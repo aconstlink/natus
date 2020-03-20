@@ -33,10 +33,9 @@ namespace natus
                 }
 
                 /// set caller thread's name 
-                static void_t set_thread_name( natus::concurrent::thread_ptr_t tptr, ::std::string const& name )
+                static void_t set_thread_name( natus::concurrent::thread_ref_t th, ::std::string const& name )
                 {
-                    if( tptr == nullptr ) return ;
-                    DWORD id = GetThreadId( tptr->native_handle() ) ;
+                    DWORD id = GetThreadId( th.native_handle() ) ;
                     set_thread_name( id, name ) ;
                 }
 

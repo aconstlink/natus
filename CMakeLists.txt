@@ -95,14 +95,15 @@ endif()
 ################################################################
 
 set( subdirs_header_only 
+    "core"
     "std"
     )
 
 set( subdirs
-    "core"
     "memory"
     "log"
     "concurrent"
+    "io"
     )
 
 

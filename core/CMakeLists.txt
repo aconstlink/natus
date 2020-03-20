@@ -15,8 +15,6 @@ set( sources
     "macros/typedef.h"
     "macros/function.h"
     "macros/move.h"
-    
-    "dummy.cpp"
     )
 
 natus_vs_src_dir( sources )

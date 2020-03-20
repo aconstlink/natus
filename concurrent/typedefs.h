@@ -25,7 +25,7 @@ namespace natus
     {
         using namespace natus::core::types ;
 
-        typedef ::std::thread thread_t ;
+        natus_typedefs( ::std::thread, thread ) ;
 
         using memory = natus::memory::global ;
 
