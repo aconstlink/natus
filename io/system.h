@@ -3,7 +3,7 @@
 #include "handle.h"
 
 #include <natus/concurrent/typedefs.h>
-#include <natus/concurrent/mutex.h>
+#include <natus/concurrent/mutex.hpp>
 #include <natus/std/stack.hpp>
 
 #include <natus/core/macros/move.h>

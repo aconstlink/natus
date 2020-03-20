@@ -144,6 +144,11 @@ foreach( _subdir ${subdirs} )
     set( cur_dir_name_raw "${_subdir}" )
     set( cur_alias_name "${PROJECT_NAME}::${_subdir}" )
     set( cur_file_name "${PROJECT_NAME}_${_subdir}" )
+
+    set( LIB_NAME_UPPER ${cur_lib_name_upper} )
+    configure_file( cmake/configure/api.in.h ${CMAKE_CURRENT_LIST_DIR}/${_subdir}/api.h @ONLY )
+    unset( LIB_NAME_UPPER )
+
     add_subdirectory( ${_subdir} )
 
     set_target_properties( ${cur_lib_name} PROPERTIES LINKER_LANGUAGE CXX )
@@ -157,8 +162,8 @@ foreach( _subdir ${subdirs} )
     endif()
 
     target_compile_options( ${cur_lib_name} PRIVATE ${NATUS_COMPILER_OPTIONS_PRIVATE})
-    target_include_directories( ${cur_lib_name} PUBLIC "${CMAKE_CURRENT_LIST_DIR}/.." )
-
+    target_include_directories( ${cur_lib_name} PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/..> )
+    
     set_target_properties( ${cur_lib_name} PROPERTIES FOLDER "natus" )
     
     target_link_libraries( complete INTERFACE ${cur_lib_name} )

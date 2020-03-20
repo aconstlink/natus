@@ -1,7 +1,7 @@
 #pragma once
 
 #include "protos.h"
-#include "mutex.h"
+#include "mutex.hpp"
 
 #include <natus/memory/global.h>
 #include <natus/memory/allocator.hpp>

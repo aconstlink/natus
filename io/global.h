@@ -6,7 +6,7 @@
 
 #include "handle.h"
 
-#include <natus/concurrent/mutex.h>
+#include <natus/concurrent/mutex.hpp>
 
 namespace natus
 {

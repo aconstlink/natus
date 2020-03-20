@@ -1,7 +1,7 @@
 #pragma once
 
 #include "job.h"
-#include "../mutex.h"
+#include "../mutex.hpp"
 #include "../typedefs.h"
 
 #include <natus/std/vector.hpp>

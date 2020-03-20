@@ -6,7 +6,7 @@
 #define _NATUS_CONCURRENT_CONTAINER_VECTOR_HPP_
 
 #include "../typedefs.h"
-#include "../mutex.h"
+#include "../mutex.hpp"
 
 namespace natus::concurrent
 {

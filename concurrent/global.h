@@ -5,7 +5,7 @@
 #include "protos.h"
 #include "typedefs.h"
 
-#include "mutex.h"
+#include "mutex.hpp"
 
 namespace natus
 {

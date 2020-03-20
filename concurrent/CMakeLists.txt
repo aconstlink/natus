@@ -15,7 +15,7 @@ set( sources
     "mrsw.hpp"
     "semaphore.hpp"
     "semaphore_guard.hpp"
-    "mutex.h"
+    "mutex.hpp"
     "scheduler.h"
     "scheduler.cpp"
 
