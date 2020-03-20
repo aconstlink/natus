@@ -14,20 +14,20 @@ namespace natus
     {
         namespace types
         {
-            so_typedefs( unsigned char, byte ) ;
-            so_typedefs( char, char ) ;
-            so_typedefs( unsigned char, uchar ) ;
+            natus_typedefs( unsigned char, byte ) ;
+            natus_typedefs( char, char ) ;
+            natus_typedefs( unsigned char, uchar ) ;
 
-            so_typedefs( short, short ) ;
-            so_typedefs( unsigned short, ushort ) ;
-            so_typedefs( int, int ) ;
-            so_typedefs( unsigned int, uint ) ;
-            so_typedefs( bool, bool ) ;
+            natus_typedefs( short, short ) ;
+            natus_typedefs( unsigned short, ushort ) ;
+            natus_typedefs( int, int ) ;
+            natus_typedefs( unsigned int, uint ) ;
+            natus_typedefs( bool, bool ) ;
 
             using ::float_t ;
             using ::double_t ;
-            so_typedef_extend( float ) ;
-            so_typedef_extend( double ) ;
+            natus_typedef_extend( float ) ;
+            natus_typedef_extend( double ) ;
 
 
             typedef unsigned long long ulonglong_t ;
@@ -37,28 +37,28 @@ namespace natus
             typedef void_t const* void_cptr_t ;
 
             using ::int8_t ;
-            so_typedef_extend( int8 ) ;
+            natus_typedef_extend( int8 ) ;
 
             using ::int16_t ;
-            so_typedef_extend( int16 ) ;
+            natus_typedef_extend( int16 ) ;
 
             using ::int32_t ;
-            so_typedef_extend( int32 ) ;
+            natus_typedef_extend( int32 ) ;
 
             using ::int64_t ;
-            so_typedef_extend( int64 ) ;
+            natus_typedef_extend( int64 ) ;
 
             using ::uint8_t ;
-            so_typedef_extend( uint8 ) ;
+            natus_typedef_extend( uint8 ) ;
 
             using ::uint16_t ;
-            so_typedef_extend( uint16 ) ;
+            natus_typedef_extend( uint16 ) ;
 
             using ::uint32_t ;
-            so_typedef_extend( uint32 ) ;
+            natus_typedef_extend( uint32 ) ;
 
             using ::uint64_t ;
-            so_typedef_extend( uint64 ) ;
+            natus_typedef_extend( uint64 ) ;
         }
     }    
 } 

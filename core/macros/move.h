@@ -11,7 +11,7 @@
     from.var_name = nullptr 
 
 #define natus_move( var_name, from ) \
-    var_name = std::move( from.var_name ) 
+    var_name = ::std::move( from.var_name ) 
 
 
 

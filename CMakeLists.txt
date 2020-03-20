@@ -54,7 +54,7 @@ natus_export_clear()
 # SECTION : Build in and compilable externals
 ################################################################
 
-
+add_subdirectory( "externals/filesystem" )
 #add_subdirectory( "externals/lua" )
 #add_subdirectory( "externals/khronos" )
 #add_subdirectory( "externals/rtmidi" )
@@ -95,12 +95,14 @@ endif()
 ################################################################
 
 set( subdirs_header_only 
-  #core
- 
-)
+    "std"
+    )
+
 set( subdirs
-    core
-    #memory
+    "core"
+    "memory"
+    "log"
+    "concurrent"
     )
 
 
@@ -153,7 +155,7 @@ foreach( _subdir ${subdirs} )
         INTERFACE -DNATUS_${cur_lib_name_upper}_IMPORT )    
     endif()
 
-    #target_compile_options( ${cur_lib_name} PRIVATE ${NATUS_COMPILER_OPTIONS_PRIVATE})
+    target_compile_options( ${cur_lib_name} PRIVATE ${NATUS_COMPILER_OPTIONS_PRIVATE})
     target_include_directories( ${cur_lib_name} PUBLIC "${CMAKE_CURRENT_LIST_DIR}/.." )
 
     set_target_properties( ${cur_lib_name} PROPERTIES FOLDER "natus" )

@@ -36,7 +36,7 @@ target_compile_definitions( ${cur_lib_name}
 # SECTION: Build Tree
 ###########################################################
 
-#so_export( ${CUR_LIB_NAME} )
+#natus_export( ${CUR_LIB_NAME} )
 
 ###########################################################
 # SECTION: Install

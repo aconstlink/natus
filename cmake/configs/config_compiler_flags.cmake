@@ -19,10 +19,10 @@ if( NATUS_COMPILER_MSC )
     set( NATUS_UNWANTED_COMPILER_OPTIONS 
 	/wd4005 /wd4100 /wd4127 /wd4189 /wd4200 /wd4251 /wd4505 /wd4702 /wd4706 )
 
-  # W4 : Warning level 4, e.g. nearly all warnings
-  # WX : all compiler warnings as errors
-  # EH : exception handling
-  set( NATUS_COMPILER_OPTIONS_PRIVATE /W4 /WX /EHsc ${NATUS_UNWANTED_COMPILER_OPTIONS} )   
+    # W4 : Warning level 4, e.g. nearly all warnings
+    # WX : all compiler warnings as errors
+    # EH : exception handling
+    set( NATUS_COMPILER_OPTIONS_PRIVATE /W4 /WX /EHsc ${NATUS_UNWANTED_COMPILER_OPTIONS} )
 
     unset( NATUS_UNWANTED_COMPILER_OPTIONS ) 
 
@@ -46,7 +46,8 @@ elseif( NATUS_COMPILER_GNU )
 
     set( CMAKE_CXX_FLAGS_DEBUG  "${CMAKE_CXX_FLAGS_DEBUG} -O0 -g")
 
-
+    # todo
+    set( NATUS_COMPILER_OPTIONS_PRIVATE )
 
     unset( NATUS_UNWANTED_COMPILER_OPTIONS )
 
