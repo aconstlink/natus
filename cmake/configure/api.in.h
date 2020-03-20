@@ -1,5 +1,8 @@
 #pragma once
 
+// this file is auto generated code.
+// see cmake/configure/api.in.h
+
 #if defined( NATUS_BUILD_DLL )
 
 #if defined( NATUS_@LIB_NAME_UPPER@_EXPORT )
