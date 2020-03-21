@@ -4,6 +4,7 @@ set( sources
     "typedefs.h"
     "protos.h"
     "id.hpp"
+    "soil.cpp"
     )
 
 natus_vs_src_dir( sources )

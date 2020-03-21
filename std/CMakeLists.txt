@@ -12,6 +12,8 @@ set( sources
 
     "string/utf8.hpp"
     "string/split.hpp"
+
+    "std.cpp"
     )
 
 natus_vs_src_dir( sources )
