@@ -161,7 +161,7 @@ foreach( _subdir ${subdirs} )
     endif()
 
     target_compile_options( ${cur_lib_name} PRIVATE ${NATUS_COMPILER_OPTIONS_PRIVATE})
-    target_include_directories( ${cur_lib_name} PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/..> )
+    target_include_directories( ${cur_lib_name} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/..> )
     
     set_target_properties( ${cur_lib_name} PROPERTIES FOLDER "natus" )
     
