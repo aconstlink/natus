@@ -105,6 +105,7 @@ set( subdirs
     "concurrent"
     "io"
     "soil"
+    ${subdirs_header_only}
     )
 
 
@@ -117,17 +118,14 @@ endif()
 #
 foreach( _subdir ${subdirs_header_only} )
     
-    set( cur_lib_name "${_subdir}" )
-    set( cur_alias_name "${PROJECT_NAME}::${_subdir}" )
-    add_subdirectory( ${_subdir} )
+    set( lib_name "${_subdir}" )
+    string( TOUPPER ${lib_name} lib_name_upper)
+    
+    
+    configure_file( cmake/configure/api.in.h ${CMAKE_CURRENT_LIST_DIR}/${lib_name}/api.h @ONLY )
+    configure_file( cmake/configure/header_only.in.cpp 
+        ${CMAKE_CURRENT_LIST_DIR}/${lib_name}/header_only.cpp @ONLY )
 
-    target_compile_options( ${cur_lib_name} PRIVATE ${NATUS_COMPILER_OPTIONS_PRIVATE} )
-    target_include_directories( ${cur_lib_name} PUBLIC "${CMAKE_CURRENT_LIST_DIR}/.." )
-
-    set_target_properties( ${cur_lib_name} PROPERTIES FOLDER "natus" )
-
-    set_target_properties( ${cur_lib_name} PROPERTIES LINKER_LANGUAGE CXX )
-    set_target_properties( ${cur_lib_name} PROPERTIES CXX_STANDARD ${NATUS_CXX_STANDARD} )
 endforeach()
 
 #

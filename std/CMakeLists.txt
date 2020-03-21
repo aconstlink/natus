@@ -13,7 +13,7 @@ set( sources
     "string/utf8.hpp"
     "string/split.hpp"
 
-    "std.cpp"
+    "header_only.cpp"
     )
 
 natus_vs_src_dir( sources )
@@ -22,9 +22,9 @@ add_library( ${cur_lib_name} ${NATUS_LIBRARY_BUILD_TYPE} ${sources} )
 add_library( ${cur_alias_name} ALIAS ${cur_lib_name} )
 
 target_link_libraries( ${cur_lib_name}
-        PUBLIC natus::log
-        PUBLIC natus::memory
-        PUBLIC ghc_filesystem )
+        INTERFACE natus::log
+        INTERFACE natus::memory
+        INTERFACE ghc_filesystem )
 
 ###########################################################
 # SECTION: Build Tree
