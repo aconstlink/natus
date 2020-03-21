@@ -104,6 +104,7 @@ set( subdirs
     "log"
     "concurrent"
     "io"
+    "soil"
     )
 
 
@@ -118,7 +119,7 @@ foreach( _subdir ${subdirs_header_only} )
     
     set( cur_lib_name "${_subdir}" )
     set( cur_alias_name "${PROJECT_NAME}::${_subdir}" )
-    add_subdirectory(${_subdir})
+    add_subdirectory( ${_subdir} )
 
     target_compile_options( ${cur_lib_name} PRIVATE ${NATUS_COMPILER_OPTIONS_PRIVATE} )
     target_include_directories( ${cur_lib_name} PUBLIC "${CMAKE_CURRENT_LIST_DIR}/.." )
