@@ -153,7 +153,15 @@ namespace natus
                 return tmp ;
             }
 
+            /// unsafe cast of stored data
             template< class B >
+            B as( void_t )
+            {
+                return static_cast< B >( *static_cast< B* >( _sd->get_ptr() ) ) ;
+            }
+
+            /// unsafe cast of stored data
+            template< class B * >
             B * as( void_t )
             {
                 return static_cast< B* >( _sd->get_ptr() ) ;
