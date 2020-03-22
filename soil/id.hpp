@@ -17,6 +17,18 @@ namespace natus
 {
     namespace soil
     {
+        namespace detail
+        {
+            struct itag { virtual ~itag( void_t ) {} };
+            natus_typedef( itag ) ;
+        
+            template< class T >
+            struct tag : public itag, virtual T
+            {
+                virtual ~tag( void_t ) {}
+            };
+        }
+
         template< class T >
         class id ;
         
@@ -58,6 +70,8 @@ namespace natus
                     
                     return _ref_count == 0 ;
                 }
+
+                virtual void_ptr_t get_ptr( void_t ) = 0 ;
             };
             natus_typedef( ishared_data ) ;
 
@@ -139,6 +153,12 @@ namespace natus
                 return tmp ;
             }
 
+            template< class B >
+            B * as( void_t )
+            {
+                return static_cast< B* >( _sd->get_ptr() ) ;
+            }
+
         protected:
 
             ishared_data_ptr_t get_( void_t ) 
@@ -154,6 +174,8 @@ namespace natus
         {
             natus_this_typedefs( id<T> ) ;
             natus_typedefs( T, value ) ;
+
+            friend id_t ;
 
         private:
 
@@ -181,6 +203,13 @@ namespace natus
             public:
 
                 value_ptr_t _pptr = nullptr ;
+
+            private:
+
+                virtual void_ptr_t get_ptr( void_t ) 
+                {
+                    return _pptr ;
+                }
             };
             natus_typedef( shared_data ) ;
 
@@ -242,10 +271,14 @@ namespace natus
             this_ref_t operator = ( id_cref_t rhv ) noexcept 
             {
                 natus::log::global_t::status( "[id::operator =(id_cref)]" ) ;
-                auto * ptr = dynamic_cast< this_t::shared_data_ptr_t >( const_cast<id_t::ishared_data_ptr_t>( rhv.get_shared_data() ) ) ;
-                if( natus::core::is_not_nullptr( ptr ) )
+                
                 {
-                    *this = this_t( ptr, true ) ;
+                    auto* ptr = dynamic_cast< this_t::shared_data_ptr_t >( const_cast< id_t::ishared_data_ptr_t >( rhv.get_shared_data() ) ) ;
+
+                    if( natus::core::is_not_nullptr( ptr ) )
+                    {
+                        *this = this_t( ptr, true ) ;
+                    }
                 }
 
                 return *this ;
