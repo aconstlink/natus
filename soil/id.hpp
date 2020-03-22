@@ -17,93 +17,73 @@ namespace natus
 {
     namespace soil
     {
-        //**********************************************
-        class id
+        template< class T >
+        class id ;
+        
+        template<>
+        class id< void_t >
         {
             natus_this_typedefs( id ) ;
 
         protected: // struct
 
-            //**********************************************
-            struct shared_data
+            struct ishared_data
             {
-                natus_this_typedefs( shared_data ) ;
+                natus_this_typedefs( ishared_data ) ;
 
-            public:
-
-                shared_data( void_t ) {}
-                shared_data( this_cref_t ) = delete ;
-                shared_data( this_rref_t rhv ) : _ref_count((size_t)rhv._ref_count)
-                {
-                    _on_deletions = ::std::move( rhv._on_deletions ) ;
-                }
-                ~shared_data( void_t ) {}
-
-                typedef ::std::function< void_t ( void_t ) > on_deletion_t ;
-
-            private:
-
-                ::std::mutex _mtx ;
-                natus::std::vector< on_deletion_t > _on_deletions ;
                 ::std::atomic<size_t> _ref_count = 0 ;
 
-            public:
+                ishared_data( void_t ) noexcept {}
+                ishared_data( this_cref_t rhv ) noexcept : _ref_count( (size_t)rhv._ref_count ) 
+                {}
 
-                /*void_t add( on_deletion_t funk ) noexcept
-                {
-                    try 
-                    { 
-                        ::std::lock_guard< ::std::mutex > lk( _mtx ) ;
-                        _on_deletions.emplace_back( funk ) ; 
-                    }
-                    catch( ::std::exception const& e )
-                    {
-                        natus::log::global_t::error( "[cid] : " +
-                            natus::std::string( e.what() ) ) ;
-                    }
-                }*/                
+                ishared_data( this_rref_t rhv ) noexcept : _ref_count((size_t)rhv._ref_count)
+                {}
+
+                virtual ~ishared_data( void_t )
+                {}
 
                 void_t aquire( void_t ) noexcept
                 {
                     ++_ref_count ;
+                    natus::log::global_t::status( "[aquire] : " +
+                        ::std::to_string( _ref_count ) ) ;
                 }
 
                 bool_t release( void_t ) noexcept
                 {
                     --_ref_count ;
+                    natus::log::global_t::status( "[release] : " +
+                        ::std::to_string( _ref_count ) ) ;
+                    
                     return _ref_count == 0 ;
                 }
             };
-            natus_typedef( shared_data ) ;
+            natus_typedef( ishared_data ) ;
 
         private: // variables
 
-            shared_data_ptr_t _sd = nullptr ;
+            ishared_data_ptr_t _sd = nullptr ;
 
         protected:
 
-            id( size_t const ) : id()
+            id( ishared_data_ptr_t ptr, bool_t const b = true ) : _sd( ptr )
             {
-                _sd->aquire() ;
+                if( b ) this_t::aquire() ;
             }
 
         public:
 
-            id( void_t ) 
-            {
-                _sd = natus::memory::global_t::alloc< shared_data_t >() ;
-            }
+            id( void_t ) noexcept
+            {}
 
-            
-
-            id( this_cref_t rhv ) 
+            id( this_cref_t rhv ) noexcept
             {
                 _sd = rhv._sd ;
-                if( natus::core::is_not_nullptr(_sd) ) 
-                    _sd->aquire() ;
+                this_t::aquire() ;
             }
 
-            id( this_rref_t rhv ) 
+            id( this_rref_t rhv ) noexcept
             {
                 natus_move_member_ptr( _sd, rhv ) ;
             }
@@ -134,98 +114,206 @@ namespace natus
             {
                 return natus::core::is_not_nullptr( _sd ) ;
             }
-        };
-        natus_typedef( id ) ;
 
-        //**********************************************
-        template< class T >
-        class cid : public id
-        {
-            natus_this_typedefs( cid<T> ) ;
-            natus_typedefs( T, value ) ;
-
-        private:
-
-            
-
-        private:
-
-            value_ptr_t _pptr = nullptr ;
-
-            cid( value_ptr_t ptr ) : id(size_t())
-            {                
-                _pptr = ptr ;
+            void_t aquire( void_t ) noexcept
+            {
+                if( natus::core::is_not_nullptr( _sd ) )
+                    _sd->aquire() ;
             }
 
         public:
 
-            cid( void_t ) noexcept
-            {}
-
-            cid( this_cref_t rhv ) : id( rhv ) noexcept
-            {}
-
-            cid( this_rref_t rhv ) : id( ::std::move(rhv) ) noexcept
-            {}
-
-            cid( value_cref_t rhv ) noexcept
+            /// do not use this externally
+            /// make const * const for protection
+            ishared_data_t const * const get_shared_data( void_t ) const noexcept
             {
+                return _sd ;
+            }
+
+            /// do not use this externally
+            /// make const * const for protection
+            ishared_data_t const* const move_shared_data( void_t ) const noexcept
+            {
+                auto* tmp = _sd ;
+                const_cast<this_ptr_t>(this)->_sd = nullptr ;
+                return tmp ;
+            }
+
+        protected:
+
+            ishared_data_ptr_t get_( void_t ) 
+            {
+                return _sd ;
+            }
+        };
+        natus_typedefs( id<void_t>, id ) ;
+
+        //**********************************************
+        template< class T >
+        class id : public id_t
+        {
+            natus_this_typedefs( id<T> ) ;
+            natus_typedefs( T, value ) ;
+
+        private:
+
+            //**********************************************
+            struct shared_data : public id_t::ishared_data
+            {
+                natus_this_typedefs( shared_data ) ;
+
+            public:
+
+                shared_data( void_t ) {}
+                shared_data( value_ptr_t ptr ) : _pptr(ptr) {}
+                shared_data( this_cref_t rhv ) : id_t::ishared_data_t( rhv ) 
+                {
+                    _pptr = rhv._pptr ;
+                }
+
+                shared_data( this_rref_t rhv ) : id_t::ishared_data_t( ::std::move( rhv ) )
+                {
+                    natus_move_member_ptr( _pptr, rhv ) ;
+                }
+
+                virtual ~shared_data( void_t ) {}
+
+            public:
+
+                value_ptr_t _pptr = nullptr ;
+            };
+            natus_typedef( shared_data ) ;
+
+        private:
+
+            id( value_ptr_t ptr ) : id_t( natus::memory::global_t::alloc< this_t::shared_data_t >(
+                this_t::shared_data_t( ptr ), "[id] : shared_data" )  )
+            {}
+
+            id( this_t::shared_data_ptr_t ptr, bool_t const b ) : id_t( ptr, b )
+            {}
+
+        public:
+
+            id( void_t ) noexcept
+            {
+                natus::log::global_t::status( "[id(void)]" ) ;
+            }
+
+            id( this_cref_t rhv ) noexcept : id_t( rhv ) 
+            {
+                natus::log::global_t::status( "[id(cref)]" ) ;
+            }
+
+            id( this_rref_t rhv ) noexcept : id_t( ::std::move(rhv) ) 
+            {
+                natus::log::global_t::status( "[id(rref)]" ) ;
+            }
+
+            id( id_cref_t rhv ) noexcept
+            {
+                natus::log::global_t::status( "[id(id_cref)]" ) ;
                 *this = rhv ;
             }
 
-            cid( value_rref_t rhv ) noexcept
+            id( id_rref_t rhv ) noexcept
             {
+                natus::log::global_t::status( "[id(id_rref)]" ) ;
+                *this = ::std::move( rhv ) ;
+            }
+
+            id( value_cref_t rhv ) noexcept
+            {
+                natus::log::global_t::status( "[id(value_cref)]" ) ;
+                *this = rhv ;
+            }
+
+            id( value_rref_t rhv ) noexcept
+            {
+                natus::log::global_t::status( "[id(value_rref)]" ) ;
                 *this = ::std::move( rhv ) ;
             }
             
-            ~cid( void_t ) noexcept
+            ~id( void_t ) noexcept
             {}
             
-            this_ref_t operator = ( this_cref_t rhv ) noexcept
+        public: // operator = 
+
+            this_ref_t operator = ( id_cref_t rhv ) noexcept 
             {
-                static_cast< this_ref_t > ( reinterpret_cast<id_ptr_t>(this)->operator = ( rhv ) ) ;
-                
-                _pptr = rhv._pptr ;
+                natus::log::global_t::status( "[id::operator =(id_cref)]" ) ;
+                auto * ptr = dynamic_cast< this_t::shared_data_ptr_t >( const_cast<id_t::ishared_data_ptr_t>( rhv.get_shared_data() ) ) ;
+                if( natus::core::is_not_nullptr( ptr ) )
+                {
+                    *this = this_t( ptr, true ) ;
+                }
 
                 return *this ;
+            }
+
+            this_ref_t operator = ( id_rref_t rhv ) noexcept
+            {
+                natus::log::global_t::status( "[id::operator =(id_rref)]" ) ;
+                auto* ptr = dynamic_cast< this_t::shared_data_ptr_t >( const_cast< id_t::ishared_data_ptr_t >( rhv.get_shared_data() ) ) ;
+                if( natus::core::is_not_nullptr( ptr ) )
+                {
+                    *this = this_t( static_cast<this_t::shared_data_ptr_t>(
+                        const_cast< id_t::ishared_data_ptr_t >(rhv.move_shared_data())), false ) ;
+                }
+
+                return *this ;
+            }
+
+            this_ref_t operator = ( this_cref_t rhv ) noexcept
+            {
+                natus::log::global_t::status( "[id::operator =(cref)]" ) ;
+                return static_cast<this_ref_t>( id_t::operator=( rhv ) ) ;
             }
 
             this_ref_t operator = ( this_rref_t rhv ) noexcept
             {
-                static_cast<this_ref_t>( reinterpret_cast<id_ptr_t>(this)->operator = ( ::std::move( rhv ) ) ) ;
-
-                natus_move_member_ptr( _pptr, rhv ) ;
-
-                return *this ;
+                natus::log::global_t::status( "[id::operator =(rref)]" ) ;
+                return static_cast<this_ref_t>( id_t::operator=( ::std::move( rhv ) ) ) ;
             }
 
             this_ref_t operator = ( value_cref_t rhv ) noexcept
             {
+                natus::log::global_t::status( "[id::operator =(value_cref)]" ) ;
                 return *this = this_t::construct( rhv ) ;
             }
-
             
             this_ref_t operator = ( value_rref_t rhv ) noexcept
             {
+                natus::log::global_t::status( "[id::operator =(value_rref)]" ) ;
                 return *this = this_t::construct( ::std::move( rhv ) ) ;
             }
-
             
-            static this_t construct( T const & t )
+        public: // operator ->
+
+            value_ptr_t operator -> ( void_t ) 
             {
-                T * ptr = natus::memory::global_t::alloc<T>( T(t),
-                    "[shared_data]" ) ;
+                return static_cast< shared_data_ptr_t >( this_t::get_() )->_pptr ;
+            }
+
+        public: // construct 
+
+            static this_t construct( value_cref_t t )
+            {
+                value_ptr_t ptr = natus::memory::global_t::alloc<value_t>( 
+                    t, "[shared_data]" ) ;
                                 
                 return this_t( ptr ) ;
             }
 
-            static this_t construct( T && t )
+            static this_t construct( value_rref_t t )
             {
-                T * ptr = natus::memory::global_t::alloc<T>( T( ::std::move(t) ),
-                    "[shared_data]" ) ;
+                value_ptr_t ptr = natus::memory::global_t::alloc<value_t>( 
+                    ::std::move(t), "[shared_data]" ) ;
                                                
                 return this_t( ptr ) ;
             }
         };
+
+        
     }
 }
