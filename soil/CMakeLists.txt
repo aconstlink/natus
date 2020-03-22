@@ -3,7 +3,7 @@ set( sources
     "api.h"
     "typedefs.h"
     "protos.h"
-    "id.hpp"
+    "res.hpp"
     "soil.cpp"
     )
 
