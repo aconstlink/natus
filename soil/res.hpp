@@ -171,6 +171,15 @@ namespace natus
                 return static_cast< B >( _sd->get_ptr() ) ;
             }
 
+            /// unsafe cast of stored data
+            template< class B >
+            B cast( void_t ) const
+            {
+                static_assert( ::std::is_pointer<B>::value, "Must pass pointer type" ) ;
+
+                return static_cast< const B >( _sd->get_ptr() ) ;
+            }
+
             /// safe cast to pointer of B -> B*
             template< class B >
             B scast( void_t )
@@ -388,7 +397,5 @@ namespace natus
                 return this_t( ptr ) ;
             }
         };
-
-        
     }
 }

@@ -5,6 +5,7 @@ set( sources
     "protos.h"
     "res.hpp"
     "soil.cpp"
+    "rptr.hpp"
     )
 
 natus_vs_src_dir( sources )
