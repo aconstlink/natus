@@ -195,15 +195,15 @@ namespace natus
         namespace semaphore_static
         {
             static const semaphore::comp_funk_t is_zero_funk =
-                [=] ( size_t const c ) { return c == 0 ; } ;
+                [] ( size_t const c ) { return c == 0 ; } ;
             static const semaphore::comp_funk_t is_true_funk =
-                [=] ( size_t const c ) { return true ; } ;
+                [] ( size_t const /*c*/ ) { return true ; } ;
             static const semaphore::access_funk_t increment_funk =
-                [=] ( semaphore_t::direct_access_ref_t da ) { ++da ; } ; ;
+                [] ( semaphore_t::direct_access_ref_t da ) { ++da ; } ;
             static const semaphore::access_funk_t decrement_funk =
-                [=] ( semaphore_t::direct_access_ref_t da ) { --da ; } ; ;
+                [] ( semaphore_t::direct_access_ref_t da ) { --da ; } ;
             static const semaphore::access_funk_t no_op_funk =
-                [=] ( semaphore_t::direct_access_ref_t da ) { } ; ;
+                [] ( semaphore_t::direct_access_ref_t /*da*/ ) { } ;
         }
     }
 }

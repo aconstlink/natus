@@ -14,7 +14,7 @@ namespace natus
         class isystem
         {
         public:
-
+            virtual ~isystem( void_t ) {}
             virtual natus::log::result log( natus::log::log_level ll, ::std::string const& msg ) = 0 ;
             virtual natus::log::result add_logger( natus::log::ilogger_ptr_t lptr ) = 0 ;
             virtual natus::log::ilogger_ptr_t set_default_logger( natus::log::ilogger_ptr_t lptr ) = 0 ;

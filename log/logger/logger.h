@@ -14,7 +14,7 @@ namespace natus
         class NATUS_LOG_API ilogger
         {
         public:
-
+            virtual ~ilogger( void_t ) {}
             virtual natus::log::result log( natus::log::log_level ll, ::std::string const& msg ) = 0 ;
         };
     }
