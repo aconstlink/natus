@@ -13,8 +13,8 @@ namespace natus
         template< typename O, size_t pre_alloc >
         class stack
         {
-            typedef natus::std::stack< O, pre_alloc > this_t ;
-            natus_this_typedefs( this_t ) ;
+            typedef natus::std::stack< O, pre_alloc > __stack_t ;
+            natus_this_typedefs( __stack_t ) ;
 
 
             natus_typedefs( O, object ) ;

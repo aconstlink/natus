@@ -51,9 +51,9 @@ namespace natus
             {
                 natus_this_typedefs( ishared_data ) ;
 
-                ::std::atomic<size_t> _ref_count = 0 ;
+                ::std::atomic<size_t> _ref_count ;
 
-                ishared_data( void_t ) noexcept {}
+                ishared_data( void_t ) noexcept : _ref_count(0) {}
                 ishared_data( this_cref_t rhv ) noexcept : _ref_count( (size_t)rhv._ref_count ) 
                 {}
 

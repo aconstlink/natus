@@ -35,7 +35,7 @@ namespace natus
                 /// set caller thread's name 
                 static void_t set_thread_name( natus::concurrent::thread_ref_t th, ::std::string const& name )
                 {
-                    DWORD id = GetThreadId( th.native_handle() ) ;
+                    DWORD id = GetThreadId( (HANDLE) th.native_handle() ) ;
                     set_thread_name( id, name ) ;
                 }
 
@@ -49,13 +49,15 @@ namespace natus
                     info.dwThreadID = id;
                     info.dwFlags = 0;
 
-                    __try
+                    
+                    //__try
                     {
                         RaiseException( MS_VC_EXCEPTION, 0, sizeof( info ) / sizeof( ULONG_PTR ), ( ULONG_PTR* ) &info );
                     }
-                    __except( EXCEPTION_EXECUTE_HANDLER )
+                    //__except( EXCEPTION_EXECUTE_HANDLER )
                     {
                     }
+                    
                 }
             };
         }
