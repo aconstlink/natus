@@ -30,9 +30,9 @@ namespace natus
             color4( vec4_cref_t color ) : _color( color ) {}
             color4( this_cref_t color ) : _color( color._color ) {}
 
-            color4( natus_switch::color_red ) : _color( vec4_t( type_t( 1 ), type_t( 0 ), type_t( 0 ), type_t( 1 ) ) ) {}
-            color4( natus_switch::color_green ) : _color( vec4_t( type_t( 0 ), type_t( 1 ), type_t( 0 ), type_t( 1 ) ) ) {}
-            color4( natus_switch::color_blue ) : _color( vec4_t( type_t( 0 ), type_t( 0 ), type_t( 1 ), type_t( 1 ) ) ) {}
+            color4( natus::math::color_red ) : _color( vec4_t( type_t( 1 ), type_t( 0 ), type_t( 0 ), type_t( 1 ) ) ) {}
+            color4( natus::math::color_green ) : _color( vec4_t( type_t( 0 ), type_t( 1 ), type_t( 0 ), type_t( 1 ) ) ) {}
+            color4( natus::math::color_blue ) : _color( vec4_t( type_t( 0 ), type_t( 0 ), type_t( 1 ), type_t( 1 ) ) ) {}
 
         public:
 
