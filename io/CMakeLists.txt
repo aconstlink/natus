@@ -25,14 +25,8 @@ target_link_libraries( ${cur_lib_name}
         PUBLIC natus::log
         PUBLIC natus::memory
         PUBLIC natus::std
-    )
+    )   
 
-    
-if( NATUS_TARGET_OS_LIN )
-target_link_libraries( ${cur_lib_name}
-    stdc++fs
-)
-endif()
 
 ###########################################################
 # SECTION: Build Tree
