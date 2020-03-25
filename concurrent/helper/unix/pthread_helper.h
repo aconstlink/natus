@@ -9,7 +9,7 @@ namespace natus
 {
     namespace concurrent
     {
-        namespace osunix
+        namespace unix
         {
             using namespace natus::core::types ;
 
