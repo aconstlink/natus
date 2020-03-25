@@ -172,9 +172,7 @@ foreach( _subdir ${subdirs} )
     target_link_libraries( complete INTERFACE ${cur_lib_name} )
 
 endforeach()
-
 export( TARGETS complete NAMESPACE natus:: APPEND FILE ${PROJECT_NAME}-targets.cmake)
-install( EXPORT ${PROJECT_NAME}-targets DESTINATION "cmake" )
 
 ################################################################
 # SECTION : Extensions
