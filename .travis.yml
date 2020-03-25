@@ -8,7 +8,7 @@ compiler: gcc
 before_script:
     - mkdir build
     - cd build
-    - cmake ..
+    - cmake -DNATUS_TARGET_GRAPHICS_API=null ..
 
 script:
     - make
