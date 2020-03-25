@@ -1,0 +1,14 @@
+
+# travis test, not jet working/complete
+
+dist: bionic
+language: cpp
+compiler: gcc
+
+before_script:
+    - mkdir build
+    - cd build
+    - cmake ..
+
+script:
+    - make
