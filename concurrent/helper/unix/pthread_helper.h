@@ -1,18 +1,13 @@
-//------------------------------------------------------------
-// snakeoil (c) Alexis Constantin Link
-// Distributed under the MIT license
-//------------------------------------------------------------
-#ifndef _SNAKEOIL_THREAD_PTHRED_HELPER_H_
-#define _SNAKEOIL_THREAD_PTHRED_HELPER_H_
+#pragma once
 
-#include <snakeoil/core/types.hpp>
+#include <natus/core/types.hpp>
 #include <pthread.h>
 
-namespace so_thread
+namespace natus
 {
-    namespace so_unix
+    namespace unix
     {
-        namespace so_pthread
+        namespace pthread
         {
             using namespace so_core::so_types ;
 
@@ -39,6 +34,3 @@ namespace so_thread
 
     }
 }
-
-#endif
-
