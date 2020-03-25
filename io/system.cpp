@@ -2,7 +2,6 @@
 #include "system.h"
 
 #include <natus/concurrent/typedefs.h>
-#include <natus/concurrent/helper/helper_os.h>
 
 #include <natus/log/global.h>
 

@@ -9,8 +9,6 @@ set( sources
     "global.cpp"
 
     "primitive/sync_object.hpp"
-    "helper.h"
-    "helper/helper_os.h"
 
     "mrsw.hpp"
     "semaphore.hpp"
@@ -54,15 +52,7 @@ set( sources
     "job/job_scheduler.h"
     "job/job_scheduler.cpp"
     )
-
-set( unix_sources
-    "helper/unix/pthread_helper.h"
-    )
-
-set( win32_sources 
-    "helper/win32/win32_helper.h"
-    )
-
+    
 if( NATUS_TARGET_OS_WIN )
     list( APPEND sources ${win32_sources} )
 elseif( NATUS_TARGET_OS_LIN )
