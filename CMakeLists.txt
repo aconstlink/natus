@@ -170,14 +170,6 @@ foreach( _subdir ${subdirs} )
     
     target_link_libraries( complete INTERFACE ${cur_lib_name} )
 
-    install( TARGETS ${cur_lib_name} 
-        RUNTIME DESTINATION bin 
-        LIBRARY DESTINATION lib
-        ARCHIVE DESTINATION lib
-        )
-    
-
-    install( TARGETS ${cur_lib_name} EXPORT ${PROJECT_NAME}-targets )    
 endforeach()
 
 export( TARGETS complete NAMESPACE natus:: APPEND FILE ${PROJECT_NAME}-targets.cmake)

@@ -36,5 +36,10 @@ add_library( ${cur_alias_name} ALIAS ${cur_lib_name} )
 ###########################################################
 
 install_headers( "${sources}" "include/${PROJECT_NAME}/${cur_lib_name}" )
-
+install( TARGETS ${cur_lib_name} 
+        RUNTIME DESTINATION bin 
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib
+        )
+install( TARGETS ${cur_lib_name} EXPORT ${PROJECT_NAME}-targets )  
 
