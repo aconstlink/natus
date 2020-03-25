@@ -46,8 +46,9 @@ include( config_output_directory )
 
 include( visual_studio_src_dir )
 include( install_headers )
+include( install_library )
 #include( install_shaders )
-#include( install_library )
+
 
 include( InstallRequiredSystemLibraries )
 
