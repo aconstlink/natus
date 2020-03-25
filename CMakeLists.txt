@@ -49,6 +49,8 @@ include( install_headers )
 #include( install_shaders )
 #include( install_library )
 
+include( InstallRequiredSystemLibraries )
+
 natus_export_clear()
 
 ################################################################
