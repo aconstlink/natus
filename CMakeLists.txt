@@ -175,9 +175,13 @@ foreach( _subdir ${subdirs} )
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib
         )
+    
+
+    install( TARGETS ${cur_lib_name} EXPORT ${PROJECT_NAME}-targets )    
 endforeach()
 
-export(TARGETS complete NAMESPACE natus:: APPEND FILE ${PROJECT_NAME}-targets.cmake)
+export( TARGETS complete NAMESPACE natus:: APPEND FILE ${PROJECT_NAME}-targets.cmake)
+install( EXPORT ${PROJECT_NAME}-targets DESTINATION "lib" )
 
 ################################################################
 # SECTION : Extensions
