@@ -50,7 +50,7 @@ include( install_library )
 #include( install_shaders )
 
 
-include( InstallRequiredSystemLibraries )
+#include( InstallRequiredSystemLibraries )
 
 natus_export_clear()
 
