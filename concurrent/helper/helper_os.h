@@ -15,7 +15,7 @@ namespace natus
 {
     namespace concurrent
     {
-        typedef natus::concurrent::unix::natus_pthread::helper helper_t ;
+        typedef natus::concurrent::osunix::pthread_helper helper_t ;
     }
 }
 #else
