@@ -6,8 +6,9 @@ if( POLICY CMP0079 )
 endif()
 
 set( NATUS_MAJOR_VERSION 0 )
-set( NATUSL_MINOR_VERSION 0 )
+set( NATUS_MINOR_VERSION 0 )
 set( NATUS_PATCH_VERSION 0 )
+set( NATUS_VERSION ${NATUS_MAJOR_VERSION}.${NATUSL_MINOR_VERSION}.${NATUS_PATCH_VERSION})
 
 ################################################################
 # SECTION: Configuring
@@ -22,7 +23,7 @@ set( CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
   "${CMAKE_CURRENT_LIST_DIR}/cmake/modules/"
   "${CMAKE_CURRENT_LIST_DIR}/cmake/configs"
   "${CMAKE_CURRENT_LIST_DIR}/cmake/macros/"
-  #"${CMAKE_CURRENT_LIST_DIR}/cmake/functions/"
+  "${CMAKE_CURRENT_LIST_DIR}/cmake/functions/"
   )
 
 set( CMAKE_INSTALL_PREFIX "${NATUS_BINARY_DIR}/install/natus-${NATUS_MAJOR_VERSION}.${NATUS_MINOR_VERSION}.${NATUS_PATCH_VERSION}" CACHE STRING "Install prefix" FORCE )
@@ -44,7 +45,7 @@ include( config_rt_link )
 include( config_output_directory )
 
 include( visual_studio_src_dir )
-#include( install_headers )
+include( install_headers )
 #include( install_shaders )
 #include( install_library )
 
@@ -122,7 +123,6 @@ foreach( _subdir ${subdirs_header_only} )
     set( lib_name "${_subdir}" )
     string( TOUPPER ${lib_name} lib_name_upper)
     
-    
     configure_file( cmake/configure/api.in.h ${CMAKE_CURRENT_LIST_DIR}/${lib_name}/api.h @ONLY )
     configure_file( cmake/configure/header_only.in.cpp 
         ${CMAKE_CURRENT_LIST_DIR}/${lib_name}/header_only.cpp @ONLY )
@@ -168,6 +168,11 @@ foreach( _subdir ${subdirs} )
     
     target_link_libraries( complete INTERFACE ${cur_lib_name} )
 
+    install( TARGETS ${cur_lib_name} 
+        RUNTIME DESTINATION bin 
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib
+        )
 endforeach()
 
 export(TARGETS complete NAMESPACE natus:: APPEND FILE ${PROJECT_NAME}-targets.cmake)

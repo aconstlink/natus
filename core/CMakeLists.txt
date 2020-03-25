@@ -35,4 +35,4 @@ add_library( ${cur_alias_name} ALIAS ${cur_lib_name} )
 # SECTION: Install
 ###########################################################
 
-#install_headers( "${SOURCES}" "include/${PROJECT_NAME}/${CUR_LIB_NAME_SHORT}" )
+install_headers( "${sources}" "include/${PROJECT_NAME}/${cur_lib_name}" )
