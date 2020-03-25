@@ -1,70 +1,66 @@
-//------------------------------------------------------------
-// snakeoil (c) Alexis Constantin Link
-// Distributed under the MIT license
-//------------------------------------------------------------
-#ifndef _NATUS_CONCURRENT_CONTAINER_VECTOR_HPP_
-#define _NATUS_CONCURRENT_CONTAINER_VECTOR_HPP_
+#pragma once
 
 #include "../typedefs.h"
 #include "../mutex.hpp"
 
-namespace natus::concurrent
+namespace natus
 {
-    template< typename T >
-    class vector
+    namespace concurrent
     {
-        natus_this_typedefs( vector<T> ) ;
-
-        natus_typedefs( T, type ) ;
-        natus_typedefs( natus::std::vector<T>, container ) ;
-
-    private:
-
-        mutable natus::concurrent::mutex_t _mtx ;
-        container_t _cont ;
-
-    public:
-
-        vector( void_t ) 
-        {}
-
-        vector( this_rref_t rhv )
+        template< typename T >
+        class vector
         {
-            natus::concurrent::lock_guard_t lk(_mtx) ;
-            _cont = ::std::move( rhv._cont ) ;
-        }
+            natus_this_typedefs( vector<T> ) ;
 
-        vector( this_cref_t rhv ) 
-        {
-            natus::concurrent::lock_guard_t lk( _mtx ) ;
-            _cont = rhv._cont ;
-        }
+            natus_typedefs( T, type ) ;
+            natus_typedefs( natus::std::vector<T>, container ) ;
 
-        ~vector( void_t )
-        {}
+        private:
 
-    public: 
+            mutable natus::concurrent::mutex_t _mtx ;
+            container_t _cont ;
 
-        this_ref_t push_back( type_cref_t v )
-        {
-            natus::concurrent::lock_guard_t lk( _mtx ) ;
-            _cont.push_back( v ) ;
+        public:
 
-            return *this ;
-        }
+            vector( void_t )
+            {}
 
-        size_t size( void_t ) const
-        {
-            natus::concurrent::lock_guard_t lk( _mtx ) ;
-            return _cont.size() ;
-        }
+            vector( this_rref_t rhv )
+            {
+                natus::concurrent::lock_guard_t lk( _mtx ) ;
+                _cont = ::std::move( rhv._cont ) ;
+            }
 
-        container_t move_out( void_t )
-        {
-            natus::concurrent::lock_guard_t lk(_mtx) ;
-            return ::std::move( _cont ) ;
-        }
-    };
+            vector( this_cref_t rhv )
+            {
+                natus::concurrent::lock_guard_t lk( _mtx ) ;
+                _cont = rhv._cont ;
+            }
+
+            ~vector( void_t )
+            {}
+
+        public:
+
+            this_ref_t push_back( type_cref_t v )
+            {
+                natus::concurrent::lock_guard_t lk( _mtx ) ;
+                _cont.push_back( v ) ;
+
+                return *this ;
+            }
+
+            size_t size( void_t ) const
+            {
+                natus::concurrent::lock_guard_t lk( _mtx ) ;
+                return _cont.size() ;
+            }
+
+            container_t move_out( void_t )
+            {
+                natus::concurrent::lock_guard_t lk( _mtx ) ;
+                return ::std::move( _cont ) ;
+            }
+        };
+    }
 }
-
-#endif

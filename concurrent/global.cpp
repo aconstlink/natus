@@ -67,7 +67,7 @@ global::this_ptr_t global::init( void_t )
         _ptr = this_t::create( this_t(),
             "[natus::concurrent::global::init] : global singleton lazy initialization" ) ;
 
-        natus::log::global_t::status( "[online] : snakeoil thread" ) ;
+        natus::log::global_t::status( "[online] : natus thread" ) ;
     }
 
     return this_t::_ptr ;
