@@ -190,6 +190,10 @@ export( TARGETS complete NAMESPACE natus:: APPEND FILE ${PROJECT_NAME}-targets.c
 # SECTION: in build tree fing_package generation
 ################################################################
 configure_file( 
-    "${NATUS_SOURCE_DIR}/cmake/natus-config.build.in.cmake"
+    "${NATUS_SOURCE_DIR}/cmake/natus-config.in.cmake"
     "${NATUS_BINARY_DIR}/natus-config.cmake"
     @ONLY )
+
+install( 
+    FILES ${NATUS_BINARY_DIR}/natus-config.cmake 
+    DESTINATION cmake )
