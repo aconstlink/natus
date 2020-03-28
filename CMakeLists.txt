@@ -106,7 +106,7 @@ set( subdirs_header_only
 
 set( subdirs
     #"application"
-    "gl"
+    
     "memory"
     "log"
     "concurrent"
@@ -115,6 +115,9 @@ set( subdirs
     ${subdirs_header_only}
     )
 
+if( TARGET OpenGL::GL )
+    list( APPEND subdirs "gl" )
+endif()
 
 if( NATUS_TARGET_GRAPHICS_OPENGL )
     #list( APPEND SUBDIRS gli )
