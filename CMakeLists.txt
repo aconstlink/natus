@@ -59,8 +59,8 @@ natus_export_clear()
 ################################################################
 
 add_subdirectory( "externals/filesystem" )
+add_subdirectory( "externals/khronos" )
 #add_subdirectory( "externals/lua" )
-#add_subdirectory( "externals/khronos" )
 #add_subdirectory( "externals/rtmidi" )
 #add_subdirectory( "externals/rapidxml" )
 #add_subdirectory( "externals/stb" )
@@ -105,6 +105,8 @@ set( subdirs_header_only
     )
 
 set( subdirs
+    #"application"
+    "gl"
     "memory"
     "log"
     "concurrent"
