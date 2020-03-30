@@ -558,7 +558,6 @@ namespace natus
             static PFNGLDEPTHRANGEINDEXEDPROC glDepthRangeIndexed ;
             static PFNGLGETFLOATI_VPROC glGetFloati_v ;
             static PFNGLGETDOUBLEI_VPROC glGetDoublei_v ;
-
         };
     }
 }

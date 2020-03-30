@@ -5,6 +5,8 @@
 namespace natus
 {
     namespace gl
-    {
-    }
+    {}
+
+    namespace gles
+    {}
 }
