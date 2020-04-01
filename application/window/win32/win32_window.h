@@ -19,11 +19,11 @@ namespace natus
                 natus_this_typedefs( win32_window ) ;
 
                 typedef natus::std::vector< natus::application::iwindow_listener_ptr_t > listeners_t ;
-                typedef natus::std::vector< natus::application::iwindow_message_listener_ptr_t > msg_listeners_t ;
+                typedef natus::std::vector< natus::application::iwindow_message_listener_rptr_t > msg_listeners_t ;
 
             private:
 
-                win32_window_handle _handle ;
+                win32_window_handle_rptr_t _handle ;
 
                 msg_listeners_t _msg_listeners ;
 
@@ -36,6 +36,7 @@ namespace natus
 
             public:
 
+                win32_window( void_t ) ;
                 win32_window( window_info const& ) ;
                 win32_window( win32_window_handle_rref_t ) ;
                 win32_window( this_rref_t rhv ) ;
@@ -48,11 +49,11 @@ namespace natus
                 static void_t destroy( this_ptr_t rhv ) ;
 
 
-                virtual natus::application::result subscribe( iwindow_message_listener_ptr_t ) ;
-                virtual natus::application::result unsubscribe( iwindow_message_listener_ptr_t ) ;
+                virtual natus::application::result subscribe( iwindow_message_listener_rptr_t ) ;
+                virtual natus::application::result unsubscribe( iwindow_message_listener_rptr_t ) ;
 
                 virtual natus::application::result destroy( void_t ) ;
-                virtual iwindow_handle_ptr_t get_handle( void_t ) ;
+                virtual iwindow_handle_rptr_t get_handle( void_t ) ;
 
                 virtual std::string const& get_name( void_t ) const ;
 
@@ -89,6 +90,7 @@ namespace natus
                 static LRESULT CALLBACK StaticWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) ;
             };
             natus_typedefs( win32_window, win32_window ) ;
+            typedef natus::soil::rptr< win32_window_ptr_t > win32_window_rptr_t ;
         }
     }
 }

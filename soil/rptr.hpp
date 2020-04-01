@@ -19,12 +19,17 @@ namespace natus
         template< class T >
         class rptr< T* >
         {
-            natus_this_typedefs( rptr< T > ) ;
+            natus_this_typedefs( rptr< T* > ) ;
             natus_typedefs( T, value ) ;
 
             natus::soil::res_t _res ;
 
         public:
+
+            template< class O >
+            rptr( rptr< O* > rhv ) : rptr(rhv.res())
+            {
+            }
 
             rptr( void_t ) noexcept
             {}
@@ -48,6 +53,11 @@ namespace natus
 
             ~rptr( void_t ) {}
             
+            bool_t is_valid( void_t ) const
+            {
+                return _res.is_valid() ;
+            }
+
         public:
 
             value_ptr_t operator -> ( void_t ) 
@@ -58,6 +68,28 @@ namespace natus
             value_cptr_t operator -> ( void_t ) const
             {
                 return _res.cast< value_cptr_t >() ;
+            }
+
+            this_ref_t operator = ( this_rref_t rhv ) 
+            {
+                _res = ::std::move( rhv._res ) ;
+                return *this ;
+            }
+
+            this_ref_t operator = ( this_cref_t rhv )
+            {
+                _res = rhv._res ;
+                return *this ;
+            }
+
+            bool_t operator == ( this_cref_t rhv ) const noexcept
+            {
+                return _res == rhv._res ;
+            }
+
+            bool_t equals ( this_cref_t rhv ) const noexcept
+            {
+                return _res == rhv._res ;
             }
 
         public:

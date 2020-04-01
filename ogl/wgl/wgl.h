@@ -1,32 +1,27 @@
-//------------------------------------------------------------
-// snakeoil (c) Alexis Constantin Link
-// Distributed under the MIT license
-//------------------------------------------------------------
-#ifndef _SNAKEOIL_GLI_WGL_WGL_H_
-#define _SNAKEOIL_GLI_WGL_WGL_H_
+#pragma once
 
 #include "../result.h"
 #include "../typedefs.h"
 #include "../api.h"
 
-#include <snakeoil/std/container/vector.hpp>
-#include <snakeoil/std/string/string.hpp>
+#include <natus/std/vector.hpp>
+#include <natus/std/string.hpp>
 
 #include <windows.h>
 #include <GL/glcorearb.h>
 #include <GL/wglext.h>
 
-namespace so_gli 
+namespace natus 
 {
-    namespace so_wgl
+    namespace ogl
     {
-        struct SNAKEOIL_GLI_API wgl
+        struct NATUS_OGL_API wgl
         {
-            so_this_typedefs( wgl ) ;
+            natus_this_typedefs( wgl ) ;
 
         private:
 
-            typedef so_std::vector< so_std::string_t > strings_t ;
+            typedef natus::std::vector< natus::std::string_t > strings_t ;
             static strings_t _wgl_extensions ;
 
         public: 
@@ -35,7 +30,7 @@ namespace so_gli
             /// be bound in order to get the correct driver .dll where 
             /// all functions are loaded from.
             /// @precondition a opengl context must be current.
-            static so_gli::result init( HDC hdc ) ;
+            static natus::ogl::result init( HDC hdc ) ;
 
             static bool_t is_supported( char_cptr_t name ) ;
 
@@ -75,10 +70,6 @@ namespace so_gli
 
             static PFNWGLSWAPINTERVALEXTPROC wglSwapInterval ;
             static PFNWGLGETSWAPINTERVALEXTPROC wglGetSwapInterval ;
-        
         };
     }
 }
-
-#endif
-

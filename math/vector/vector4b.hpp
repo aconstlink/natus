@@ -1,4 +1,4 @@
-#prama once
+#pragma once
 
 #include "protos.hpp"
 #include "vector2b.hpp"

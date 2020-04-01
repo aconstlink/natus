@@ -17,11 +17,11 @@ namespace natus
         public:
 
             /// allows to register a listener for all kinds of window messages.
-            virtual natus::application::result subscribe( iwindow_message_listener_ptr_t ) = 0 ;
-            virtual natus::application::result unsubscribe( iwindow_message_listener_ptr_t ) = 0 ;
+            virtual natus::application::result subscribe( iwindow_message_listener_rptr_t ) = 0 ;
+            virtual natus::application::result unsubscribe( iwindow_message_listener_rptr_t ) = 0 ;
 
             virtual natus::application::result destroy( void_t ) = 0 ;
-            virtual iwindow_handle_ptr_t get_handle( void_t ) = 0 ;
+            virtual iwindow_handle_rptr_t get_handle( void_t ) = 0 ;
 
             virtual natus::std::string_cref_t get_name( void_t ) const = 0 ;
 

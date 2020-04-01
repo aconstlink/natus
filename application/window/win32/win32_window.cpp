@@ -11,6 +11,11 @@ using namespace natus::application ;
 using namespace natus::application::win32 ;
 
 //***********************************************************************
+win32_window::win32_window( void_t ) 
+{
+}
+
+//***********************************************************************
 win32_window::win32_window( window_info const & info ) 
 {
     this_t::create_window( info ) ;
@@ -20,9 +25,9 @@ win32_window::win32_window( window_info const & info )
 win32_window::win32_window( this_rref_t rhv ) 
 {
     _handle = ::std::move( rhv._handle ) ;
-    if( _handle.is_valid() )
+    if( _handle.is_valid() && _handle->is_valid() )
     {
-        SetWindowLongPtr( _handle.get_handle(), GWLP_USERDATA, (LONG_PTR)this ) ;
+        SetWindowLongPtr( _handle->get_handle(), GWLP_USERDATA, (LONG_PTR)this ) ;
     }
 
     _msg_listeners = ::std::move( rhv._msg_listeners ) ;
@@ -34,8 +39,9 @@ win32_window::win32_window( this_rref_t rhv )
 //***********************************************************************
 win32_window::win32_window( win32_window_handle_rref_t handle )
 {
-    _handle = ::std::move( handle ) ;
-    _name = "[Clone - snakeoil win32 window]" ;
+    _handle = win32_window_handle_rptr_t( 
+        natus::soil::res<win32_window_handle>( ::std::move( handle ) ) ) ;
+    _name = "[Clone - natus win32 window]" ;
 }
 
 //***********************************************************************
@@ -63,7 +69,7 @@ void_t win32_window::destroy( this_ptr_t ptr )
 }
 
 //***********************************************************************
-natus::application::result win32_window::subscribe( iwindow_message_listener_ptr_t lptr ) 
+natus::application::result win32_window::subscribe( iwindow_message_listener_rptr_t lptr ) 
 {
     auto iter = ::std::find( _msg_listeners.begin(), _msg_listeners.end(), lptr ) ;
     if( iter != _msg_listeners.end() ) return natus::application::result::ok ;
@@ -73,16 +79,16 @@ natus::application::result win32_window::subscribe( iwindow_message_listener_ptr
     // every newly registered listener needs the current state.
     // so, send all possible events to the listener.
     {
-        this_t::send_resize( _handle.get_handle() ) ;
-        this_t::send_screen_dpi( _handle.get_handle() ) ;
-        this_t::send_screen_size( _handle.get_handle() ) ;
+        this_t::send_resize( _handle->get_handle() ) ;
+        this_t::send_screen_dpi( _handle->get_handle() ) ;
+        this_t::send_screen_size( _handle->get_handle() ) ;
     }
 
     return natus::application::result::ok ;
 }
 
 //***********************************************************************
-natus::application::result win32_window::unsubscribe( iwindow_message_listener_ptr_t lptr ) 
+natus::application::result win32_window::unsubscribe( iwindow_message_listener_rptr_t lptr ) 
 {
     auto iter = ::std::find( _msg_listeners.begin(), _msg_listeners.end(), lptr ) ;
     if( iter == _msg_listeners.end() ) return natus::application::result::invalid_argument ;
@@ -100,9 +106,9 @@ natus::application::result win32_window::destroy( void_t )
 }
 
 //***********************************************************************
-iwindow_handle_ptr_t win32_window::get_handle( void_t ) 
+iwindow_handle_rptr_t win32_window::get_handle( void_t ) 
 {
-    return &_handle ;
+    return _handle ;
 }
 
 //***********************************************************************
@@ -114,7 +120,7 @@ iwindow_handle_ptr_t win32_window::get_handle( void_t )
 //***********************************************************************
 void_t win32_window::send_close( void_t )
 {
-    PostMessage( _handle.get_handle(), WM_CLOSE, 0, 0 ) ;
+    PostMessage( _handle->get_handle(), WM_CLOSE, 0, 0 ) ;
 }
 
 //***********************************************************************
@@ -127,7 +133,7 @@ void_t win32_window::send_toggle( natus::application::toggle_window_in_t di )
         {
             DWORD ws_ex_style = WS_EX_APPWINDOW /*& ~(WS_EX_DLGMODALFRAME |
                           WS_EX_WINDOWEDGE | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE )*/ ;
-            SetWindowLongPtrA( _handle.get_handle(), GWL_EXSTYLE, ws_ex_style ) ;
+            SetWindowLongPtrA( _handle->get_handle(), GWL_EXSTYLE, ws_ex_style ) ;
         }
 
         {
@@ -142,7 +148,7 @@ void_t win32_window::send_toggle( natus::application::toggle_window_in_t di )
                 ws_style = WS_OVERLAPPEDWINDOW ;
             }
 
-            SetWindowLongPtrA( _handle.get_handle(), GWL_STYLE, ws_style ) ;
+            SetWindowLongPtrA( _handle->get_handle(), GWL_STYLE, ws_style ) ;
         }
 
         {
@@ -159,7 +165,7 @@ void_t win32_window::send_toggle( natus::application::toggle_window_in_t di )
                 height /= 2 ;
             }
 
-            SetWindowPos( _handle.get_handle(), HWND_TOP, start_x,
+            SetWindowPos( _handle->get_handle(), HWND_TOP, start_x,
                 start_y, width, height, SWP_SHOWWINDOW ) ;
         }
     }
@@ -276,7 +282,11 @@ HWND win32_window::create_window( window_info const & wi )
     // that will perform the callback in the static wndproc
     SetWindowLongPtr( hwnd, GWLP_USERDATA, (LONG_PTR)this ) ;
 
-    _handle = win32_window_handle(hwnd) ;
+    {
+        natus::soil::res_t w32handle = natus::soil::res< win32_window_handle >( 
+            win32_window_handle( hwnd ) ) ;
+        _handle = win32_window_handle_rptr_t( w32handle ) ;
+    }
 
     return hwnd ;
 }
@@ -286,8 +296,8 @@ void_t win32_window::destroy_window( void_t )
 {
     if( !_handle.is_valid() ) return ;
 
-    SetWindowLongPtr( _handle.get_handle(), GWLP_USERDATA, (LONG_PTR)nullptr ) ;
-    DestroyWindow( _handle.set_handle(NULL) ) ;
+    SetWindowLongPtr( _handle->get_handle(), GWLP_USERDATA, (LONG_PTR)nullptr ) ;
+    DestroyWindow( _handle->set_handle(NULL) ) ;
 }
 
 //***********************************************************************
@@ -307,7 +317,7 @@ LRESULT CALLBACK win32_window::WndProc( HWND hwnd, UINT msg, WPARAM wParam, LPAR
     case WM_SHOWWINDOW:
         {
             natus::application::show_message const amsg { bool_t(wParam == TRUE) } ;
-            for( auto * lptr : _msg_listeners )
+            for( auto lptr : _msg_listeners )
             {                
                 lptr->on_visible( amsg ) ;
             }
@@ -352,7 +362,7 @@ LRESULT CALLBACK win32_window::WndProc( HWND hwnd, UINT msg, WPARAM wParam, LPAR
     case WM_DESTROY: 
         {
             natus::application::close_message const amsg { true } ;
-            for( auto * lptr : _msg_listeners )
+            for( auto lptr : _msg_listeners )
             {
                 lptr->on_close(amsg) ;
             }
@@ -377,7 +387,7 @@ void_t win32_window::send_resize( HWND hwnd )
         size_t(rect.right-rect.left), size_t(rect.bottom-rect.top)
     } ;
 
-    for( auto * lptr : _msg_listeners )
+    for( auto lptr : _msg_listeners )
         lptr->on_resize( rm ) ;
 }
 
@@ -412,7 +422,7 @@ void_t win32_window::send_screen_dpi( HWND, uint_t dpix, uint_t dpiy )
 {
     natus::application::screen_dpi_message const dpim { dpix, dpiy } ;
 
-    for( auto * lptr : _msg_listeners )
+    for( auto lptr : _msg_listeners )
         lptr->on_screen( dpim ) ;
 }
 
@@ -431,7 +441,7 @@ void_t win32_window::send_screen_size( HWND, uint_t width, uint_t height )
         width,height
     } ;
 
-    for( auto * lptr : _msg_listeners )
+    for( auto lptr : _msg_listeners )
         lptr->on_screen( msg ) ;
 }
 

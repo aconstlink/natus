@@ -1,22 +1,16 @@
-//------------------------------------------------------------
-// snakeoil (c) Alexis Constantin Link
-// Distributed under the MIT license
-//------------------------------------------------------------
 #include "wgl.h"
 
-#include <snakeoil/log/global.h>
+#include <natus/log/global.h>
+#include <natus/std/string/split.hpp>
 
-#include <snakeoil/std/string/split.hpp>
-
-using namespace so_gli ;
-using namespace so_gli::so_wgl ;
+using namespace natus::ogl ;
 
 /////////////////////////////////////////////////////////////////////////
 // some defines
 /////////////////////////////////////////////////////////////////////////
 
 #define CHECK_AND_LOAD_COND( fn, name ) \
-    !so_log::global::error( \
+    !natus::log::global::error( \
     (fn = (fn == NULL ? static_cast<decltype(fn)>(this_t::load_wgl_function( name )) : fn)) == NULL, \
     "[CHECK_AND_LOAD_COND] : Failed to load: "  name  )
 
@@ -27,7 +21,7 @@ using namespace so_gli::so_wgl ;
         fn = static_cast<decltype(fn)>(this_t::load_wgl_function( name )) ; \
     } \
     \
-    so_log::global::error( fn == NULL, "[CHECK_AND_LOAD] : Failed to load: "  name ) ; \
+    natus::log::global::error( fn == NULL, "[CHECK_AND_LOAD] : Failed to load: "  name ) ; \
 }
 
 #define NULL_STATIC_MEMBER( fn ) decltype(wgl::fn) wgl::fn = nullptr ;
@@ -88,22 +82,22 @@ void_ptr_t wgl::load_wgl_function( char_cptr_t name )
 //**************************************************************
 bool_t wgl::is_supported( char_cptr_t name ) 
 {
-    if( so_log::global::warning( _wgl_extensions.size() == 0, 
+    if( natus::log::global::warning( _wgl_extensions.size() == 0, 
         "[wgl::is_supported] : extension string is empty" ) )
         return false ;    
 
-    auto const iter = std::find( _wgl_extensions.begin(), _wgl_extensions.end(), name ) ;
+    auto const iter = ::std::find( _wgl_extensions.begin(), _wgl_extensions.end(), name ) ;
     return iter != _wgl_extensions.end() ;
 }
 
 //**************************************************************
-so_gli::result wgl::init( HDC hdc ) 
+natus::ogl::result wgl::init( HDC hdc ) 
 {
     if( CHECK_AND_LOAD_COND( wglGetExtensionsString, "wglGetExtensionsStringARB" ) )
     {
         char const * wglext = wglGetExtensionsString( hdc );
 
-        so_std::string_ops::split( so_std::string_t(char_cptr_t(wglext)), ' ', _wgl_extensions ) ;
+        natus::std::string_ops::split( natus::std::string_t(char_cptr_t(wglext)), ' ', _wgl_extensions ) ;
     }
 
     if( this_t::is_supported("WGL_ARB_buffer_region") )
@@ -122,8 +116,8 @@ so_gli::result wgl::init( HDC hdc )
     {
         if( !CHECK_AND_LOAD_COND( wglCreateContextAttribs, "wglCreateContextAttribsARB" ) )
         {
-            so_log::global::error( "[wgl::init] : Function pointer not found. Although extension supported."  ) ;
-            return so_gli::failed_load_function ;
+            natus::log::global::error( "[wgl::init] : Function pointer not found. Although extension supported."  ) ;
+            return natus::ogl::result::failed_load_function ;
         }
     }
 
@@ -194,6 +188,6 @@ so_gli::result wgl::init( HDC hdc )
         CHECK_AND_LOAD( wglGetSwapInterval, "wglGetSwapIntervalEXT" ) ;
     }
 
-    return so_gli::ok ;
+    return natus::ogl::result::ok ;
 }
 

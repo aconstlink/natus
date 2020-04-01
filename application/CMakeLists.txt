@@ -40,8 +40,8 @@ set( sources
     result.h
     typedefs.h
 
-    system.h
-    system.cpp
+    global.h
+    global.cpp
 
     application/iapplication.h
     application/application.h
@@ -49,6 +49,7 @@ set( sources
     application/window_application.h
     application/window_application.cpp
         
+    window/window_type.h
     window/irender_context.h
     window/gl_info.h
     window/gapi_info.h
@@ -72,20 +73,16 @@ set( sources
     event/toggle_window.h
     )
 
-if( NATUS_WINDOW_SYSTEM_WIN32 )
-    if( NATUS_TARGET_GRAPHICS_OPENGL )
-        set( sources ${sources} ${WGL_SOURCES} )
-    endif()
+if( NATUS_GRAPHICS_WGL )
+    set( sources ${sources} ${WGL_SOURCES} )
+elseif( NATUS_GRAPHICS_GLX )
+    set( sources ${sources} ${GLX_SOURCES} )
+endif()
 
-    
+if( NATUS_WINDOW_SYSTEM_WIN32 )
     set( sources ${sources} ${WIN32_SOURCES} )
-    
     add_definitions( -DWIN32_LEAN_AND_MEAN )
-    
 elseif( NATUS_WINDOW_SYSTEM_XLIB )
-    if( NATUS_TARGET_GRAPHICS_OPENGL )
-        set( sources ${sources} ${GLX_SOURCES} )
-    endif()
     set( sources ${sources} ${XLIB_SOURCES} )
 else()
     message( FATAL_ERROR "Window System: No Os specified." )
@@ -103,9 +100,14 @@ target_link_libraries( ${cur_lib_name}
     PUBLIC natus::concurrent
     PUBLIC natus::log
     PUBLIC natus::memory
+    
     #PUBLIC natus::device
     PUBLIC natus::io
 ) 
+
+if( TARGET natus::ogl )
+    target_link_libraries( ${cur_lib_name} PUBLIC natus::ogl )
+endif()
 
 ###########################################################
 # SECTION: Build Tree

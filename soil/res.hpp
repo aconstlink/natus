@@ -204,6 +204,13 @@ namespace natus
                 return natus::core::is_not_nullptr( ptr ) ;
             }
 
+            bool_t operator == ( this_cref_t rhv ) const
+            {
+                if( natus::core::is_nullptr( _sd ) ) return false ;
+
+                return _sd == rhv.get_shared_data() ;
+            }
+
         protected:
 
             ishared_data_ptr_t get_( void_t ) 
@@ -266,14 +273,14 @@ namespace natus
 
         private:
 
-            res( value_ptr_t ptr ) : res_t( natus::memory::global_t::alloc< this_t::shared_data_t >(
-                this_t::shared_data_t( ptr ), "[id] : shared_data" )  )
-            {}
-
             res( this_t::shared_data_ptr_t ptr, bool_t const b ) : res_t( ptr, b )
             {}
 
         public:
+
+            res( value_ptr_t ptr ) : res_t( natus::memory::global_t::alloc< this_t::shared_data_t >(
+                this_t::shared_data_t( ptr ), "[id] : shared_data" ) )
+            {}
 
             res( void_t ) noexcept
             {

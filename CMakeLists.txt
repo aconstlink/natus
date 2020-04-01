@@ -104,20 +104,24 @@ set( subdirs_header_only
     "math"
     )
 
-set( subdirs
-    #"application"
-    
+set( subdirs  )
+
+if( TARGET OpenGL::GL )
+    list( APPEND subdirs "ogl" )
+endif()
+
+list( APPEND subdirs
+    "application"
     "memory"
     "log"
     "concurrent"
     "io"
     "soil"
+    "system"
     ${subdirs_header_only}
     )
 
-if( TARGET OpenGL::GL )
-    list( APPEND subdirs "gl" )
-endif()
+
 
 if( NATUS_TARGET_GRAPHICS_OPENGL )
     #list( APPEND SUBDIRS gli )

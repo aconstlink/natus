@@ -1,7 +1,5 @@
 #include "win32_application.h"
 
-#include "../../system.h"
-
 //#include <natus/device/global.h>
 //#include <natus/device/system/idevice_system.h>
 //#include <natus/device/api/win32/rawinput/rawinput_api.h>
@@ -27,7 +25,7 @@ win32_application::win32_application( void_t )
 }
 
 //***********************************************************************
-win32_application::win32_application( this_rref_t rhv ) : base_t( std::move( rhv ) )
+win32_application::win32_application( this_rref_t rhv ) : base_t( ::std::move( rhv ) )
 {
     //natus_move_member_ptr( _rawinput_ptr, rhv ) ;
 }
@@ -61,7 +59,7 @@ void_t win32_application::destroy( this_ptr_t ptr )
 natus::application::result win32_application::destroy( void_t ) 
 {
     this_t::destroy( this ) ;
-    return natus::application::ok ;
+    return natus::application::result::ok ;
 }
 
 //***********************************************************************
@@ -84,5 +82,5 @@ natus::application::result win32_application::exec_derived( void_t )
           //  msg.wParam, msg.lParam ) ;
     } 
 
-    return ok ;
+    return result::ok ;
 }

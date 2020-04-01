@@ -73,7 +73,7 @@ namespace natus
             public:
 
                 /// @note a valid window handle must be passed.
-                natus::application::result create_context( gl_info_cref_t gli, iwindow_handle_ptr_t wnd_ptr ) ;
+                natus::application::result create_context( gl_info_cref_t gli, iwindow_handle_rptr_t wnd_ptr ) ;
 
                 /// allows to create a shared context for supporting the main context.
                 /// this context can not be associated with a separate window.
@@ -99,13 +99,13 @@ namespace natus
 
             private:
 
-                HWND get_win32_handle( iwindow_handle_ptr_t ) ;
+                HWND get_win32_handle( iwindow_handle_rptr_t ) ;
 
                 natus::application::result create_the_context( gl_info_cref_t gli ) ;
                 HGLRC create_the_shared( void_t ) ;
 
             };
-            natus_typedefs( wgl_context, wgl_context ) ;
+            natus_typedef( wgl_context ) ;
         }
     }
 }

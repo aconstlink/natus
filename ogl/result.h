@@ -5,7 +5,7 @@
 
 namespace natus
 {
-    namespace gl
+    namespace ogl
     {
         enum class result
         {
@@ -20,22 +20,22 @@ namespace natus
         namespace detail
         {
             static const natus::std::string_t __graphics_result_strings[] = {
-                "natus::gl::result"
+                "natus::ogl::result"
             } ;
         }
 
         /// not implemented yet.
-        static natus::std::string_cref_t to_string( natus::gl::result /*res*/ )
+        static natus::std::string_cref_t to_string( natus::ogl::result /*res*/ )
         {
-            return natus::gl::detail::__graphics_result_strings[ 0 ] ;
+            return natus::ogl::detail::__graphics_result_strings[ 0 ] ;
         }
 
-        static bool_t success( natus::gl::result res )
+        static bool_t success( natus::ogl::result res )
         {
-            return res == natus::gl::result::ok ;
+            return res == natus::ogl::result::ok ;
         }
 
-        static bool_t no_success( natus::gl::result res )
+        static bool_t no_success( natus::ogl::result res )
         {
             return !success( res ) ;
         }

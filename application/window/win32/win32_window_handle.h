@@ -36,6 +36,7 @@ namespace natus
                 bool_t is_valid( void_t ) ;
             };
             natus_typedefs( win32_window_handle, win32_window_handle ) ;
+            typedef natus::soil::rptr< win32_window_handle_ptr_t > win32_window_handle_rptr_t ;
         }
     }
 }

@@ -3,23 +3,25 @@
 
 #include "../win32/win32_window.h"
 
-#include <natus/gpu/api/gl/gl_33/gl_33_api.h>
+//#include <natus/gpu/api/gl/gl_33/gl_33_api.h>
 #include <natus/log/global.h>
 
 using namespace natus::application ;
-using namespace natus::application::natus_win32 ;
+using namespace natus::application::win32 ;
 
 //***********************************************************************
 wgl_window::wgl_window( gl_info_cref_t gli, window_info_cref_t wi ) 
 {
-    win32_window_ptr_t wnd_ptr = win32_window::create( win32_window(wi), 
-        "[wgl_window::wgl_window] : The render window." ) ;
+    natus::soil::res< win32_window_t > window ( win32_window::create( win32_window( wi ),
+        "[wgl_window::wgl_window] : The render window.") ) ;
+
+    win32_window_rptr_t wnd_ptr = win32_window_rptr_t( window ) ;
 
     this_t::set_decorated( wnd_ptr ) ;
 
-    if( wnd_ptr == nullptr )
+    if( !wnd_ptr.is_valid() )
     {
-        natus_log::global::error( "[wgl_window::wgl_window] : unable to create win32 window. aborting." ) ;
+        natus::log::global_t::error( "[wgl_window::wgl_window] : unable to create win32 window. aborting." ) ;
         return ;
     }
     
@@ -28,15 +30,15 @@ wgl_window::wgl_window( gl_info_cref_t gli, window_info_cref_t wi )
     auto ctx_res = _context_ptr->create_context( gli, wnd_ptr->get_handle() ) ;
     if( natus::application::no_success( ctx_res ) )
     {
-        natus_log::global::error( "[wgl_window::wgl_window] : Failed to create GL context." ) ;
+        natus::log::global_t::error( "[wgl_window::wgl_window] : Failed to create GL context." ) ;
         return ;
     }
 
     // create and initialize the gl api object
-    {
+    /*{
         _gl_api_ptr = natus_gpu::natus_gl::gl_33_api_t::create( natus_gpu::natus_gl::gl_33_api_t( _context_ptr ),
             "[wgl_window::wgl_window] : gl_33_api" ) ;
-    }
+    }*/
 
     _vsync = gli.vsync_enabled ;
 
@@ -56,9 +58,9 @@ wgl_window::wgl_window( gl_info_cref_t gli, window_info_cref_t wi )
     // window's color buffer.
     {
         _context_ptr->activate() ;
-        _context_ptr->clear_now( natus_math::vec4f_t(0.0f,0.0f,0.0f,1.0f) ) ;
+        _context_ptr->clear_now( natus::math::vec4f_t(0.0f,0.0f,0.0f,1.0f) ) ;
         _context_ptr->swap() ;
-        _context_ptr->clear_now( natus_math::vec4f_t(0.1f,0.1f,0.1f,1.0f) ) ;
+        _context_ptr->clear_now( natus::math::vec4f_t(0.1f,0.1f,0.1f,1.0f) ) ;
         _context_ptr->swap() ;
         _context_ptr->deactivate() ;
     }
@@ -85,10 +87,10 @@ wgl_window::wgl_window( gl_info_cref_t gli, window_info_cref_t wi )
 }
 
 //***********************************************************************
-wgl_window::wgl_window( this_rref_t rhv ) : decorator_window( std::move(rhv) )
+wgl_window::wgl_window( this_rref_t rhv ) : decorator_window( ::std::move(rhv) )
 {
     natus_move_member_ptr( _context_ptr, rhv ) ;
-    natus_move_member_ptr( _gl_api_ptr, rhv ) ;
+    //natus_move_member_ptr( _gl_api_ptr, rhv ) ;
 
     _vsync = rhv._vsync ;
 }
@@ -96,8 +98,8 @@ wgl_window::wgl_window( this_rref_t rhv ) : decorator_window( std::move(rhv) )
 //***********************************************************************
 wgl_window::~wgl_window( void_t ) 
 {
-    if( natus_core::is_not_nullptr( _gl_api_ptr ) )
-        _gl_api_ptr->destroy() ;
+    //if( natus::core::is_not_nullptr( _gl_api_ptr ) )
+      //  _gl_api_ptr->destroy() ;
 
     natus::application::memory::dealloc( _context_ptr ) ;
 
@@ -106,15 +108,18 @@ wgl_window::~wgl_window( void_t )
     // because it is created in this ctor.
     if( this_t::has_decorated() )
     {
-        win32_window::destroy( (win32_window_ptr_t)this_t::get_decorated() ) ;
-        this_t::set_decorated( nullptr ) ;
+        auto dec = this_t::get_decorated() ;
+        // @todo force deletion and inform everyone connected
+        // old code
+        //win32_window::destroy( (win32_window_ptr_t)this_t::get_decorated() ) ;
+        this_t::set_decorated( iwindow_rptr_t() ) ;
     }
 }
 
 //***********************************************************************
 wgl_window::this_ptr_t wgl_window::create( this_rref_t rhv ) 
 {
-    return natus::application::memory::alloc( std::move(rhv), "[gl_window::create] : create" ) ;
+    return natus::application::memory::alloc( ::std::move(rhv), "[gl_window::create] : create" ) ;
 }
 
 //***********************************************************************
@@ -128,7 +133,7 @@ natus::application::result wgl_window::destroy( void_t )
 {
     this_t::destroy( this ) ;
 
-    return natus::application::ok ;
+    return natus::application::result::ok ;
 }
 
 //***********************************************************************
@@ -138,10 +143,10 @@ irender_context_ptr_t wgl_window::get_render_context( void_t )
 }
 
 //***********************************************************************
-natus_gpu::iapi_ptr_t wgl_window::get_driver( void_t )
+/*natus::gpu::iapi_ptr_t wgl_window::get_driver( void_t )
 {
     return nullptr ;
-}
+}*/
 
 //***********************************************************************
 irender_context_ptr_t wgl_window::get_support_context( size_t i ) 
@@ -150,10 +155,10 @@ irender_context_ptr_t wgl_window::get_support_context( size_t i )
 }
 
 //***********************************************************************
-natus_gpu::iapi_ptr_t wgl_window::get_support_driver( size_t i )
+/*natus::gpu::iapi_ptr_t wgl_window::get_support_driver( size_t i )
 {
     return nullptr ;
-}
+}*/
 
 //***********************************************************************
 void_t wgl_window::render_thread_begin( void_t )
@@ -177,16 +182,16 @@ void_t wgl_window::end_frame( void_t )
 }
 
 //***********************************************************************
-natus_gpu::iapi_ptr_t wgl_window::get_api( void_t )
+/*natus_gpu::iapi_ptr_t wgl_window::get_api( void_t )
 {
     return _gl_api_ptr ;
-}
+}*/
 
 //***********************************************************************
-natus_gpu::api_type wgl_window::get_api_type( void_t )
+/*natus_gpu::api_type wgl_window::get_api_type( void_t )
 {
     return natus_gpu::api_type::gl_33 ;
-}
+}*/
 
 //***********************************************************************
 void_t wgl_window::send_toggle( natus::application::toggle_window_in_t di )

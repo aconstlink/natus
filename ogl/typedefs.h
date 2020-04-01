@@ -13,12 +13,12 @@
 
 namespace natus
 {
-    namespace gl
+    namespace ogl
     {
         using namespace natus::core::types ;
         using memory = natus::memory::global ;
 
         template< typename T >
-        using allocator = natus::memory::allocator< T, natus::gl::memory > ;
+        using allocator = natus::memory::allocator< T, natus::ogl::memory > ;
     }
 }

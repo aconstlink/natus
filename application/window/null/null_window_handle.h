@@ -24,6 +24,7 @@ namespace natus
 
             };
             natus_typedef( null_window_handle ) ;
+            typedef natus::soil::rptr< null_window_handle_ptr_t > null_window_handle_rptr_t ;
         }
     }
 }

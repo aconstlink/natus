@@ -20,7 +20,7 @@ namespace natus
 
             private:
 
-                null_window_handle_ptr_t _handle = nullptr ;
+                iwindow_handle_rptr_t _handle ;
                 natus::std::string_t _name = "null_window" ;
 
                 // @todo gpu
@@ -40,11 +40,11 @@ namespace natus
 
             public:
 
-                virtual natus::application::result subscribe( iwindow_message_listener_ptr_t ) ;
-                virtual natus::application::result unsubscribe( iwindow_message_listener_ptr_t ) ;
+                virtual natus::application::result subscribe( iwindow_message_listener_rptr_t ) ;
+                virtual natus::application::result unsubscribe( iwindow_message_listener_rptr_t ) ;
 
                 virtual natus::application::result destroy( void_t ) ;
-                virtual iwindow_handle_ptr_t get_handle( void_t ) ;
+                virtual iwindow_handle_rptr_t get_handle( void_t ) ;
 
                 virtual natus::std::string_cref_t get_name( void_t ) const ;
                 virtual void_t send_close( void_t ) ;

@@ -23,16 +23,16 @@ set( sources
     ${gl_sources}
 )
 
-if( SNAKEOIL_TARGET_OS_WIN )
-    set( SOURCES ${sources} ${WGL_SOURCES} )
+if( NATUS_TARGET_OS_WIN )
+    set( sources ${sources} ${wgl_sources} )
     add_definitions( -DWIN32_LEAN_AND_MEAN )
-elseif( SNAKEOIL_TARGET_OS_LIN )
-    set( SOURCES ${sources} ${GLX_SOURCES} )
+elseif( NATUS_TARGET_OS_LIN )
+    set( sources ${sources} ${glx_sources} )
 endif()
 
 natus_vs_src_dir( sources )
 
-add_library( ${cur_lib_name} ${SNAKEOIL_LIBRARY_BUILD_TYPE} ${sources} )
+add_library( ${cur_lib_name} ${NATUS_LIBRARY_BUILD_TYPE} ${sources} )
 add_library( ${cur_alias_name} ALIAS ${cur_lib_name} )
 
 target_link_libraries( ${cur_lib_name}

@@ -4,42 +4,63 @@
 # for the target platform.
 #
 
-set( NATUS_TARGET_GRAPHICS_CONFIGURED FALSE )
+set( NATUS_GRAPHICS_CONFIGURED FALSE )
 
+set( THIS_TARGET natus_graphics_options )
+add_library( ${THIS_TARGET} INTERFACE )
 
-set( NATUS_TARGET_GRAPHICS_NULL ON )
-set( NATUS_TARGET_GRAPHICS_VULKAN OFF )
+set( NATUS_GRAPHICS_NULL ON )
+set( NATUS_GRAPHICS_VULKAN OFF )
+set( NATUS_GRAPHICS_OPENGL OFF )
+set( NATUS_GRAPHICS_OPENGLES OFF )
+set( NATUS_GRAPHICS_DIRECT3D OFF )
+set( NATUS_GRAPHICS_EGL OFF )
+set( NATUS_GRAPHICS_GLX OFF )
+set( NATUS_GRAPHICS_WGL OFF )
 
-set( NATUS_TARGET_GRAPHICS_OPENGL OFF )
-set( NATUS_TARGET_GRAPHICS_OPENGL_33 OFF )
+#
+# Test OpenGL
+#
+find_package( OpenGL )
+if( OPENGL_FOUND )
+  set( NATUS_GRAPHICS_OPENGL ON )
+  target_compile_definitions( ${THIS_TARGET} INTERFACE -DNATUS_GRAPHICS_OPENGL )
 
-set( NATUS_TARGET_GRAPHICS_OPENGLES OFF )
-set( NATUS_TARGET_GRAPHICS_DIRECT3D OFF )
-
-# by default, lets just choose OpenGL until there are more api implemented
-set( NATUS_TARGET_GRAPHICS_API "OpenGL 3.3" CACHE STRING 
-    "Select the graphics api to be compiled into the package." )
-
-set_property(CACHE NATUS_TARGET_GRAPHICS_API PROPERTY STRINGS 
-    #"null" "Vulkan" "OpenGL" "OpenGL ES" "Direct3D" )
-    "null" "OpenGL 3.3" )
-
-if( NATUS_TARGET_GRAPHICS_API STREQUAL "null" )
-    message( "No Graphics API compiled" )
-elseif( NATUS_TARGET_GRAPHICS_API STREQUAL "OpenGL 3.3" )
-    find_package( OpenGL REQUIRED )
-    set( NATUS_TARGET_GRAPHICS_OPENGL ON )
-    set( NATUS_TARGET_GRAPHICS_OPENGL_33 ON )
-    set( NATUS_TARGET_GRAPHICS_DEFINES 
-      -DNATUS_TARGET_GRAPHICS_OPENGL
-      -DNATUS_TARGET_GRAPHICS_OPENGL_33 )
-elseif( NATUS_TARGET_GRAPHICS_API STREQUAL "OpenGL ES" )
-    message( FATAL_ERROR "Graphcis API currently not supported" )
-elseif( NATUS_TARGET_GRAPHICS_API STREQUAL "Vulkan" )
-    message( FATAL_ERROR "Graphcis API currently not supported" )
-elseif( NATUS_TARGET_GRAPHICS_API STREQUAL "Direct3D" )
-    message( FATAL_ERROR "Graphcis API currently not supported" )
+  if( OpenGL_EGL_FOUND )
+    set( NATUS_GRAPHICS_EGL ON )
+    target_compile_definitions( ${THIS_TARGET} INTERFACE -DNATUS_GRAPHICS_EGL )
+    target_link_libraries( ${THIS_TARGET} INTERFACE OpenGL::OpenGL )
+  endif()
+  if( OpenGL_GLX_FOUND )
+    set( NATUS_GRAPHICS_GLX ON )
+    target_compile_definitions( ${THIS_TARGET} INTERFACE -DNATUS_GRAPHICS_GLX )
+    target_link_libraries( ${THIS_TARGET} INTERFACE OpenGL::OpenGL )
+  endif()
+  if( WIN32 )
+    set( NATUS_GRAPHICS_WGL ON )
+    target_compile_definitions( ${THIS_TARGET} INTERFACE -DNATUS_GRAPHICS_WGL )
+    target_link_libraries( ${THIS_TARGET} INTERFACE OpenGL::GL )
+  endif()
 endif()
+
+#
+# Test OpenGLES 
+#
+find_library( OPENGLES3_LIBRARY GLESv2 "OpenGL ES v3.0 library")
+if( OPENGLES3_LIBRARY )
+  set( NATUS_GRAPHICS_OPENGLES ON )
+  target_compile_definitions( ${THIS_TARGET} INTERFACE -DNATUS_GRAPHICS_OPENGLES )
+  target_link_libraries( ${THIS_TARGET} INTERFACE ${OPENGLES3_LIBRARY} )
+endif()
+unset( OPENGLES3_LIBRARY CACHE )
+
+#
+# Test Directx
+#
+#
+# Test Vulkan
+#
+
 
 set( NATUS_TARGET_GRAPHICS_CONFIGURED TRUE )
 

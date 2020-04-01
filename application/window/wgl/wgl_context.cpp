@@ -4,8 +4,8 @@
 
 #include <natus/core/assert.h>
 
-//#include <natus/gli/gl/gl.h>
-//#include <natus/gli/wgl/wgl.h>
+#include <natus/ogl/gl/gl.h>
+#include <natus/ogl/wgl/wgl.h>
 
 #include <natus/std/string/split.hpp>
 
@@ -30,7 +30,7 @@ wgl_context::wgl_context( HWND hwnd, HGLRC ctx )
 //***********************************************************************
 wgl_context::wgl_context( this_rref_t rhv )
 {
-    *this = std::move( rhv ) ;
+    *this = ::std::move( rhv ) ;
 }
 
 //***********************************************************************
@@ -56,9 +56,9 @@ wgl_context::this_ref_t wgl_context::operator = ( this_rref_t rhv )
 }
 
 //***********************************************************************
-wgl_context::this_ptr_t wgl_context::create( this_rref_t rhv, natus_memory::purpose_cref_t p )
+wgl_context::this_ptr_t wgl_context::create( this_rref_t rhv, natus::memory::purpose_cref_t p )
 {
-    return natus::application::memory::alloc( std::move( rhv ), p ) ;
+    return natus::application::memory::alloc( ::std::move( rhv ), p ) ;
 }
 
 //***********************************************************************
@@ -74,29 +74,29 @@ natus::application::result wgl_context::activate( void_t )
 
     _hdc = GetDC( _hwnd ) ;
 
-    if( natus_log::global::error( wglMakeCurrent( _hdc, _hrc ) == FALSE, 
+    if( natus::log::global::error( wglMakeCurrent( _hdc, _hrc ) == FALSE, 
         "[wgl_context::activate] : wglMakeCurrent") ) 
-        return natus::application::failed_wgl ;
+        return natus::application::result::failed_wgl ;
         
-    return natus::application::ok ;
+    return natus::application::result::ok ;
 }
 
 //***********************************************************************
 natus::application::result wgl_context::deactivate( void_t ) 
 {
-    if( _hdc == NULL ) return natus::application::ok ;
+    if( _hdc == NULL ) return natus::application::result::ok ;
 
-    if( natus_log::global::error( wglMakeCurrent( 0,0 ) == FALSE, 
+    if( natus::log::global::error( wglMakeCurrent( 0,0 ) == FALSE, 
         "[wgl_context::deactivate] : wglMakeCurrent") ) 
-        return natus::application::failed_wgl ;
+        return natus::application::result::failed_wgl ;
 
-    if( natus_log::global::error( ReleaseDC( _hwnd, _hdc ) == FALSE, 
+    if( natus::log::global::error( ReleaseDC( _hwnd, _hdc ) == FALSE, 
         "[wgl_context::deactivate] : ReleaseDC") ) 
-        return natus::application::failed_wgl ;
+        return natus::application::result::failed_wgl ;
     
     _hdc = NULL ;
 
-    return natus::application::ok ;
+    return natus::application::result::ok ;
 }
 
 //***********************************************************************
@@ -104,28 +104,28 @@ natus::application::result wgl_context::vsync( bool_t on_off )
 {
     natus::application::result const res = this_t::is_extension_supported("WGL_EXT_swap_control") ;
 
-    if( natus_log::global::error( natus::application::no_success(res), 
+    if( natus::log::global::error( natus::application::no_success(res), 
         "[wgl_context::vsync] : vsync not supported." ) ) 
         return res ;
     
-    if( natus_log::global::error( natus_gli::natus_wgl::wgl::wglSwapInterval(on_off) != TRUE, 
+    if( natus::log::global::error( natus::ogl::wgl::wglSwapInterval(on_off) != TRUE, 
         "[wgl_context::vsync] : wglSwapIntervalEXT" ) )
-        return natus::application::failed_wgl ;
+        return natus::application::result::failed_wgl ;
 
-    return natus::application::ok ;
+    return natus::application::result::ok ;
 }
 
 //***********************************************************************
 natus::application::result wgl_context::swap( void_t ) 
 {
     if( _hdc == NULL ) 
-        return natus::application::invalid_win32_handle ;
+        return natus::application::result::invalid_win32_handle ;
 
-    if( natus_log::global::error( SwapBuffers( _hdc ) == FALSE, 
+    if( natus::log::global::error( SwapBuffers( _hdc ) == FALSE, 
         "[wgl_context::swap] : SwapBuffers") ) 
-        return natus::application::failed_wgl ;
+        return natus::application::result::failed_wgl ;
     
-    return natus::application::ok ;
+    return natus::application::result::ok ;
 }
 
 //***********************************************************************
@@ -135,17 +135,17 @@ irender_context_ptr_t wgl_context::create_shared_context( void_t )
 }
 
 //***********************************************************************
-natus::application::result wgl_context::create_context( gl_info_cref_t gli, iwindow_handle_ptr_t wnd_ptr ) 
+natus::application::result wgl_context::create_context( gl_info_cref_t gli, iwindow_handle_rptr_t wnd_ptr ) 
 {
-    if( natus_log::global::error( wnd_ptr == nullptr, 
+    if( natus::log::global::error( !wnd_ptr.is_valid(), 
         "[wgl_context::create_context] : Window handle is nullptr" ) )
-        return natus::application::invalid_argument ;
+        return natus::application::result::invalid_argument ;
     
     _hwnd = this_t::get_win32_handle(wnd_ptr) ;
     
-    if( natus_log::global::error( _hwnd == NULL, 
+    if( natus::log::global::error( _hwnd == NULL, 
         "[wgl_context::create_context] : Window handle is no win32 handle." ) )
-        return natus::application::invalid_argument ;
+        return natus::application::result::invalid_argument ;
 
     return this_t::create_the_context( gli ) ;
 }
@@ -164,45 +164,45 @@ void_t wgl_context::destroy_shared( this_ptr_t shared_ptr )
 }
 
 //***********************************************************************
-natus::application::result wgl_context::is_extension_supported( natus_std::string_cref_t extension_name ) 
+natus::application::result wgl_context::is_extension_supported( natus::std::string_cref_t extension_name ) 
 {
-    natus_std::vector< natus_std::string_t > ext_list ;
-    if( natus::application::no_success( get_wgl_extension(ext_list) ) ) return natus::application::failed_wgl ;
+    natus::std::vector< natus::std::string_t > ext_list ;
+    if( natus::application::no_success( get_wgl_extension(ext_list) ) ) return natus::application::result::failed_wgl ;
 
-    auto const iter = std::find( ext_list.begin(), ext_list.end(), extension_name ) ;
+    auto const iter = ::std::find( ext_list.begin(), ext_list.end(), extension_name ) ;
 
     return iter != ext_list.end() ? 
-        natus::application::ok : natus::application::invalid_extension ;
+        natus::application::result::ok : natus::application::result::invalid_extension ;
 }
 
 //***********************************************************************
-natus::application::result wgl_context::get_wgl_extension( natus_std::vector< natus_std::string_t > & ext_list )
+natus::application::result wgl_context::get_wgl_extension( natus::std::vector< natus::std::string_t > & ext_list )
 {
-    if( !natus_gli::natus_wgl::wgl::wglGetExtensionsString ) 
-        return natus::application::invalid_extension ;
+    if( !natus::ogl::wgl::wglGetExtensionsString ) 
+        return natus::application::result::invalid_extension ;
 
-    char_cptr_t ch = natus_gli::natus_wgl::wgl::wglGetExtensionsString( _hdc ) ;
-    natus_std::string_ops::split( natus_std::string_t(ch), ' ', ext_list ) ;
+    char_cptr_t ch = natus::ogl::wgl::wglGetExtensionsString( _hdc ) ;
+    natus::std::string_ops::split( natus::std::string_t(ch), ' ', ext_list ) ;
 
-    return natus::application::ok ;
+    return natus::application::result::ok ;
 }
 
 //***********************************************************************
 natus::application::result wgl_context::get_gl_extension( natus::std::vector< natus::std::string_t > & ext_list )
 {
-    const GLubyte * ch = natus_gli::gl::glGetString( GL_EXTENSIONS ) ;
-    if( !ch ) return natus::application::failed ;
+    const GLubyte * ch = natus::ogl::gl::glGetString( GL_EXTENSIONS ) ;
+    if( !ch ) return natus::application::result::failed ;
 
-    natus_std::string_ops::split( natus_std::string_t(char_cptr_t(ch)), ' ', ext_list ) ;
+    natus::std::string_ops::split( natus::std::string_t(char_cptr_t(ch)), ' ', ext_list ) ;
 
-    return natus::application::ok ;
+    return natus::application::result::ok ;
 }
 
 //***********************************************************************
 natus::application::result wgl_context::get_gl_version( natus::application::gl_version & version ) const 
 {
-    const GLubyte* ch = natus_gli::gl::glGetString(GL_VERSION) ;
-    if( !ch ) return failed ;
+    const GLubyte* ch = natus::ogl::gl::glGetString(GL_VERSION) ;
+    if( !ch ) return natus::application::result::failed ;
 
     std::string version_string = std::string((const char*)ch) ;
 
@@ -210,21 +210,21 @@ natus::application::result wgl_context::get_gl_version( natus::application::gl_v
     GLint minor = 0 ;
 
     {
-        natus_gli::gl::glGetIntegerv( GL_MAJOR_VERSION, &major ) ;
-        GLenum err = natus_gli::gl::glGetError() ;
+        natus::ogl::gl::glGetIntegerv( GL_MAJOR_VERSION, &major ) ;
+        GLenum err = natus::ogl::gl::glGetError() ;
         if( err != GL_NO_ERROR )
         {
-            natus_std::string_t const es = std::to_string(err) ;
-            natus_log::global::error( "[wgl_context::get_gl_version] : get gl major <"+es+">" ) ;
+            natus::std::string_t const es = ::std::to_string(err) ;
+            natus::log::global::error( "[wgl_context::get_gl_version] : get gl major <"+es+">" ) ;
         }
     }
     {
-        natus_gli::gl::glGetIntegerv( GL_MINOR_VERSION, &minor) ;
-        GLenum err = natus_gli::gl::glGetError() ;
+        natus::ogl::gl::glGetIntegerv( GL_MINOR_VERSION, &minor) ;
+        GLenum err = natus::ogl::gl::glGetError() ;
         if( err != GL_NO_ERROR )
         {
-            natus_std::string_t es = std::to_string(err) ;
-            natus_log::global::error( "[wgl_context::get_gl_version] : get gl minor <"+es+">" ) ;
+            natus::std::string_t es = ::std::to_string(err) ;
+            natus::log::global::error( "[wgl_context::get_gl_version] : get gl minor <"+es+">" ) ;
         }
     }
     version.major = major ;
@@ -234,27 +234,28 @@ natus::application::result wgl_context::get_gl_version( natus::application::gl_v
 }
 
 //***********************************************************************
-void_t wgl_context::clear_now( natus_math::vec4f_t const & vec ) 
+void_t wgl_context::clear_now( natus::math::vec4f_t const & vec ) 
 {
-    natus_gli::gl::glClearColor( vec.x(), vec.y(), vec.z(), vec.w() ) ;
-    natus_gli::gl::glClear( GL_COLOR_BUFFER_BIT ) ;
+    natus::ogl::gl::glClearColor( vec.x(), vec.y(), vec.z(), vec.w() ) ;
+    natus::ogl::gl::glClear( GL_COLOR_BUFFER_BIT ) ;
     
-    GLenum const gler = natus_gli::gl::glGetError() ;
-    natus_log::global::error( gler != GL_NO_ERROR, "[wgl_context::clear_now] : glClear" ) ;
+    GLenum const gler = natus::ogl::gl::glGetError() ;
+    natus::log::global::error( gler != GL_NO_ERROR, "[wgl_context::clear_now] : glClear" ) ;
 }
 
 //***********************************************************************
-HWND wgl_context::get_win32_handle( iwindow_handle_ptr_t hnd_ptr ) 
+HWND wgl_context::get_win32_handle( iwindow_handle_rptr_t hnd_ptr ) 
 {
-    natus_win32::win32_window_handle_ptr_t win32_handle = dynamic_cast<win32_window_handle_ptr_t>( hnd_ptr ) ;
+    natus::soil::res< natus::application::win32::win32_window_handle > handle(
+        hnd_ptr.res() ) ;
     
-    return win32_handle == nullptr ? NULL : win32_handle->get_handle() ;
+    return handle.is_valid() ? handle->get_handle() : NULL ;
 }
 
 //***********************************************************************
 natus::application::result wgl_context::create_the_context( gl_info_cref_t gli ) 
 {
-    typedef std::chrono::high_resolution_clock local_clock_t ;
+    typedef ::std::chrono::high_resolution_clock local_clock_t ;
     auto t1 = local_clock_t::now() ;
 
     HDC hdc = GetDC( _hwnd ) ;
@@ -279,22 +280,22 @@ natus::application::result wgl_context::create_the_context( gl_info_cref_t gli )
     // we still need to determine if OpenGL 3.x is supported.
     _hrc = wglCreateContext( hdc ) ;
 
-    if( natus_log::global::error(_hrc == NULL, 
+    if( natus::log::global::error(_hrc == NULL, 
         "[wgl_context::create_the_context] : Failed to create the temporary context.") ) 
-        return failed_gfx_context_creation ;
+        return result::failed_gfx_context_creation ;
 
-    if( natus_log::global::error( wglMakeCurrent( hdc, _hrc ) == FALSE, 
+    if( natus::log::global::error( wglMakeCurrent( hdc, _hrc ) == FALSE, 
         "[wgl_context::create_the_context] : wglMakeCurrent" ) )
     {
-        return natus::application::failed ;
+        return natus::application::result::failed ;
     }
 
     // init the current "old" gl context. We need it in
     // order to determine the "new" 3.x+ context availability.
-    natus_gli::natus_wgl::wgl::init( hdc ) ;
+    natus::ogl::wgl::init( hdc ) ;
 
     HGLRC new_context ;
-    if( natus_gli::natus_wgl::wgl::is_supported("WGL_ARB_create_context") )
+    if( natus::ogl::wgl::is_supported("WGL_ARB_create_context") )
     {
         const int attribList[] =
         {
@@ -311,7 +312,7 @@ natus::application::result wgl_context::create_the_context( gl_info_cref_t gli )
 
         // We create the new OpenGL 3.x+ context.
         //new_context = wglCreateContextAttribsARB(hdc, NULL, attribList) ;
-        new_context = natus_gli::natus_wgl::wgl::wglCreateContextAttribs(hdc, NULL, attribList) ;
+        new_context = natus::ogl::wgl::wglCreateContextAttribs(hdc, NULL, attribList) ;
         if( new_context != NULL )
         {
             wglMakeCurrent( 0, 0 ) ;
@@ -321,7 +322,7 @@ natus::application::result wgl_context::create_the_context( gl_info_cref_t gli )
         }
 
         // now using the new 3.x+ context.
-        natus_gli::gl::init() ;
+        natus::ogl::gl::init() ;
     }
 
     //
@@ -331,13 +332,13 @@ natus::application::result wgl_context::create_the_context( gl_info_cref_t gli )
         if( !success(this->get_gl_version( version )) ){
             //ups, more info? This should not happen
             wglMakeCurrent( 0, 0 ) ;
-            return failed_gfx_context_creation ;
+            return result::failed_gfx_context_creation ;
         }
 
         // check if the requested version is lower of equal to the queried version.
         if( gli.version.major > version.major ){
             // if major version can not be supported by the hardware, the program must fail.
-            return invalid_gfx_api_version ;
+            return result::invalid_gfx_api_version ;
         }
     }
 
@@ -347,7 +348,7 @@ natus::application::result wgl_context::create_the_context( gl_info_cref_t gli )
     {
         this_t::activate() ;
         
-        natus_log::global::warning( natus::application::no_success( this_t::vsync( gli.vsync_enabled ) ), 
+        natus::log::global::warning( natus::application::no_success( this_t::vsync( gli.vsync_enabled ) ), 
             "[wgl_context::create_the_context] : vsync setting failed." ) ;
         
         this_t::deactivate() ;
@@ -355,29 +356,29 @@ natus::application::result wgl_context::create_the_context( gl_info_cref_t gli )
 
     // timing end
     {
-        size_t const milli = size_t(std::chrono::duration_cast<std::chrono::milliseconds>(
+        size_t const milli = size_t( ::std::chrono::duration_cast<::std::chrono::milliseconds>(
             local_clock_t::now() - t1).count()) ;
 
-        natus_log::global::status("[wgl_context] : created [" + std::to_string(milli) +" ms]" ) ;
+        natus::log::global::status("[wgl_context] : created [" + ::std::to_string(milli) +" ms]" ) ;
     }
 
-    return natus::application::ok ;
+    return natus::application::result::ok ;
 }
 
 //***********************************************************************
 HGLRC wgl_context::create_the_shared( void_t ) 
 {
-    typedef std::chrono::high_resolution_clock local_clock_t ;
+    typedef ::std::chrono::high_resolution_clock local_clock_t ;
     auto t1 = local_clock_t::now() ;
 
     gl_version version ;
 
-    natus_log::global::error( natus::application::no_success( this_t::activate() ), 
+    natus::log::global::error( natus::application::no_success( this_t::activate() ), 
         "[wgl_context] : could not activate wgl context." ) ;
 
     if( natus::application::no_success( this_t::get_gl_version( version ) ) )
     {
-        natus_log::global::error("[wgl_context::create_shared_context] : Requested version failed.") ;
+        natus::log::global::error("[wgl_context::create_shared_context] : Requested version failed.") ;
         wglMakeCurrent( 0, 0 ) ;
         return NULL ;
     }
@@ -391,10 +392,10 @@ HGLRC wgl_context::create_the_shared( void_t )
         0,        //End
     };
     
-    HGLRC shared_context = natus_gli::natus_wgl::wgl::wglCreateContextAttribs( _hdc, _hrc, attribList ) ;
+    HGLRC shared_context = natus::ogl::wgl::wglCreateContextAttribs( _hdc, _hrc, attribList ) ;
 
     /// don't forget to init
-    natus_log::global::error( natus_gli::no_success( natus_gli::gl::init() ), 
+    natus::log::global::error( natus::ogl::no_success( natus::ogl::gl::init() ), 
         "[wgl_context::create_the_shared] : gl init failed." ) ;
 
     this_t::deactivate() ;
@@ -402,9 +403,9 @@ HGLRC wgl_context::create_the_shared( void_t )
     // timing end
     {
         size_t const milli = 
-            size_t(std::chrono::duration_cast<std::chrono::milliseconds>( local_clock_t::now() - t1).count()) ;
-        natus_log::global::status("[wgl_context] : shared created [" + 
-            std::to_string(milli) +" ms]" ) ;
+            size_t( ::std::chrono::duration_cast<::std::chrono::milliseconds>( local_clock_t::now() - t1).count()) ;
+        natus::log::global::status("[wgl_context] : shared created [" + 
+            ::std::to_string(milli) +" ms]" ) ;
     }
 
     return shared_context ;

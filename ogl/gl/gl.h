@@ -16,11 +16,11 @@
 
 namespace natus
 {
-    namespace gl
+    namespace ogl
     {
-        struct NATUS_GL_API bindings
+        struct NATUS_OGL_API gl
         {
-            natus_this_typedefs( bindings ) ;
+            natus_this_typedefs( gl ) ;
 
         public:
 
@@ -33,7 +33,7 @@ namespace natus
 
         public:
 
-            static natus::gl::result init( void_t ) ;
+            static natus::ogl::result init( void_t ) ;
 
             static bool_t is_supported( char const* name ) ;
 

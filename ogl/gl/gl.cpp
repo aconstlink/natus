@@ -13,7 +13,7 @@
 #include <GL/glxext.h>
 #endif
 
-using namespace natus::gl ;
+using namespace natus::ogl ;
 
 /////////////////////////////////////////////////////////////////////////
 // some defines
@@ -37,14 +37,14 @@ using namespace natus::gl ;
 
 #define CHECK_AND_LOAD_BY_FN( fn ) CHECK_AND_LOAD( fn, #fn )
 
-#define NULL_STATIC_MEMBER( fn ) decltype(natus::gl::bindings::fn) natus::gl::bindings::fn = nullptr
+#define NULL_STATIC_MEMBER( fn ) decltype(natus::ogl::gl::fn) natus::ogl::gl::fn = nullptr
 
 /////////////////////////////////////////////////////////////////////////
 // member init
 /////////////////////////////////////////////////////////////////////////
 
-natus::gl::bindings::string_list_t bindings::_extensions = natus::gl::bindings::string_list_t( ) ;
-bool_t natus::gl::bindings::_init = false ;
+natus::ogl::gl::string_list_t gl::_extensions = natus::ogl::gl::string_list_t( ) ;
+bool_t natus::ogl::gl::_init = false ;
 
 NULL_STATIC_MEMBER( glCullFace ) ;
 NULL_STATIC_MEMBER( glFrontFace ) ;
@@ -571,7 +571,7 @@ NULL_STATIC_MEMBER( glGetDoublei_v ) ;
 /////////////////////////////////////////////////////////////////////////
 
 //**************************************************************
-void_ptr_t natus::gl::bindings::load_gl_function( char_cptr_t name ) 
+void_ptr_t natus::ogl::gl::load_gl_function( char_cptr_t name ) 
 {
 #if defined( NATUS_TARGET_OS_WIN )
     void *p = (void *)wglGetProcAddress(name);
@@ -591,20 +591,20 @@ void_ptr_t natus::gl::bindings::load_gl_function( char_cptr_t name )
 }
 
 //**************************************************************
-bool_t natus::gl::bindings::is_supported( char const * name ) 
+bool_t natus::ogl::gl::is_supported( char const * name ) 
 {
     auto const iter = ::std::find( _extensions.begin(), _extensions.end(), name ) ;
     return iter != _extensions.end() ;
 }
 
 //**************************************************************
-natus::gl::result natus::gl::bindings::init( void_t ) 
+natus::ogl::result natus::ogl::gl::init( void_t ) 
 {
-    if( _init ) return natus::gl::result::ok ;
+    if( _init ) return natus::ogl::result::ok ;
 
     if( !CHECK_AND_LOAD_COND( glGetIntegerv, "glGetIntegerv" ) )
     {
-        return natus::gl::result::failed_load_function ;
+        return natus::ogl::result::failed_load_function ;
     }
 
     if( !CHECK_AND_LOAD_COND( glGetStringi, "glGetStringi" ) )
@@ -1146,6 +1146,6 @@ natus::gl::result natus::gl::bindings::init( void_t )
 
     _init = true ;
 
-    return natus::gl::result::ok ;
+    return natus::ogl::result::ok ;
 }
 

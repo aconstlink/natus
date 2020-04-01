@@ -2,7 +2,7 @@
 
 #include "iwindow.h"
 
-namespace natus::application
+namespace natus
 {
     namespace application
     {
@@ -17,22 +17,22 @@ namespace natus::application
 
         private:
 
-            iwindow_ptr_t _decorated_ptr = nullptr ;
+            iwindow_rptr_t _decorated_ptr ;
 
         public:
 
             decorator_window( void_t ) ;
-            decorator_window( iwindow_ptr_t wnd_ptr ) ;
+            decorator_window( iwindow_rptr_t wnd_ptr ) ;
             decorator_window( this_rref_t ) ;
             virtual ~decorator_window( void_t ) ;
 
         public: // interface
 
-            virtual natus::application::result subscribe( iwindow_message_listener_ptr_t ) ;
-            virtual natus::application::result unsubscribe( iwindow_message_listener_ptr_t ) ;
+            virtual natus::application::result subscribe( iwindow_message_listener_rptr_t ) ;
+            virtual natus::application::result unsubscribe( iwindow_message_listener_rptr_t ) ;
 
             virtual natus::application::result destroy( void_t ) ;
-            virtual iwindow_handle_ptr_t get_handle( void_t ) ;
+            virtual iwindow_handle_rptr_t get_handle( void_t ) ;
 
             virtual natus::std::string_cref_t get_name( void_t ) const final ;
 
@@ -46,8 +46,8 @@ namespace natus::application
 
         protected:
 
-            natus::application::result set_decorated( iwindow_ptr_t wnd_ptr ) ;
-            iwindow_ptr_t get_decorated( void_t ) ;
+            natus::application::result set_decorated( iwindow_rptr_t wnd_ptr ) ;
+            iwindow_rptr_t get_decorated( void_t ) ;
         };
     }
 }

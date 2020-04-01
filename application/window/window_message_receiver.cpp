@@ -13,7 +13,7 @@ window_message_receiver::this_ptr_t window_message_receiver::create( natus::std:
 window_message_receiver::this_ptr_t window_message_receiver::create( this_rref_t rhv, 
     natus::std::string_cref_t purpose ) 
 {
-    return natus::memory::alloc( ::std::move(rhv), purpose ) ;
+    return natus::memory::global_t::alloc( ::std::move(rhv), purpose ) ;
 }
 
 //*************************************************************************************

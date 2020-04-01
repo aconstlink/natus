@@ -1,18 +1,19 @@
 #include "null_window.h"
 
 #include <natus/core/macros/move.h>
+#include <natus/soil/res.hpp>
 
 #include <thread>
 #include <chrono>
 
 using namespace natus::application ;
-using namespace natus::application::natus_null ;
+using namespace natus::application::null ;
 
 //***********************************************************************
 null_window::null_window( void_t )
 {
-    _handle = natus::application::memory::alloc( null_window_handle_t(), 
-        "[null_window::null_window] : null_window_handle" ) ;
+    _handle = natus::soil::res< null_window_handle_t >( natus::application::memory::alloc
+        ( null_window_handle_t(), "[null_window::null_window] : null_window_handle" ) ) ;
 
     // @todo gpu
     //_api = natus::gpu::natus_null::null_api::create( 
@@ -22,16 +23,16 @@ null_window::null_window( void_t )
 //***********************************************************************
 null_window::null_window( this_rref_t rhv )
 {
-    natus_move_member_ptr( _handle, rhv ) ;
-    natus_move_member_ptr( _api, rhv ) ;
+    _handle = ::std::move( rhv._handle ) ;
+    //natus_move_member_ptr( _api, rhv ) ;
 }
 
 //***********************************************************************
 null_window::~null_window( void_t )
 {
-    if( natus::core::is_not_nullptr( _handle ) )
+    if( _handle.is_valid() )
     {
-        natus::application::memory::dealloc( _handle ) ;
+        // @todo tell resource deletion to callbacks
     }
 
     // @todo gpu
@@ -56,13 +57,13 @@ void_t null_window::destroy( this_ptr_t ptr )
 }
 
 //***********************************************************************
-natus::application::result null_window::subscribe( iwindow_message_listener_ptr_t )
+natus::application::result null_window::subscribe( iwindow_message_listener_rptr_t )
 {
     return natus::application::result::not_implemented ;
 }
 
 //***********************************************************************
-natus::application::result null_window::unsubscribe( iwindow_message_listener_ptr_t )
+natus::application::result null_window::unsubscribe( iwindow_message_listener_rptr_t )
 {
     return natus::application::result::not_implemented ;
 }
@@ -75,7 +76,7 @@ natus::application::result null_window::destroy( void_t )
 }
 
 //***********************************************************************
-iwindow_handle_ptr_t null_window::get_handle( void_t )
+iwindow_handle_rptr_t null_window::get_handle( void_t )
 {
     return _handle ;
 }

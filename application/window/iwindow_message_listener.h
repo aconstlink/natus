@@ -34,5 +34,7 @@ namespace natus
             /// the listener destroys itself.
             virtual void_t destroy( void_t ) = 0 ;
         };
+        natus_typedef( iwindow_message_listener ) ;
+        
     }
 }
