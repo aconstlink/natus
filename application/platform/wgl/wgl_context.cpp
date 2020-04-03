@@ -65,7 +65,7 @@ natus::application::result context::activate( void_t )
     _hdc = GetDC( _hwnd ) ;
 
     if( natus::log::global::error( wglMakeCurrent( _hdc, _hrc ) == FALSE, 
-        "[context::activate] : wglMakeCurrent") ) 
+        natus_log_fn( "wglMakeCurrent" ) ) ) 
         return natus::application::result::failed_wgl ;
         
     return natus::application::result::ok ;
@@ -77,11 +77,11 @@ natus::application::result context::deactivate( void_t )
     if( _hdc == NULL ) return natus::application::result::ok ;
 
     if( natus::log::global::error( wglMakeCurrent( 0,0 ) == FALSE, 
-        "[context::deactivate] : wglMakeCurrent") ) 
+        natus_log_fn( "wglMakeCurrent" ) ) ) 
         return natus::application::result::failed_wgl ;
 
     if( natus::log::global::error( ReleaseDC( _hwnd, _hdc ) == FALSE, 
-        "[context::deactivate] : ReleaseDC") ) 
+        natus_log_fn( "ReleaseDC" ) ) ) 
         return natus::application::result::failed_wgl ;
     
     _hdc = NULL ;
@@ -312,7 +312,7 @@ natus::application::result context::create_the_context( gl_info_cref_t gli )
         size_t const milli = size_t( ::std::chrono::duration_cast<::std::chrono::milliseconds>(
             local_clock_t::now() - t1).count()) ;
 
-        natus::log::global::status("[context] : created [" + ::std::to_string(milli) +" ms]" ) ;
+        natus::log::global::status( natus_log_fn( "created [" + ::std::to_string(milli) +" ms]" ) ) ;
     }
 
     return natus::application::result::ok ;

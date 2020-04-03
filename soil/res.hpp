@@ -66,15 +66,15 @@ namespace natus
                 void_t aquire( void_t ) noexcept
                 {
                     ++_ref_count ;
-                    natus::log::global_t::status( "[aquire] : " +
-                        ::std::to_string( _ref_count ) ) ;
+                    //natus::log::global_t::status( "[aquire] : " +
+                       // ::std::to_string( _ref_count ) ) ;
                 }
 
                 bool_t release( void_t ) noexcept
                 {
                     --_ref_count ;
-                    natus::log::global_t::status( "[release] : " +
-                        ::std::to_string( _ref_count ) ) ;
+                    //natus::log::global_t::status( "[release] : " +
+                       // ::std::to_string( _ref_count ) ) ;
                     
                     return _ref_count == 0 ;
                 }
@@ -284,40 +284,40 @@ namespace natus
 
             res( void_t ) noexcept
             {
-                natus::log::global_t::status( "[res(void)]" ) ;
+                //natus::log::global_t::status( "[res(void)]" ) ;
             }
 
             res( this_cref_t rhv ) noexcept : res_t( rhv ) 
             {
-                natus::log::global_t::status( "[res(cref)]" ) ;
+                //natus::log::global_t::status( "[res(cref)]" ) ;
             }
 
             res( this_rref_t rhv ) noexcept : res_t( ::std::move(rhv) ) 
             {
-                natus::log::global_t::status( "[res(rref)]" ) ;
+                //natus::log::global_t::status( "[res(rref)]" ) ;
             }
 
             res( res_cref_t rhv ) noexcept
             {
-                natus::log::global_t::status( "[res(res_cref)]" ) ;
+                //natus::log::global_t::status( "[res(res_cref)]" ) ;
                 *this = rhv ;
             }
 
             res( res_rref_t rhv ) noexcept
             {
-                natus::log::global_t::status( "[res(id_rref)]" ) ;
+                //natus::log::global_t::status( "[res(id_rref)]" ) ;
                 *this = ::std::move( rhv ) ;
             }
 
             res( value_cref_t rhv ) noexcept
             {
-                natus::log::global_t::status( "[res(value_cref)]" ) ;
+                //natus::log::global_t::status( "[res(value_cref)]" ) ;
                 *this = rhv ;
             }
 
             res( value_rref_t rhv ) noexcept
             {
-                natus::log::global_t::status( "[res(value_rref)]" ) ;
+                //natus::log::global_t::status( "[res(value_rref)]" ) ;
                 *this = ::std::move( rhv ) ;
             }
             
@@ -328,7 +328,7 @@ namespace natus
 
             this_ref_t operator = ( res_cref_t rhv ) noexcept 
             {
-                natus::log::global_t::status( "[res::operator =(res_cref)]" ) ;
+                //natus::log::global_t::status( "[res::operator =(res_cref)]" ) ;
                 
                 {
                     auto* ptr = dynamic_cast< this_t::shared_data_ptr_t >( const_cast< res_t::ishared_data_ptr_t >( rhv.get_shared_data() ) ) ;
@@ -344,7 +344,7 @@ namespace natus
 
             this_ref_t operator = ( res_rref_t rhv ) noexcept
             {
-                natus::log::global_t::status( "[res::operator =(id_rref)]" ) ;
+                //natus::log::global_t::status( "[res::operator =(id_rref)]" ) ;
                 auto* ptr = dynamic_cast< this_t::shared_data_ptr_t >( const_cast< res_t::ishared_data_ptr_t >( rhv.get_shared_data() ) ) ;
                 if( natus::core::is_not_nullptr( ptr ) )
                 {
@@ -357,25 +357,25 @@ namespace natus
 
             this_ref_t operator = ( this_cref_t rhv ) noexcept
             {
-                natus::log::global_t::status( "[res::operator =(cref)]" ) ;
+                //natus::log::global_t::status( "[res::operator =(cref)]" ) ;
                 return static_cast<this_ref_t>( res_t::operator=( rhv ) ) ;
             }
 
             this_ref_t operator = ( this_rref_t rhv ) noexcept
             {
-                natus::log::global_t::status( "[res::operator =(rref)]" ) ;
+                //natus::log::global_t::status( "[res::operator =(rref)]" ) ;
                 return static_cast<this_ref_t>( res_t::operator=( ::std::move( rhv ) ) ) ;
             }
 
             this_ref_t operator = ( value_cref_t rhv ) noexcept
             {
-                natus::log::global_t::status( "[res::operator =(value_cref)]" ) ;
+                //natus::log::global_t::status( "[res::operator =(value_cref)]" ) ;
                 return *this = this_t::construct( rhv ) ;
             }
             
             this_ref_t operator = ( value_rref_t rhv ) noexcept
             {
-                natus::log::global_t::status( "[res::operator =(value_rref)]" ) ;
+                //natus::log::global_t::status( "[res::operator =(value_rref)]" ) ;
                 return *this = this_t::construct( ::std::move( rhv ) ) ;
             }
             
