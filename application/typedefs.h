@@ -6,8 +6,11 @@
 #include <natus/core/types.hpp>
 #include <natus/core/macros/typedef.h>
 
-namespace natus::application
+namespace natus
 {
-    using namespace natus::core::types ;
-    using memory = natus::memory::global ;
+    namespace application
+    {
+        using namespace natus::core::types ;
+        using memory = natus::memory::global ;
+    }
 }

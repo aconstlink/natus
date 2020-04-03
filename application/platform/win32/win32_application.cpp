@@ -63,7 +63,7 @@ natus::application::result win32_application::destroy( void_t )
 }
 
 //***********************************************************************
-natus::application::result win32_application::exec_derived( void_t )
+natus::application::result win32_application::exec( void_t )
 {
     MSG msg ;
     while( GetMessage( &msg, 0,0,0) )

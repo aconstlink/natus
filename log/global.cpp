@@ -36,7 +36,7 @@ global::this_ptr_t global::init( void_t )
         return this_t::_ptr ;
 
     {
-        ::std::lock_guard<std::mutex> lk( this_t::_mtx ) ;
+        ::std::lock_guard<::std::mutex> lk( this_t::_mtx ) ;
 
         if( natus::core::is_not_nullptr( global_t::_ptr ) )
             return this_t::_ptr ;

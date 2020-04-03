@@ -4,7 +4,8 @@ set( sources
     "result.h"
     "protos.h"
     "typedefs.h"
-    
+    "function.h"
+
     "global.h"
     "global.cpp"
     "log_level.h"

@@ -1,14 +1,12 @@
 #pragma once
 
-#include "../irender_context.h"
-#include "../iwindow_handle.h"
 #include "../gl_info.h"
 
-#include <natus/math/vector/vector4.hpp>
-//#include <natus/gpu/api/gl/gl_any/gl_context.h>
+#include "../../typedefs.h"
+#include "../../result.h"
 
-#include <natus/std/string.hpp>
-#include <natus/std/vector.hpp>
+#include <natus/soil/res.hpp>
+#include <natus/math/vector/vector4.hpp>
 
 #include <windows.h>
 
@@ -16,12 +14,11 @@ namespace natus
 {
     namespace application
     {
-        namespace win32
+        namespace wgl
         {
-            class NATUS_APPLICATION_API wgl_context : public irender_context
-                //, public natus_gpu::natus_gl::gl_context
+            class context
             {
-                natus_this_typedefs( wgl_context ) ;
+                natus_this_typedefs( context ) ;
 
             private:
 
@@ -32,25 +29,21 @@ namespace natus
                 /// context active. Will be released on deactivation.
                 HDC _hdc = NULL ;
 
-            private:
-
-                /// copy construction is not allowed.
-                /// a render context is a unique object.
-                wgl_context( this_cref_t ) {}
-
             public:
 
                 /// initializes this context but does not create the context.
                 /// @see create_context
-                wgl_context( void_t ) ;
+                context( void_t ) ;
+                context( HWND ) ;
+                context( this_cref_t ) = delete ;
 
                 /// allows to move-construct a context.
-                wgl_context( this_rref_t ) ;
-                virtual ~wgl_context( void_t ) ;
+                context( this_rref_t ) ;
+                ~context( void_t ) ;
 
             private:
 
-                wgl_context( HWND hwnd, HGLRC ctx ) ;
+                context( HWND hwnd, HGLRC ctx ) ;
 
             public: // operator =
 
@@ -59,26 +52,15 @@ namespace natus
 
             public:
 
-                static this_ptr_t create( this_rref_t, natus::memory::purpose_cref_t ) ;
-                static void_t destroy( this_ptr_t ) ;
-
-            public:
-
-                virtual natus::application::result activate( void_t ) ;
-                virtual natus::application::result deactivate( void_t ) ;
-                virtual natus::application::result vsync( bool_t on_off ) ;
-                virtual natus::application::result swap( void_t ) ;
-                virtual irender_context_ptr_t create_shared_context( void_t ) ;
+                natus::application::result activate( void_t ) ;
+                natus::application::result deactivate( void_t ) ;
+                natus::application::result vsync( bool_t on_off ) ;
+                natus::application::result swap( void_t ) ;
 
             public:
 
                 /// @note a valid window handle must be passed.
-                natus::application::result create_context( gl_info_cref_t gli, iwindow_handle_rptr_t wnd_ptr ) ;
-
-                /// allows to create a shared context for supporting the main context.
-                /// this context can not be associated with a separate window.
-                this_ptr_t create_shared( void_t ) ;
-                void_t destroy_shared( this_ptr_t ) ;
+                natus::application::result create_context( HWND hwnd ) ;
 
                 /// Returns ok, if the extension is supported, otherwise, this function fails.
                 /// @precondition Must be used after context has been created and made current.
@@ -99,13 +81,10 @@ namespace natus
 
             private:
 
-                HWND get_win32_handle( iwindow_handle_rptr_t ) ;
-
-                natus::application::result create_the_context( gl_info_cref_t gli ) ;
-                HGLRC create_the_shared( void_t ) ;
-
+                natus::application::result create_the_context( natus::application::gl_info_cref_t gli ) ;
             };
-            natus_typedef( wgl_context ) ;
+            natus_typedef( context ) ;
+            typedef natus::soil::res< context_t > context_res_t ;
         }
     }
 }

@@ -3,6 +3,7 @@
 #include "typedefs.h"
 #include "protos.h"
 #include "api.h"
+#include "function.h"
 
 #include "log_level.h"
 

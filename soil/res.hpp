@@ -391,7 +391,8 @@ namespace natus
             static this_t construct( value_cref_t t )
             {
                 value_ptr_t ptr = natus::memory::global_t::alloc<value_t>( 
-                    t, "[shared_data]" ) ;
+                    t, "[shared_data] : " + 
+                    natus::std::string( typeid(value_t).name() ) ) ;
                                 
                 return this_t( ptr ) ;
             }
@@ -399,7 +400,8 @@ namespace natus
             static this_t construct( value_rref_t t )
             {
                 value_ptr_t ptr = natus::memory::global_t::alloc<value_t>( 
-                    ::std::move(t), "[shared_data]" ) ;
+                    ::std::move(t), "[shared_data] : " + 
+                    natus::std::string_t( typeid(value_t).name() ) ) ;
                                                
                 return this_t( ptr ) ;
             }

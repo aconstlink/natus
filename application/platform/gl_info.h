@@ -1,6 +1,6 @@
 #pragma once
 
-#include "gapi_info.h"
+#include "../typedefs.h"
 
 namespace natus
 {
@@ -9,10 +9,10 @@ namespace natus
         struct gl_version
         {
             int_t major = 4 ;
-            int_t minor = 0 ;
+            int_t minor = 6 ;
         };
 
-        struct gl_info : public gapi_info
+        struct gl_info 
         {
             gl_version version ;
 
@@ -29,6 +29,6 @@ namespace natus
             /// Allows to dis-/enable the vsync.
             bool_t vsync_enabled = true ;
         };
-        natus_typedefs( gl_info, gl_info ) ;
+        natus_typedef( gl_info ) ;
     }
 }

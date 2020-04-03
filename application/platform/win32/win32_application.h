@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../../api.h"
-#include "../window_application.h"
+#include "../platform_application.h"
 
 //#include <natus/device/protos.h>
 
@@ -11,9 +11,9 @@ namespace natus
     {
         namespace win32
         {
-            class NATUS_APPLICATION_API win32_application : public window_application
+            class NATUS_APPLICATION_API win32_application : public platform_application
             {
-                typedef window_application base_t ;
+                typedef platform_application base_t ;
                 natus_this_typedefs( win32_application ) ;
 
             private:
@@ -38,7 +38,7 @@ namespace natus
             public:
 
                 virtual natus::application::result destroy( void_t ) ;
-                virtual natus::application::result exec_derived( void_t ) ;
+                virtual natus::application::result exec( void_t ) ;
             };
         }
     }

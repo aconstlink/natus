@@ -13,6 +13,8 @@ namespace natus
         {
             natus_this_typedefs( global ) ;
 
+        public: 
+
             static natus::system::os_type compiled_os_type( void_t ) ;
             static natus::std::vector< natus::system::window_type > compiled_window_types( void_t ) ;
             static natus::std::vector< natus::system::graphics_type > compiled_graphics_types( void_t ) ;

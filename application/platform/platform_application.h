@@ -9,7 +9,7 @@ namespace natus
 {
     namespace application
     {
-        class NATUS_APPLICATION_API iapplication
+        class NATUS_APPLICATION_API platform_application
         {
         public:
 
