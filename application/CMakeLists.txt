@@ -37,17 +37,7 @@ set( sources
     platform/render_window.h
     platform/platform_window.h
     platform/platform_application.h
-    platform/window_info.h
-    
-    
-        
-    window/window_type.h
-    window/irender_context.h
-    window/gl_info.h
-    
-    
-    window/iwindow_handle.h
-   
+    platform/window_info.h   
     )
 
 if( NATUS_GRAPHICS_WGL )
