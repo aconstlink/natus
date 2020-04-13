@@ -21,6 +21,7 @@ set( NATUS_GRAPHICS_WGL OFF )
 #
 # Test OpenGL
 #
+set( OpenGL_GL_PREFERENCE GLVND )
 find_package( OpenGL )
 if( OPENGL_FOUND )
   set( NATUS_GRAPHICS_OPENGL ON )
