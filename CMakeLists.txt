@@ -49,6 +49,8 @@ include( install_headers )
 include( install_library )
 #include( install_shaders )
 
+include( emacs_default_directory )
+natus_emacs_default_directory( "${CMAKE_CURRENT_LIST_DIR}" )
 
 #include( InstallRequiredSystemLibraries )
 
