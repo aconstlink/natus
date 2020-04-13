@@ -35,30 +35,21 @@ if( NATUS_TARGET_OS_WIN )
     
     
 elseif( NATUS_TARGET_OS_LIN )
-
-    set( NATUS_TARGET_WINDOW_SYSTEM_API "null" CACHE STRING 
-    "Select the window system api to be compiled into the package." )
-
-    set_property(CACHE NATUS_TARGET_WINDOW_SYSTEM_API PROPERTY STRINGS 
-        "null" "x11" "wayland" )
-
-    if( NATUS_TARGET_WINDOW_SYSTEM_API STREQUAL "null" )
+    
+    find_package( X11 )
         
-        set( NATUS_WINDOW_SYSTEM_NULL ON )
-        set( NATUS_WINDOW_SYSTEM_DEFINES 
-          -DNATUS_WINDOW_SYSTEM_WIN32 )
-        message( "Null window system driver used" )
-
-    elseif( NATUS_TARGET_WINDOW_SYSTEM_API STREQUAL "x11" )
-
+    if( X11_FOUND )
+      
+        set( NATUS_TARGET_WINDOW_SYSTEM_API "x11" )
+      
         set( NATUS_WINDOW_SYSTEM_XLIB ON )
         set( NATUS_WINDOW_SYSTEM_DEFINES 
           -DNATUS_WINDOW_SYSTEM_XLIB )
-        message( "X11 window system driver used" )
-        message( FATAL_ERROR "Not supported at the moment" )
     
     elseif( NATUS_TARGET_WINDOW_SYSTEM_API STREQUAL "wayland" )
-        
+
+        set( NATUS_TARGET_WINDOW_SYSTEM_API "wayland" )
+      
         set( NATUS_WINDOW_SYSTEM_WAYLAND ON )
         set( NATUS_WINDOW_SYSTEM_DEFINES 
           -DNATUS_WINDOW_SYSTEM_WAYLAND )
