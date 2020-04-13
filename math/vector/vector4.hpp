@@ -5,6 +5,7 @@
 #include "../typedefs.h"
 
 #include "vector4b.hpp"
+#include "../utility/fn.hpp"
 
 #include <limits>
 
@@ -433,7 +434,7 @@ namespace natus
             this_ref_t normalize( void )
             {
                 type_t len = this->length() ;
-                if( std::abs(len) > std::numeric_limits<type_t>::epsilon() ) (*this) /= len ;
+                if( ::std::abs(len) > ::std::numeric_limits<type_t>::epsilon() ) (*this) /= len ;
                 return (*this) ;
             }
 
@@ -483,10 +484,10 @@ namespace natus
             //************************************************************************************
             this_ref_t abs( void )
             {
-                _elem[0] = natus::math::fast<type_t>::abs(_elem[0]) ;
-                _elem[1] = natus::math::fast<type_t>::abs(_elem[1]) ;
-                _elem[2] = natus::math::fast<type_t>::abs(_elem[2]) ;
-                _elem[3] = natus::math::fast<type_t>::abs(_elem[3]) ;
+                _elem[0] = natus::math::fn<type_t>::abs(_elem[0]) ;
+                _elem[1] = natus::math::fn<type_t>::abs(_elem[1]) ;
+                _elem[2] = natus::math::fn<type_t>::abs(_elem[2]) ;
+                _elem[3] = natus::math::fn<type_t>::abs(_elem[3]) ;
                 return *this ;
             }
 

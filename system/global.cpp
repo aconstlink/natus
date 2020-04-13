@@ -5,6 +5,8 @@
 #include <natus/std/vector.hpp>
 #include <natus/log/global.h>
 
+#include <algorithm>
+
 using namespace natus::system ;
 
 //*****************************************************************

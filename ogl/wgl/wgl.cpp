@@ -11,14 +11,14 @@ using namespace natus::ogl ;
 
 #define CHECK_AND_LOAD_COND( fn, name ) \
     !natus::log::global::error( \
-    (fn = (fn == NULL ? static_cast<decltype(fn)>(this_t::load_wgl_function( name )) : fn)) == NULL, \
+    (fn = (fn == NULL ? reinterpret_cast<decltype(fn)>(this_t::load_wgl_function( name )) : fn)) == NULL, \
     "[CHECK_AND_LOAD_COND] : Failed to load: "  name  )
 
 #define CHECK_AND_LOAD( fn, name ) \
 { \
     if( fn == NULL ) \
     { \
-        fn = static_cast<decltype(fn)>(this_t::load_wgl_function( name )) ; \
+        fn = reinterpret_cast<decltype(fn)>(this_t::load_wgl_function( name )) ; \
     } \
     \
     natus::log::global::error( fn == NULL, "[CHECK_AND_LOAD] : Failed to load: "  name ) ; \
