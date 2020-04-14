@@ -11,6 +11,11 @@ using namespace natus::application ;
 using namespace natus::application::xlib ;
 
 //*****************************************************************
+window::window( void_t ) 
+{
+}
+
+//*****************************************************************
 window::window( window_info const & info ) 
 {
     this_t::create_window( info ) ;
