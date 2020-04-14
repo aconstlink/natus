@@ -1,137 +1,66 @@
-//------------------------------------------------------------
-// snakeoil (c) Alexis Constantin Link
-// Distributed under the MIT license
-//------------------------------------------------------------
+
+#include "xlib_application.h"
 #include "xlib_window.h"
-#include "../../log.h"
 
-#include "../../application/xlib/xlib_application.h"
-
-#include "../iwindow_message_listener.h"
+#include <natus/log/global.h>
 
 #include <algorithm>
 #include <X11/Xlib.h>
 
-using namespace so_app ;
-using namespace so_app::so_xlib ;
+using namespace natus::application ;
+using namespace natus::application::xlib ;
 
-//***********************************************************************
-xlib_window::xlib_window( window_info const & info ) 
+//*****************************************************************
+window::window( window_info const & info ) 
 {
     this_t::create_window( info ) ;
 }
 
-//***********************************************************************
-xlib_window::xlib_window( Display * display, Window wnd ) 
+//*****************************************************************
+window::window( Display * display, Window wnd ) 
 {
     this_t::create_window( display, wnd ) ;
 }
 
-//***********************************************************************
-xlib_window::xlib_window( this_rref_t rhv ) 
+//****************************************************************
+window::window( this_rref_t rhv ) 
 {
-    _handle = std::move( rhv._handle ) ;
-    
-    _msg_listeners = std::move( rhv._msg_listeners ) ;
-    _name = std::move( rhv._name ) ;
-    
+    _display = rhv._display ;
+    rhv._display = nullptr ;
+
+    _handle = rhv._handle ;
+    rhv._handle = NULL ;
+
     this_t::store_this_ptr_in_atom( 
-        _handle.get_display(), _handle.get_handle() ) ;
+        _display, _handle ) ;
 }
 
-//***********************************************************************
-xlib_window::~xlib_window( void_t ) 
+//***************************************************************
+window::~window( void_t ) 
 {
     this_t::destroy_window() ;
 }
 
-//***********************************************************************
-xlib_window::this_ptr_t xlib_window::create( this_rref_t rhv ) 
+//***************************************************************
+Window window::get_handle( void_t ) 
 {
-    return this_t::create( std::move(rhv), std::string("[xlib_window::create]") ) ;
+    return _handle ;
 }
 
-//***********************************************************************
-xlib_window::this_ptr_t xlib_window::create( this_rref_t rhv, std::string const & msg ) 
+//***************************************************************
+Display * window::get_display( void_t ) 
 {
-    return so_app::memory::alloc( std::move(rhv), msg ) ;
+    return _display ;
 }
 
-//***********************************************************************
-void_t xlib_window::destroy( this_ptr_t ptr ) 
-{
-    so_app::memory::dealloc( ptr ) ;
-}
-
-//***********************************************************************
-so_app::result xlib_window::subscribe( iwindow_message_listener_ptr_t lptr ) 
-{
-    auto iter = std::find( _msg_listeners.begin(), _msg_listeners.end(), lptr ) ;
-    if( iter != _msg_listeners.end() ) return so_app::ok ;
-
-    _msg_listeners.push_back( lptr ) ;
-
-    // every newly registered listener needs the current state.
-    // so, send all possible events to the listener.
-    {
-        {
-            XWindowAttributes attr ;
-            XGetWindowAttributes( _handle.get_display(), _handle.get_handle(), &attr ) ;
-
-            so_app::resize_message rm {
-                attr.x, attr.y, 
-                attr.width, attr.height
-            } ;
-            this_t::send_resize( rm ) ;
-        }
-        
-        this_t::send_screen_dpi( &_handle ) ;
-        this_t::send_screen_size( &_handle ) ;
-    }
-
-    return so_app::ok ;
-}
-
-//***********************************************************************
-so_app::result xlib_window::unsubscribe( iwindow_message_listener_ptr_t lptr ) 
-{
-    auto iter = std::find( _msg_listeners.begin(), _msg_listeners.end(), lptr ) ;
-    if( iter == _msg_listeners.end() ) return so_app::invalid_argument ;
-
-    _msg_listeners.erase( iter ) ;
-
-    return so_app::ok ;
-}
-
-//***********************************************************************
-so_app::result xlib_window::destroy( void_t ) 
-{
-    so_app::memory::dealloc( this ) ;
-    return so_app::ok ;
-}
-
-//***********************************************************************
-iwindow_handle_ptr_t xlib_window::get_handle( void_t ) 
-{
-    return &_handle ;
-}
-
-//***********************************************************************
-std::string const & xlib_window::get_name( void_t ) 
-{
-    return _name ;
-}
-
-//***********************************************************************
-void_t xlib_window::create_window( window_info const & wi ) 
+//***************************************************************
+void_t window::create_window( window_info const & wi ) 
 {
     window_info wil = wi ;
 
-    Display * display = so_xlib::xlib_application::get_display() ;
+    Display * display = natus::application::xlib::xlib_application::get_display() ;
 
     Window root = DefaultRootWindow( display ) ;
-       
-    _name = wil.window_name ;
 
     int start_x = wi.x ; 
     int start_y = wi.y ; 
@@ -142,11 +71,9 @@ void_t xlib_window::create_window( window_info const & wi )
 
     if( wil.fullscreen )
     {
-        
     }
     else
     {
-        
     }
 
     Window wnd = XCreateSimpleWindow( 
@@ -155,12 +82,12 @@ void_t xlib_window::create_window( window_info const & wi )
             XBlackPixel(display,0), 
             XWhitePixel(display,0) ) ;
     
-    if( so_app::log::error( wnd == BadAlloc, 
-            "[xlib_window::create_window] : XCreateSimpleWindow - BadAlloc" ) ){
+    if( natus::log::global_t::error( wnd == BadAlloc, 
+            "[window::create_window] : XCreateSimpleWindow - BadAlloc" ) ){
         return ;
     }
-    else if( so_app::log::error( wnd == BadValue, 
-            "[xlib_window::create_window] : XCreateSimpleWindow - BadValue" ) ){
+    else if( natus::log::global_t::error( wnd == BadValue, 
+            "[window::create_window] : XCreateSimpleWindow - BadValue" ) ){
         return ;
     }
 
@@ -173,26 +100,29 @@ void_t xlib_window::create_window( window_info const & wi )
     }
 }
 
-//***********************************************************************
-void_t xlib_window::create_window( Display * display, Window wnd ) 
+//***************************************************************
+void_t window::create_window( Display * display, Window wnd ) 
 {
-    XSelectInput( display, wnd, ExposureMask | KeyPressMask | KeyReleaseMask |
-            ButtonPressMask | ButtonReleaseMask | StructureNotifyMask | ResizeRedirectMask ) ;
-    
+    XSelectInput( display, wnd, 
+                  ExposureMask | KeyPressMask | KeyReleaseMask | 
+                  ButtonPressMask | ButtonReleaseMask | 
+                  StructureNotifyMask | ResizeRedirectMask ) ;
+
     // prepare per window data
     this_t::store_this_ptr_in_atom( display, wnd ) ;
-    
+
     /// setup client message for closing a window
     {
         Atom del = XInternAtom( display, "WM_DELETE_WINDOW", false ) ;
         XSetWMProtocols( display, wnd, &del, 1 ) ;
     }
-        
-    _handle = xlib_window_handle(display, wnd) ;
+
+    _handle = wnd ;
+    _display = display ;
 }
 
-//***********************************************************************
-void_t xlib_window::store_this_ptr_in_atom( Display * display, Window wnd ) 
+//**************************************************************
+void_t window::store_this_ptr_in_atom( Display * display, Window wnd ) 
 {
     Atom a = XInternAtom( display, "wnd_ptr_value", false ) ;
     Atom at = XInternAtom( display, "wnd_ptr_type", false ) ; 
@@ -201,9 +131,9 @@ void_t xlib_window::store_this_ptr_in_atom( Display * display, Window wnd )
 
     // store the data in the per window memory
     {
-        this_ptr_t data = this ;        
-        XChangeProperty( display, wnd, a, at, format_in, PropModeReplace, 
-                (uchar_ptr_t)&data, len_in ) ;
+        this_ptr_t data = this ;
+        XChangeProperty( display, wnd, a, at, 
+          format_in, PropModeReplace, (uchar_ptr_t)&data, len_in ) ;
     }
 
     // test the stored data
@@ -213,30 +143,30 @@ void_t xlib_window::store_this_ptr_in_atom( Display * display, Window wnd )
         unsigned long len_out, bytes_after ;
 
         uchar_ptr_t stored_data ;
-        XGetWindowProperty( display, wnd, a, 0, sizeof(void_ptr_t), false,
-                at, &at_ret, &format_out, &len_out, &bytes_after, (uchar_ptr_t*)&stored_data ) ;
+        XGetWindowProperty( display, wnd, a, 0, 
+           sizeof(void_ptr_t), false, at, &at_ret, 
+           &format_out, &len_out, &bytes_after, 
+           (uchar_ptr_t*)&stored_data ) ;
 
         this_ptr_t test_ptr = this_ptr_t(*(this_ptr_t*)stored_data) ;
 
-        so_assert( len_out == len_in ) ;
-        so_assert( format_out == format_in ) ;
-        so_assert( test_ptr == this ) ;
+        natus_assert( len_out == len_in ) ;
+        natus_assert( format_out == format_in ) ;
+        natus_assert( test_ptr == this ) ;
     }
 }
 
-//***********************************************************************
-void_t xlib_window::destroy_window( void_t ) 
+//*****************************************************************
+void_t window::destroy_window( void_t ) 
 {
-    if( !_handle.is_valid() ) return ;
-
-    XDestroyWindow( _handle.get_display(), _handle.get_handle() ) ;
+    XDestroyWindow( _display, _handle ) ;
 }
 
-//***********************************************************************
-void_t xlib_window::xevent_callback( XEvent const & event ) 
+//****************************************************************
+void_t window::xevent_callback( XEvent const & event ) 
 {
-    //so_app::log::status( "[xlib_window::xevent_callback]" ) ;
-    
+    //so_app::log::status( "[window::xevent_callback]" ) ;
+
     switch( event.type )
     {
     case Expose:
@@ -246,81 +176,30 @@ void_t xlib_window::xevent_callback( XEvent const & event )
     case ButtonRelease:
         //run = false ;
         break ;
-        
+
     case VisibilityNotify:
-        
+
         break ;
 
     case ResizeRequest:
         {
             XWindowAttributes attr ;
-            XGetWindowAttributes( _handle.get_display(), _handle.get_handle(), &attr ) ;
+            XGetWindowAttributes( _display, 
+                _handle, &attr ) ;
 
             XResizeRequestEvent const & rse = (XResizeRequestEvent const &) event ;
-            so_app::resize_message const rm {
-                attr.x, attr.y, 
-                rse.width, rse.height
-            } ;
+            //natus::application::resize_message const rm {
+              //  attr.x, attr.y, 
+                //rse.width, rse.height
+            //} ;
 
-            this_t::send_resize( rm ) ;
+            //this_t::send_resize( rm ) ;
         }
-        
         break ;
-    }    
-}
-
-//***********************************************************************
-void_t xlib_window::send_resize( so_app::resize_message const & rm ) 
-{
-    for( auto * lptr : _msg_listeners )
-        lptr->on_resize( rm ) ;
-}
-
-//***********************************************************************
-void_t xlib_window::send_screen_dpi( xlib_window_handle_ptr_t hwnd ) 
-{
-    // dots per inch
-    // try compute with
-    // DisplayHeightMM and DisplayHeight
-    // DisplayWidthMM and DisplayWidth
-    
-    {
-        uint_t dpix = 96 ;
-        uint_t dpiy = 96 ;
-        send_screen_dpi( hwnd, dpix, dpiy ) ;
     }
-    
 }
 
-//***********************************************************************
-void_t xlib_window::send_screen_dpi( xlib_window_handle_ptr_t, uint_t dpix, uint_t dpiy ) 
+//***************************************************************
+void_t send_toggle( natus::application::toggle_window_in_t ) 
 {
-    so_app::screen_dpi_message const dpim { dpix, dpiy } ;
-
-    for( auto * lptr : _msg_listeners )
-        lptr->on_screen( dpim ) ;
 }
-
-//***********************************************************************
-void_t xlib_window::send_screen_size( xlib_window_handle_ptr_t wnd_ptr ) 
-{
-    Display * dsp = wnd_ptr->get_display() ;
-    Screen * def_screen = XDefaultScreenOfDisplay(dsp) ;
-    
-    uint_t const width = WidthOfScreen( def_screen ) ;
-    uint_t const height = HeightOfScreen( def_screen ) ;
-    
-    send_screen_size( wnd_ptr, width, height ) ;
-}
-
-//***********************************************************************
-void_t xlib_window::send_screen_size( xlib_window_handle_ptr_t, uint_t width, uint_t height ) 
-{
-    so_app::screen_size_message msg {
-        width,height
-    } ;
-
-    for( auto * lptr : _msg_listeners )
-        lptr->on_screen( msg ) ;
-}
-

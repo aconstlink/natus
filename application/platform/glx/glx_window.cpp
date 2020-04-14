@@ -1,0 +1,48 @@
+
+#include "glx_window.h"
+#include "glx_context.h"
+
+#include <natus/log/global.h>
+
+using namespace natus::application ;
+using namespace natus::application::glx ;
+
+//***********************************************************************
+window::window( void_t ) 
+{}
+
+//***********************************************************************
+window::window( gl_info_cref_t gli, window_info_cref_t wi ) 
+{
+    _window = xlib::window( wi ) ;
+    _context = glx::context_t( _window->get_handle(), 
+                 _window->get_display() ) ;
+
+    _vsync = gli.vsync_enabled ;
+
+    // give it a test
+    {
+        _context->activate() ;
+        _context->clear_now( natus::math::vec4f_t(0.0f,0.0f,0.0f,1.0f) ) ;
+        _context->swap() ;
+        _context->clear_now( natus::math::vec4f_t(0.5f,0.5f,1.0f,1.0f) ) ;
+        _context->swap() ;
+        _context->deactivate() ;
+    }
+}
+
+//***********************************************************************
+window::window( this_rref_t rhv ) : platform_window( ::std::move( rhv ) )
+{
+    _window = ::std::move( rhv._window ) ;
+    _context = ::std::move( rhv._context ) ;
+
+    _vsync = rhv._vsync ;
+}
+
+//***********************************************************************
+window::~window( void_t ) 
+{
+    _window = xlib::window_res_t() ;
+    _context = glx::context_res_t() ;
+}

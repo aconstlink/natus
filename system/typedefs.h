@@ -16,11 +16,11 @@ namespace natus
 
         enum class os_type
         {
-            unknown,
-            windows,
-            linux,
-            android,
-            macos
+            os_unknown,
+            os_windows,
+            os_linux,
+            os_android,
+            os_macos
         };
 
         enum class arch_type

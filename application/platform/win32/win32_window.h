@@ -44,7 +44,7 @@ namespace natus
                 HWND create_window( window_info const& ) ;
                 void_t destroy_window( void_t ) ;
 
-                
+
             protected: // virtual
 
                 /// Here the real code is executed in order to do the callback actions.

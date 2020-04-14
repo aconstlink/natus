@@ -11,6 +11,7 @@
 #endif
 
 #include <GL/glcorearb.h>
+#define GL_VERSION_1_1 0
 
 #include <natus/std/list.hpp>
 
@@ -104,7 +105,6 @@ namespace natus
             static PFNGLDELETETEXTURESPROC glDeleteTextures ;
             static PFNGLGENTEXTURESPROC glGenTextures ;
             static PFNGLISTEXTUREPROC glIsTexture ;
-
 
         public: // gl version 1.2
 

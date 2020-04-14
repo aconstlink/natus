@@ -1,94 +1,69 @@
-//------------------------------------------------------------
-// snakeoil (c) Alexis Constantin Link
-// Distributed under the MIT license
-//------------------------------------------------------------
-#ifndef _SNAKEOIL_APPLICATION_WINDOW_XLIB_XLIB_WINDOW_H_
-#define _SNAKEOIL_APPLICATION_WINDOW_XLIB_XLIB_WINDOW_H_
+#pragma once
 
-#include "../iwindow.h"
+#include "../platform_window.h"
 #include "../window_info.h"
+#include "../toggle_window.h"
 
-#include "xlib_window_handle.h"
+#include <natus/std/vector.hpp>
 
-#include <vector>
+#include <X11/Xlib.h>
 
-namespace so_app
+namespace natus
 {
-    namespace so_xlib
+    namespace application
     {
-        class xlib_window : public iwindow
+        namespace xlib
         {
-            so_this_typedefs( xlib_window ) ;
+            class window : public platform_window
+            {
+                natus_this_typedefs( window ) ;
+                friend class xlib_application ;
 
-            typedef std::vector< so_app::iwindow_listener_ptr_t > listeners_t ;
-            typedef std::vector< so_app::iwindow_message_listener_ptr_t > msg_listeners_t ;
+            private:
 
-        private:
+                Display * _display ;
+                Window _handle ;
 
-            xlib_window_handle _handle ;
-            
-            msg_listeners_t _msg_listeners ;
+                bool_t _is_fullscreen = false ;
+                bool_t _is_cursor = false ;
 
-            std::string _name ;
+            public:
 
-        public:
+                window( void_t ) ;
+                window( window_info const & ) ;
+                window( Display * display, Window wnd ) ;
 
-            xlib_window( window_info const & ) ;
-            xlib_window( Display * display, Window wnd ) ;
-            
-            xlib_window( this_rref_t rhv ) ;
-            virtual ~xlib_window( void_t ) ;
+                window( this_rref_t rhv ) ;
+                virtual ~window( void_t ) ;
 
-        public: // interface
+            public: // interface
 
-            static this_ptr_t create( this_rref_t rhv ) ;
-            static this_ptr_t create( this_rref_t rhv, std::string const & msg ) ;
-            static void_t destroy( this_ptr_t rhv ) ;
+                Window get_handle( void_t ) ;
+                Display * get_display( void_t ) ;
+                void_t send_toggle( natus::application::toggle_window_in_t ) ;
 
-            
-            virtual so_app::result subscribe( iwindow_message_listener_ptr_t ) ;
-            virtual so_app::result unsubscribe( iwindow_message_listener_ptr_t ) ;
+            private:
 
-            virtual so_app::result destroy( void_t ) ;
-            virtual iwindow_handle_ptr_t get_handle( void_t ) ;
-            
-            virtual std::string const & get_name( void_t ) ;
+                void_t create_window( window_info const & ) ;
+                void_t create_window( Display * display, Window wnd ) ;
 
-            /// allows to set a xevent straight to the window.
-            /// this is primarilly used by the xlib application.
-            virtual void_t xevent_callback( XEvent const & event ) ;
-            
-        private:
+                void_t destroy_window( void_t ) ;
 
-            void_t create_window( Display * display, Window wnd ) ;
-            void_t create_window( window_info const & ) ;
-            void_t destroy_window( void_t ) ;
+            public:
 
-            void_t remove_invalid_window_listeners( void_t ) ;
+                /// allows to set a xevent straight to the window.
+                /// this is primarilly used by the xlib application.
+                void_t xevent_callback( XEvent const & event ) ;
 
-            /// we store the this pointer within xlib so it
-            /// can be retrieved later on in the application's
-            /// main loop
-            void_t store_this_ptr_in_atom( Display * display, Window wnd ) ;
-            
-        private:
+            private:
 
-            void_t send_resize( so_app::resize_message const & ) ;
-            
-            
-        private: 
-            
-            void_t send_screen_dpi( xlib_window_handle_ptr_t ) ;
-            void_t send_screen_dpi( xlib_window_handle_ptr_t, uint_t dpix, uint_t dpiy ) ;
-            void_t send_screen_size( xlib_window_handle_ptr_t ) ;
-            void_t send_screen_size( xlib_window_handle_ptr_t, uint_t width, uint_t height ) ;
-
-        protected: // virtual
-
-        };
-        so_typedefs( xlib_window, xlib_window ) ;
+                /// we store the this pointer within xlib so it
+                /// can be retrieved later on in the application's
+                /// main loop
+                void_t store_this_ptr_in_atom( Display * display, Window wnd ) ;
+            };
+            natus_typedef( window ) ;
+            typedef natus::soil::res< window_t > window_res_t ;
+        }
     }
 }
-    
-#endif
-

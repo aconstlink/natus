@@ -9,10 +9,11 @@ set( WIN32_SOURCES
 set( XLIB_SOURCES 
     platform/xlib/xlib_application.h
     platform/xlib/xlib_application.cpp
+    platform/xlib/xlib_window.h
+    platform/xlib/xlib_window.cpp
     )
 
 set( WGL_SOURCES
-    platform/gl_info.h
     platform/wgl/wgl_window.h
     platform/wgl/wgl_window.cpp
     platform/wgl/wgl_context.h
@@ -22,6 +23,8 @@ set( WGL_SOURCES
 set( GLX_SOURCES
     platform/glx/glx_window.h
     platform/glx/glx_window.cpp
+    platform/glx/glx_context.h
+    platform/glx/glx_context.cpp
 )
 
 set( sources 
@@ -38,6 +41,7 @@ set( sources
     platform/platform_window.h
     platform/platform_application.h
     platform/window_info.h   
+    platform/gl_info.h
     )
 
 if( NATUS_GRAPHICS_WGL )

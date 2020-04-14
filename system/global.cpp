@@ -14,19 +14,19 @@ natus::system::os_type global::compiled_os_type( void_t )
 {
 #if defined( NATUS_OS_WINDOWS )
     natus::log::global_t::status( "[global::what_os_type] : have Windows OS" ) ;
-    return natus::system::os_type::windows ;
+    return natus::system::os_type::os_windows ;
 #elif defined( NATUS_OS_LINUX )
     natus::log::global_t::status( "[global::what_os_type] : have Linux OS" ) ;
-    return natus::system::os_type::linux ;
+    return natus::system::os_type::os_linux ;
 #elif defined( NATUS_OS_ANDROID )
     natus::log::global_t::status( "[global::what_os_type] : have Android OS" ) ;
-    return natus::system::os_type::android ;
+    return natus::system::os_type::os_android ;
 #elif defined( NATUS_OS_MACOS )
     natus::log::global_t::status( "[global::what_os_type] : have Mac OS" ) ;
-    return natus::system::os_type::macos ;
+    return natus::system::os_type::os_macos ;
 #endif
     natus::log::global_t::status( "unknown" ) ;
-    return natus::system::os_type::unknown ;
+    return natus::system::os_type::os_unknown ;
 }
 
 

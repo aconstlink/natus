@@ -1,4 +1,3 @@
-
 #include "win32_window.h"
 
 #include <natus/log/global.h>

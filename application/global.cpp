@@ -8,13 +8,13 @@
 #endif
 
 #ifdef NATUS_GRAPHICS_GLX
-#include "window/glx/glx_window.h"
-#include "window/xlib/xlib_window.h"
+#include "platform/glx/glx_window.h"
+#include "platform/xlib/xlib_window.h"
 #endif
 
 #ifdef NATUS_GRAPHICS_EGL
-#include "window/egl/egl_window.h"
-#include "window/xlib/xlib_window.h"
+//#include "window/egl/egl_window.h"
+//#include "window/xlib/xlib_window.h"
 #endif
 
 using namespace natus::application ;

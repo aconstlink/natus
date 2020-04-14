@@ -1,22 +1,17 @@
-//------------------------------------------------------------
-// snakeoil (c) Alexis Constantin Link
-// Distributed under the MIT license
-//------------------------------------------------------------
 #include "glx.h"
 
-#include "../log.h"
+#include <natus/log/global.h>
+#include <natus/std/string/split.hpp>
 
-#include <boost/tokenizer.hpp>
-
-using namespace so_gli ;
-using namespace so_gli::so_glx ;
+using namespace natus ;
+using namespace natus::ogl ;
 
 /////////////////////////////////////////////////////////////////////////
 // some defines
 /////////////////////////////////////////////////////////////////////////
 
 #define CHECK_AND_LOAD_COND( fn, name ) \
-    !so_gli::log::error( \
+    !natus::log::global_t::error( \
     (fn = (fn == NULL ? (decltype(fn))(this_t::load_glx_function( name )) : fn)) == NULL, \
     "[CHECK_AND_LOAD_COND] : Failed to load: "  name  )
 
@@ -36,7 +31,7 @@ using namespace so_gli::so_glx ;
 // static member init
 /////////////////////////////////////////////////////////////////////////
 
-glx::string_list_t glx::_glx_extensions = glx::string_list_t() ;
+glx::strings_t glx::_glx_extensions = glx::strings_t() ;
 
 NULL_STATIC_MEMBER( glXCreateContextAttribs )
 NULL_STATIC_MEMBER( glXSwapInterval )
@@ -85,13 +80,13 @@ void_ptr_t glx::load_glx_function( char_cptr_t name )
 //**************************************************************
 bool_t glx::is_supported( char_cptr_t name ) 
 {
-    if( so_gli::log::warning( _glx_extensions.size() == 0, 
+    if( natus::log::global_t::warning( _glx_extensions.size() == 0, 
         "[glx::is_supported] : extension string is empty" ) )
     {
         return false ;
     }
 
-    auto iter = std::find( _glx_extensions.begin(), _glx_extensions.end(), name ) ;
+    auto iter = ::std::find( _glx_extensions.begin(), _glx_extensions.end(), name ) ;
     if( iter == _glx_extensions.end() )
     {
         return false ;
@@ -101,23 +96,16 @@ bool_t glx::is_supported( char_cptr_t name )
 }
 
 //**************************************************************
-so_gli::result glx::init( Display * display, int screen ) 
+natus::ogl::result glx::init( Display * display, int screen ) 
 {
     {
         char_cptr_t extensions = glXQueryExtensionsString( display, screen ) ;
-        std::string extensions_string((const char*)extensions);
-        
-        typedef boost::tokenizer< boost::char_separator<char> > tokenizer_t;
-        tokenizer_t tokens(extensions_string, boost::char_separator<char>(" "));
-        for (tokenizer_t::const_iterator token = tokens.begin(); token != tokens.end(); ++token)
-        {
-            _glx_extensions.push_back(*token);
-        }
+        natus::std::string_ops::split( natus::std::string_t(char_cptr_t(extensions)), ' ', _glx_extensions ) ;
     }
         
     if( !CHECK_AND_LOAD_COND( glXCreateContextAttribs, "glXCreateContextAttribsARB" ) )
     {
-        return so_gli::failed ;
+        return natus::ogl::result::failed ;
     }
     
     /*
@@ -128,7 +116,7 @@ so_gli::result glx::init( Display * display, int screen )
     
     if( !CHECK_AND_LOAD_COND( glXChooseFBConfig, "glXChooseFBConfig" ) )
     {
-        return so_gli::failed ;
+        return natus::ogl::result::failed ;
     }
                 
 #if 0
@@ -281,6 +269,6 @@ so_gli::result glx::init( Display * display, int screen )
     //char_cptr_t ext = wglGetExtensionsString() ;
 
     
-    return so_gli::ok ;
+    return natus::ogl::result::ok ;
 }
 

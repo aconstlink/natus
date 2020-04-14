@@ -1,32 +1,27 @@
-//------------------------------------------------------------
-// snakeoil (c) Alexis Constantin Link
-// Distributed under the MIT license
-//------------------------------------------------------------
-#ifndef _SNAKEOIL_GLI_GLX_GLX_H_
-#define _SNAKEOIL_GLI_GLX_GLX_H_
+#pragma once 
 
 #include "../result.h"
 #include "../typedefs.h"
-#include "../so_api.h"
+#include "../api.h"
 
-#include <list>
+#include <natus/std/vector.hpp>
 
 #include <GL/glcorearb.h>
 #include <GL/glx.h>
 #include <GL/glxext.h>
 
-namespace so_gli 
+namespace natus 
 {
-    namespace so_glx
+    namespace ogl
     {
-        struct glx
+        struct NATUS_OGL_API glx
         {
-            so_this_typedefs( glx ) ;
+            natus_this_typedefs( glx ) ;
 
         private:
 
-            typedef std::list< std::string > string_list_t ;
-            static string_list_t _glx_extensions ;
+            typedef natus::std::vector< natus::std::string > strings_t ;
+            static strings_t _glx_extensions ;
 
         public: 
 
@@ -34,7 +29,8 @@ namespace so_gli
             /// be bound in order to get the correct driver .dll where 
             /// all functions are loaded from.
             /// @precondition a opengl context must be current.
-            static so_gli::result init( Display *, int ) ;
+            static natus::ogl::result init( Display *, int ) ;
+
 
             static bool_t is_supported( char_cptr_t name ) ;
 
@@ -85,6 +81,3 @@ namespace so_gli
         };
     }
 }
-
-#endif
-
