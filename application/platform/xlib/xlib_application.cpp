@@ -13,29 +13,28 @@ Display * xlib_application::_display = NULL ;
 size_t xlib_application::_display_use_count = 0 ;
 
 //**********************************************************************
-void_t xlib_application::connect_display( void_t ) 
+Display * xlib_application::connect_display( void_t ) 
 {
-    if( natus::log::global_t::warning( _display != NULL, 
-            "[xlib_application::connect_display] : Display already initialized." ) )
+    if( _display_use_count++ > 0 )
     {
-        return ;
+        return _display ;
     }
 
     _display = XOpenDisplay( NULL ) ;
 
     if( natus::log::global_t::error( 
-         _display==NULL, "[xlib_application] : XOpenDisplay" ) ){
+         _display==NULL, "[xlib_application] : XOpenDisplay" ) )
+    {
         exit(0) ;
     }
 
-    _display_use_count = 1 ;
+    return _display ;
 }
 
 //**********************************************************************
 void_t xlib_application::disconnect_display( void_t ) 
 {
-    --_display_use_count ;
-    if( _display_use_count == 0 )
+    if( _display_use_count-- == 1 )
     {
         XCloseDisplay( _display ) ;
         _display = NULL ;
@@ -65,13 +64,7 @@ xlib_application::xlib_application( void_t )
 //**********************************************************************
 Display * xlib_application::get_display( void_t ) 
 {
-    if( natus::log::global_t::error( _display==NULL, 
-            "[xlib_application::get_display] : No display Connection. An Xlib application object is required." ) )
-    {
-        exit(1) ;
-    }
-
-    return _display ;
+    return this_t::connect_display()  ;
 }
 
 //**********************************************************************

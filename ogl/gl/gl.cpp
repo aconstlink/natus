@@ -600,7 +600,7 @@ bool_t natus::ogl::gl::is_supported( char const * name )
 //**************************************************************
 natus::ogl::result natus::ogl::gl::init( void_t ) 
 {
-    if( _init ) return natus::ogl::result::ok ;
+    //if( _init ) return natus::ogl::result::ok ;
 
     if( !CHECK_AND_LOAD_COND( glGetIntegerv, "glGetIntegerv" ) )
     {

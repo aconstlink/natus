@@ -36,8 +36,8 @@ window::window( this_rref_t rhv )
     _handle = rhv._handle ;
     rhv._handle = NULL ;
 
-    this_t::store_this_ptr_in_atom( 
-        _display, _handle ) ;
+    //this_t::store_this_ptr_in_atom( 
+      //  _display, _handle ) ;
 }
 
 //***************************************************************
@@ -114,7 +114,7 @@ void_t window::create_window( Display * display, Window wnd )
                   StructureNotifyMask | ResizeRedirectMask ) ;
 
     // prepare per window data
-    this_t::store_this_ptr_in_atom( display, wnd ) ;
+    //this_t::store_this_ptr_in_atom( display, wnd ) ;
 
     /// setup client message for closing a window
     {
@@ -164,7 +164,8 @@ void_t window::store_this_ptr_in_atom( Display * display, Window wnd )
 //*****************************************************************
 void_t window::destroy_window( void_t ) 
 {
-    XDestroyWindow( _display, _handle ) ;
+    //if( _display != NULL && _handle != NULL )
+        //XDestroyWindow( _display, _handle ) ;
 }
 
 //****************************************************************

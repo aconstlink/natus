@@ -102,23 +102,23 @@ natus::ogl::result glx::init( Display * display, int screen )
         char_cptr_t extensions = glXQueryExtensionsString( display, screen ) ;
         natus::std::string_ops::split( natus::std::string_t(char_cptr_t(extensions)), ' ', _glx_extensions ) ;
     }
-        
+
     if( !CHECK_AND_LOAD_COND( glXCreateContextAttribs, "glXCreateContextAttribsARB" ) )
     {
         return natus::ogl::result::failed ;
     }
-    
+
     /*
     if( !CHECK_AND_LOAD_COND( glXSwapInterval, "glXSwapIntervalEXT" ) )
     {
         return so_gli::failed ;
     }*/
-    
+
     if( !CHECK_AND_LOAD_COND( glXChooseFBConfig, "glXChooseFBConfig" ) )
     {
         return natus::ogl::result::failed ;
     }
-                
+
 #if 0
     
     if( CHECK_AND_LOAD_COND( wglGetExtensionsString, "wglGetExtensionsStringARB" ) )

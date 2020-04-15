@@ -1,4 +1,5 @@
 #include "glx_context.h"
+#include "glx_window.h"
 
 #include <natus/ogl/gl/gl.h>
 #include <natus/ogl/glx/glx.h>
@@ -7,16 +8,17 @@
 using namespace natus::application ;
 using namespace natus::application::glx ;
 
-//****************************************************************
+//***********************n*****************************************
 context::context( void_t )
 {
 }
 
 //****************************************************************
-context::context( Window wnd, Display * disp ) 
+context::context( gl_info_in_t gli, Window wnd, Display * disp ) 
 {
     _display = disp ;
     _wnd = wnd ;
+    this_t::create_the_context( gli ) ;
 }
 
 //****************************************************************
@@ -41,14 +43,14 @@ context::~context( void_t )
 //***************************************************************
 natus::application::result context::activate( void_t ) 
 {
-    glXMakeCurrent( _display, _wnd, NULL ) ;
+    //glXMakeCurrent( _display, _wnd, NULL ) ;
     //XLockDisplay( _display ) ;
     glXMakeCurrent( _display, _wnd, _context ) ;
     //XUnlockDisplay( _display ) ;
 
     const GLenum glerr = natus::ogl::gl::glGetError( ) ;
     natus::log::global_t::warning( glerr != GL_NO_ERROR, 
-            "[context::activate] : glXMakeCurrent" ) ;
+            natus_log_fn( "glXMakeCurrent" ) ) ;
 
     return natus::application::result::ok ;
 }
@@ -56,6 +58,7 @@ natus::application::result context::activate( void_t )
 //***************************************************************
 natus::application::result context::deactivate( void_t ) 
 {
+    glXMakeCurrent( _display, 0, 0 ) ;
     return natus::application::result::ok ;
 }
 
@@ -68,6 +71,7 @@ natus::application::result context::vsync( bool_t /*on_off*/ )
 //**************************************************************
 natus::application::result context::swap( void_t ) 
 {
+    glXSwapBuffers( _display, _wnd ) ;
     return natus::application::result::ok ;
 }
 
@@ -167,7 +171,118 @@ void_t context::clear_now( natus::math::vec4f_t const & vec )
 }
 
 //***************************************************************
-natus::application::result context::create_the_context( gl_info_cref_t /*gli*/ ) 
+natus::application::result context::create_the_context( gl_info_cref_t gli ) 
 {
+    auto res = natus::ogl::glx::init( _display, DefaultScreen( _display ) ) ;
+
+    if( natus::log::global_t::error( natus::ogl::no_success(res), 
+               "[glx_window::create_glx_window] : init glx") )
+    {
+        return natus::application::result::failed ;
+    }
+
+    int glx_major, glx_minor ;
+
+    if( !glXQueryVersion( _display, &glx_major, &glx_minor ) ) 
+    {
+        natus::log::global_t::error( 
+              "[glx_window::create_glx_window] : glXQueryVersion") ;
+        return natus::application::result::failed ;
+    }
+
+    if( glx_major < 1 ) return natus::application::result::failed_glx_version ;
+    if( glx_minor < 3 ) return natus::application::result::failed_glx_version ;
+
+    // determine the GL version by creating a simple 1.0 context.
+    natus::application::gl_version glv ;
+    if( !this_t::determine_gl_version( glv ) )
+    {
+        natus::log::global_t::error( natus_log_fn(
+           "failed to determine gl version ") ) ;
+        return natus::application::result::failed ;
+    }
+
+    int context_attribs[] =
+    {
+     GLX_CONTEXT_MAJOR_VERSION_ARB, glv.major,
+     GLX_CONTEXT_MINOR_VERSION_ARB, glv.minor,
+     None
+    } ;
+
+    GLXContext context = natus::ogl::glx::glXCreateContextAttribs( 
+          _display, natus::application::glx::window::get_config(), 
+          0, True, context_attribs );
+
+    if( natus::log::global_t::error( !context, 
+           natus_log_fn( "glXCreateContextAttribs" )) ) 
+    {
+        return natus::application::result::failed ;
+    }
+
+    natus::ogl::gl::init() ;
+
+    //this_t::activate() ;
+    glXMakeCurrent( _display, _wnd, context ) ;
+    {
+        gl_version version ;
+        if( !success( this_t::get_gl_version( version ) ) )
+        {
+            natus::log::global_t::error( natus_log_fn( "" ) ) ;
+            this_t::deactivate() ;
+            return result::failed_gfx_context_creation ;
+        }
+        natus::log::global_t::status( "GL Version: " +
+           ::std::to_string(version.major) + "." + 
+           ::std::to_string(version.minor) ) ;
+    }
+
+    glXMakeCurrent( _display, 0, 0 ) ;
+
+
+    _context = context ;
+
     return natus::application::result::ok ;
+}
+
+//****************************************************************
+bool_t context::determine_gl_version( gl_version & gl_out ) const 
+{
+    int context_attribs[] =
+    {
+     GLX_CONTEXT_MAJOR_VERSION_ARB, 1,//gli.version.major,
+     GLX_CONTEXT_MINOR_VERSION_ARB, 0,//gli.version.minor,
+     None
+    } ;
+
+    GLXContext context = natus::ogl::glx::glXCreateContextAttribs( 
+          _display, natus::application::glx::window::get_config(), 
+          0, True, context_attribs );
+
+    if( natus::log::global_t::error( !context, 
+           natus_log_fn( "glXCreateContextAttribs") ) ) 
+    {
+        return false ;
+    }
+
+    natus::ogl::gl::init() ;
+
+    gl_version version ;
+    glXMakeCurrent( _display, _wnd, context ) ;
+    {
+        if( !success( this_t::get_gl_version( version ) ) )
+        {
+            natus::log::global_t::error( natus_log_fn( "" ) ) ;
+            glXMakeCurrent( _display, 0, 0 ) ;
+            glXDestroyContext( _display, context ) ;
+            return false ;
+        }
+        natus::log::global_t::status( "[determine_gl_version] : GL Version: " +
+           ::std::to_string(version.major) + "." + 
+           ::std::to_string(version.minor) ) ;
+    }
+    glXMakeCurrent( _display, 0, 0 ) ;
+    glXDestroyContext( _display, context ) ;
+
+    gl_out = version ;
+    return true ;
 }

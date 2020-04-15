@@ -38,7 +38,7 @@ namespace natus
             public:
 
                 context( void_t ) ;
-                context( Window wnd, Display * disp ) ;
+                context( gl_info_in_t, Window wnd, Display * disp ) ;
                 context( this_cref_t ) = delete ;
                 /// allows to move-construct a context.
                 context( this_rref_t ) ;
@@ -46,7 +46,7 @@ namespace natus
 
             private:
 
-                //glx_context( HWND hwnd, HGLRC ctx ) ;
+                bool_t  determine_gl_version( gl_version & ) const ;
 
             public:
 

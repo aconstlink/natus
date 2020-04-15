@@ -26,9 +26,9 @@ namespace natus
                 static Display * _display ;
                 static size_t _display_use_count ;
 
-                void_t connect_display( void_t ) ;
-                void_t disconnect_display( void_t ) ;
-                Display * move_display( void_t ) ;
+                static Display * connect_display( void_t ) ;
+                static void_t disconnect_display( void_t ) ;
+                static Display * move_display( void_t ) ;
 
             public:
 
@@ -52,6 +52,7 @@ namespace natus
                 virtual natus::application::result destroy( void_t ) ;
                 virtual natus::application::result exec( void_t ) ;
             };
+            natus_typedef( xlib_application ) ;
         }
     }
 }
