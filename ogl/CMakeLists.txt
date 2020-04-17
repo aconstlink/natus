@@ -53,5 +53,5 @@ target_link_libraries( ${cur_lib_name}
 # SECTION: Install
 ###########################################################
 
-#install_headers( "${SOURCES}" "include/${PROJECT_NAME}/${CUR_LIB_NAME_SHORT}" )
-#install_library( ${cur_lib_name} )
+install_headers( "${sources}" "include/${PROJECT_NAME}/${cur_lib_name}" )
+install_library( ${cur_lib_name} ${PROJECT_NAME}-targets )

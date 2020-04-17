@@ -1,11 +1,12 @@
 
+
 #pragma once
 
 #include "api.h"
-#include "typedefs.h"
 #include "protos.h"
+#include "typedefs.h"
 
-
+#include "platform/platform_application.h"
 
 namespace natus
 {
@@ -13,13 +14,9 @@ namespace natus
     {
         class NATUS_APPLICATION_API global
         {
-            natus_this_typedefs( global ) ;
-
         public:
 
-            static iwindow_rptr_t create_window( void_t ) noexcept ;
-            static iwindow_rptr_t create_render_window( void_t ) noexcept ;
-
+            static platform_application_rptr_t create_application( void_t ) ;
         };
         natus_typedef( global ) ;
     }

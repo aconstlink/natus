@@ -28,6 +28,9 @@ set( CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
 
 set( CMAKE_INSTALL_PREFIX "${NATUS_BINARY_DIR}/install/natus-${NATUS_MAJOR_VERSION}.${NATUS_MINOR_VERSION}.${NATUS_PATCH_VERSION}" CACHE STRING "Install prefix" FORCE )
 
+include( install_headers )
+include( install_library )
+
 include( config_export_target )
 include( config_operating_system )
 include( config_compiler )
@@ -45,8 +48,7 @@ include( config_rt_link )
 include( config_output_directory )
 
 include( visual_studio_src_dir )
-include( install_headers )
-include( install_library )
+
 #include( install_shaders )
 
 include( emacs_default_directory )
@@ -120,6 +122,7 @@ list( APPEND subdirs
     "io"
     "soil"
     "system"
+    "gpu"
     ${subdirs_header_only}
     )
 

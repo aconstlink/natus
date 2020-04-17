@@ -26,7 +26,7 @@ namespace natus
         using namespace natus::core::types ;
 
         natus_typedefs( ::std::thread, thread ) ;
-
+        natus_typedefs( ::std::mutex, mutex ) ;
         using memory = natus::memory::global ;
 
         template< typename T >

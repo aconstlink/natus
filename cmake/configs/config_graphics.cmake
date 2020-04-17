@@ -65,3 +65,5 @@ unset( OPENGLES3_LIBRARY CACHE )
 
 set( NATUS_TARGET_GRAPHICS_CONFIGURED TRUE )
 
+#install_headers( "${sources}" "include/${PROJECT_NAME}/${cur_lib_name}" )
+install_library( ${THIS_TARGET} ${PROJECT_NAME}-targets )

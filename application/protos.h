@@ -31,5 +31,8 @@ namespace natus
         typedef natus::soil::rptr< natus::application::iwindow_message_listener_ptr_t > iwindow_message_listener_rptr_t ;
 
         natus_class_proto_typedefs( window_message_receiver ) ;
+
+        natus_class_proto_typedefs( app ) ;
+        typedef natus::soil::rptr< app_ptr_t > app_rptr_t ;
     }
 }

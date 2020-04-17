@@ -33,13 +33,14 @@ set( sources
     result.h
     typedefs.h
 
+
+    app.h
     global.h
     global.cpp
-    app.h
-
     platform/render_window.h
     platform/platform_window.h
     platform/platform_application.h
+    platform/platform_application.cpp
     platform/window_info.h   
     platform/gl_info.h
     )
@@ -79,7 +80,9 @@ target_link_libraries( ${cur_lib_name}
 ) 
 
 if( TARGET natus::ogl )
-    target_link_libraries( ${cur_lib_name} PUBLIC natus::ogl )
+    target_link_libraries( ${cur_lib_name} 
+      PUBLIC gl_headers 
+      PUBLIC natus::ogl )
 endif()
 
 ###########################################################
@@ -92,5 +95,5 @@ endif()
 # SECTION: Install
 ###########################################################
 
-#install_headers( "${sources}" "include/${PROJECT_NAME}/${CUR_LIB_NAME_SHORT}" )
-#install_library( ${CUR_LIB_NAME} )
+install_headers( "${sources}" "include/${PROJECT_NAME}/${cur_lib_name}" )
+install_library( ${cur_lib_name} ${PROJECT_NAME}-targets )

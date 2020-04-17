@@ -98,13 +98,6 @@ void_t xlib_application::destroy( this_ptr_t ptr )
 }
 
 //********************************************************************
-natus::application::result xlib_application::destroy( void_t ) 
-{
-    this_t::destroy( this ) ;
-    return natus::application::result::ok ;
-}
-
-//********************************************************************
 natus::application::result xlib_application::exec( void_t )
 {
     Display * display = this_t::get_display() ;

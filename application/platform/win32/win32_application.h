@@ -37,9 +37,10 @@ namespace natus
 
             public:
 
-                virtual natus::application::result destroy( void_t ) ;
-                virtual natus::application::result exec( void_t ) ;
+                virtual natus::application::result on_exec( void_t ) ;
             };
+            natus_typedef( win32_application ) ;
+            typedef natus::soil::res< win32_application > application_res_t ;
         }
     }
 }

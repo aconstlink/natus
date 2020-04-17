@@ -57,6 +57,11 @@ namespace natus
             {
                 return _res.is_valid() ;
             }
+            bool_t is_not_valid( void_t ) const
+            {
+                return natus::core::is_not( _res.is_valid() ) ;
+            }
+
 
         public:
 

@@ -19,7 +19,7 @@ namespace natus
 
             virtual natus::application::result init( void_t ) = 0 ;
             virtual natus::application::result update( void_t ) = 0 ;
-            virtual natus::application::result visualize( void_t ) = 0 ;
+            virtual natus::application::result render( void_t ) = 0 ;
             virtual natus::application::result shutdown( void_t ) = 0 ;
         };
         
