@@ -285,7 +285,7 @@ namespace natus
             res( void_t ) noexcept
             {
                 //natus::log::global_t::status( "[res(void)]" ) ;
-                *this = res_t() ;
+                *this = value_t() ;
             }
 
             res( this_cref_t rhv ) noexcept : res_t( rhv ) 

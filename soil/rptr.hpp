@@ -41,6 +41,24 @@ namespace natus
                 _res = res ;
             }
 
+            rptr( natus::soil::res<T> const & res )
+            {
+                _res = res ;
+            }
+
+            rptr( natus::soil::res<T> && res )
+            {
+                _res = ::std::move( res ) ;
+            }
+
+            rptr( value_cref_t v ) : rptr( natus::soil::res<T>(v)  )
+            {
+            }
+
+            rptr( value_rref_t v ) : rptr( natus::soil::res<T>( ::std::move( v ) ) )
+            {
+            }
+
             rptr( this_cref_t rhv ) 
             {
                 _res = rhv._res ;

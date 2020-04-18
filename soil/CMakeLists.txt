@@ -6,6 +6,7 @@ set( sources
     "res.hpp"
     "soil.cpp"
     "rptr.hpp"
+    "macros.h"
     )
 
 natus_vs_src_dir( sources )
