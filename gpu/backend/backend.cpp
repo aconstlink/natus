@@ -16,7 +16,7 @@ size_t backend::create_backend_id( void_t ) noexcept
     natus_assert( id <= natus::gpu::max_backends ) ;
 
     natus::concurrent::lock_guard_t lk( mtx ) ;
-    return ++id ;
+    return id++ ;
 } 
 
 //****

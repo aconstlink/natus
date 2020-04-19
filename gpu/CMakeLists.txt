@@ -13,12 +13,13 @@ set( sources
     "backend/backend.cpp"
     "backend/async/async.h"
     "backend/async/async.cpp"
-    "backend/async/completion.hpp"
+    
     "backend/gl3/gl3.h"
     "backend/gl3/gl3.cpp"
     "backend/es3/es3.h"
     "backend/es3/es3.cpp"
-
+    "backend/null/null.h"
+    "backend/null/null.cpp"
    
     "configuration/render_configuration.h"
 

@@ -4,14 +4,41 @@
 
 #include <natus/ogl/gl/gl.h>
 #include <natus/memory/global.h>
+#include <natus/std/vector.hpp>
 
 using namespace natus::gpu ;
 
+namespace this_file
+{
+    struct render_config
+    {
+        bool_t valid = false ;
+    };
+}
+
 struct gl3_backend::pimpl
 {
-    pimpl( void_t ) 
-    {
+    typedef natus::std::vector< this_file::render_config > rconfigs_t ;
+    rconfigs_t rconfigs ;
 
+    pimpl( void_t ) 
+    {}
+
+    size_t construct_rconfig( void_t )  
+    {
+        size_t i = 0 ;
+        for( i; i<rconfigs.size(); ++i )
+        {
+            if( natus::core::is_not( rconfigs[i].valid ) )
+            {
+                break ;
+            }
+        }
+
+        if( i == rconfigs.size() ) {
+            rconfigs.resize( i + 1 ) ;
+        }
+        return i ;
     }
 };
 
@@ -46,13 +73,27 @@ natus::gpu::id_t gl3_backend::prepare( id_rref_t id, natus::gpu::render_configur
 {
     if( id.is_not_valid() )
     {
-        // create new id
+        id = natus::gpu::id_t( this_t::get_bid(),
+            _pimpl->construct_rconfig() ) ;
     }
-    return natus::gpu::id_t() ;
+
+    if( id.is_not_bid( this_t::get_bid() ) )
+    {
+        natus::log::global_t::error( natus_log_fn( "invalid id" ) ) ;
+        return ::std::move( id ) ;
+    }
+
+    size_t const oid = id.get_oid() ;
+
+    natus::log::global_t::status( natus_log_fn("prepare") ) ;
+
+    return ::std::move( id ) ;
 }
 
 //****
 natus::gpu::id_t gl3_backend::render( id_rref_t id ) noexcept 
-{
-    return natus::gpu::id_t() ;
+{ 
+    natus::log::global_t::status( natus_log_fn("render") ) ;
+
+    return ::std::move( id ) ;
 }

@@ -4,22 +4,60 @@
 using namespace natus::gpu ;
 
 //****
-natus::gpu::result async_backend::prepare( natus::gpu::render_configuration_in_t, 
-    natus::gpu::completion_rptr_t ) noexcept 
+async_backend::async_backend( void_t ) 
+{}
+
+//****
+async_backend::async_backend( backend_rptr_t rptr ) :_backend( rptr ) 
+{}
+
+//****
+async_backend::async_backend( this_rref_t rhv ) 
 {
-    return natus::gpu::result::failed ;
+    _backend = ::std::move( rhv._backend ) ;
+    _renders = ::std::move( rhv._renders ) ;
+    _prepares = ::std::move( rhv._prepares ) ;
 }
 
 //****
-natus::gpu::result async_backend::prepare( natus::gpu::id_rref_t, 
-    natus::gpu::render_configuration_in_t, natus::gpu::completion_rptr_t ) noexcept
+async_backend::~async_backend( void_t ) 
+{}
+
+//****
+natus::gpu::result async_backend::prepare( natus::gpu::async_id_rptr_t aid, natus::gpu::render_configuration_in_t rc ) noexcept 
 {
-    return natus::gpu::result::failed ;
+    _prepares.push_back( prepare_data( {aid, rc } ) ) ;
+    return natus::gpu::result::ok ;
 }
 
 //****
-natus::gpu::result async_backend::render( natus::gpu::id_rref_t,
-    natus::gpu::completion_rptr_t ) noexcept 
+natus::gpu::result async_backend::render( natus::gpu::async_id_rptr_t aid ) noexcept 
 {
-    return natus::gpu::result::failed ;
+    _renders.push_back( { aid } ) ;
+    return natus::gpu::result::ok ;
+}
+
+//****
+void_t async_backend::update( void_t ) noexcept 
+{
+    for( auto & prc : _prepares )
+    {
+        natus::gpu::id_t id = _backend->prepare( prc.aid->id(), ::std::move( prc.config ) ) ;
+        id = prc.aid->set( ::std::move( id ), natus::gpu::result::ok ) ;
+        natus::log::global_t::error( id.is_valid(), natus_log_fn(
+            "gpu resource need to be released." ) ) ;
+    }
+
+    _prepares.clear() ;
+
+    for( auto & rnd : _renders )
+    {
+        natus::gpu::id_t id = _backend->render( rnd.aid->id() ) ;
+
+        id = rnd.aid->set( ::std::move( id ), natus::gpu::result::ok ) ;
+        natus::log::global_t::error( id.is_valid(), natus_log_fn(
+            "gpu resource need to be released." ) ) ;
+    }
+
+    _renders.clear() ;
 }

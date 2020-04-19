@@ -60,6 +60,12 @@ namespace natus
                 return natus::core::is_not( this_t::is_valid() ) ;
             }
 
+            size_t get_oid( void_t ) const noexcept { return _oid ; }
+            size_t get_bid( void_t ) const noexcept { return _bid ; }
+            bool_t is_bid( size_t const bid ) const { return _bid == bid ; }
+            bool_t is_not_bid( size_t const bid ) const { 
+                return natus::core::is_not( this_t::is_bid( bid ) ) ; }
+
         public:
 
             this_ref_t operator = ( this_rref_t rhv ) noexcept

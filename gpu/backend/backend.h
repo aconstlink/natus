@@ -31,6 +31,11 @@ namespace natus
             backend( this_rref_t ) noexcept ;
             virtual ~backend( void_t ) noexcept ;
 
+
+        protected:
+
+            size_t get_bid( void_t ) const { return _backend_id ; }
+
         private:
 
             size_t _backend_id = size_t(-1) ;
