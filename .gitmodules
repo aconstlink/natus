@@ -1,9 +1,4 @@
 [submodule "externals/filesystem/gulrak"]
 	path = externals/filesystem/gulrak
 	url = https://github.com/gulrak/filesystem.git
-[submodule "externals/khronos/glslang"]
-	path = externals/khronos/glslang
-	url = https://github.com/KhronosGroup/glslang.git
-[submodule "externals/khronos/SPIRV-Cross"]
-	path = externals/khronos/SPIRV-Cross
-	url = https://github.com/KhronosGroup/SPIRV-Cross.git
+
