@@ -9,7 +9,7 @@ namespace natus
 {
     namespace gpu
     {
-        class NATUS_GPU_API geometry_shader : public backend_id
+        class NATUS_GPU_API geometry_shader
         {
             natus_this_typedefs( geometry_shader ) ;
 
@@ -22,7 +22,7 @@ namespace natus
             geometry_shader( void_t ) {}
             geometry_shader( natus::std::string_in_t code ) : _code( code ) {}
             geometry_shader( this_cref_t ) = delete ;
-            geometry_shader( this_rref_t rhv ) : backend_id( ::std::move( rhv ) ) {
+            geometry_shader( this_rref_t rhv ) {
                 _code = ::std::move( rhv._code ) ;
             }
             virtual ~geometry_shader( void_t ) {}

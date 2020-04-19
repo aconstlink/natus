@@ -9,6 +9,7 @@ set( sources
     "global.cpp"
 
     "backend/id.hpp"
+    "backend/types.h"
     "backend/backend.h"
     "backend/backend.cpp"
     "backend/async/async.h"
@@ -21,6 +22,10 @@ set( sources
     "backend/null/null.h"
     "backend/null/null.cpp"
    
+    "shader/vertex_shader.hpp"
+    "shader/geometry_shader.hpp"
+    "shader/pixel_shader.hpp"
+
     "configuration/render_configuration.h"
 
    

@@ -24,7 +24,7 @@ async_backend::~async_backend( void_t )
 {}
 
 //****
-natus::gpu::result async_backend::prepare( natus::gpu::async_id_rptr_t aid, natus::gpu::render_configuration_in_t rc ) noexcept 
+natus::gpu::result async_backend::prepare( natus::gpu::async_id_rptr_t aid, natus::gpu::render_configurations_in_t rc ) noexcept 
 {
     _prepares.push_back( prepare_data( {aid, rc } ) ) ;
     return natus::gpu::result::ok ;

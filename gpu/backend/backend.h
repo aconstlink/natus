@@ -18,8 +18,8 @@ namespace natus
 
         public:
 
-            virtual id_t prepare( natus::gpu::render_configuration_in_t ) noexcept = 0 ;
-            virtual id_t prepare( id_rref_t id, natus::gpu::render_configuration_in_t ) noexcept = 0 ;
+            virtual id_t prepare( natus::gpu::render_configurations_in_t ) noexcept = 0 ;
+            virtual id_t prepare( id_rref_t id, natus::gpu::render_configurations_in_t ) noexcept = 0 ;
             virtual id_t render( id_rref_t id ) noexcept = 0 ;
 
             //virtual id_t feedback( id_rref_t id ) noexcept = 0 ;
@@ -40,6 +40,7 @@ namespace natus
 
             size_t _backend_id = size_t(-1) ;
             static size_t create_backend_id( void_t ) noexcept ;
+
         };
         natus_typedef( backend ) ;
     }

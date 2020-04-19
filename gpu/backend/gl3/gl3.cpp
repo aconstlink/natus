@@ -63,13 +63,13 @@ gl3_backend::~gl3_backend( void_t )
 }
 
 //****
-natus::gpu::id_t gl3_backend::prepare( natus::gpu::render_configuration_in_t rc ) noexcept
+natus::gpu::id_t gl3_backend::prepare( natus::gpu::render_configurations_in_t rc ) noexcept
 {
     return this_t::prepare( natus::gpu::id_t(), rc ) ;
 }
 
 //****
-natus::gpu::id_t gl3_backend::prepare( id_rref_t id, natus::gpu::render_configuration_in_t ) noexcept 
+natus::gpu::id_t gl3_backend::prepare( id_rref_t id, natus::gpu::render_configurations_in_t ) noexcept 
 {
     if( id.is_not_valid() )
     {

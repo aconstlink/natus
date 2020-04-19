@@ -25,10 +25,10 @@ namespace natus
 
         public:
 
-            virtual natus::gpu::id_t prepare( natus::gpu::render_configuration_in_t ) noexcept override ;
+            virtual natus::gpu::id_t prepare( natus::gpu::render_configurations_in_t ) noexcept override ;
 
             virtual natus::gpu::id_t prepare( id_rref_t id, 
-                natus::gpu::render_configuration_in_t ) noexcept override ;
+                natus::gpu::render_configurations_in_t ) noexcept override ;
 
             virtual natus::gpu::id_t render( id_rref_t id ) noexcept override ;
 

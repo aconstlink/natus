@@ -22,7 +22,7 @@ namespace natus
             struct prepare_data
             {
                 natus::gpu::async_id_rptr_t aid ;
-                natus::gpu::render_configuration_t config ;
+                natus::gpu::render_configurations_t config ;
             };
             typedef natus::std::vector< prepare_data > prepares_t ;
             prepares_t _prepares ;
@@ -44,7 +44,7 @@ namespace natus
 
         public:
 
-            virtual natus::gpu::result prepare( natus::gpu::async_id_rptr_t, natus::gpu::render_configuration_in_t ) noexcept ;
+            virtual natus::gpu::result prepare( natus::gpu::async_id_rptr_t, natus::gpu::render_configurations_in_t ) noexcept ;
 
             virtual natus::gpu::result render( natus::gpu::async_id_rptr_t ) noexcept ;
 
