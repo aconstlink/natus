@@ -4,15 +4,15 @@
 using namespace natus::gpu ;
 
 //****
-async_backend::async_backend( void_t ) 
+async::async( void_t ) 
 {}
 
 //****
-async_backend::async_backend( backend_rptr_t rptr ) :_backend( rptr ) 
+async::async( backend_rptr_t rptr ) :_backend( rptr ) 
 {}
 
 //****
-async_backend::async_backend( this_rref_t rhv ) 
+async::async( this_rref_t rhv ) 
 {
     _backend = ::std::move( rhv._backend ) ;
     _renders = ::std::move( rhv._renders ) ;
@@ -20,25 +20,25 @@ async_backend::async_backend( this_rref_t rhv )
 }
 
 //****
-async_backend::~async_backend( void_t ) 
+async::~async( void_t ) 
 {}
 
 //****
-natus::gpu::result async_backend::prepare( natus::gpu::async_id_rptr_t aid, natus::gpu::render_configurations_in_t rc ) noexcept 
+natus::gpu::result async::prepare( natus::gpu::async_id_rptr_t aid, natus::gpu::render_configurations_in_t rc ) noexcept 
 {
     _prepares.push_back( prepare_data( {aid, rc } ) ) ;
     return natus::gpu::result::ok ;
 }
 
 //****
-natus::gpu::result async_backend::render( natus::gpu::async_id_rptr_t aid ) noexcept 
+natus::gpu::result async::render( natus::gpu::async_id_rptr_t aid ) noexcept 
 {
     _renders.push_back( { aid } ) ;
     return natus::gpu::result::ok ;
 }
 
 //****
-void_t async_backend::update( void_t ) noexcept 
+void_t async::update( void_t ) noexcept 
 {
     for( auto & prc : _prepares )
     {

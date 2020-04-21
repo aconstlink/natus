@@ -26,7 +26,7 @@ namespace natus
         natus_class_proto_typedefs( backend ) ;
         typedef natus::soil::rptr< backend_ptr_t > backend_rptr_t ;
 
-        natus_soil_class_proto_typedefs( async_backend ) ;
+        natus_soil_class_proto_typedefs( async ) ;
         natus_soil_class_proto_typedefs( async_id ) ;
     }
 }

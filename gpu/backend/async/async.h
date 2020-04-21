@@ -10,9 +10,9 @@ namespace natus
 {
     namespace gpu
     {
-        class NATUS_GPU_API async_backend
+        class NATUS_GPU_API async
         {
-            natus_this_typedefs( async_backend ) ;
+            natus_this_typedefs( async ) ;
 
         private:
 
@@ -36,11 +36,11 @@ namespace natus
 
         public:
 
-            async_backend( void_t ) ;
-            async_backend( backend_rptr_t ) ;
-            async_backend( this_cref_t ) = delete ;
-            async_backend( this_rref_t ) ;
-            ~async_backend( void_t ) ;
+            async( void_t ) ;
+            async( backend_rptr_t ) ;
+            async( this_cref_t ) = delete ;
+            async( this_rref_t ) ;
+            ~async( void_t ) ;
 
         public:
 
@@ -55,14 +55,14 @@ namespace natus
 
             void_t update( void_t ) noexcept ;
         };
-        natus_soil_typedef( async_backend ) ;
+        natus_soil_typedef( async ) ;
 
         /// 
         class NATUS_GPU_API async_id
         {
             natus_this_typedefs( async_id ) ;
 
-            friend class async_backend ;
+            friend class async ;
 
         private: 
 
@@ -80,7 +80,7 @@ namespace natus
             }
             ~async_id( void_t ) noexcept {}
 
-        private: // async_backend interface
+        private: // async interface
 
             natus::gpu::id_t set( natus::gpu::id_rref_t id, natus::gpu::result res ) 
             {
