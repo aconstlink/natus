@@ -5,10 +5,11 @@
 #include "platform/wgl/wgl_context.h"
 #include "platform/wgl/wgl_window.h"
 #include <natus/gpu/backend/gl3/gl3.h>
-#include <natus/gpu/backend/es3/es3.h>
 #elif defined( NATUS_GRAPHICS_GLX )
 #include "platform/glx/glx_context.h"
 #include "platform/glx/glx_window.h"
+#include <natus/gpu/backend/gl3/gl3.h>
+#include <natus/gpu/backend/es3/es3.h>
 #endif
 
 #include <natus/gpu/async.h>
