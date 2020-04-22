@@ -28,6 +28,10 @@ namespace natus
                 window( gl_info_cref_t gli, window_info_cref_t wi ) ;
                 window( this_rref_t ) ;
                 virtual ~window( void_t ) ;
+
+            public:
+
+                context_res_t get_context( void_t ) const { return _context ; }
             };
             natus_typedef( window ) ;
             typedef natus::soil::res< window_t > window_res_t ;

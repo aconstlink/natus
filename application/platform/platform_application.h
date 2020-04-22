@@ -33,14 +33,18 @@ namespace natus
             platform_application( void_t ) ;
             platform_application( this_cref_t ) = delete ;
             platform_application( this_rref_t ) ;
+            platform_application( natus::application::app_rptr_t ) ;
             virtual ~platform_application( void_t ) ;
 
         public:
-
-            virtual natus::application::result set( natus::application::app_rptr_t ) ;
+            
             natus::application::result exec( void_t ) ;
 
         private:
+
+            /// at the moment, the app object must be added by the applications' ctor
+            /// this is due to multi-threading issues when creating a window in the app.
+            natus::application::result set( natus::application::app_rptr_t ) ;
 
             natus::application::result start_update_thread( void_t ) ;
             void_t stop_update_thread( void_t ) ;

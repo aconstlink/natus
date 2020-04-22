@@ -23,6 +23,8 @@ window::window( this_rref_t rhv )
 {
     _handle = rhv._handle ;
     rhv._handle = NULL ;
+    _cursor = rhv._cursor ;
+    rhv._cursor = NULL ;
 
     if( _handle != NULL )
     {
@@ -31,6 +33,8 @@ window::window( this_rref_t rhv )
     
     _is_fullscreen = rhv._is_fullscreen ;
     _is_cursor = rhv._is_cursor ;
+
+    _name = ::std::move( rhv._name ) ;
 }
 
 //***********************************************************************
@@ -119,7 +123,7 @@ HWND window::create_window( window_info const & wi )
     HINSTANCE hinst = GetModuleHandle(0) ;
     
     static size_t window_number = 0 ;
-    natus::std::string_t class_name = wi.window_name + " " + ::std::to_string(window_number++) ;
+    natus::std::string_t class_name = wi.window_name  +" " + ::std::to_string( window_number++ ) ;
 
     HWND hwnd ;
     WNDCLASSA wndclass ;
@@ -135,6 +139,8 @@ HWND window::create_window( window_info const & wi )
     wndclass.lpszMenuName = 0 ;
     wndclass.lpszClassName = class_name.c_str() ;
         
+    _name = wi.window_name ;
+
     if( natus::log::global::error( !RegisterClassA( &wndclass ), 
         "[window::create_window] : RegisterClassA" ) )
         exit(0) ;

@@ -23,6 +23,13 @@ platform_application::platform_application( this_rref_t rhv )
 }
 
 //******************************************************
+platform_application::platform_application( natus::application::app_rptr_t app ) 
+{
+    this_t::set( app ) ;
+    _sd = natus::memory::global::alloc< this_t::shared_data >() ;
+}
+
+//******************************************************
 platform_application::~platform_application( void_t )
 {
     if( natus::core::is_not_nullptr(_sd) )
@@ -46,21 +53,24 @@ natus::application::result platform_application::set( natus::application::app_rp
 natus::application::result platform_application::start_update_thread( void_t ) 
 {
     if( natus::core::is_not( _app.is_valid() ) )
+    {
+        natus::log::global_t::error( natus_log_fn("No app object") ) ;
         return natus::application::result::no_app ;
+    }
 
     _sd->update_running = true ;
-
+    
     _thr = natus::concurrent::thread_t( [=]( void_t )
     {
-        _app->init() ;
+        _app->on_init() ;
 
         while( _sd->update_running )
         {
-            _app->update() ;
-            _app->render() ;
+            _app->on_update() ;
+            _app->on_render() ;
         }
         
-        _app->shutdown() ;
+        _app->on_shutdown() ;
 
     } ) ;
 
@@ -83,7 +93,10 @@ natus::application::result platform_application::exec( void_t )
     {
         auto const res = this_t::start_update_thread() ;
         if( natus::application::no_success( res ) )
-            return res ;
+        {
+            natus::log::global_t::warning( natus_log_fn(
+                "No update thread started. Proceed anyway.") ) ;
+        }
     }
 
     // virtual call

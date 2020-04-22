@@ -12,8 +12,9 @@ set( sources
     "backend/types.h"
     "backend/backend.h"
     "backend/backend.cpp"
-    "backend/async/async.h"
-    "backend/async/async.cpp"
+    "async.h"
+    "async.cpp"
+    "async_id.hpp"
     
     "backend/gl3/gl3.h"
     "backend/gl3/gl3.cpp"

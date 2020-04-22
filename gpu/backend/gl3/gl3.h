@@ -36,6 +36,6 @@ namespace natus
 
             //
         };
-        natus_typedef( gl3_backend ) ;
+        natus_soil_typedef( gl3_backend ) ;
     }
 }

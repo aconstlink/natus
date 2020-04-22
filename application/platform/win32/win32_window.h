@@ -19,12 +19,14 @@ namespace natus
 
             private:
 
-                HWND _handle ;
+                HWND _handle = NULL ;
 
                 bool_t _is_fullscreen = false ;
                 bool_t _is_cursor = false ;
 
                 HCURSOR _cursor = NULL ;
+
+                natus::std::string _name = "WIN32 Window";
 
             public:
 

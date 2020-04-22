@@ -35,14 +35,15 @@ set( sources
 
 
     app.h
+    app.cpp
     global.h
     global.cpp
-    platform/render_window.h
     platform/platform_window.h
     platform/platform_application.h
     platform/platform_application.cpp
     platform/window_info.h   
     platform/gl_info.h
+    platform/gfx_context.h
     )
 
 if( NATUS_GRAPHICS_WGL )
@@ -70,7 +71,7 @@ target_link_libraries( ${cur_lib_name}
     PUBLIC natus_graphics_options 
     PUBLIC natus::system
     #PUBLIC natus::gpx
-    #PUBLIC natus::gpu
+   PUBLIC natus::gpu
     PUBLIC natus::concurrent
     PUBLIC natus::log
     PUBLIC natus::memory

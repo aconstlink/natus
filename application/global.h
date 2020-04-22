@@ -17,6 +17,7 @@ namespace natus
         public:
 
             static platform_application_rptr_t create_application( void_t ) ;
+            static platform_application_rptr_t create_application( natus::application::app_rptr_t ) ;
         };
         natus_typedef( global ) ;
     }

@@ -2,8 +2,7 @@
 
 #include "../gl_info.h"
 
-#include "../../typedefs.h"
-#include "../../result.h"
+#include "../gfx_context.h"
 
 #include <natus/soil/res.hpp>
 #include <natus/math/vector/vector4.hpp>
@@ -16,7 +15,7 @@ namespace natus
     {
         namespace wgl
         {
-            class context
+            class NATUS_APPLICATION_API context : public gfx_context
             {
                 natus_this_typedefs( context ) ;
 
@@ -52,10 +51,10 @@ namespace natus
 
             public:
 
-                natus::application::result activate( void_t ) ;
-                natus::application::result deactivate( void_t ) ;
-                natus::application::result vsync( bool_t on_off ) ;
-                natus::application::result swap( void_t ) ;
+                virtual natus::application::result activate( void_t ) ;
+                virtual natus::application::result deactivate( void_t ) ;
+                virtual natus::application::result vsync( bool_t on_off ) ;
+                virtual natus::application::result swap( void_t ) ;
 
             public:
 

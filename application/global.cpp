@@ -33,3 +33,19 @@ platform_application_rptr_t global::create_application( void_t )
 
     #endif
 }
+
+//*********************************************************
+platform_application_rptr_t global::create_application( natus::application::app_rptr_t app ) 
+{
+    #if defined( NATUS_GRAPHICS_WGL )
+
+    return natus::application::win32::application_res_t(
+        natus::application::win32::win32_application_t( app ) ) ;
+
+    #elif defined( NATUS_GRAPHICS_GLX )
+
+
+    #elif defined( NATUS_GRAPHICS_EGL )
+
+    #endif
+}
