@@ -31,7 +31,7 @@ win32_application::win32_application( this_rref_t rhv ) : base_t( ::std::move( r
 }
 
 //***********************************************************************
-win32_application::win32_application( natus::application::app_rptr_t app ) : base_t( app )
+win32_application::win32_application( natus::application::app_res_t app ) : base_t( app )
 {}
 
 //***********************************************************************

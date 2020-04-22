@@ -19,7 +19,7 @@ using namespace natus ;
 using namespace natus::application ;
 
 //*********************************************************
-platform_application_rptr_t global::create_application( void_t ) 
+platform_application_res_t global::create_application( void_t ) 
 {
     #if defined( NATUS_GRAPHICS_WGL )
 
@@ -35,7 +35,7 @@ platform_application_rptr_t global::create_application( void_t )
 }
 
 //*********************************************************
-platform_application_rptr_t global::create_application( natus::application::app_rptr_t app ) 
+platform_application_res_t global::create_application( natus::application::app_res_t app ) 
 {
     #if defined( NATUS_GRAPHICS_WGL )
 

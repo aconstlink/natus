@@ -8,7 +8,7 @@ async::async( void_t )
 {}
 
 //****
-async::async( backend_rptr_t rptr ) :_backend( rptr ) 
+async::async( backend_res_t rptr ) : _backend( rptr ) 
 {}
 
 //****
@@ -24,14 +24,14 @@ async::~async( void_t )
 {}
 
 //****
-natus::gpu::result async::prepare( natus::gpu::async_id_rptr_t aid, natus::gpu::render_configurations_in_t rc ) noexcept 
+natus::gpu::result async::prepare( natus::gpu::async_id_res_t aid, natus::gpu::render_configurations_in_t rc ) noexcept 
 {
     _prepares.push_back( prepare_data( {aid, rc } ) ) ;
     return natus::gpu::result::ok ;
 }
 
 //****
-natus::gpu::result async::render( natus::gpu::async_id_rptr_t aid ) noexcept 
+natus::gpu::result async::render( natus::gpu::async_id_res_t aid ) noexcept 
 {
     _renders.push_back( { aid } ) ;
     return natus::gpu::result::ok ;

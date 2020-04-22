@@ -23,7 +23,7 @@ platform_application::platform_application( this_rref_t rhv )
 }
 
 //******************************************************
-platform_application::platform_application( natus::application::app_rptr_t app ) 
+platform_application::platform_application( natus::application::app_res_t app ) 
 {
     this_t::set( app ) ;
     _sd = natus::memory::global::alloc< this_t::shared_data >() ;
@@ -39,7 +39,7 @@ platform_application::~platform_application( void_t )
 }
 
 //******************************************************
-natus::application::result platform_application::set( natus::application::app_rptr_t app )
+natus::application::result platform_application::set( natus::application::app_res_t app )
 {
     if( _app.is_valid() )
         return natus::application::result::failed ;

@@ -26,7 +26,7 @@ namespace natus
             public:
 
                 win32_application( void_t ) ;
-                win32_application( natus::application::app_rptr_t ) ;
+                win32_application( natus::application::app_res_t ) ;
                 win32_application( this_rref_t ) ;
                 virtual ~win32_application( void_t ) ;
 

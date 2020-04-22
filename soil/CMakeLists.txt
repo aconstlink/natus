@@ -5,7 +5,6 @@ set( sources
     "protos.h"
     "res.hpp"
     "soil.cpp"
-    "rptr.hpp"
     "macros.h"
     )
 

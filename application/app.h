@@ -5,9 +5,10 @@
 #include "typedefs.h"
 #include "result.h"
 #include "protos.h"
+#include "platform/platform_window.h"
 
+#include <natus/gpu/async.h>
 #include <natus/concurrent/typedefs.h>
-#include <natus/gpu/protos.h>
 
 namespace natus
 {
@@ -42,8 +43,8 @@ namespace natus
 
                 natus::concurrent::mutex_t mtx ;
                 natus::concurrent::thread_t rnd_thread ;
-                natus::application::platform_window_rptr_t wnd ;
-                natus::gpu::async_rptr_t async ;
+                natus::application::platform_window_res_t wnd ;
+                natus::gpu::async_res_t async ;
                 window_info_t wi ;
                 bool_ptr_t run ;
                 per_window_info( void_t ) {}
@@ -87,7 +88,7 @@ namespace natus
 
             
 
-            natus::gpu::async_rptr_t gpu_async( this_t::window_id_t const ) const ;
+            natus::gpu::async_res_t gpu_async( this_t::window_id_t const ) const ;
 
             natus::application::result request_change( this_t::window_info_in_t ) ;
 
@@ -95,6 +96,6 @@ namespace natus
 
             void_t destroy_window( this_t::per_window_info_ref_t ) ;
         };
-        
+        natus_soil_typedef( app ) ;
     }
 }

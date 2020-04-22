@@ -22,5 +22,6 @@ namespace natus
             virtual natus::application::result vsync( bool_t on_off ) = 0 ;
             virtual natus::application::result swap( void_t ) = 0 ;
         };
+        natus_soil_typedef( gfx_context ) ;
     }
 }

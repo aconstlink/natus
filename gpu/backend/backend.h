@@ -42,6 +42,6 @@ namespace natus
             static size_t create_backend_id( void_t ) noexcept ;
 
         };
-        natus_typedef( backend ) ;
+        natus_soil_typedef( backend ) ;
     }
 }

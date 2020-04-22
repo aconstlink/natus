@@ -4,6 +4,7 @@
 #include "../protos.h"
 #include "../result.h"
 #include "../typedefs.h"
+#include "../app.h"
 
 #include <natus/concurrent/typedefs.h>
 
@@ -17,7 +18,7 @@ namespace natus
 
         private:
 
-            natus::application::app_rptr_t _app ;
+            natus::application::app_res_t _app ;
             
             struct shared_data
             {
@@ -33,7 +34,7 @@ namespace natus
             platform_application( void_t ) ;
             platform_application( this_cref_t ) = delete ;
             platform_application( this_rref_t ) ;
-            platform_application( natus::application::app_rptr_t ) ;
+            platform_application( natus::application::app_res_t ) ;
             virtual ~platform_application( void_t ) ;
 
         public:
@@ -44,7 +45,7 @@ namespace natus
 
             /// at the moment, the app object must be added by the applications' ctor
             /// this is due to multi-threading issues when creating a window in the app.
-            natus::application::result set( natus::application::app_rptr_t ) ;
+            natus::application::result set( natus::application::app_res_t ) ;
 
             natus::application::result start_update_thread( void_t ) ;
             void_t stop_update_thread( void_t ) ;
@@ -53,8 +54,6 @@ namespace natus
 
             virtual natus::application::result on_exec( void_t ) = 0 ;
         };
-        natus_typedef( platform_application ) ;
-        typedef natus::soil::rptr< platform_application_ptr_t > platform_application_rptr_t ;
-        typedef natus::soil::rptr< platform_application_ptr_t > application_rptr_t ;
+        natus_soil_typedef( platform_application ) ;
     }
 }

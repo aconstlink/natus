@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "backend/id.hpp"
+#include "async_id.hpp"
 #include "backend/backend.h"
 
 #include <natus/std/vector.hpp>
@@ -17,11 +17,11 @@ namespace natus
         private:
 
             /// decorated backend.
-            backend_rptr_t _backend ;
+            backend_res_t _backend ;
 
             struct prepare_data
             {
-                natus::gpu::async_id_rptr_t aid ;
+                natus::gpu::async_id_res_t aid ;
                 natus::gpu::render_configurations_t config ;
             };
             typedef natus::std::vector< prepare_data > prepares_t ;
@@ -29,7 +29,7 @@ namespace natus
             
             struct render_data
             {
-                natus::gpu::async_id_rptr_t aid ;
+                natus::gpu::async_id_res_t aid ;
             };
             typedef natus::std::vector< render_data > renders_t ;
             renders_t _renders ;
@@ -37,16 +37,16 @@ namespace natus
         public:
 
             async( void_t ) ;
-            async( backend_rptr_t ) ;
+            async( backend_res_t ) ;
             async( this_cref_t ) = delete ;
             async( this_rref_t ) ;
             ~async( void_t ) ;
 
         public:
 
-            virtual natus::gpu::result prepare( natus::gpu::async_id_rptr_t, natus::gpu::render_configurations_in_t ) noexcept ;
+            virtual natus::gpu::result prepare( natus::gpu::async_id_res_t, natus::gpu::render_configurations_in_t ) noexcept ;
 
-            virtual natus::gpu::result render( natus::gpu::async_id_rptr_t ) noexcept ;
+            virtual natus::gpu::result render( natus::gpu::async_id_res_t ) noexcept ;
 
         public:
 
@@ -56,42 +56,5 @@ namespace natus
             void_t update( void_t ) noexcept ;
         };
         natus_soil_typedef( async ) ;
-
-        /// 
-        class NATUS_GPU_API async_id
-        {
-            natus_this_typedefs( async_id ) ;
-
-            friend class async ;
-
-        private: 
-
-            natus::gpu::id_t _id ;
-            natus::gpu::result _res ;
-
-        public:
-
-            async_id( void_t ) noexcept {}
-            async_id( this_cref_t ) = delete ;
-            async_id( this_rref_t rhv ) noexcept
-            {
-                _id = ::std::move( rhv._id ) ;
-                _res = rhv._res ;
-            }
-            ~async_id( void_t ) noexcept {}
-
-        private: // async interface
-
-            natus::gpu::id_t set( natus::gpu::id_rref_t id, natus::gpu::result res ) 
-            {
-                _id = ::std::move( id ) ;
-                _res = res ;
-                
-                return natus::gpu::id_t() ;
-            }
-
-            natus::gpu::id_t id( void_t ) { return ::std::move( _id ) ;  }
-        };
-        natus_soil_typedef( async_id ) ;
     }
 }

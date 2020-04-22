@@ -40,8 +40,8 @@ app::window_id_t app::create_window(
     natus::std::string_cref_t name, this_t::window_info_in_t wi )
 {
     this_t::per_window_info_t pwi ;
-    natus::gpu::backend_rptr_t backend = natus::gpu::null_backend_res_t() ;
-    natus::application::gfx_context_rptr_t ctx ;
+    natus::gpu::backend_res_t backend = natus::gpu::null_backend_res_t() ;
+    natus::application::gfx_context_res_t ctx ;
 
     {
         #if defined( NATUS_GRAPHICS_WGL )
@@ -83,11 +83,11 @@ app::window_id_t app::create_window(
         #elif defined( NATUS_GRAPHICS_GLX )
         #endif
 
-        pwi.async = natus::gpu::async_rptr_t( 
+        pwi.async = natus::gpu::async_res_t( 
             natus::gpu::async_t( backend ) ) ;
     }
 
-    natus::gpu::async_rptr_t async = natus::gpu::async_res_t(
+    natus::gpu::async_res_t async = natus::gpu::async_res_t(
         natus::gpu::async_t( backend ) ) ;
 
     bool_ptr_t run = natus::memory::global_t::alloc<bool_t>(
@@ -128,9 +128,9 @@ void_t app::destroy_window( this_t::per_window_info_ref_t pwi )
 }
 
 //***
-natus::gpu::async_rptr_t app::gpu_async( this_t::window_id_t const wid ) const 
+natus::gpu::async_res_t app::gpu_async( this_t::window_id_t const wid ) const 
 {
-    return natus::gpu::async_rptr_t() ;
+    return natus::gpu::async_res_t() ;
 }
 
 //***

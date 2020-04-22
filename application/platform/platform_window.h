@@ -16,5 +16,6 @@ namespace natus
 
             virtual ~platform_window( void_t ) {}
         };
+        natus_soil_typedef( platform_window ) ;
     }
 }
