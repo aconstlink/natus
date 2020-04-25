@@ -19,12 +19,16 @@ using namespace natus::application ;
 
 //***
 app::app( void_t ) 
-{}
+{
+    _access = natus::memory::global_t::alloc< bool_t >() ;
+    *_access = false ;
+}
 
 //***
 app::app( this_rref_t rhv )
 {
     _windows = ::std::move( rhv._windows ) ;
+    natus_move_member_ptr( _access, rhv ) ;
 }
 
 //***
@@ -34,14 +38,17 @@ app::~app( void_t )
     {
         this_t::destroy_window( pwi ) ;
     }
+    
+    natus::memory::global_t::dealloc( _access ) ;
 }
 
 //***
-app::window_id_t app::create_window( 
+app::wid_async_t app::create_window( 
     natus::std::string_cref_t name, this_t::window_info_in_t wi )
 {
     this_t::per_window_info_t pwi ;
-    natus::gpu::backend_res_t backend = natus::gpu::null_backend_res_t() ;
+    natus::gpu::backend_res_t backend = natus::gpu::null_backend_res_t(
+        natus::gpu::null_backend_t() ) ;
     natus::application::gfx_context_res_t ctx ;
 
     {
@@ -74,9 +81,10 @@ app::window_id_t app::create_window(
         {
             natus::application::gl_version glv ;
             glctx->get_gl_version( glv ) ;
-            if( glv.major == 3 )
+            if( glv.major >= 3 )
             {
-                backend = natus::gpu::gl3_backend_res_t() ;
+                backend = natus::gpu::gl3_backend_res_t(
+                    natus::gpu::gl3_backend_t() ) ;
             }
         }
 
@@ -105,19 +113,22 @@ app::window_id_t app::create_window(
         ctx_->activate() ;
         while( *run_ ) 
         {    
-            async_->update() ;
+            async_->wait_for_frame() ;
+            async_->system_update() ;
+            async_->set_ready() ;
             ctx_->swap() ;
         }
         ctx_->deactivate() ;
     } ) ;
-    pwi.async = ::std::move( async ) ;
+    pwi.async = async ;
 
     // add per window info
     //here
     natus::concurrent::lock_guard_t lk( _wmtx ) ;
     _windows.emplace_back( ::std::move( pwi ) ) ;
 
-    return 0 ;
+    return ::std::make_pair( _windows.size()-1, 
+        this_t::async_view_t( ::std::move( async ), _access ) ) ;
 }
 
 //***
@@ -129,15 +140,60 @@ void_t app::destroy_window( this_t::per_window_info_ref_t pwi )
 }
 
 //***
-natus::gpu::async_res_t app::gpu_async( this_t::window_id_t const wid ) const 
-{
-    return natus::gpu::async_res_t() ;
-}
-
-//***
 natus::application::result app::request_change( this_t::window_info_in_t )
 {
     return natus::application::result::ok ;
+}
+
+//***
+bool_t app::before_update( void_t ) 
+{
+    *_access = false ;
+    return true ;
+}
+
+//***
+bool_t app::after_update( void_t )
+{
+    *_access = true ;
+    ++_update_count ;
+    return true ;
+}
+
+//***
+bool_t app::before_render( void_t )
+{
+    size_t windows = _windows.size() ;
+
+    // check if async system is ready
+    for( auto & pwi : _windows )
+    {
+        if( pwi.async->enter_frame() )
+            --windows ;
+    }
+
+    if( windows != 0 )
+    {
+        for( auto& pwi : _windows )
+        {
+            pwi.async->leave_frame() ;
+        }
+        // do not go into on_render
+        return false ;
+    }
+
+    return true ;
+}
+
+//***
+bool_t app::after_render( void_t )
+{
+    ++_render_count ;
+    for( auto& pwi : _windows )
+    {
+        pwi.async->leave_frame() ;
+    }
+    return true ;
 }
 
 //***

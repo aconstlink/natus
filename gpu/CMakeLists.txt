@@ -28,7 +28,7 @@ set( sources
     "shader/pixel_shader.hpp"
 
     "configuration/render_configuration.h"
-
+    "configuration/geometry_configuration.h"
    
     )
 

@@ -9,7 +9,17 @@ namespace natus
         {
             ok, 
             failed,
+            invalid,
             invalid_argument
+        };
+
+
+        enum class async_result
+        {
+            ok,
+            failed,
+            invalid,
+            in_transit
         };
     }
 }

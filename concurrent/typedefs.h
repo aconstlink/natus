@@ -18,6 +18,7 @@
 
 #include <thread>
 #include <functional>
+#include <mutex>
 
 namespace natus
 {
@@ -27,6 +28,8 @@ namespace natus
 
         natus_typedefs( ::std::thread, thread ) ;
         natus_typedefs( ::std::mutex, mutex ) ;
+        natus_typedefs( ::std::unique_lock<mutex_t>, ulock ) ;
+
         using memory = natus::memory::global ;
 
         template< typename T >

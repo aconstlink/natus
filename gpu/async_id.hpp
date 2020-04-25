@@ -7,6 +7,8 @@
 
 #include "backend/id.hpp"
 
+#include <natus/concurrent/typedefs.h>
+
 namespace natus
 {
     namespace gpu
@@ -21,7 +23,8 @@ namespace natus
         private:
 
             natus::gpu::id_t _id ;
-            natus::gpu::result _res ;
+            natus::gpu::async_result _res = natus::gpu::async_result::invalid ;
+            natus::concurrent::mutex_t _mtx ;
 
         public:
 
@@ -30,21 +33,34 @@ namespace natus
             async_id( this_rref_t rhv ) noexcept
             {
                 _id = ::std::move( rhv._id ) ;
-                _res = rhv._res ;
+                _res = ::std::move( rhv._res ) ;
             }
             ~async_id( void_t ) noexcept {}
 
         private: // async interface
 
-            natus::gpu::id_t set( natus::gpu::id_rref_t id, natus::gpu::result res )
+            natus::gpu::id_t set( natus::gpu::id_rref_t id, natus::gpu::async_result res )
             {
+                {
+                    natus::concurrent::lock_guard_t lk( _mtx ) ;
+                    _res = res ;
+                }
+
                 _id = ::std::move( id ) ;
-                _res = res ;
 
                 return natus::gpu::id_t() ;
             }
 
             natus::gpu::id_t id( void_t ) { return ::std::move( _id ) ; }
+
+            natus::gpu::async_result swap( natus::gpu::async_result const res )
+            {
+                natus::concurrent::lock_guard_t lk( _mtx ) ;
+                auto const old = _res ;
+                _res = res ;
+                return old ;
+
+            }
         };
         natus_soil_typedef( async_id ) ;
     }

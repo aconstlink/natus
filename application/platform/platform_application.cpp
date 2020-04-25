@@ -66,8 +66,17 @@ natus::application::result platform_application::start_update_thread( void_t )
 
         while( _sd->update_running )
         {
-            _app->on_update() ;
-            _app->on_render() ;
+            if( _app->before_update() )
+            {
+                _app->on_update() ;
+                _app->after_update() ;
+            }
+            
+            if( _app->before_render() ) 
+            {
+                _app->on_render() ;
+                _app->after_render() ;
+            }
         }
         
         _app->on_shutdown() ;
