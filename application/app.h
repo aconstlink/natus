@@ -117,6 +117,11 @@ namespace natus
                 /// during rendering type.
                 bool_t is_accessable( void_t ) const noexcept { return *_access ; }
 
+                natus::gpu::result configure( natus::gpu::async_id_res_t id, natus::gpu::geometry_configuration_in_t config ) noexcept 
+                {
+                    return _async->configure( id, config ) ;
+                }
+
             public:
 
             };

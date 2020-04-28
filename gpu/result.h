@@ -19,7 +19,8 @@ namespace natus
             ok,
             failed,
             invalid,
-            in_transit
+            in_transit,
+            user_edit
         };
     }
 }

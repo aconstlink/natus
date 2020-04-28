@@ -22,9 +22,10 @@ namespace natus
 
         private:
 
-            natus::gpu::id_t _id ;
+            natus::gpu::id_t _id ;            
+            mutable natus::concurrent::mutex_t _mtx ;
             natus::gpu::async_result _res = natus::gpu::async_result::invalid ;
-            natus::concurrent::mutex_t _mtx ;
+            natus::gpu::async_result _config = natus::gpu::async_result::invalid ;
 
         public:
 
@@ -36,6 +37,23 @@ namespace natus
                 _res = ::std::move( rhv._res ) ;
             }
             ~async_id( void_t ) noexcept {}
+
+            bool_t is_config( natus::gpu::async_result const res ) const 
+            {
+                natus::concurrent::lock_t lk( _mtx ) ;
+                return _config == res ;
+            }
+
+            bool_t check_invalid_and_swap_user( natus::gpu::async_result const res )
+            {
+                natus::concurrent::lock_t lk( _mtx ) ;
+                if( _config != res ) return false ;
+                
+                _config = natus::gpu::async_result::user_edit ;
+                    
+                return true ;
+
+            }
 
         private: // async interface
 
@@ -59,7 +77,14 @@ namespace natus
                 auto const old = _res ;
                 _res = res ;
                 return old ;
+            }
 
+            natus::gpu::async_result swap_config( natus::gpu::async_result const res )
+            {
+                natus::concurrent::lock_guard_t lk( _mtx ) ;
+                auto const old = _config ;
+                _config = res ;
+                return old ;
             }
         };
         natus_soil_typedef( async_id ) ;

@@ -7,6 +7,7 @@
 
 #include "id.hpp"
 #include "../configuration/render_configuration.h"
+#include "../configuration/geometry_configuration.h"
 
 namespace natus
 {
@@ -18,8 +19,9 @@ namespace natus
 
         public:
 
-            virtual id_t prepare( natus::gpu::render_configurations_in_t ) noexcept = 0 ;
-            virtual id_t prepare( id_rref_t id, natus::gpu::render_configurations_in_t ) noexcept = 0 ;
+            virtual id_t configure( id_rref_t id, natus::gpu::geometry_configuration_in_t ) noexcept = 0 ;
+            virtual id_t configure( natus::gpu::render_configurations_in_t ) noexcept = 0 ;
+            virtual id_t configure( id_rref_t id, natus::gpu::render_configurations_in_t ) noexcept = 0 ;
             virtual id_t render( id_rref_t id ) noexcept = 0 ;
 
             //virtual id_t feedback( id_rref_t id ) noexcept = 0 ;

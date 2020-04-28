@@ -4,6 +4,7 @@ set( sources
     "result.h"
     "protos.h"
     "typedefs.h"
+    "types.h"
 
     "global.h"
     "global.cpp"
@@ -26,6 +27,10 @@ set( sources
     "shader/vertex_shader.hpp"
     "shader/geometry_shader.hpp"
     "shader/pixel_shader.hpp"
+
+    "buffer/vertex_attribute.h"
+    "buffer/vertex_buffer.hpp"
+    "buffer/index_buffer.hpp"
 
     "configuration/render_configuration.h"
     "configuration/geometry_configuration.h"
