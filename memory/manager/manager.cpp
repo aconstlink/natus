@@ -32,8 +32,10 @@ void_t manager::destroy( this_ptr_t ptr )
 }
 
 //*************************************************************************************
-void_ptr_t manager::alloc( size_t sib, natus::memory::purpose_cref_t purpose ) 
+void_ptr_t manager::alloc( size_t const sib, natus::memory::purpose_cref_t purpose ) 
 {
+    if( sib == 0 ) return nullptr ;
+
     void_ptr_t ptr = malloc( sib ) ;
     {
         lock_t lk(_mtx) ;
@@ -44,7 +46,7 @@ void_ptr_t manager::alloc( size_t sib, natus::memory::purpose_cref_t purpose )
 }
 
 //*************************************************************************************
-void_ptr_t manager::alloc( size_t sib ) 
+void_ptr_t manager::alloc( size_t const sib ) 
 {
     return this_t::alloc( sib, "[manager::alloc]" ) ;
 }

@@ -14,8 +14,8 @@ namespace natus
         {
         public:
 
-            virtual void_ptr_t alloc( size_t sib, natus::memory::purpose_cref_t purpose ) = 0 ;
-            virtual void_ptr_t alloc( size_t sib ) = 0 ;
+            virtual void_ptr_t alloc( size_t const sib, natus::memory::purpose_cref_t purpose ) = 0 ;
+            virtual void_ptr_t alloc( size_t const sib ) = 0 ;
 
             virtual void_t dealloc( void_ptr_t ) = 0 ;
             virtual size_t get_sib( void_t ) const = 0 ;
