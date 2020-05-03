@@ -50,6 +50,8 @@ namespace natus
                 rhv._hash = 0 ;
                 return *this ;
             }
+
+            natus::std::string code( void_t ) const { return _code ; }
         };
         natus_soil_typedef( pixel_shader ) ;
     }

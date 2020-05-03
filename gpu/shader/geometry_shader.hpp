@@ -27,6 +27,9 @@ namespace natus
             }
             virtual ~geometry_shader( void_t ) {}
 
+            natus::std::string code( void_t ) const { return _code ; }
+
         };
+        natus_typedef( geometry_shader ) ;
     }
 }

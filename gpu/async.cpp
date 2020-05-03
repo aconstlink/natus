@@ -26,10 +26,10 @@ async::~async( void_t )
 
 //****
 natus::gpu::result async::configure( natus::gpu::async_id_res_t aid, 
-    natus::gpu::geometry_configuration_in_t gconfig ) noexcept
+    natus::gpu::geometry_configuration_res_t gconfig ) noexcept
 {
-    auto const res = aid->swap( natus::gpu::async_result::in_transit ) ;
-    if( res != natus::gpu::async_result::in_transit )
+    //auto const res = aid->swap( natus::gpu::async_result::in_transit ) ;
+    //if( res != natus::gpu::async_result::in_transit )
     {
         _gconfigs.push_back( gconfig_data( { aid, gconfig } ) ) ;
     }
@@ -37,10 +37,10 @@ natus::gpu::result async::configure( natus::gpu::async_id_res_t aid,
 }
 
 //****
-natus::gpu::result async::configure( natus::gpu::async_id_res_t aid, natus::gpu::render_configurations_in_t rc ) noexcept 
+natus::gpu::result async::configure( natus::gpu::async_id_res_t aid, natus::gpu::render_configurations_res_t rc ) noexcept 
 {
-    auto const res = aid->swap( natus::gpu::async_result::in_transit ) ;
-    if( res != natus::gpu::async_result::in_transit ) 
+    //auto const res = aid->swap( natus::gpu::async_result::in_transit ) ;
+    //if( res != natus::gpu::async_result::in_transit ) 
     {
         _rconfigs.push_back( rconfig_data( {aid, rc } ) ) ;
     }

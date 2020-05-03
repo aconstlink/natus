@@ -150,4 +150,14 @@ namespace natus
             return detail::vertex_count_for_primitive_type[ size_t( pt ) ] ;
         }
     }
+
+    namespace gpu
+    {
+        enum class usage_type
+        {
+            unknown,
+            buffer_static,
+            buffer_dynamic
+        };
+    }
 }

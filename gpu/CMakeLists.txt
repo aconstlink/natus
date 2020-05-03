@@ -19,6 +19,7 @@ set( sources
     
     "backend/gl3/gl3.h"
     "backend/gl3/gl3.cpp"
+    "backend/gl3/gl3_constants.h"
     "backend/es3/es3.h"
     "backend/es3/es3.cpp"
     "backend/null/null.h"

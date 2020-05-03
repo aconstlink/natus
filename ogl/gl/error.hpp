@@ -1,6 +1,7 @@
 #pragma once
 
 #include "gl.h"
+#include "convert.hpp"
 
 #include <natus/std/string.hpp>
 #include <natus/log/global.h>
@@ -16,7 +17,7 @@ namespace natus
                 GLenum __so__err = natus::ogl::gl::glGetError() ;
                 if( __so__err == GL_NO_ERROR ) return false ;
 
-                std::string const __glstring = ::std::to_string( __so__err ) ;
+                std::string const __glstring = natus::ogl::to_string( __so__err ) ;
                 natus::log::global_t::error( msg + " " + __glstring ) ;
                 return true ;
             }

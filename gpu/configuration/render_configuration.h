@@ -25,12 +25,17 @@ namespace natus
 
             natus::gpu::backend_type _type ;
             natus::gpu::vertex_shader_t _vs ;
+            natus::gpu::geometry_shader_t _gs ;
             natus::gpu::pixel_shader_t _ps ;
 
-        public:
+            natus::std::string_t _geo ;
+            natus::std::string_t _name ;
 
-            render_configuration( void_t ) {}
+        public:
+            
             render_configuration( natus::gpu::backend_type const bt ) : _type(bt) {}
+            render_configuration( natus::std::string_cref_t name, natus::gpu::backend_type const bt ) 
+                : _name( name ), _type(bt) {}
             render_configuration( this_cref_t rhv )
             {
                 *this = rhv  ;
@@ -50,6 +55,17 @@ namespace natus
             // render states
             
             // geometry
+            this_ref_t set_geometry( natus::std::string_cref_t name ) noexcept 
+            {
+                _geo = name ;
+                return *this ;
+            }
+
+            natus::std::string_cref_t get_geometry( void_t ) const noexcept
+            {
+                return _geo ;
+            }
+
             // textures
 
             // shaders
@@ -66,24 +82,50 @@ namespace natus
             }
 
             natus::gpu::vertex_shader_cref_t get_vertex_shader( void_t ) const noexcept { return _vs ; }
+            natus::gpu::geometry_shader_cref_t get_geometry_shader( void_t ) const noexcept { return _gs ; }
             natus::gpu::pixel_shader_cref_t get_pixel_shader( void_t ) const noexcept { return _ps ; }
+
+            bool_t has_vertex_shader( void_t ) const noexcept
+            {
+                return natus::core::is_not( _vs.code().empty() ) ;
+            }
+
+            bool_t has_geometry_shader( void_t ) const noexcept 
+            {
+                return natus::core::is_not( _gs.code().empty() ) ; 
+            }
+
+            bool_t has_pixel_shader( void_t ) const noexcept
+            {
+                return natus::core::is_not( _ps.code().empty() ) ;
+            }
 
         public:
 
             this_ref_t operator = ( this_cref_t rhv )
             {
+                _type = rhv._type ;
                 _vs = rhv._vs ;
                 _ps = rhv._ps ;
+                _name = rhv._name ;
+                _geo = rhv._geo;
 
                 return *this ;
             }
 
             this_ref_t operator = ( this_rref_t rhv )
             {
+                _type = rhv._type ;
                 _vs = ::std::move( rhv._vs ) ;
                 _ps = ::std::move( rhv._ps ) ;
-
+                _name = ::std::move( rhv._name ) ;
+                _geo = ::std::move( rhv._geo ) ;
                 return *this ;
+            }
+
+            natus::std::string_cref_t name( void_t ) const noexcept
+            {
+                return _name ;
             }
         };
         natus_typedef( render_configuration ) ;
@@ -173,7 +215,23 @@ namespace natus
 
                 return iter != _configs.end() ;
             }
+
+            //***
+            bool_t find_configuration( natus::gpu::backend_type const bt, 
+                natus::gpu::render_configuration_out_t config ) const noexcept
+            {
+                auto iter = ::std::find_if( _configs.begin(), _configs.end(), 
+                    [&] ( this_t::data_in_t d ) {
+                    return d.config.get_type() == bt ; } ) ;
+
+                if( iter != _configs.end() )
+                {
+                    config = iter->config ;
+                }
+
+                return iter != _configs.end() ;
+            }
         };
-        natus_typedef( render_configurations ) ;
+        natus_soil_typedef( render_configurations ) ;
     }
 }

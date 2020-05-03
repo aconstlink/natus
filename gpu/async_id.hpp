@@ -44,7 +44,7 @@ namespace natus
                 return _config == res ;
             }
 
-            bool_t check_invalid_and_swap_user( natus::gpu::async_result const res )
+            bool_t check_and_swap_user( natus::gpu::async_result const res )
             {
                 natus::concurrent::lock_t lk( _mtx ) ;
                 if( _config != res ) return false ;

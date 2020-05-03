@@ -9,7 +9,8 @@ null_backend::null_backend( void_t ) {}
 null_backend::null_backend( this_rref_t rhv ) : backend( ::std::move( rhv ) ){}
 null_backend::~null_backend( void_t ) {}
 
-natus::gpu::id_t null_backend::configure( id_rref_t id, natus::gpu::geometry_configuration_in_t conf ) noexcept
+//***
+natus::gpu::id_t null_backend::configure( id_rref_t id, natus::gpu::geometry_configuration_res_t ) noexcept
 {
     static size_t number = 0 ;
 
@@ -21,13 +22,7 @@ natus::gpu::id_t null_backend::configure( id_rref_t id, natus::gpu::geometry_con
 }
 
 //***
-natus::gpu::id_t null_backend::configure( natus::gpu::render_configurations_in_t rc ) noexcept
-{
-    return this_t::configure( natus::gpu::id_t(), rc ) ;
-}
-
-//***
-natus::gpu::id_t null_backend::configure( id_rref_t id, natus::gpu::render_configurations_in_t ) noexcept 
+natus::gpu::id_t null_backend::configure( id_rref_t id, natus::gpu::render_configurations_res_t ) noexcept 
 {
     static size_t number = 0 ;
 

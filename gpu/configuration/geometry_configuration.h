@@ -24,17 +24,29 @@ namespace natus
             natus::gpu::vertex_buffer_t _vb ;
             natus::gpu::index_buffer_t _ib ;
 
+            natus::std::string_t _name ;
+
         public: 
 
-            geometry_configuration( void_t ) 
+            geometry_configuration( natus::std::string_cref_t name ) : _name(name)
             {}
 
-            geometry_configuration( natus::gpu::primitive_type const pt, 
+            geometry_configuration( natus::std::string_cref_t name, natus::gpu::primitive_type const pt, 
                 natus::gpu::vertex_buffer_cref_t vb, natus::gpu::index_buffer_cref_t ib )
             {
+                _name = name ;
                 _pt = pt ;
                 _vb = vb ;
                 _ib = ib ;
+            }
+
+            geometry_configuration( natus::std::string_cref_t name, natus::gpu::primitive_type const pt,
+                natus::gpu::vertex_buffer_rref_t vb, natus::gpu::index_buffer_rref_t ib )
+            {
+                _name = name ;
+                _pt = pt ;
+                _vb = ::std::move( vb ) ;
+                _ib = ::std::move( ib ) ;
             }
 
             geometry_configuration( this_cref_t rhv ) 
@@ -42,6 +54,7 @@ namespace natus
                 _pt = rhv._pt ;
                 _vb = rhv._vb ;
                 _ib = rhv._ib ;
+                _name = rhv._name ;
             }
 
             geometry_configuration( this_rref_t rhv )
@@ -49,6 +62,7 @@ namespace natus
                 _pt = rhv._pt ;
                 _vb = ::std::move( rhv._vb ) ;
                 _ib = ::std::move( rhv._ib ) ;
+                _name = ::std::move( rhv._name ) ;
             }
 
             ~geometry_configuration( void_t ) 
@@ -79,6 +93,11 @@ namespace natus
             natus::gpu::index_buffer_cref_t index_buffer( void_t ) const noexcept
             {
                 return _ib ;
+            }
+
+            natus::std::string_cref_t name( void_t ) const noexcept
+            {
+                return _name ;
             }
         };
         natus_soil_typedef( geometry_configuration ) ;

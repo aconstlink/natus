@@ -3,6 +3,7 @@ set( gl_sources
     gl/gl.h
     gl/gl.cpp
     gl/error.hpp
+    gl/convert.hpp
 )
 
 set( wgl_sources
