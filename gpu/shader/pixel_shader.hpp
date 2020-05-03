@@ -1,9 +1,7 @@
 
 #pragma once
 
-#include "../backend/id.hpp"
-
-#include <natus/std/string.hpp>
+#include "shader.hpp"
 
 namespace natus
 {

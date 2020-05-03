@@ -1,25 +1,19 @@
 
 #pragma once
 
-#include "../backend/id.hpp"
+#include "shader.hpp"
 #include "../buffer/vertex_attribute.h"
-#include <natus/std/string.hpp>
-
-#include <functional>
 
 namespace natus
 {
     namespace gpu
     {
-        class NATUS_GPU_API vertex_shader
+        class vertex_shader : public natus::gpu::shader<vertex_shader>
         {
+            typedef natus::gpu::shader<vertex_shader> base_t ;
             natus_this_typedefs( vertex_shader ) ;
 
         private:
-
-            natus::std::string_t _code ;
-
-            size_t _hash = 0 ;
 
             struct input_binding
             {
@@ -58,10 +52,9 @@ namespace natus
         public:
 
             vertex_shader( void_t ) {}
-            vertex_shader( natus::std::string_in_t code ) : _code( code ) 
-            {
-                _hash = ::std::hash<::std::string>{}( code ) ;
-            }
+            vertex_shader( natus::std::string_in_t code ) : base_t( code )
+            {}
+
             vertex_shader( this_cref_t rhv ) {
                 *this = rhv ;
             }
@@ -74,22 +67,17 @@ namespace natus
 
             this_ref_t operator = ( this_cref_t rhv )
             {
-                _code = rhv._code ;
-                _hash = rhv._hash ;
                 _inputs = rhv._inputs ;
+                static_cast< base_t& >( *this ).operator=( rhv ) ;
                 return *this ;
             }
 
             this_ref_t operator = ( this_rref_t rhv )
             {
-                _code = ::std::move( rhv._code ) ;
-                _hash = rhv._hash ;
-                rhv._hash = 0 ;
                 _inputs = ::std::move( rhv._inputs ) ;
+                static_cast< base_t& >( *this ).operator=( ::std::move( rhv ) ) ;
                 return *this ;
             }
-
-            natus::std::string code( void_t ) const { return _code ; }
 
         public:
 

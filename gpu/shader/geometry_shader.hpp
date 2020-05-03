@@ -1,15 +1,13 @@
 
 #pragma once
 
-#include "../backend/id.hpp"
-
-#include <natus/std/string.hpp>
+#include "shader.hpp"
 
 namespace natus
 {
     namespace gpu
     {
-        class NATUS_GPU_API geometry_shader
+        class NATUS_GPU_API geometry_shader 
         {
             natus_this_typedefs( geometry_shader ) ;
 
