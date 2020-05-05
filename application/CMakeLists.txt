@@ -32,8 +32,7 @@ set( sources
     protos.h
     result.h
     typedefs.h
-
-
+    
     app.h
     app.cpp
     global.h
@@ -42,6 +41,8 @@ set( sources
     platform/platform_application.h
     platform/platform_application.cpp
     platform/window_info.h   
+    platform/window_message.h
+    platform/window_message_receiver.hpp
     platform/gl_info.h
     platform/gfx_context.h
     )

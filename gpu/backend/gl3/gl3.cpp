@@ -17,6 +17,15 @@ using namespace natus::gpu ;
 
 namespace this_file
 {
+    struct camera_config
+    {
+        // proj
+        // view
+        // cam rot
+        // cam pos
+        // viewport
+    };
+
     struct geo_config
     {
         natus::std::string_t name ;

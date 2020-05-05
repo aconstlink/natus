@@ -51,6 +51,9 @@ app::wid_async_t app::create_window(
         natus::gpu::null_backend_t() ) ;
     natus::application::gfx_context_res_t ctx ;
 
+    auto rnd_msg_recv = natus::application::window_message_receiver_res_t(
+        natus::application::window_message_receiver_t() ) ;
+
     {
         #if defined( NATUS_GRAPHICS_WGL )
 
@@ -89,6 +92,17 @@ app::wid_async_t app::create_window(
         }
 
         ctx = glctx ;
+
+        {
+            pwi.msg_recv = natus::application::window_message_receiver_res_t(
+                natus::application::window_message_receiver_t() ) ;
+            wglw->get_window()->register_listener( pwi.msg_recv ) ; // application
+            wglw->get_window()->register_listener( rnd_msg_recv ) ; // render
+        }
+
+        // show the window after all listeners have been registered.
+        wglw->get_window()->show_window( wii ) ;
+
         #elif defined( NATUS_GRAPHICS_GLX )
         #endif
 
@@ -109,10 +123,19 @@ app::wid_async_t app::create_window(
         auto async_ = async ;
         auto ctx_ = ctx ;
         auto run_ = run ;
+        auto recv = rnd_msg_recv ;
 
         ctx_->activate() ;
         while( *run_ ) 
         {    
+            {
+                natus::application::window_message_receiver_t::state_vector sv ;
+                if( recv->swap_and_reset( sv ) )
+                {
+                    // tess render backend stuff
+                    natus::log::global_t::status("have message") ;
+                }
+            }
             async_->wait_for_frame() ;
             async_->system_update() ;
             async_->set_ready() ;

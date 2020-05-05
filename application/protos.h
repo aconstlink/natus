@@ -13,7 +13,6 @@ namespace natus
         natus_class_proto_typedefs( window_application ) ;
         natus_class_proto_typedefs( iwindow ) ;
         natus_class_proto_typedefs( iwindow_handle ) ;
-        natus_class_proto_typedefs( iwindow_listener ) ;
         
 
         natus_class_proto_typedefs( platform_window ) ;

@@ -32,6 +32,7 @@ namespace natus
 
                 window( void_t ) ;
                 window( window_info_cref_t ) ;
+                window( this_cref_t rhv ) = delete ;
                 window( this_rref_t rhv ) ;
                 virtual ~window( void_t ) ;
 
@@ -40,6 +41,8 @@ namespace natus
                 HWND get_handle( void_t ) ;
 
                 void_t send_toggle( natus::application::toggle_window_in_t ) ;
+
+                void_t show_window(  window_info const & wi ) ;
 
             private:
 
@@ -56,6 +59,12 @@ namespace natus
 
                 /// used to pass to windows for the callback. It is the wrapper that calls the real proc function.
                 static LRESULT CALLBACK StaticWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) ;
+
+            private:
+
+                void_t send_show( WPARAM ) ;
+                void_t send_resize( HWND ) ;
+                void_t send_destroy( void_t ) ;
             };
             natus_typedef( window ) ;
             typedef natus::soil::res< window > window_res_t ;

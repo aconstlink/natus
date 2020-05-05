@@ -22,7 +22,7 @@ window::window( gl_info_cref_t gli, window_info_cref_t wi )
     // give it a test
     {
         _context->activate() ;
-        _context->clear_now( natus::math::vec4f_t(0.0f,0.0f,0.0f,1.0f) ) ;
+        _context->clear_now( natus::math::vec4f_t(0.5f,0.5f,1.0f,1.0f) ) ;
         _context->swap() ;
         _context->clear_now( natus::math::vec4f_t(0.5f,0.5f,1.0f,1.0f) ) ;
         _context->swap() ;

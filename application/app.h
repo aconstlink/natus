@@ -46,6 +46,7 @@ namespace natus
                 natus::concurrent::mutex_t mtx ;
                 natus::concurrent::thread_t rnd_thread ;
                 natus::application::platform_window_res_t wnd ;
+                natus::application::window_message_receiver_res_t msg_recv ;
                 natus::gpu::async_res_t async ;
                 window_info_t wi ;
                 bool_ptr_t run ;
@@ -57,6 +58,7 @@ namespace natus
                     wnd = ::std::move( rhv.wnd ) ;
                     async = ::std::move( rhv.async ) ;
                     wi = ::std::move( rhv.wi ) ;
+                    msg_recv = ::std::move( rhv.msg_recv ) ;
                     natus_move_member_ptr( run, rhv ) ;
                 }
                 ~per_window_info( void_t ) {}

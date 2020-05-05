@@ -7,19 +7,19 @@
 using namespace natus::application ;
 using namespace natus::application::win32 ;
 
-//***********************************************************************
+//***
 window::window( void_t ) 
 {
 }
 
-//***********************************************************************
+//***
 window::window( window_info_cref_t info ) 
 {
     this_t::create_window( info ) ;
 }
 
-//***********************************************************************
-window::window( this_rref_t rhv ) 
+//***
+window::window( this_rref_t rhv ) : platform_window( ::std::move( rhv ) )
 {
     _handle = rhv._handle ;
     rhv._handle = NULL ;
@@ -37,19 +37,19 @@ window::window( this_rref_t rhv )
     _name = ::std::move( rhv._name ) ;
 }
 
-//***********************************************************************
+//***
 window::~window( void_t ) 
 {
     this_t::destroy_window() ;
 }
 
-//***********************************************************************
+//***
 HWND window::get_handle( void_t ) 
 {
     return _handle ;
 }
 
-//***********************************************************************
+//***
 void_t window::send_toggle( natus::application::toggle_window_in_t di ) 
 {
     if( di.toggle_fullscreen )
@@ -115,7 +115,7 @@ void_t window::send_toggle( natus::application::toggle_window_in_t di )
     }
 }
 
-//***********************************************************************
+//***
 HWND window::create_window( window_info const & wi ) 
 {
     window_info wil = wi ;
@@ -199,8 +199,6 @@ HWND window::create_window( window_info const & wi )
         "[window::create_window] : CreateWindowA failed" ) )
         exit(0) ;
 
-    if( wi.show ) ShowWindow( hwnd, SW_SHOW ) ;
-
     // Important action here. The user data is used pass the object
     // that will perform the callback in the static wndproc
     SetWindowLongPtr( hwnd, GWLP_USERDATA, (LONG_PTR)this ) ;
@@ -210,7 +208,7 @@ HWND window::create_window( window_info const & wi )
     return hwnd ;
 }
 
-//***********************************************************************
+//***
 void_t window::destroy_window( void_t ) 
 {
     if( _handle == NULL ) return ;
@@ -219,14 +217,14 @@ void_t window::destroy_window( void_t )
     DestroyWindow( _handle ) ;
 }
 
-//***********************************************************************
+//***
 LRESULT CALLBACK window::StaticWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     this_ptr_t wnd_ptr = (this_ptr_t)GetWindowLongPtr( hwnd, GWLP_USERDATA ) ;
     return wnd_ptr ? wnd_ptr->WndProc(hwnd, msg, wParam, lParam) : DefWindowProc(hwnd, msg, wParam, lParam) ;
 }
 
-//***********************************************************************
+//***
 LRESULT CALLBACK window::WndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     switch( msg )
@@ -234,20 +232,10 @@ LRESULT CALLBACK window::WndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
     case WM_SYSCOMMAND: break ;
 
     case WM_SHOWWINDOW:
-        #if 0
-        {
-            natus::application::show_message const amsg { bool_t(wParam == TRUE) } ;
-            for( auto lptr : _msg_listeners )
-            {                
-                lptr->on_visible( amsg ) ;
-            }
-        }
-        #endif
-
+        this_t::send_show( wParam ) ;
         // pass-through
-        // break ;
     case WM_SIZE:
-        //this_t::send_resize( hwnd ) ;
+        this_t::send_resize( hwnd ) ;
         break ;
         
     case WM_DPICHANGED:
@@ -281,15 +269,7 @@ LRESULT CALLBACK window::WndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 
     case WM_CLOSE: 
     case WM_DESTROY: 
-        #if 0
-        {
-            natus::application::close_message const amsg { true } ;
-            for( auto lptr : _msg_listeners )
-            {
-                lptr->on_close(amsg) ;
-            }
-        }
-        #endif
+        this_t::send_destroy() ;
         // post a WM_USER message to the stream so the 
         // win32_application knows when a window is closed.
         PostMessage( hwnd, WM_USER, wParam, lParam ) ;
@@ -300,22 +280,57 @@ LRESULT CALLBACK window::WndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
     return DefWindowProc( hwnd, msg, wParam, lParam ) ;
 }
 
-#if 0
-//***********************************************************************
+//***
+void_t window::show_window(  window_info const & wi ) 
+{
+    if( wi.show ) 
+    {
+        ShowWindow( _handle, SW_SHOW ) ;
+    }
+    else 
+    {
+        ShowWindow( _handle, SW_HIDE ) ;
+    }
+}
+
+//***
+void_t window::send_show( WPARAM wparam ) 
+{
+    natus::application::show_message const amsg { bool_t( wparam == TRUE ) } ;
+    this_t::foreach_listener( [&] ( natus::application::iwindow_message_listener_res_t lst )
+    {
+        lst->on_visible( amsg ) ;
+    } ) ;
+}
+
+//***
 void_t window::send_resize( HWND hwnd ) 
 {
     RECT rect ;
     GetClientRect( hwnd, &rect ) ;
 
-    natus::application::resize_message rm {
+    natus::application::resize_message const rm {
         size_t(rect.left), size_t(rect.top), 
         size_t(rect.right-rect.left), size_t(rect.bottom-rect.top)
     } ;
 
-    for( auto lptr : _msg_listeners )
-        lptr->on_resize( rm ) ;
+    this_t::foreach_listener( [&] ( natus::application::iwindow_message_listener_res_t lst ) 
+    { 
+        lst->on_resize( rm ) ;
+    } ) ;
 }
 
+//***
+void_t window::send_destroy( void_t ) 
+{
+    natus::application::close_message const amsg { true } ;
+    this_t::foreach_listener( [&] ( natus::application::iwindow_message_listener_res_t lst )
+    {
+        lst->on_close( amsg ) ;
+    } ) ;
+}
+
+#if 0
 //***********************************************************************
 void_t window::get_monitor_info( HWND hwnd, MONITORINFO & imon_out ) 
 {
