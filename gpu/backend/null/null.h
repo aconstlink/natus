@@ -21,6 +21,8 @@ namespace natus
 
         public:
 
+            virtual void_t set_window_info( window_info_cref_t ) noexcept ;
+
             virtual natus::gpu::id_t configure( id_rref_t id, natus::gpu::geometry_configuration_res_t ) noexcept override ;
 
             virtual natus::gpu::id_t configure( id_rref_t id,

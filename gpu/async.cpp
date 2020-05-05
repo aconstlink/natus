@@ -25,6 +25,15 @@ async::~async( void_t )
 {}
 
 //****
+natus::gpu::result async::set_window_info( natus::gpu::backend_t::window_info_cref_t wi ) noexcept 
+{
+    natus::concurrent::lock_guard_t lk( _window_info_mtx ) ;
+    _window_info_set = true ;
+    _window_info = wi ;
+    return natus::gpu::result::ok ;
+}
+
+//****
 natus::gpu::result async::configure( natus::gpu::async_id_res_t aid, 
     natus::gpu::geometry_configuration_res_t gconfig ) noexcept
 {
@@ -62,6 +71,18 @@ natus::gpu::result async::render( natus::gpu::async_id_res_t aid ) noexcept
 //****
 void_t async::system_update( void_t ) noexcept 
 {
+    // window info
+    if( _window_info_set )
+    {
+        natus::gpu::backend_t::window_info_t wi ;
+        {
+            natus::concurrent::lock_guard_t lk( _window_info_mtx ) ;
+            wi = _window_info ;
+            _window_info_set = false ;
+        }
+        _backend->set_window_info( wi ) ;
+    }
+
     // geometry configs
     {
         this_t::gconfigs_t preps ;

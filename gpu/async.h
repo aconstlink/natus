@@ -20,6 +20,10 @@ namespace natus
             /// decorated backend.
             backend_res_t _backend ;
 
+            bool_t _window_info_set = false  ;
+            natus::gpu::backend_t::window_info_t _window_info ;
+            natus::concurrent::mutex_t _window_info_mtx ;
+
             struct rconfig_data
             {
                 natus::gpu::async_id_res_t aid = natus::gpu::async_id_t() ;
@@ -65,11 +69,13 @@ namespace natus
 
         public:
 
-            virtual natus::gpu::result configure( natus::gpu::async_id_res_t, natus::gpu::geometry_configuration_res_t ) noexcept ;
+            natus::gpu::result set_window_info( natus::gpu::backend_t::window_info_cref_t ) noexcept ;
 
-            virtual natus::gpu::result configure( natus::gpu::async_id_res_t, natus::gpu::render_configurations_res_t ) noexcept ;
+            natus::gpu::result configure( natus::gpu::async_id_res_t, natus::gpu::geometry_configuration_res_t ) noexcept ;
 
-            virtual natus::gpu::result render( natus::gpu::async_id_res_t ) noexcept ;
+            natus::gpu::result configure( natus::gpu::async_id_res_t, natus::gpu::render_configurations_res_t ) noexcept ;
+
+            natus::gpu::result render( natus::gpu::async_id_res_t ) noexcept ;
 
         public:
 

@@ -9,6 +9,11 @@ null_backend::null_backend( void_t ) {}
 null_backend::null_backend( this_rref_t rhv ) : backend( ::std::move( rhv ) ){}
 null_backend::~null_backend( void_t ) {}
 
+//****
+void_t null_backend::set_window_info( window_info_cref_t ) noexcept
+{
+}
+
 //***
 natus::gpu::id_t null_backend::configure( id_rref_t id, natus::gpu::geometry_configuration_res_t ) noexcept
 {

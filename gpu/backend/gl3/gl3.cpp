@@ -112,6 +112,9 @@ struct gl3_backend::pimpl
     typedef natus::std::vector< this_file::geo_config > geo_configs_t ;
     geo_configs_t geo_configs ;
 
+    GLsizei vp_width = 0 ;
+    GLsizei vp_height = 0 ;
+
     pimpl( void_t ) 
     {}
 
@@ -836,6 +839,12 @@ struct gl3_backend::pimpl
         }
         return true ;
     }
+
+    void_t change_root_viewport( void_t ) 
+    {
+        natus::ogl::gl::glViewport( 0, 0, vp_width, vp_height ) ;
+        natus::ogl::error::check_and_log( natus_log_fn( "glViewport" ) ) ;
+    }
 };
 
 //************************************************************************************************
@@ -861,6 +870,28 @@ gl3_backend::~gl3_backend( void_t )
 {
     if( natus::core::is_not_nullptr( _pimpl ) )
         natus::memory::global_t::dealloc( _pimpl ) ;
+}
+
+//****
+void_t gl3_backend::set_window_info( window_info_cref_t wi ) noexcept 
+{
+    {
+        bool_t change = false ;
+        if( wi.width != 0 )
+        {
+            _pimpl->vp_width = GLsizei( wi.width ) ;
+            change = true ;
+        }
+        if( wi.height != 0 )
+        {
+            _pimpl->vp_height = GLsizei( wi.height ) ;
+            change = true ;
+        }
+        if( change )
+        {
+            _pimpl->change_root_viewport() ;
+        }
+    }
 }
 
 //****

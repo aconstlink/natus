@@ -132,8 +132,14 @@ app::wid_async_t app::create_window(
                 natus::application::window_message_receiver_t::state_vector sv ;
                 if( recv->swap_and_reset( sv ) )
                 {
-                    // tess render backend stuff
-                    natus::log::global_t::status("have message") ;
+                    natus::gpu::backend_t::window_info_t wi ;
+                    if( sv.resize_changed )
+                    {
+                        wi.width = sv.resize_msg.w ;
+                        wi.height = sv.resize_msg.h ;
+                    }
+
+                    async_->set_window_info( wi ) ;
                 }
             }
             async_->wait_for_frame() ;
