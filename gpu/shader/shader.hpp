@@ -77,7 +77,7 @@ namespace natus
 
         public:
 
-            T & add_variable_binding( natus::gpu::binding_point const bp, 
+            T & add_input_binding( natus::gpu::binding_point const bp, 
                 natus::std::string_cref_t name )
             {
                 variable_binding vb ;
