@@ -209,7 +209,9 @@ namespace natus
             { natus::ogl::gl::glUniformMatrix3fv( loc, count, GL_TRUE, ( const GLfloat* ) p ); } ;
 
             case GL_FLOAT_MAT4: return [=] ( GLuint loc, GLuint count, void_ptr_t p )
-            { natus::ogl::gl::glUniformMatrix4fv( loc, count, GL_TRUE, ( const GLfloat* ) p ); } ;
+            { 
+                natus::ogl::gl::glUniformMatrix4fv( loc, count, GL_TRUE, ( const GLfloat* ) p ); 
+            } ;
 
                 //************************************************************
 
@@ -233,6 +235,108 @@ namespace natus
             case GL_UNSIGNED_INT_SAMPLER_2D_ARRAY: 
                 return [=] ( GLuint loc, GLuint count, void_ptr_t p )
                 { natus::ogl::gl::glUniform1iv( loc, count, ( const GLint* ) p ); } ;
+
+            default: break ;
+            }
+            return empty_funk ;
+        }
+
+        typedef ::std::function< void_t ( void_ptr_t ) > uniform_default_value_funk_t ;
+
+        static natus::ogl::uniform_default_value_funk_t uniform_default_value( GLenum const e ) noexcept
+        {
+            natus::ogl::uniform_default_value_funk_t empty_funk =
+                [=] ( void_ptr_t ) { } ;
+
+            switch( e )
+            {
+
+                //************************************************************
+
+            case GL_FLOAT: return [=] ( void_ptr_t p )
+            { ::std::memset( p, 0, sizeof( GLfloat ) ) ; } ;
+
+            case GL_FLOAT_VEC2: return [=] ( void_ptr_t p )
+            { ::std::memset( p, 0, sizeof( GLfloat ) * 2 ) ; } ;
+
+            case GL_FLOAT_VEC3: return [=] ( void_ptr_t p )
+            { ::std::memset( p, 0, sizeof( GLfloat ) * 3 ) ; } ;
+
+            case GL_FLOAT_VEC4: return [=] ( void_ptr_t p )
+            { ::std::memset( p, 0, sizeof( GLfloat ) * 4 ) ; } ;
+
+                //************************************************************
+
+            case GL_INT: return [=] ( void_ptr_t p )
+            { ::std::memset( p, 0, sizeof( GLint ) ) ; } ;
+
+            case GL_INT_VEC2: return [=] ( void_ptr_t p )
+            { ::std::memset( p, 0, sizeof( GLint ) * 2 ) ; } ;
+
+            case GL_INT_VEC3: return [=] ( void_ptr_t p )
+            { ::std::memset( p, 0, sizeof( GLint ) * 3 ) ; } ;
+
+            case GL_INT_VEC4: return [=] ( void_ptr_t p )
+            { ::std::memset( p, 0, sizeof( GLint ) * 4 ) ; } ;
+
+                //************************************************************
+
+            case GL_UNSIGNED_INT: return [=] ( void_ptr_t p )
+            { ::std::memset( p, 0, sizeof( GLuint ) ) ; } ;
+
+            case GL_UNSIGNED_INT_VEC2: return [=] ( void_ptr_t p )
+            { ::std::memset( p, 0, sizeof( GLuint ) * 2 ) ; } ;
+
+            case GL_UNSIGNED_INT_VEC3: return [=] ( void_ptr_t p )
+            { ::std::memset( p, 0, sizeof( GLuint ) * 3 ) ; } ;
+
+            case GL_UNSIGNED_INT_VEC4: return [=] ( void_ptr_t p )
+            { ::std::memset( p, 0, sizeof( GLuint ) * 4 ) ; } ;
+
+                //************************************************************
+
+            case GL_FLOAT_MAT2: return [=] ( void_ptr_t p )
+            { 
+                ::std::memset( p, 0, sizeof( GLfloat ) * 4 ) ; 
+                ( ( GLfloat* ) p )[ 0 ] = 1.0f ; ( ( GLfloat* ) p )[ 3 ] = 1.0f ;
+            } ;
+
+            case GL_FLOAT_MAT3: return [=] ( void_ptr_t p )
+            { 
+                ::std::memset( p, 0, sizeof( GLfloat ) * 9 ) ; 
+                ( ( GLfloat* ) p )[ 0 ] = 1.0f ; ( ( GLfloat* ) p )[ 4 ] = 1.0f ; 
+                ( ( GLfloat* ) p )[ 8 ] = 1.0f ; 
+            } ;
+
+            case GL_FLOAT_MAT4: return [=] ( void_ptr_t p )
+            { 
+                ::std::memset( p, 0, sizeof( GLfloat ) * 16 ) ; 
+                ( ( GLfloat* ) p )[ 0 ] = 1.0f ; ( ( GLfloat* ) p )[ 5 ] = 1.0f ;
+                ( ( GLfloat* ) p )[ 10 ] = 1.0f ; ( ( GLfloat* ) p )[ 15 ] = 1.0f ;
+            } ;
+
+                //************************************************************
+
+            case GL_SAMPLER_1D: 
+            case GL_SAMPLER_2D: 
+            case GL_SAMPLER_3D: 
+            case GL_INT_SAMPLER_1D: 
+            case GL_INT_SAMPLER_2D: 
+            case GL_INT_SAMPLER_3D: 
+            case GL_UNSIGNED_INT_SAMPLER_1D: 
+            case GL_UNSIGNED_INT_SAMPLER_2D: 
+            case GL_UNSIGNED_INT_SAMPLER_3D: 
+            case GL_SAMPLER_CUBE: 
+            case GL_SAMPLER_1D_SHADOW: 
+            case GL_SAMPLER_2D_SHADOW: 
+            case GL_SAMPLER_BUFFER:
+            case GL_INT_SAMPLER_BUFFER: 
+            case GL_UNSIGNED_INT_SAMPLER_BUFFER: 
+            case GL_SAMPLER_2D_ARRAY: 
+            case GL_INT_SAMPLER_2D_ARRAY: 
+            case GL_UNSIGNED_INT_SAMPLER_2D_ARRAY: 
+                return [=] ( void_ptr_t p )
+                { ::std::memset( p, 0, sizeof( GLint ) ) ; } ;
 
             default: break ;
             }

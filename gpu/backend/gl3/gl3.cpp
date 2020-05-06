@@ -90,6 +90,12 @@ namespace this_file
             GLenum type ;
             void_ptr_t mem = nullptr ;
             natus::ogl::uniform_funk_t uniform_funk ;
+
+            void_t do_uniform_funk( void_t )
+            {
+                uniform_funk( loc, 1, mem ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glUniform" ) ) ;
+            }
         };
         natus_typedef( uniform_variable ) ;
 
@@ -317,6 +323,7 @@ struct gl3_backend::pimpl
         }
         config.uniforms.clear() ;
         natus::memory::global_t::dealloc( config.uniform_mem ) ;
+        config.uniform_mem = nullptr ;
     }
 
     //***********************
@@ -599,6 +606,7 @@ struct gl3_backend::pimpl
             {
                 sib += natus::ogl::uniform_size_of( v.type ) ;
             }
+            natus_assert( config.uniform_mem == nullptr ) ;
             config.uniform_mem = natus::memory::global_t::alloc( sib, 
                 natus_log_fn("uniform memory block") ) ;
         }
@@ -609,8 +617,24 @@ struct gl3_backend::pimpl
             for( auto& v : config.uniforms )
             {
                 v.mem = void_ptr_t( byte_ptr_t( config.uniform_mem ) + sib ) ;
+                natus::ogl::uniform_default_value( v.type )( v.mem ) ;
                 sib += natus::ogl::uniform_size_of( v.type ) ;
             }
+        }
+    }
+
+    //***********************
+    void_t update_all_uniforms( GLuint const program_id, this_file::render_config & config )
+    {
+        {
+            natus::ogl::gl::glUseProgram( config.pg_id ) ;
+            if( natus::ogl::error::check_and_log( natus_log_fn( "glUseProgram" ) ) )
+                return ;
+        }
+
+        for( auto & v : config.uniforms )
+        {
+            v.do_uniform_funk() ;
         }
     }
 
@@ -667,7 +691,7 @@ struct gl3_backend::pimpl
         
         {
             this_t::post_link_uniforms( config.pg_id, config ) ;
-            // link uniforms with variables
+            this_t::update_all_uniforms( config.pg_id, config ) ;
         }
 
         return true ;
