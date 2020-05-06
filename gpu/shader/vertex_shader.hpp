@@ -81,7 +81,7 @@ namespace natus
 
         public:
 
-            this_ref_t add_input_binding( natus::gpu::vertex_attribute const va, 
+            this_ref_t add_vertex_binding( natus::gpu::vertex_attribute const va, 
                 natus::std::string_cref_t name )
             {
                 auto iter = ::std::find_if( _inputs.begin(), _inputs.end(), 
