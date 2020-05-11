@@ -27,7 +27,7 @@ natus::gpu::id_t null_backend::configure( id_rref_t id, natus::gpu::geometry_con
 }
 
 //***
-natus::gpu::id_t null_backend::configure( id_rref_t id, natus::gpu::render_configurations_res_t ) noexcept 
+natus::gpu::id_t null_backend::configure( id_rref_t id, natus::gpu::render_configuration_res_t ) noexcept 
 {
     static size_t number = 0 ;
 
@@ -42,4 +42,14 @@ natus::gpu::id_t null_backend::configure( id_rref_t id, natus::gpu::render_confi
 natus::gpu::id_t null_backend::render( id_rref_t id ) noexcept 
 {
     return ::std::move( id ) ;
+}
+
+//***
+void_t null_backend::render_begin( void_t ) noexcept 
+{
+}
+
+//***
+void_t null_backend::render_end( void_t ) noexcept 
+{
 }

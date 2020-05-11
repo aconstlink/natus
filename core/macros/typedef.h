@@ -4,9 +4,6 @@
 #define natus_typedefs_extend( from_, to_ )                                \
     typedef to_ ## _t * to_ ## _ptr_t ;                                 \
     typedef to_ ## _t * to_ ## _vtr_t ;                                 \
-    typedef to_ ## _t * to_ ## _utr_t ;                 /*unique ptr*/  \
-    typedef to_ ## _t * to_ ## _str_t ;                 /*shared ptr*/  \
-    typedef to_ ## _t const * to_ ## _cstr_t ;    /*const shared ptr*/  \
     typedef to_ ## _t & to_ ## _ref_t ;                                 \
     typedef to_ ## _t && to_ ## _rref_t ;                               \
     typedef to_ ## _t const * to_ ## _cptr_t ;                          \
@@ -34,9 +31,6 @@
     typedef this_t const & this_cref_t ;                                \
     typedef this_t * this_ptr_t ;                                       \
     typedef this_t const * this_cptr_t ;                                \
-    typedef this_t * this_utr_t ;               /*unique ptr*/          \
-    typedef this_t * this_str_t ;               /*shared ptr*/          \
-    typedef this_t const * this_cstr_t ;        /*const shared ptr*/    \
     typedef this_t && this_rref_t ;                                     \
     typedef this_t & this_inout_t
 
@@ -47,9 +41,6 @@
     typedef x const * x ## _cptr_t ;                                    \
     typedef x * const x ## _ptrc_t ;                                    \
     typedef x const * const x ## _cptrc_t ;                             \
-    typedef x * x ## _utr_t ;                     /*unique ptr*/        \
-    typedef x * x ## _str_t ;                     /*shared ptr*/        \
-    typedef x const * x ## _cstr_t ;              /*const shared ptr*/  \
     typedef x && x ## _rref_t ;                                         \
     typedef x & x ## _inout_t
 
@@ -60,7 +51,4 @@
     typedef x const * x ## _cptr_t ;                                    \
     typedef x * const x ## _ptrc_t ;                                    \
     typedef x const * const x ## _cptrc_t ;                             \
-    typedef x const * x ## _cvtr_t ;                                    \
-    typedef x * x ## _utr_t ;                     /*unique ptr*/        \
-    typedef x * x ## _str_t ;                     /*shared ptr*/        \
-    typedef x const * x ## _cstr_t               /*const shared ptr*/   
+    typedef x const * x ## _cvtr_t                                         

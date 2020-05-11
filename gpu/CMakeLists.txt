@@ -19,7 +19,7 @@ set( sources
     
     "backend/gl3/gl3.h"
     "backend/gl3/gl3.cpp"
-    "backend/gl3/gl3_constants.h"
+    "backend/gl3/gl3_convert.h"
     "backend/es3/es3.h"
     "backend/es3/es3.cpp"
     "backend/null/null.h"
@@ -37,6 +37,10 @@ set( sources
 
     "configuration/render_configuration.h"
     "configuration/geometry_configuration.h"
+
+    "variable/variable.hpp"
+    "variable/variable_set.hpp"
+    "variable/type_traits.hpp"
     )
 
 natus_vs_src_dir( sources )

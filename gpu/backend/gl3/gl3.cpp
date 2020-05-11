@@ -1,6 +1,7 @@
 
 
 #include "gl3.h"
+#include "gl3_convert.h"
 
 #include "../../buffer/vertex_buffer.hpp"
 #include "../../buffer/index_buffer.hpp"
@@ -38,9 +39,7 @@ namespace this_file
 
         size_t num_elements_vb = 0 ;
         size_t num_elements_ib = 0 ;
-
-        // per vertex sib
-        GLuint stride = 0 ;
+        
         struct layout_element
         {
             natus::gpu::vertex_attribute va ;
@@ -54,6 +53,9 @@ namespace this_file
             }
         };
         natus::std::vector< layout_element > elements ;
+
+        // per vertex sib
+        GLuint stride = 0 ;
 
         GLenum ib_type ;
         size_t ib_elem_sib = 0  ;
@@ -125,14 +127,14 @@ struct gl3_backend::pimpl
     {}
 
     size_t construct_rconfig( size_t oid, natus::std::string_cref_t name, 
-        natus::gpu::render_configuration_ptr_t config )  
+        natus::gpu::render_configuration_ref_t config )  
     {
         // the name is unique
         {
             auto iter = ::std::find_if( rconfigs.begin(), rconfigs.end(),
-                [&] ( this_file::render_config const& config )
+                [&] ( this_file::render_config const& c )
             {
-                return config.name == name ;
+                return c.name == name ;
             } ) ;
             
             if( iter != rconfigs.end() )
@@ -210,7 +212,7 @@ struct gl3_backend::pimpl
         }
 
         // geometry shader
-        if( config->has_geometry_shader() )
+        if( config.has_geometry_shader() )
         {
             GLuint id = rconfigs[ oid ].gs_id ;
 
@@ -266,7 +268,7 @@ struct gl3_backend::pimpl
         }
 
         // pixel shader
-        if( config->has_pixel_shader() )
+        if( config.has_pixel_shader() )
         {
             GLuint id = rconfigs[ oid ].ps_id ;
             if( id == GLuint(-1) )
@@ -766,7 +768,7 @@ struct gl3_backend::pimpl
             geo_configs[ i ].num_elements_vb = geo.vertex_buffer().get_num_elements() ;
             geo_configs[ i ].ib_elem_sib = geo.index_buffer().get_element_sib() ;
             geo_configs[ i ].ib_type = GL_UNSIGNED_INT ;
-            geo_configs[ i ].pt = GL_TRIANGLE_FAN ; //  geo.primitive_type() ;
+            geo_configs[ i ].pt = natus::gpu::gl3::convert( geo.primitive_type() ) ; 
         }
 
         return i ;
@@ -833,7 +835,7 @@ struct gl3_backend::pimpl
 
         // render section
         {
-            GLenum const pt = GL_TRIANGLES ;
+            GLenum const pt = config.geo->pt ;
             GLuint const vb = config.geo->vb_id ;
             GLuint const ib = config.geo->ib_id ;
 
@@ -864,8 +866,14 @@ struct gl3_backend::pimpl
         return true ;
     }
 
-    void_t change_root_viewport( void_t ) 
+    void_t begin_frame( void_t ) 
     {
+        //natus::ogl::gl::glClearColor( 0.1f, 0.1f, 0.1f, 1.0f ) ;
+        //natus::ogl::error::check_and_log( natus_log_fn( "glClearColor" ) ) ;
+
+        //natus::ogl::gl::glClear( GL_COLOR_BUFFER_BIT ) ;
+        //natus::ogl::error::check_and_log( natus_log_fn( "glClear" ) ) ;
+        
         natus::ogl::gl::glViewport( 0, 0, vp_width, vp_height ) ;
         natus::ogl::error::check_and_log( natus_log_fn( "glViewport" ) ) ;
     }
@@ -877,7 +885,7 @@ struct gl3_backend::pimpl
 //************************************************************************************************
 
 //****
-gl3_backend::gl3_backend( void_t ) noexcept
+gl3_backend::gl3_backend( void_t ) noexcept : backend( natus::gpu::backend_type::gl3 )
 {
     _pimpl = natus::memory::global_t::alloc( pimpl(), 
         natus_log_fn("gl3_backend::pimpl") ) ;
@@ -911,10 +919,6 @@ void_t gl3_backend::set_window_info( window_info_cref_t wi ) noexcept
             _pimpl->vp_height = GLsizei( wi.height ) ;
             change = true ;
         }
-        if( change )
-        {
-            _pimpl->change_root_viewport() ;
-        }
     }
 }
 
@@ -946,19 +950,11 @@ natus::gpu::id_t gl3_backend::configure( id_rref_t id,
 }
 
 //****
-natus::gpu::id_t gl3_backend::configure( id_rref_t id, natus::gpu::render_configurations_res_t configs ) noexcept 
+natus::gpu::id_t gl3_backend::configure( id_rref_t id, natus::gpu::render_configuration_res_t config ) noexcept 
 {
-    natus::gpu::render_configuration_t config( natus::gpu::backend_type::unknown ) ;
-    if( natus::core::is_not(configs->find_configuration( natus::gpu::backend_type::gl3, config )) )
-    {
-        natus::log::global_t::warning( natus_log_fn("render configuration backend missing - " + 
-             natus::gpu::to_string(natus::gpu::backend_type::gl3) ) ) ;
-        return natus::gpu::id_t() ;
-    }
-    
     {
         id = natus::gpu::id_t( this_t::get_bid(),
-            _pimpl->construct_rconfig( id.get_oid(), config.name(), &config ) ) ;
+            _pimpl->construct_rconfig( id.get_oid(), config->name(), *config ) ) ;
     }
 
     if( id.is_not_bid( this_t::get_bid() ) )
@@ -970,7 +966,7 @@ natus::gpu::id_t gl3_backend::configure( id_rref_t id, natus::gpu::render_config
     size_t const oid = id.get_oid() ;
 
     {
-        auto const res = _pimpl->update( id.get_oid(), config ) ;
+        auto const res = _pimpl->update( id.get_oid(), *config ) ;
         if( natus::core::is_not( res ) )
         {
             return ::std::move( id ) ;
@@ -994,4 +990,14 @@ natus::gpu::id_t gl3_backend::render( id_rref_t id ) noexcept
     _pimpl->render( id.get_oid() ) ;
 
     return ::std::move( id ) ;
+}
+
+//****
+void_t gl3_backend::render_begin( void_t ) noexcept 
+{
+    _pimpl->begin_frame() ;
+}
+
+void_t gl3_backend::render_end( void_t ) noexcept 
+{
 }

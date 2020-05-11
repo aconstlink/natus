@@ -27,6 +27,9 @@ namespace natus
         private:
 
             typedef ::std::shared_ptr< T > sptr_t ;
+            typedef ::std::shared_ptr< T > const scptr_t ;
+            typedef ::std::shared_ptr< const T > sptrc_t ;
+
             sptr_t _data ;
 
         public:
@@ -90,6 +93,21 @@ namespace natus
             sptr_t operator -> ( void_t ) 
             {
                 return _data ;
+            }
+
+            scptr_t operator -> ( void_t ) const
+            {
+                return _data ;
+            }
+
+            T & operator * ( void_t )
+            {
+                return *_data ;
+            }
+
+            T const & operator * ( void_t ) const
+            {
+                return *_data ;
             }
 
             this_ref_t operator = ( this_cref_t rhv )

@@ -124,7 +124,8 @@ namespace natus
                     return _async->configure( id, config ) ;
                 }
 
-                natus::gpu::result configure( natus::gpu::async_id_res_t id, natus::gpu::render_configurations_res_t configs ) noexcept
+                natus::gpu::result configure( natus::gpu::async_id_res_t id, 
+                    natus::gpu::render_configurations_t configs ) noexcept
                 {
                     return _async->configure( id, configs ) ;
                 }

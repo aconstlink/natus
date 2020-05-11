@@ -27,7 +27,7 @@ namespace natus
             struct rconfig_data
             {
                 natus::gpu::async_id_res_t aid = natus::gpu::async_id_t() ;
-                natus::gpu::render_configurations_res_t config ;
+                natus::gpu::render_configuration_res_t config ;
             };
             typedef natus::std::vector< rconfig_data > rconfigs_t ;
             rconfigs_t _rconfigs ;
@@ -72,8 +72,11 @@ namespace natus
             natus::gpu::result set_window_info( natus::gpu::backend_t::window_info_cref_t ) noexcept ;
 
             natus::gpu::result configure( natus::gpu::async_id_res_t, natus::gpu::geometry_configuration_res_t ) noexcept ;
+            
+            natus::gpu::result configure( natus::gpu::async_id_res_t, natus::gpu::render_configurations_t ) noexcept ;
 
-            natus::gpu::result configure( natus::gpu::async_id_res_t, natus::gpu::render_configurations_res_t ) noexcept ;
+
+            natus::gpu::result configure( natus::gpu::async_id_res_t, natus::gpu::render_configuration_res_t ) noexcept ;
 
             natus::gpu::result render( natus::gpu::async_id_res_t ) noexcept ;
 

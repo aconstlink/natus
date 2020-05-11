@@ -26,10 +26,18 @@ backend::backend( void_t ) noexcept
 }
 
 //****
+backend::backend( natus::gpu::backend_type const bt ) : _bt( bt )
+{
+    _backend_id = this_t::create_backend_id() ;
+}
+
+//****
 backend::backend( this_rref_t rhv ) noexcept
 {
     _backend_id = rhv._backend_id ;
     rhv._backend_id = size_t( -1 ) ;
+    _bt = rhv._bt ;
+    rhv._bt = backend_type::unknown ;
 }
 
 //****

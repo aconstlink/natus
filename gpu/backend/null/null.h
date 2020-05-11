@@ -26,10 +26,12 @@ namespace natus
             virtual natus::gpu::id_t configure( id_rref_t id, natus::gpu::geometry_configuration_res_t ) noexcept override ;
 
             virtual natus::gpu::id_t configure( id_rref_t id,
-                natus::gpu::render_configurations_res_t ) noexcept override ;
+                natus::gpu::render_configuration_res_t ) noexcept override ;
 
             virtual natus::gpu::id_t render( id_rref_t id ) noexcept override ;
 
+            virtual void_t render_begin( void_t ) noexcept ;
+            virtual void_t render_end( void_t ) noexcept ;
         };
         natus_soil_typedef( null_backend ) ;
     }
