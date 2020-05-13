@@ -8,6 +8,7 @@
 #include "id.hpp"
 #include "../configuration/render_configuration.h"
 #include "../configuration/geometry_configuration.h"
+#include "../variable/variable_set.hpp"
 
 namespace natus
 {
@@ -33,6 +34,8 @@ namespace natus
 
             virtual id_t configure( id_rref_t id, natus::gpu::geometry_configuration_res_t ) noexcept = 0 ;
             virtual id_t configure( id_rref_t id, natus::gpu::render_configuration_res_t ) noexcept = 0 ;
+
+            virtual id_t connect( id_rref_t id, natus::gpu::variable_set_res_t ) noexcept = 0 ;
 
             virtual id_t render( id_rref_t id ) noexcept = 0 ;
 

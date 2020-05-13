@@ -101,12 +101,14 @@ namespace this_file
         };
         natus_typedef( uniform_variable ) ;
 
-
         natus::std::vector< uniform_variable > uniforms ;
 
         void_ptr_t uniform_mem = nullptr ;
 
         geo_config* geo = nullptr ;
+
+        // user provided variable set
+        natus::gpu::variable_set_res_t var_set ;
     };
 }
 
@@ -815,12 +817,40 @@ struct gl3_backend::pimpl
         return true ;
     }
 
+    bool_t connect( size_t const id, natus::gpu::variable_set_res_t vs )
+    {
+        auto& config = rconfigs[ id ] ;
+
+        config.var_set = vs ;
+
+        for( auto & uv : config.uniforms )
+        {
+            // is it a data uniform variable?
+            if( natus::ogl::uniform_is_data( uv.type ) )
+            {
+                auto const types = natus::gpu::gl3::to_type_type_struct( uv.type ) ;
+                auto* var = vs->data_variable( uv.name, types.first, types.second ) ;
+                if( natus::core::is_nullptr( var ) )
+                {
+                    natus::log::global_t::error( natus_log_fn( "can not claim variable " + uv.name ) ) ;
+                    continue ;
+                }
+
+                // copy funk?
+                ::std::memcpy( uv.mem, var->data_ptr(), natus::ogl::uniform_size_of( uv.type ) ) ;
+            }
+        }
+
+        this_t::update_all_uniforms( config.pg_id, config ) ;
+
+        return true ;
+    }
+
     bool_t render( size_t const id, GLsizei const start_element = GLsizei(0), 
         GLsizei const num_elements = GLsizei(-1) )
     {
         this_file::render_config& config = rconfigs[ id ] ;
 
-        // bind vertex array object
         {
             natus::ogl::gl::glBindVertexArray( config.va_id ) ;
             if( natus::ogl::error::check_and_log( natus_log_fn( "glBindVertexArray" ) ) )
@@ -973,6 +1003,21 @@ natus::gpu::id_t gl3_backend::configure( id_rref_t id, natus::gpu::render_config
         }
     }
 
+    return ::std::move( id ) ;
+}
+
+//***
+natus::gpu::id_t gl3_backend::connect( id_rref_t id, natus::gpu::variable_set_res_t vs ) noexcept
+{
+    if( id.is_not_valid() )
+    {
+        natus::log::global_t::error( natus_log_fn( "invalid render configuration id" ) ) ;
+        return ::std::move( id ) ;
+    }
+
+    auto const res = _pimpl->connect( id.get_oid(), vs ) ;
+
+   
     return ::std::move( id ) ;
 }
 

@@ -65,14 +65,14 @@ namespace natus
             }
     
             //************************************************************************************
-            matrix2( type_t cos_a, type_t sin_a, natus_switch::rotation_matrix )
+            matrix2( type_t cos_a, type_t sin_a, natus::math::rotation_matrix )
             {
                 set_row( 0, vec2_t( cos_a, -sin_a ) ) ;
                 set_row( 1, vec2_t( sin_a, cos_a ) ) ;
             }
 
             //************************************************************************************
-            matrix2( vec2_cref_t cos_sin, natus_switch::rotation_matrix )
+            matrix2( vec2_cref_t cos_sin, natus::math::rotation_matrix )
             {
                 set_row( 0, vec2_t( cos_sin.x(), -cos_sin.y() ) ) ;
                 set_row( 1, vec2_t( cos_sin.y(), cos_sin.x() ) ) ;

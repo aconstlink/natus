@@ -33,6 +33,15 @@ namespace natus
             rconfigs_t _rconfigs ;
             natus::concurrent::mutex_t _rconfigs_mtx ;
 
+            struct connect_data
+            {
+                natus::gpu::async_id_res_t aid = natus::gpu::async_id_t() ;
+                natus::gpu::variable_set_res_t vs ;
+            };
+            typedef natus::std::vector< connect_data > connects_t ;
+            connects_t _connects ;
+            natus::concurrent::mutex_t _connects_mtx ;
+
             struct gconfig_data
             {
                 natus::gpu::async_id_res_t aid = natus::gpu::async_id_t() ;
@@ -77,6 +86,8 @@ namespace natus
 
 
             natus::gpu::result configure( natus::gpu::async_id_res_t, natus::gpu::render_configuration_res_t ) noexcept ;
+
+            natus::gpu::result connect( natus::gpu::async_id_res_t, natus::gpu::variable_set_res_t ) noexcept ;
 
             natus::gpu::result render( natus::gpu::async_id_res_t ) noexcept ;
 

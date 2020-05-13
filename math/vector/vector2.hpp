@@ -75,13 +75,13 @@ namespace natus
                 (*this)(rhv.x(),rhv.y()) ;
             }
 
-            vector2( type_t angle, natus_switch::cos_sin )
+            vector2( type_t angle, natus::math::cos_sin )
             {
                 _elem[0] = std::cos( angle ) ;
                 _elem[1] = std::sin( angle ) ;
             }
 
-            vector2( type_t angle, natus_switch::sin_cos )
+            vector2( type_t angle, natus::math::sin_cos )
             {
                 _elem[0] = std::sin( angle ) ;
                 _elem[1] = std::cos( angle ) ;

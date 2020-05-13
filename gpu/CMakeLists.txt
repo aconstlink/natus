@@ -38,7 +38,7 @@ set( sources
     "configuration/render_configuration.h"
     "configuration/geometry_configuration.h"
 
-    "variable/variable.hpp"
+    "variable/variables.hpp"
     "variable/variable_set.hpp"
     "variable/type_traits.hpp"
     )

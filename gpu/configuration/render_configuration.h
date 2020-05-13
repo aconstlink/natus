@@ -9,8 +9,6 @@
 #include "../shader/geometry_shader.hpp"
 #include "../shader/pixel_shader.hpp"
 
-#include "../variable/variable_set.hpp"
-
 #include "../backend/types.h"
 
 #include <natus/std/vector.hpp>
@@ -31,8 +29,6 @@ namespace natus
 
             natus::std::string_t _geo ;
             natus::std::string_t _name ;
-
-            natus::gpu::variable_set_t _var_set ;
 
         public:
             
@@ -107,7 +103,6 @@ namespace natus
                 _ps = rhv._ps ;
                 _name = rhv._name ;
                 _geo = rhv._geo;
-                _var_set = rhv._var_set ;
 
                 return *this ;
             }
@@ -118,19 +113,12 @@ namespace natus
                 _ps = ::std::move( rhv._ps ) ;
                 _name = ::std::move( rhv._name ) ;
                 _geo = ::std::move( rhv._geo ) ;
-                _var_set = ::std::move( rhv._var_set ) ;
                 return *this ;
             }
 
             natus::std::string_cref_t name( void_t ) const noexcept
             {
                 return _name ;
-            }
-
-            template< class T >
-            ::std::shared_ptr< natus::gpu::variable< T > > create_variable( natus::std::string_cref_t name ) noexcept 
-            {
-                return _var_set.create_variable< T >( name ) ;
             }
         };
         natus_soil_typedef( render_configuration ) ;

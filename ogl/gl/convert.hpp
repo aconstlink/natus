@@ -101,6 +101,70 @@ namespace natus
             return 0 ;
         }
 
+        static bool_t uniform_is_data( GLenum const e ) noexcept
+        {
+            switch( e )
+            {
+            case GL_FLOAT: 
+            case GL_FLOAT_VEC2: 
+            case GL_FLOAT_VEC3: 
+            case GL_FLOAT_VEC4: 
+            case GL_INT: 
+            case GL_INT_VEC2: 
+            case GL_INT_VEC3: 
+            case GL_INT_VEC4: 
+            case GL_UNSIGNED_INT: 
+            case GL_UNSIGNED_INT_VEC2: 
+            case GL_UNSIGNED_INT_VEC3: 
+            case GL_UNSIGNED_INT_VEC4: 
+            case GL_BOOL: 
+            case GL_BOOL_VEC2: 
+            case GL_BOOL_VEC3: 
+            case GL_BOOL_VEC4: 
+            case GL_FLOAT_MAT2: 
+            case GL_FLOAT_MAT3: 
+            case GL_FLOAT_MAT4: return true ;
+            default: break ;
+            }
+            return false ;
+        }
+
+        static bool_t uniform_is_texture( GLenum const e ) noexcept
+        {
+            switch( e )
+            {
+            case GL_SAMPLER_1D: 
+            case GL_SAMPLER_2D: 
+            case GL_SAMPLER_3D: 
+            case GL_INT_SAMPLER_1D: 
+            case GL_INT_SAMPLER_2D: 
+            case GL_INT_SAMPLER_3D: 
+            case GL_UNSIGNED_INT_SAMPLER_1D: 
+            case GL_UNSIGNED_INT_SAMPLER_2D: 
+            case GL_UNSIGNED_INT_SAMPLER_3D: 
+            case GL_SAMPLER_CUBE: 
+            case GL_SAMPLER_1D_SHADOW: 
+            case GL_SAMPLER_2D_SHADOW: 
+            case GL_SAMPLER_2D_ARRAY: 
+            case GL_INT_SAMPLER_2D_ARRAY: 
+            case GL_UNSIGNED_INT_SAMPLER_2D_ARRAY: return true;
+            default: break ;
+            }
+            return false ;
+        }
+
+        static bool_t uniform_is_buffer( GLenum const e ) noexcept
+        {
+            switch( e )
+            {
+            case GL_SAMPLER_BUFFER: 
+            case GL_INT_SAMPLER_BUFFER: 
+            case GL_UNSIGNED_INT_SAMPLER_BUFFER: return true ;
+            default: break ;
+            }
+            return false ;
+        }
+
         static GLenum complex_to_simple_type( GLenum const e ) noexcept
         {
             switch( e )

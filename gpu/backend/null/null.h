@@ -28,6 +28,8 @@ namespace natus
             virtual natus::gpu::id_t configure( id_rref_t id,
                 natus::gpu::render_configuration_res_t ) noexcept override ;
 
+            virtual id_t connect( id_rref_t id, natus::gpu::variable_set_res_t ) noexcept ;
+
             virtual natus::gpu::id_t render( id_rref_t id ) noexcept override ;
 
             virtual void_t render_begin( void_t ) noexcept ;
