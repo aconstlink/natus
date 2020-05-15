@@ -85,18 +85,28 @@ namespace this_file
 
         struct uniform_variable
         {
-            typedef ::std::function< void_t () > glUniform_funk_t ;
-
             natus::std::string_t name ;
             GLuint loc ;
             GLenum type ;
+
+            // this variable's memory location
             void_ptr_t mem = nullptr ;
+
+            // the GL uniform function
             natus::ogl::uniform_funk_t uniform_funk ;
+            
+            // set by the user in user-space
+            natus::gpu::ivariable_ptr_t var ;
 
             void_t do_uniform_funk( void_t )
             {
                 uniform_funk( loc, 1, mem ) ;
                 natus::ogl::error::check_and_log( natus_log_fn( "glUniform" ) ) ;
+            }
+
+            void_t do_copy_funk( void_t ) 
+            {
+                ::std::memcpy( mem, var->data_ptr(), natus::ogl::uniform_size_of( type ) ) ;
             }
         };
         natus_typedef( uniform_variable ) ;
@@ -108,7 +118,7 @@ namespace this_file
         geo_config* geo = nullptr ;
 
         // user provided variable set
-        natus::gpu::variable_set_res_t var_set ;
+        natus::std::vector< natus::gpu::variable_set_res_t > var_sets ;
     };
 }
 
@@ -694,10 +704,21 @@ struct gl3_backend::pimpl
 
         
         {
-            this_t::post_link_uniforms( config.pg_id, config ) ;
-            this_t::update_all_uniforms( config.pg_id, config ) ;
+            this_t::post_link_uniforms( config.pg_id, config ) ;            
         }
 
+        {
+            auto vss = ::std::move( config.var_sets ) ;
+            for( auto vs : vss )
+            {
+                auto const res = this_t::connect( id, vs ) ;
+                natus::log::global_t::warning( natus::core::is_not( res ), natus_log_fn( "connect" ) ) ;
+            }
+        }
+
+        {
+            this_t::update_all_uniforms( config.pg_id, config ) ;
+        }
         return true ;
     }
 
@@ -821,9 +842,17 @@ struct gl3_backend::pimpl
     {
         auto& config = rconfigs[ id ] ;
 
-        config.var_set = vs ;
+        if( this_t::connect( config, vs ) )
+            this_t::update_all_uniforms( config.pg_id, config ) ;
 
-        for( auto & uv : config.uniforms )
+        return true ;
+    }
+
+    bool_t connect( this_file::render_config & config, natus::gpu::variable_set_res_t vs )
+    {
+        config.var_sets.emplace_back( vs ) ;
+
+        for( auto& uv : config.uniforms )
         {
             // is it a data uniform variable?
             if( natus::ogl::uniform_is_data( uv.type ) )
@@ -836,12 +865,10 @@ struct gl3_backend::pimpl
                     continue ;
                 }
 
-                // copy funk?
-                ::std::memcpy( uv.mem, var->data_ptr(), natus::ogl::uniform_size_of( uv.type ) ) ;
+                uv.var = var ;
+                uv.do_copy_funk() ;
             }
         }
-
-        this_t::update_all_uniforms( config.pg_id, config ) ;
 
         return true ;
     }
@@ -861,6 +888,14 @@ struct gl3_backend::pimpl
             natus::ogl::gl::glUseProgram( config.pg_id ) ;
             if( natus::ogl::error::check_and_log( natus_log_fn( "glUseProgram" ) ) )
                 return false ;
+        }
+
+        {
+            for( auto & uv : config.uniforms )
+            {
+                uv.do_copy_funk() ;
+                uv.do_uniform_funk() ;
+            }
         }
 
         // render section
