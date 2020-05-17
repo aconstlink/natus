@@ -1,6 +1,8 @@
 
 #include "app.h"
 
+#include "platform/gfx_context.h"
+
 #if defined( NATUS_GRAPHICS_WGL )
 #include "platform/wgl/wgl_context.h"
 #include "platform/wgl/wgl_window.h"
