@@ -49,7 +49,7 @@ namespace natus
 
             public:
 
-                virtual natus::application::result exec( void_t ) ;
+                virtual natus::application::result on_exec( void_t ) ;
             };
             natus_typedef( xlib_application ) ;
         }

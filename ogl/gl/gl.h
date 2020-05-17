@@ -11,7 +11,7 @@
 #endif
 
 #include <GL/glcorearb.h>
-#define GL_VERSION_1_1 0
+//#define GL_VERSION_1_1 0
 
 #include <natus/std/list.hpp>
 

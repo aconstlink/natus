@@ -190,8 +190,8 @@ natus::application::result context::create_the_context( gl_info_cref_t gli )
         return natus::application::result::failed ;
     }
 
-    if( glx_major < 1 ) return natus::application::result::failed_glx_version ;
-    if( glx_minor < 3 ) return natus::application::result::failed_glx_version ;
+    if( glx_major < 1 ) return natus::application::result::failed_glx ;
+    if( glx_minor < 3 ) return natus::application::result::failed_glx ;
 
     // determine the GL version by creating a simple 1.0 context.
     natus::application::gl_version glv ;

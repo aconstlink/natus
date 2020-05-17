@@ -5,6 +5,7 @@
 #include "vertex_attribute.h"
 
 #include <natus/std/vector.hpp>
+#include <cstring>
 
 namespace natus
 {

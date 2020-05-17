@@ -9,6 +9,7 @@
 #include "vector2b.hpp"
 
 #include <algorithm>
+#include <cmath>
 
 namespace natus 
 {
@@ -77,14 +78,14 @@ namespace natus
 
             vector2( type_t angle, natus::math::cos_sin )
             {
-                _elem[0] = std::cos( angle ) ;
-                _elem[1] = std::sin( angle ) ;
+                _elem[0] = ::std::cos( angle ) ;
+                _elem[1] = ::std::sin( angle ) ;
             }
 
             vector2( type_t angle, natus::math::sin_cos )
             {
-                _elem[0] = std::sin( angle ) ;
-                _elem[1] = std::cos( angle ) ;
+                _elem[0] = ::std::sin( angle ) ;
+                _elem[1] = ::std::cos( angle ) ;
             }
 
         public: // x,y,z accessor
@@ -393,7 +394,7 @@ namespace natus
             //***************************************************
             this_ref_t normalize( void ){
                 type_t len = this_t::length() ;
-                if( std::abs(len) > std::numeric_limits<type_t>::epsilon() ) (*this) /= len ;
+                if( ::std::abs(len) > ::std::numeric_limits<type_t>::epsilon() ) (*this) /= len ;
                 return (*this) ;
             }
 
@@ -437,7 +438,7 @@ namespace natus
             //***************************************************
             this_ref_t abs( void )
             {
-                _elem[0] = type_t(std::abs(_elem[0])) ;
+                _elem[0] = type_t(::std::abs(_elem[0])) ;
                 _elem[1] = natus::math::fn<type_t>::abs(_elem[1]) ;
                 return *this ;
             }
@@ -454,8 +455,8 @@ namespace natus
             /// @return operates on this object. returns this.
             this_ref_t dead_zone( type_t threshold )
             {
-                _elem[0] = std::abs(_elem[0]) < threshold ? type_t(0) : _elem[0]  ;
-                _elem[1] = std::abs(_elem[1]) < threshold ? type_t(0) : _elem[1]  ;
+                _elem[0] = ::std::abs(_elem[0]) < threshold ? type_t(0) : _elem[0]  ;
+                _elem[1] = ::std::abs(_elem[1]) < threshold ? type_t(0) : _elem[1]  ;
                 return *this ;
             }
 
@@ -471,8 +472,8 @@ namespace natus
             //***************************************************
             this_ref_t clamp( this_cref_t min_val, this_cref_t max_val ) 
             {
-                _elem[0] = std::min( std::max(_elem[0], min_val.x()), max_val.x()) ;
-                _elem[1] = std::min( std::max(_elem[1], min_val.y()), max_val.y()) ;
+                _elem[0] = ::std::min( ::std::max(_elem[0], min_val.x()), max_val.x()) ;
+                _elem[1] = ::std::min( ::std::max(_elem[1], min_val.y()), max_val.y()) ;
 
                 return *this ;
             }
@@ -486,8 +487,8 @@ namespace natus
             //***************************************************
             this_ref_t clamp( type_t min_val, type_t max_val ) 
             {
-                _elem[0] = std::min( std::max(_elem[0], min_val), max_val) ;
-                _elem[1] = std::min( std::max(_elem[1], min_val), max_val) ;
+                _elem[0] = ::std::min( ::std::max(_elem[0], min_val), max_val) ;
+                _elem[1] = ::std::min( ::std::max(_elem[1], min_val), max_val) ;
 
                 return *this ;
             }
@@ -530,8 +531,8 @@ namespace natus
             //***************************************************
             vec2_ref_t floor( void_t ) 
             {
-                _elem[ 0 ] = std::floor( _elem[ 0 ] ) ;
-                _elem[ 1 ] = std::floor( _elem[ 1 ] ) ;
+                _elem[ 0 ] = ::std::floor( _elem[ 0 ] ) ;
+                _elem[ 1 ] = ::std::floor( _elem[ 1 ] ) ;
                 return *this ;
             }
 
@@ -539,8 +540,8 @@ namespace natus
             vec2_t floored( void_t ) const
             {
                 return this_t(
-                    std::floor( _elem[ 0 ] ),
-                    std::floor( _elem[ 1 ] ) ) ;
+                    ::std::floor( _elem[ 0 ] ),
+                    ::std::floor( _elem[ 1 ] ) ) ;
             }
 
         private:

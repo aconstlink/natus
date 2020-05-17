@@ -250,7 +250,7 @@ namespace natus
             //************************************************************************************
             type_t angle( void ) const 
             {
-                return std::acos( (this_t::trace()-type_t(2))*(type_t(0.5)) ) ;
+                return ::std::acos( (this_t::trace()-type_t(2))*(type_t(0.5)) ) ;
             }
 
         public: // operator +

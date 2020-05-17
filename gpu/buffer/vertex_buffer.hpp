@@ -6,6 +6,9 @@
 
 #include <natus/std/vector.hpp>
 
+#include <cstring>
+#include <algorithm>
+
 namespace natus
 {
     namespace gpu

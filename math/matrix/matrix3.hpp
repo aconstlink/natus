@@ -37,7 +37,7 @@ namespace natus
             }
 
             //************************************************************************************
-            matrix3( natus_matrix::with_identity const & )
+            matrix3( natus::math::with_identity const & )
             {
                 _elem[0] = _elem[4] = _elem[8] = type_t(1) ;
 
@@ -220,7 +220,7 @@ namespace natus
             // zero based indices
             type_t get_element( size_t r, size_t c ) const
             {
-                natus_core::break_if( r > 2 || c > 2 ) ;
+                natus::core::break_if( r > 2 || c > 2 ) ;
 
                 return _elem[r * 3 + c] ;
             }

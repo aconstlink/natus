@@ -70,7 +70,7 @@ namespace natus
                 _elem[15] = e16 ;
             }
 
-            matrix4( natus::math::natus_matrix::with_identity )
+            matrix4( natus::math::with_identity )
             {
                 for( size_t i = 0; i<16; ++i )
                     _elem[i] = type_t(0) ;
@@ -81,11 +81,11 @@ namespace natus
                 _elem[15] = type_t(1) ;
             }
 
-            matrix4( natus::math::natus_matrix::xyzw )
-                : matrix4( natus::math::so_matrix::with_identity() )
+            matrix4( natus::math::xyzw )
+                : matrix4( natus::math::with_identity() )
             {}
 
-            matrix4( natus::math::natus_matrix::xzyw )
+            matrix4( natus::math::xzyw )
             {
                 for( size_t i = 0; i<16; ++i )
                     _elem[i] = type_t(0) ;

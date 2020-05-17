@@ -4,6 +4,8 @@
 #include "shader.hpp"
 #include "../buffer/vertex_attribute.h"
 
+#include <algorithm>
+
 namespace natus
 {
     namespace gpu

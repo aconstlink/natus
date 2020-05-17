@@ -13,6 +13,8 @@
 
 #include <natus/std/vector.hpp>
 
+#include <algorithm>
+
 namespace natus
 {
     namespace gpu

@@ -4,6 +4,7 @@
 
 #include "protos.hpp"
 #include "../quaternion/protos.hpp"
+#include "../utility/fn.hpp"
 
 #include "vector3b.hpp"
 
@@ -105,17 +106,17 @@ namespace natus
             }
 
             //************************************************************************************
-            vector3( natus_vector::x_axis ) :
+            vector3( natus::math::x_axis ) :
                 vector3(type_t(1),type_t(0), type_t(0))
             {}
 
             //************************************************************************************
-            vector3( natus_vector::y_axis ) :
+            vector3( natus::math::y_axis ) :
                 vector3(type_t(0),type_t(1), type_t(0))
             {}
 
             //************************************************************************************
-            vector3( natus_vector::z_axis ) :
+            vector3( natus::math::z_axis ) :
                 vector3(type_t(0),type_t(0), type_t(1))
             {}
 
@@ -535,7 +536,7 @@ namespace natus
             this_ref_t normalize( void )
             {
                 type_t len = this->length( ) ;
-                if( std::abs( len ) > std::numeric_limits<type_t>::epsilon( ) ) ( *this ) /= len ;
+                if( ::std::abs( len ) > ::std::numeric_limits<type_t>::epsilon( ) ) ( *this ) /= len ;
                 return (*this) ;
             }
 
@@ -584,9 +585,9 @@ namespace natus
 
             this_ref_t abs( void )
             {
-                _elem[0] = natus::math::fast<type_t>::abs( _elem[0] ) ;
-                _elem[1] = natus::math::fast<type_t>::abs( _elem[1] ) ;
-                _elem[2] = natus::math::fast<type_t>::abs( _elem[2] ) ;
+                _elem[0] = natus::math::fn<type_t>::abs( _elem[0] ) ;
+                _elem[1] = natus::math::fn<type_t>::abs( _elem[1] ) ;
+                _elem[2] = natus::math::fn<type_t>::abs( _elem[2] ) ;
                 return *this ;
             }
 
