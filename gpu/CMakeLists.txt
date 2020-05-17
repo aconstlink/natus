@@ -17,11 +17,6 @@ set( sources
     "async.cpp"
     "async_id.hpp"
     
-    "backend/gl3/gl3.h"
-    "backend/gl3/gl3.cpp"
-    "backend/gl3/gl3_convert.h"
-    "backend/es3/es3.h"
-    "backend/es3/es3.cpp"
     "backend/null/null.h"
     "backend/null/null.cpp"
    
@@ -42,6 +37,20 @@ set( sources
     "variable/variable_set.hpp"
     "variable/type_traits.hpp"
     )
+
+if( NATUS_GRAPHICS_OPENGL )
+list( APPEND sources 
+    "backend/gl3/gl3.h"
+    "backend/gl3/gl3.cpp"
+    "backend/gl3/gl3_convert.h"
+)
+endif()
+if( NATUS_GRAPHICS_OPENGLES )
+list( APPEND sources 
+    "backend/es3/es3.h"
+    "backend/es3/es3.cpp"
+)
+endif()
 
 natus_vs_src_dir( sources )
 
