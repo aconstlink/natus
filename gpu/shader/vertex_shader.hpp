@@ -57,10 +57,10 @@ namespace natus
             vertex_shader( natus::std::string_in_t code ) : base_t( code )
             {}
 
-            vertex_shader( this_cref_t rhv ) {
+            vertex_shader( this_cref_t rhv ) : base_t( rhv ) {
                 *this = rhv ;
             }
-            vertex_shader( this_rref_t rhv )  {
+            vertex_shader( this_rref_t rhv ) : base_t( ::std::move( rhv ) ) {
                 *this = ::std::move( rhv ) ;
             }
             virtual ~vertex_shader( void_t ) {}
