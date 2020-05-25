@@ -51,7 +51,7 @@ namespace natus
 
                 virtual natus::application::result activate( void_t ) ;
                 virtual natus::application::result deactivate( void_t ) ;
-                virtual natus::application::result vsync( bool_t on_off ) ;
+                virtual natus::application::result vsync( bool_t const on_off ) ;
                 virtual natus::application::result swap( void_t ) ;
 
             public:
