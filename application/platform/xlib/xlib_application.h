@@ -13,6 +13,7 @@ namespace natus
         {
             class xlib_application : public platform_application
             {
+                typedef platform_application base_t ;
                 natus_this_typedefs( xlib_application ) ;
 
             private:
@@ -34,6 +35,7 @@ namespace natus
 
                 xlib_application( void_t ) ;
                 xlib_application( this_rref_t ) ;
+                xlib_application( natus::application::app_res_t ) ;
                 virtual ~xlib_application( void_t ) ;
 
                 /// singleton. It is required due to the fact
@@ -51,7 +53,8 @@ namespace natus
 
                 virtual natus::application::result on_exec( void_t ) ;
             };
-            natus_typedef( xlib_application ) ;
+            natus_soil_typedef( xlib_application ) ;
+            typedef natus::soil::res< xlib_application > application_res_t ;
         }
     }
 }

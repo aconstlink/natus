@@ -57,7 +57,7 @@ app::wid_async_t app::create_window(
         natus::application::window_message_receiver_t() ) ;
 
     {
-        #if defined( NATUS_GRAPHICS_WGL )
+#if defined( NATUS_GRAPHICS_WGL )
 
         natus::application::gl_info_t gli ;
         {
@@ -105,15 +105,60 @@ app::wid_async_t app::create_window(
         // show the window after all listeners have been registered.
         wglw->get_window()->show_window( wii ) ;
 
-        #elif defined( NATUS_GRAPHICS_GLX )
-        #endif
+#elif defined( NATUS_GRAPHICS_GLX )
+
+        natus::application::gl_info_t gli ;
+        {
+            gli.vsync_enabled = wi.vsync ;
+        }
+
+        natus::application::window_info_t wii ;
+        {
+            wii.x = wi.x ;
+            wii.y = wi.y ;
+            wii.w = wi.w ;
+            wii.h = wi.h ;
+            wii.window_name = name ;
+            wii.borderless = !wi.borders ;
+            wii.fullscreen = wi.fullscreen ;
+        }
+
+        natus::application::glx::window_res_t glxw =
+            natus::application::glx::window_t( gli, wii ) ;
+
+        pwi.wnd = glxw ;
+
+        natus::application::glx::context_res_t glctx =
+            glxw->get_context() ;
+
+        {
+            natus::application::gl_version glv ;
+            glctx->get_gl_version( glv ) ;
+            if( glv.major >= 3 )
+            {
+                backend = natus::gpu::gl3_backend_res_t(
+                    natus::gpu::gl3_backend_t() ) ;
+            }
+        }
+
+        ctx = glctx ;
+
+        {
+            pwi.msg_recv = natus::application::window_message_receiver_res_t(
+                natus::application::window_message_receiver_t() ) ;
+            glxw->get_window()->register_listener( pwi.msg_recv ) ; // application
+            glxw->get_window()->register_listener( rnd_msg_recv ) ; // render
+        }
+
+        // show the window after all listeners have been registered.
+        glxw->get_window()->show_window( wii ) ;
+#endif
 
         pwi.async = natus::gpu::async_res_t( 
             natus::gpu::async_t( backend ) ) ;
     }
 
-    natus::gpu::async_res_t async = natus::gpu::async_res_t(
-        natus::gpu::async_t( backend ) ) ;
+    natus::gpu::async_res_t async = pwi.async ;
 
     bool_ptr_t run = natus::memory::global_t::alloc<bool_t>(
         natus_log_fn( "bool for render thread while") ) ;
@@ -129,11 +174,12 @@ app::wid_async_t app::create_window(
 
         ctx_->activate() ;
         while( *run_ ) 
-        {    
+        {
             {
                 natus::application::window_message_receiver_t::state_vector sv ;
                 if( recv->swap_and_reset( sv ) )
                 {
+
                     natus::gpu::backend_t::window_info_t wi ;
                     if( sv.resize_changed )
                     {
@@ -144,11 +190,15 @@ app::wid_async_t app::create_window(
                     async_->set_window_info( wi ) ;
                 }
             }
+            natus::log::global_t::status( natus_log_fn("before wait") ) ;
+
             async_->wait_for_frame() ;
+            natus::log::global_t::status( natus_log_fn("after  wait") ) ;
             async_->system_update() ;
             async_->set_ready() ;
             ctx_->swap() ;
         }
+        natus::log::global_t::status( natus_log_fn("thread end") ) ;
         ctx_->deactivate() ;
     } ) ;
     pwi.async = async ;

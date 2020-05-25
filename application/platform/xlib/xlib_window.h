@@ -41,6 +41,7 @@ namespace natus
                 Window get_handle( void_t ) ;
                 Display * get_display( void_t ) ;
                 void_t send_toggle( natus::application::toggle_window_in_t ) ;
+                void_t show_window(  window_info const & wi ) ;
 
             private:
 

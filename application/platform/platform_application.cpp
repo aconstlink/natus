@@ -71,7 +71,7 @@ natus::application::result platform_application::start_update_thread( void_t )
                 _app->on_update() ;
                 _app->after_update() ;
             }
-            
+
             if( _app->before_render() ) 
             {
                 _app->on_render() ;

@@ -19,7 +19,7 @@ namespace natus
 
                 context_res_t _context ;
                 xlib::window_res_t _window ;
-                
+
                 bool_t _vsync = true ;
 
             public:
@@ -30,6 +30,11 @@ namespace natus
                 virtual ~window( void_t ) ;
 
                 static GLXFBConfig get_config( void_t ) ;
+
+            public:
+
+                context_res_t get_context( void_t ) const { return _context ; }
+                xlib::window_res_t get_window( void_t ) { return _window ; }
 
             private:
 

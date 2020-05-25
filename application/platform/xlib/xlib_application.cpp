@@ -51,16 +51,14 @@ Display * xlib_application::move_display( void_t )
 //**********************************************************************
 xlib_application::xlib_application( void_t ) 
 {
-    int_t ret = XInitThreads() ;
-    if( natus::log::global_t::error( 
-           ret == 0, "[xlib_application] : XInitThreads" ) )
-        {
-            exit(ret) ;
-        }
-
     connect_display() ;
 }
 
+//***********************************************************************
+xlib_application::xlib_application( natus::application::app_res_t app ) : base_t( app )
+{
+    connect_display() ;
+}
 //**********************************************************************
 Display * xlib_application::get_display( void_t ) 
 {
@@ -68,7 +66,7 @@ Display * xlib_application::get_display( void_t )
 }
 
 //**********************************************************************
-xlib_application::xlib_application( this_rref_t rhv ) 
+xlib_application::xlib_application( this_rref_t rhv ) : base_t( ::std::move( rhv ) )
 {
     this_t::move_display() ;
 }
@@ -100,6 +98,13 @@ void_t xlib_application::destroy( this_ptr_t ptr )
 //********************************************************************
 natus::application::result xlib_application::on_exec( void_t )
 {
+    int_t ret = XInitThreads() ;
+    if( natus::log::global_t::error( 
+           ret == 0, "[xlib_application] : XInitThreads" ) )
+        {
+            exit(ret) ;
+        }
+
     Display * display = this_t::get_display() ;
 
     XEvent event ;
@@ -136,7 +141,7 @@ natus::application::result xlib_application::on_exec( void_t )
             switch( event.type )
             {
             case Expose:
-
+                natus::log::global_t::status("application expose") ;
                 break ;
 
             case ButtonRelease:

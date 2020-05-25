@@ -130,6 +130,10 @@ GLXFBConfig window::get_config( void_t )
 //***********************************************************************
 Window window::create_glx_window( window_info_in_t wi ) 
 {
+    auto const status = XInitThreads() ;
+    natus::log::global_t::warning( status == 0, 
+           natus_log_fn("XInitThreads") ) ;
+
     Display * display = natus::application::xlib::xlib_application_t::get_display() ;
     GLXFBConfig fbconfig = this_t::get_config() ;
     XVisualInfo * vi = glXGetVisualFromFBConfig( display, fbconfig ) ;
@@ -141,7 +145,8 @@ Window window::create_glx_window( window_info_in_t wi )
        RootWindow( display, vi->screen ), vi->visual, AllocNone ) ;
     swa.background_pixmap = None ;
     swa.border_pixel = 0 ;
-    swa.event_mask = StructureNotifyMask | ResizeRedirectMask ;
+    swa.event_mask = ExposureMask | StructureNotifyMask | ResizeRedirectMask |
+        KeyPressMask ;
 
     Window window = XCreateWindow( display, 
             RootWindow( display, vi->screen ), 0, 0,
@@ -156,7 +161,7 @@ Window window::create_glx_window( window_info_in_t wi )
         return 0 ;
     }
 
-    XFree( vi ) ;
+    //XFree( vi ) ;
 
     XStoreName( display, window, wi.window_name.c_str() ) ;
 

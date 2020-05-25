@@ -12,8 +12,7 @@ using namespace natus::application::xlib ;
 
 //*****************************************************************
 window::window( void_t ) 
-{
-}
+{}
 
 //*****************************************************************
 window::window( window_info const & info ) 
@@ -61,6 +60,10 @@ Display * window::get_display( void_t )
 //***************************************************************
 void_t window::create_window( window_info const & wi ) 
 {
+    auto const status = XInitThreads() ;
+    natus::log::global_t::warning( status == 0, 
+           natus_log_fn("XInitThreads") ) ;
+
     window_info wil = wi ;
 
     Display * display = natus::application::xlib::xlib_application::get_display() ;
@@ -114,7 +117,7 @@ void_t window::create_window( Display * display, Window wnd )
                   StructureNotifyMask | ResizeRedirectMask ) ;
 
     // prepare per window data
-    //this_t::store_this_ptr_in_atom( display, wnd ) ;
+    this_t::store_this_ptr_in_atom( display, wnd ) ;
 
     /// setup client message for closing a window
     {
@@ -177,6 +180,7 @@ void_t window::xevent_callback( XEvent const & event )
     {
     case Expose:
         XClearWindow( event.xany.display, event.xany.window ) ;
+        natus::log::global_t::status("expose") ;
         break ;
 
     case ButtonRelease:
@@ -189,11 +193,11 @@ void_t window::xevent_callback( XEvent const & event )
 
     case ResizeRequest:
         {
-            XWindowAttributes attr ;
-            XGetWindowAttributes( _display, 
-                _handle, &attr ) ;
+            //XWindowAttributes attr ;
+            //XGetWindowAttributes( _display, 
+              //  _handle, &attr ) ;
 
-            XResizeRequestEvent const & rse = (XResizeRequestEvent const &) event ;
+            //XResizeRequestEvent const & rse = (XResizeRequestEvent const &) event ;
             //natus::application::resize_message const rm {
               //  attr.x, attr.y, 
                 //rse.width, rse.height
@@ -202,6 +206,19 @@ void_t window::xevent_callback( XEvent const & event )
             //this_t::send_resize( rm ) ;
         }
         break ;
+    }
+}
+
+//***
+void_t window::show_window(  window_info const & wi ) 
+{
+    if( wi.show ) 
+    {
+        //ShowWindow( _handle, SW_SHOW ) ;
+    }
+    else 
+    {
+        //ShowWindow( _handle, SW_HIDE ) ;
     }
 }
 

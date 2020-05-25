@@ -71,7 +71,9 @@ natus::application::result context::vsync( bool_t /*on_off*/ )
 //**************************************************************
 natus::application::result context::swap( void_t ) 
 {
+    natus::log::global_t::status("swap") ;
     glXSwapBuffers( _display, _wnd ) ;
+    natus::log::global_t::status("swap end") ;
     return natus::application::result::ok ;
 }
 

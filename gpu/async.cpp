@@ -201,9 +201,12 @@ void_t async::leave_frame( void_t )
 //***
 void_t async::wait_for_frame( void_t ) 
 {
+    natus::log::global_t::status("wait for frame" ) ;
+
     natus::concurrent::ulock_t lk( _frame_mtx ) ;
     while( _frame_ready ) _frame_cv.wait( lk ) ;
     _ready = false ;
+    natus::log::global_t::status("wait for frame end" ) ;
 }
 
 //***
