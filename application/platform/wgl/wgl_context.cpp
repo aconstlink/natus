@@ -90,7 +90,7 @@ natus::application::result context::deactivate( void_t )
 }
 
 //***********************************************************************
-natus::application::result context::vsync( bool_t on_off ) 
+natus::application::result context::vsync( bool_t const on_off ) 
 {
     natus::application::result const res = this_t::is_extension_supported("WGL_EXT_swap_control") ;
 
@@ -98,7 +98,7 @@ natus::application::result context::vsync( bool_t on_off )
         "[context::vsync] : vsync not supported." ) ) 
         return res ;
     
-    if( natus::log::global::error( natus::ogl::wgl::wglSwapInterval(on_off) != TRUE, 
+    if( natus::log::global::error( natus::ogl::wgl::wglSwapInterval(on_off ? 1 : 0) != TRUE, 
         "[context::vsync] : wglSwapIntervalEXT" ) )
         return natus::application::result::failed_wgl ;
 

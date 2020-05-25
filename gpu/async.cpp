@@ -189,11 +189,11 @@ bool_t async::enter_frame( void_t )
 }
 
 //***
-void_t async::leave_frame( void_t ) 
+void_t async::leave_frame( bool_t const rendered ) 
 {
     {
         natus::concurrent::lock_guard_t lk( _frame_mtx ) ;
-        _frame_ready = true ;
+        _frame_ready = rendered ;
     }
     _frame_cv.notify_all() ;
 }
@@ -201,12 +201,12 @@ void_t async::leave_frame( void_t )
 //***
 void_t async::wait_for_frame( void_t ) 
 {
-    natus::log::global_t::status("wait for frame" ) ;
+    //natus::log::global_t::status("wait for frame" ) ;
 
     natus::concurrent::ulock_t lk( _frame_mtx ) ;
-    while( _frame_ready ) _frame_cv.wait( lk ) ;
+    while( natus::core::is_not(_frame_ready) ) _frame_cv.wait( lk ) ;    
     _ready = false ;
-    natus::log::global_t::status("wait for frame end" ) ;
+    //natus::log::global_t::status("wait for frame end" ) ;
 }
 
 //***

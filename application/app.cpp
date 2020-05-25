@@ -173,6 +173,7 @@ app::wid_async_t app::create_window(
         auto recv = rnd_msg_recv ;
 
         ctx_->activate() ;
+        async_->set_ready() ;
         while( *run_ ) 
         {
             {
@@ -190,13 +191,14 @@ app::wid_async_t app::create_window(
                     async_->set_window_info( wi ) ;
                 }
             }
-            natus::log::global_t::status( natus_log_fn("before wait") ) ;
+            
 
             async_->wait_for_frame() ;
-            natus::log::global_t::status( natus_log_fn("after  wait") ) ;
-            async_->system_update() ;
-            async_->set_ready() ;
+            async_->system_update() ;            
             ctx_->swap() ;
+            async_->set_ready() ;
+            static size_t this_count = 0 ;
+            this_count++ ;
         }
         natus::log::global_t::status( natus_log_fn("thread end") ) ;
         ctx_->deactivate() ;
@@ -257,7 +259,7 @@ bool_t app::before_render( void_t )
     {
         for( auto& pwi : _windows )
         {
-            pwi.async->leave_frame() ;
+            pwi.async->leave_frame( false ) ;
         }
         // do not go into on_render
         return false ;
@@ -272,7 +274,7 @@ bool_t app::after_render( void_t )
     ++_render_count ;
     for( auto& pwi : _windows )
     {
-        pwi.async->leave_frame() ;
+        pwi.async->leave_frame( true ) ;
     }
     return true ;
 }
