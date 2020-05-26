@@ -183,7 +183,7 @@ void_t async::system_update( void_t ) noexcept
 bool_t async::enter_frame( void_t ) 
 {
     natus::concurrent::lock_guard_t lk( _frame_mtx ) ;
-    if( natus::core::is_not( _ready ) ) return false ;
+    if( natus::core::is_not( _ready ) || _frame_ready ) return false ;
     _frame_ready = false ;
     return true ;
 }
