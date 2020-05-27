@@ -45,11 +45,9 @@ natus::application::result context::activate( void_t )
 {
     //glXMakeCurrent( _display, _wnd, NULL ) ;
     //XLockDisplay( _display ) ;
-    glXMakeCurrent( _display, _wnd, _context ) ;
+    auto const res = glXMakeCurrent( _display, _wnd, _context ) ;
     //XUnlockDisplay( _display ) ;
-
-    const GLenum glerr = natus::ogl::gl::glGetError( ) ;
-    natus::log::global_t::warning( glerr != GL_NO_ERROR, 
+    natus::log::global_t::warning( natus::core::is_not(res), 
             natus_log_fn( "glXMakeCurrent" ) ) ;
 
     return natus::application::result::ok ;
@@ -58,7 +56,9 @@ natus::application::result context::activate( void_t )
 //***************************************************************
 natus::application::result context::deactivate( void_t ) 
 {
-    glXMakeCurrent( _display, 0, 0 ) ;
+    auto const res = glXMakeCurrent( _display, 0, 0 ) ;
+    natus::log::global_t::warning( natus::core::is_not(res), 
+            natus_log_fn( "glXMakeCurrent" ) ) ;
     return natus::application::result::ok ;
 }
 
@@ -72,6 +72,9 @@ natus::application::result context::vsync( bool_t const /*on_off*/ )
 natus::application::result context::swap( void_t ) 
 {
     glXSwapBuffers( _display, _wnd ) ;
+    const GLenum glerr = natus::ogl::gl::glGetError( ) ;
+    natus::log::global_t::warning( glerr != GL_NO_ERROR, 
+            natus_log_fn( "glXSwapBuffers" ) ) ;
     return natus::application::result::ok ;
 }
 

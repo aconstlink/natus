@@ -27,7 +27,7 @@ window::window( Display * display, Window wnd )
 }
 
 //****************************************************************
-window::window( this_rref_t rhv ) 
+window::window( this_rref_t rhv ) : platform_window( ::std::move( rhv ) )
 {
     _display = rhv._display ;
     rhv._display = nullptr ;
@@ -35,8 +35,8 @@ window::window( this_rref_t rhv )
     _handle = rhv._handle ;
     rhv._handle = NULL ;
 
-    //this_t::store_this_ptr_in_atom( 
-      //  _display, _handle ) ;
+    this_t::store_this_ptr_in_atom( 
+        _display, _handle ) ;
 }
 
 //***************************************************************
@@ -174,7 +174,7 @@ void_t window::destroy_window( void_t )
 //****************************************************************
 void_t window::xevent_callback( XEvent const & event ) 
 {
-    //so_app::log::status( "[window::xevent_callback]" ) ;
+    natus::log::global_t::status( "[window::xevent_callback]" ) ;
 
     switch( event.type )
     {
@@ -184,26 +184,29 @@ void_t window::xevent_callback( XEvent const & event )
         break ;
 
     case ButtonRelease:
+        XClearWindow( event.xany.display, event.xany.window ) ;
         //run = false ;
+        //natus::log::global_t::status("buttonrelease") ;
         break ;
 
     case VisibilityNotify:
-
+        //natus::log::global_t::status("visnotify") ;
         break ;
 
     case ResizeRequest:
         {
-            //XWindowAttributes attr ;
-            //XGetWindowAttributes( _display, 
-              //  _handle, &attr ) ;
+            natus::log::global_t::status("window resize") ;
+            XWindowAttributes attr ;
+            XGetWindowAttributes( event.xany.display, 
+                event.xany.window, &attr ) ;
 
-            //XResizeRequestEvent const & rse = (XResizeRequestEvent const &) event ;
-            //natus::application::resize_message const rm {
-              //  attr.x, attr.y, 
-                //rse.width, rse.height
-            //} ;
+            XResizeRequestEvent const & rse = (XResizeRequestEvent const &) event ;
+            natus::application::resize_message const rm {
+                attr.x, attr.y, 
+                rse.width, rse.height
+            } ;
 
-            //this_t::send_resize( rm ) ;
+            this_t::foreach_listener( [&]( natus::application::iwindow_message_listener_res_t lst ){ lst->on_resize( rm ) ; } ) ;
         }
         break ;
     }

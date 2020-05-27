@@ -191,15 +191,11 @@ app::wid_async_t app::create_window(
                     async_->set_window_info( wi ) ;
                 }
             }
-            
 
             async_->wait_for_frame() ;
             async_->system_update() ; 
             async_->set_ready() ;
             ctx_->swap() ;
-            
-            static size_t this_count = 0 ;
-            this_count++ ;
         }
         natus::log::global_t::status( natus_log_fn("thread end") ) ;
         ctx_->deactivate() ;

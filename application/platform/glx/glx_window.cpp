@@ -140,20 +140,22 @@ Window window::create_glx_window( window_info_in_t wi )
 
     Colormap cm ;
     XSetWindowAttributes swa ;
+    
+    Window root = DefaultRootWindow( display ) ; //RootWindow( display, vi->screen )
 
     swa.colormap = cm = XCreateColormap( display, 
-       RootWindow( display, vi->screen ), vi->visual, AllocNone ) ;
+       root, vi->visual, AllocNone ) ;
     swa.background_pixmap = None ;
     swa.border_pixel = 0 ;
     swa.event_mask = ExposureMask | StructureNotifyMask | ResizeRedirectMask |
         KeyPressMask ;
 
     Window window = XCreateWindow( display, 
-            RootWindow( display, vi->screen ), 0, 0,
-            100,//WidthOfScreen( DefaultScreenOfDisplay( display ) ),
-            100,//HeightOfScreen( DefaultScreenOfDisplay( display ) ),
+            root, wi.x, wi.y,
+            wi.w,//WidthOfScreen( DefaultScreenOfDisplay( display ) ),
+            wi.h,//HeightOfScreen( DefaultScreenOfDisplay( display ) ),
             0, vi->depth, InputOutput, vi->visual, 
-            CWBorderPixel | CWColormap | CWEventMask, &swa ) ;
+            CWBackPixel | CWColormap | CWEventMask, &swa ) ;
 
     if( natus::log::global_t::error( !window, 
             "[glx_window::create_glx_window] : XCreateWindow" ) )
@@ -161,7 +163,7 @@ Window window::create_glx_window( window_info_in_t wi )
         return 0 ;
     }
 
-    //XFree( vi ) ;
+    XFree( vi ) ;
 
     XStoreName( display, window, wi.window_name.c_str() ) ;
 
