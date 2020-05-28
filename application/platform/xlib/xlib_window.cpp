@@ -114,7 +114,8 @@ void_t window::create_window( Display * display, Window wnd )
     XSelectInput( display, wnd, 
                   ExposureMask | KeyPressMask | KeyReleaseMask | 
                   ButtonPressMask | ButtonReleaseMask | 
-                  StructureNotifyMask | ResizeRedirectMask ) ;
+                  StructureNotifyMask //| ResizeRedirectMask 
+                  ) ;
 
     // prepare per window data
     this_t::store_this_ptr_in_atom( display, wnd ) ;
@@ -193,6 +194,16 @@ void_t window::xevent_callback( XEvent const & event )
         //natus::log::global_t::status("visnotify") ;
         break ;
 
+    case ConfigureNotify:{
+        XConfigureEvent xce = event.xconfigure ;
+        natus::application::resize_message const rm {
+                0,0,
+                xce.width, xce.height
+            } ;
+
+            this_t::foreach_listener( [&]( natus::application::iwindow_message_listener_res_t lst ){ lst->on_resize( rm ) ; } ) ;
+        break ;}
+
     case ResizeRequest:
         {
             natus::log::global_t::status("window resize") ;
@@ -207,6 +218,7 @@ void_t window::xevent_callback( XEvent const & event )
             } ;
 
             this_t::foreach_listener( [&]( natus::application::iwindow_message_listener_res_t lst ){ lst->on_resize( rm ) ; } ) ;
+            XClearArea( event.xany.display, event.xany.window, 0,0,0,0, true ) ;
         }
         break ;
     }

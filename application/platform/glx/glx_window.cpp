@@ -29,7 +29,8 @@ window::window( gl_info_cref_t gli, window_info_cref_t wi )
 
     if( wi.show )
     {
-        XMapWindow( _window->get_display(), glx_wnd );
+        //XMapWindow( _window->get_display(), glx_wnd );
+        XMapRaised( _window->get_display(), glx_wnd ) ;
         XFlush( _window->get_display() ) ;
     }
 
@@ -142,12 +143,14 @@ Window window::create_glx_window( window_info_in_t wi )
     XSetWindowAttributes swa ;
     
     Window root = DefaultRootWindow( display ) ; //RootWindow( display, vi->screen )
+    int sid = DefaultScreen( display ) ;
 
-    swa.colormap = cm = XCreateColormap( display, 
+    swa.colormap = cm = XCreateColormap( display,
        root, vi->visual, AllocNone ) ;
-    swa.background_pixmap = None ;
-    swa.border_pixel = 0 ;
-    swa.event_mask = ExposureMask | StructureNotifyMask | ResizeRedirectMask |
+    //swa.background_pixmap = None ;
+    //swa.background_pixel = WhitePixel( diplay, sid ) ;
+    //swa.border_pixel = BlackPixel( display, sid )  ;
+    swa.event_mask = ExposureMask | StructureNotifyMask | //ResizeRedirectMask |
         KeyPressMask ;
 
     Window window = XCreateWindow( display, 
