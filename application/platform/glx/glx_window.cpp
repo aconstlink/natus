@@ -3,6 +3,7 @@
 #include "glx_context.h"
 #include "../xlib/xlib_application.h"
 
+#include <natus/ogl/glx/glx.h>
 #include <natus/log/global.h>
 
 using namespace natus::application ;
@@ -165,7 +166,10 @@ Window window::create_glx_window( window_info_in_t wi )
     {
         return 0 ;
     }
-
+    
+    {
+        natus::ogl::glx::init( display, sid ) ;
+    }
     XFree( vi ) ;
 
     XStoreName( display, window, wi.window_name.c_str() ) ;

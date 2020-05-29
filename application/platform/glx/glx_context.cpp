@@ -224,7 +224,7 @@ natus::application::result context::create_the_context( gl_info_cref_t gli )
     }
 
     natus::ogl::gl::init() ;
-
+    
     //this_t::activate() ;
     glXMakeCurrent( _display, _wnd, context ) ;
     {
