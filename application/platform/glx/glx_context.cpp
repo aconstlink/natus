@@ -63,8 +63,9 @@ natus::application::result context::deactivate( void_t )
 }
 
 //***************************************************************
-natus::application::result context::vsync( bool_t const /*on_off*/ ) 
+natus::application::result context::vsync( bool_t const on_off ) 
 {
+    natus::ogl::glx::glXSwapInterval( _display, _wnd, on_off ? 1 : 0 ) ;
     return natus::application::result::ok ;
 }
 
@@ -239,6 +240,11 @@ natus::application::result context::create_the_context( gl_info_cref_t gli )
            ::std::to_string(version.minor) ) ;
     }
 
+    {
+        auto const res = this_t::vsync( gli.vsync_enabled ) ;
+        natus::log::global_t::warning( natus::application::no_success(res),
+               natus_log_fn("vsync") ) ;
+    }
     glXMakeCurrent( _display, 0, 0 ) ;
 
 

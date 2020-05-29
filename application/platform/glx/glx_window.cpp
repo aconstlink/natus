@@ -26,7 +26,7 @@ window::window( gl_info_cref_t gli, window_info_cref_t wi )
                  natus::application::xlib::xlib_application_t::get_display()  ) ;
 
     _vsync = gli.vsync_enabled ;
-
+    
     if( wi.show )
     {
         //XMapWindow( _window->get_display(), glx_wnd );

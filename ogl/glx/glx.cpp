@@ -108,11 +108,11 @@ natus::ogl::result glx::init( Display * display, int screen )
         return natus::ogl::result::failed ;
     }
 
-    /*
+    
     if( !CHECK_AND_LOAD_COND( glXSwapInterval, "glXSwapIntervalEXT" ) )
     {
-        return so_gli::failed ;
-    }*/
+        return natus::ogl::result::failed ;
+    }
 
     if( !CHECK_AND_LOAD_COND( glXChooseFBConfig, "glXChooseFBConfig" ) )
     {
