@@ -18,6 +18,7 @@ async::async( this_rref_t rhv )
     _renders = ::std::move( rhv._renders ) ;
     _rconfigs = ::std::move( rhv._rconfigs ) ;
     _gconfigs = ::std::move( rhv._gconfigs ) ;
+    _num_enter = rhv._num_enter ;
 }
 
 //****
@@ -180,7 +181,7 @@ void_t async::system_update( void_t ) noexcept
 
     {
         natus::concurrent::lock_guard_t lk( _frame_mtx ) ;
-        _frame_ready = false ;
+        _num_enter = 0 ;
     }
 }
 
@@ -188,35 +189,23 @@ void_t async::system_update( void_t ) noexcept
 bool_t async::enter_frame( void_t ) 
 {
     natus::concurrent::lock_guard_t lk( _frame_mtx ) ;
-    if( natus::core::is_not( _ready )  ) return false ;
-    _frame_ready = false ;
+    if( _num_enter > 0 ) return false ;
     return true ;
 }
 
 //***
-void_t async::leave_frame( bool_t const rendered ) 
+void_t async::leave_frame( void_t ) 
 {
     {
         natus::concurrent::lock_guard_t lk( _frame_mtx ) ;
-        _frame_ready = rendered ;
+        _num_enter = 1 ;
     }
-    if( rendered ) _frame_cv.notify_all() ;
+    _frame_cv.notify_all() ;
 }
 
 //***
 void_t async::wait_for_frame( void_t ) 
 {
-    //natus::log::global_t::status("wait for frame" ) ;
-
     natus::concurrent::ulock_t lk( _frame_mtx ) ;
-    while( natus::core::is_not(_frame_ready) ) _frame_cv.wait( lk ) ;    
-    _ready = false ;
-    //natus::log::global_t::status("wait for frame end" ) ;
-}
-
-//***
-void_t async::set_ready( void_t ) 
-{
-    natus::concurrent::lock_guard_t lk( _frame_mtx ) ;
-    _ready = true ;
+    while( _num_enter == 0 ) _frame_cv.wait( lk ) ;
 }

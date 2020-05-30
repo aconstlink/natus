@@ -65,8 +65,7 @@ namespace natus
 
             natus::concurrent::mutex_t _frame_mtx ;
             natus::concurrent::condition_variable_t _frame_cv ;
-            bool_t _frame_ready = false ;
-            bool_t _ready = false ;
+            size_t _num_enter = 0 ;
 
         public:
 
@@ -99,9 +98,8 @@ namespace natus
         public: // sync
 
             bool_t enter_frame( void_t ) ;
-            void_t leave_frame( bool_t const ) ;
+            void_t leave_frame( void_t ) ;
             void_t wait_for_frame( void_t ) ;
-            void_t set_ready( void_t ) ;
         };
         natus_soil_typedef( async ) ;
     }
