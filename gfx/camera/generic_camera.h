@@ -28,16 +28,18 @@ namespace natus
 
             generic_camera( this_rref_t rhv ) noexcept ;
 
-            generic_camera( this_cref_t rhv ) noexcept ;
+            generic_camera( this_cref_t rhv ) = delete ;
             
             virtual ~generic_camera( void_t ) noexcept ;
 
         public:
 
             natus::gfx::result add_lens( natus::gfx::lens_res_t lens ) ;
+            void_t replace_lens( size_t const, lens_res_t ) ;
 
         public: // interface
 
+            
             virtual size_t get_num_lenses( void_t ) const ;
 
             virtual lens_res_t get_lens( size_t const i ) ;

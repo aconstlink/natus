@@ -25,12 +25,22 @@ namespace natus
                 _camera->add_lens( _lens ) ;
             }
 
-            pinhole_camera( this_cref_t rhv )
+            pinhole_camera( this_rref_t rhv )
             {
+                *this = ::std::move( rhv ) ;
             }
+
+            pinhole_camera( this_cref_t rhv ) = delete ;
 
             ~pinhole_camera( void_t )
             {}
+
+            this_ref_t operator = ( this_rref_t rhv ) 
+            {
+                _lens = ::std::move( rhv._lens ) ;
+                _camera = ::std::move( rhv._camera ) ;
+                return *this ;
+            }
 
         public:
 
@@ -38,6 +48,7 @@ namespace natus
                 float_t const near, float_t const far  )
             {
                 _lens = pinhole_lens_t::create_orthographic( w, h, near, far ) ;
+                _camera->replace_lens( 0, _lens ) ;
                 return *this ;
             }
 
@@ -45,6 +56,15 @@ namespace natus
                 float_t const near, float_t const far  )
             {
                 _lens = pinhole_lens_t::create_perspective_fov( fov, aspect, near, far ) ;
+                _camera->replace_lens( 0, _lens ) ;
+                return *this ;
+            }
+
+            this_ref_t transpose_by( natus::math::vec3f_cref_t d )
+            {
+                natus::math::m3d::trafof_t t ;
+                t.translate_fr( d ) ;
+                _camera->transform_by( t ) ;
                 return *this ;
             }
 

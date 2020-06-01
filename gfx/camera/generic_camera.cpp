@@ -23,12 +23,6 @@ generic_camera::generic_camera( this_rref_t rhv ) noexcept
 }
 
 //***
-generic_camera::generic_camera( this_cref_t rhv ) noexcept
-{
-    _trafo = rhv._trafo ;
-}
-
-//***
 generic_camera::~generic_camera( void_t ) noexcept {}
 
  //***
@@ -38,7 +32,15 @@ generic_camera::~generic_camera( void_t ) noexcept {}
      return natus::gfx::result::ok ;
  }
 
-  //***
+ //***
+ void_t generic_camera::replace_lens( size_t const i, lens_res_t lens )  
+ {
+     if( _lenses.size() <= i ) return ;
+
+     _lenses[i] = lens ;
+ }
+
+ //***
  size_t generic_camera::get_num_lenses( void_t ) const
  {
      return _lenses.size() ;
@@ -54,6 +56,10 @@ generic_camera::~generic_camera( void_t ) noexcept {}
  void_t generic_camera::transform_by( natus::math::m3d::trafof_cref_t trafo )
  {
      _trafo = _trafo * trafo ;
+     for( lens_res_t& res : _lenses )
+     {
+         res->transform_by( trafo ) ;
+     }
  }
 
   //***

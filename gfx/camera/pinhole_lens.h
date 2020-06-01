@@ -35,7 +35,12 @@ namespace natus
 
         public:
 
-            pinhole_lens( void_t ) {}
+            pinhole_lens( void_t ) 
+            {
+                _lens_matrix.identity() ;
+                _view_matrix.identity() ;
+                _proj_matrix.identity() ;
+            }
             pinhole_lens( this_rref_t rhv ) 
             {
                 _lens_frame = rhv._lens_frame ;
