@@ -32,7 +32,7 @@ namespace natus
                 natus_typedefs( natus::math::vector4<type_t>, vec4 ) ;
                 natus_typedefs( natus::math::matrix4<type_t>, mat4 ) ;
 
-                natus_typedefs( natus_internal::orthographic_projection<type_t>, proj ) ;
+                natus_typedefs( natus::math::m3d::detail::orthographic_projection<type_t>, proj ) ;
 
             private:
 

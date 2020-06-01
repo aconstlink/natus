@@ -16,11 +16,12 @@ namespace natus
     {
         namespace m3d
         {
-            template< typename type_t >
+            template< typename T >
             class transformation
             {
             public:
 
+                natus_typedefs( T, type ) ;
                 natus_this_typedefs( transformation<type_t> ) ;
 
                 natus_typedefs( natus::math::vector2<type_t>, vec2 ) ;
@@ -40,10 +41,10 @@ namespace natus
 
             public:
 
-                transformation( void_t ) : _trafo( natus::math::so_matrix::with_identity() )
+                transformation( void_t ) : _trafo( natus::math::with_identity() )
                 {}
 
-                transformation( natus::math::so_matrix::xzyw ) : _trafo( natus::math::so_matrix::xzyw() )
+                transformation( natus::math::xzyw ) : _trafo( natus::math::xzyw() )
                 {}
 
                 transformation( this_cref_t rhv )
@@ -54,13 +55,13 @@ namespace natus
                 transformation( mat4_cref_t trafo ) : _trafo( trafo )
                 {}
 
-                transformation( vec2_cref_t pos ) : _trafo( natus::math::so_matrix::with_identity() )
+                transformation( vec2_cref_t pos ) : _trafo( natus::math::with_identity() )
                 {
                     this_t::translate_by( pos ) ;
                 }
 
                 transformation( vec3f_cref_t scale, euler_angle_cref_t axis, vec3f_cref_t translation ) :
-                    _trafo( natus::math::so_matrix::with_identity() )
+                    _trafo( natus::math::with_identity() )
                 {
                     this_t::scale_fl( scale ) ;
                     this_t::rotate_by_angle_fl( axis ) ;
@@ -68,7 +69,7 @@ namespace natus
                 }
 
                 transformation( vec3f_cref_t scale, axis_angle_cref_t axis, vec3f_cref_t translation ) :
-                    _trafo( natus::math::so_matrix::with_identity() )
+                    _trafo( natus::math::with_identity() )
                 {
                     this_t::scale_fl( scale ) ;
                     this_t::rotate_by_angle_fl( axis.xyz(), axis.w() ) ;
@@ -112,7 +113,7 @@ namespace natus
                 /// scale in all dimensions from left
                 this_ref_t scale_fl( type_t scaling )
                 {
-                    mat4_t trafo = mat4_t( natus::math::so_matrix::with_identity() ).
+                    mat4_t trafo = mat4_t( natus::math::with_identity() ).
                         scale_by( scaling ) ;
 
                     trafo[ 15 ] = 1.0f ;
@@ -125,7 +126,7 @@ namespace natus
                 /// scale in all dimensions from right
                 this_ref_t scale_fr( type_t scaling )
                 {
-                    mat4_t trafo = mat4_t( natus::math::so_matrix::with_identity() ).
+                    mat4_t trafo = mat4_t( natus::math::with_identity() ).
                         scale_by( scaling ) ;
 
                     trafo[ 15 ] = 1.0f ;
@@ -138,7 +139,7 @@ namespace natus
                 /// scale from left
                 this_ref_t scale_fl( vec3_cref_t scaling )
                 {
-                    mat4_t trafo = mat4_t( natus::math::so_matrix::with_identity() ).
+                    mat4_t trafo = mat4_t( natus::math::with_identity() ).
                         scale_by( scaling ) ;
 
                     trafo[ 15 ] = 1.0f ;
@@ -151,7 +152,7 @@ namespace natus
                 /// scale from right
                 this_ref_t scale_fr( vec3_cref_t scaling )
                 {
-                    mat4_t trafo = mat4_t( natus::math::so_matrix::with_identity() ).
+                    mat4_t trafo = mat4_t( natus::math::with_identity() ).
                         scale_by( scaling ) ;
 
                     trafo[ 15 ] = 1.0f ;
@@ -164,18 +165,18 @@ namespace natus
                 /// rotate by angle(euler angles) from left
                 this_ref_t rotate_by_angle_fl( vec3_cref_t per_axis_angle )
                 {
-                    vec3_t const x_axis = vec3_t( natus::math::so_vector::x_axis() ) ;
-                    vec3_t const y_axis = vec3_t( natus::math::so_vector::y_axis() ) ;
-                    vec3_t const z_axis = vec3_t( natus::math::so_vector::z_axis() ) ;
+                    vec3_t const x_axis = vec3_t( natus::math::x_axis() ) ;
+                    vec3_t const y_axis = vec3_t( natus::math::y_axis() ) ;
+                    vec3_t const z_axis = vec3_t( natus::math::z_axis() ) ;
 
                     quat4_t const x( per_axis_angle.x(), x_axis,
-                        natus::math::so_quaternion::axis_normalized() ) ;
+                        natus::math::axis_normalized() ) ;
 
                     quat4_t const y( per_axis_angle.y(), y_axis,
-                        natus::math::so_quaternion::axis_normalized() ) ;
+                        natus::math::axis_normalized() ) ;
 
                     quat4_t const z( per_axis_angle.z(), z_axis,
-                        natus::math::so_quaternion::axis_normalized() ) ;
+                        natus::math::axis_normalized() ) ;
 
                     // rotation matrix
                     mat4_t rot( quat4_t( z * y * x ).to_matrix() ) ;
@@ -191,18 +192,18 @@ namespace natus
                 /// => this * rot(euler angles)
                 this_ref_t rotate_by_angle_fr( vec3_cref_t per_axis_angle )
                 {
-                    vec3_t const x_axis = vec3_t( natus::math::so_vector::x_axis() ) ;
-                    vec3_t const y_axis = vec3_t( natus::math::so_vector::y_axis() ) ;
-                    vec3_t const z_axis = vec3_t( natus::math::so_vector::z_axis() ) ;
+                    vec3_t const x_axis = vec3_t( natus::math::x_axis() ) ;
+                    vec3_t const y_axis = vec3_t( natus::math::y_axis() ) ;
+                    vec3_t const z_axis = vec3_t( natus::math::z_axis() ) ;
 
                     quat4_t const x( per_axis_angle.x(), x_axis,
-                        natus::math::so_quaternion::axis_normalized() ) ;
+                        natus::math::axis_normalized() ) ;
 
                     quat4_t const y( per_axis_angle.y(), y_axis,
-                        natus::math::so_quaternion::axis_normalized() ) ;
+                        natus::math::axis_normalized() ) ;
 
                     quat4_t const z( per_axis_angle.z(), z_axis,
-                        natus::math::so_quaternion::axis_normalized() ) ;
+                        natus::math::axis_normalized() ) ;
 
                     // rotation matrix
                     mat4_t rot( quat4_t( x * y * z ).to_matrix() ) ;
@@ -219,7 +220,7 @@ namespace natus
                 this_ref_t rotate_by_axis_fl( vec3_cref_t axis, type_t angle )
                 {
                     auto m = mat4_t( natus::math::quat4f_t(
-                        angle, axis, natus::math::so_quaternion::axis_normalized() ).to_matrix() ) ;
+                        angle, axis, natus::math::axis_normalized() ).to_matrix() ) ;
                     m[ 15 ] = type_t( 1 ) ;
 
                     _trafo = m * _trafo ;
@@ -231,7 +232,7 @@ namespace natus
                 this_ref_t rotate_by_axis_fr( vec3_cref_t axis, type_t angle )
                 {
                     auto m = mat4_t( natus::math::quat4f_t(
-                        angle, axis, natus::math::so_quaternion::axis_normalized() ).to_matrix() ) ;
+                        angle, axis, natus::math::axis_normalized() ).to_matrix() ) ;
                     m[ 15 ] = type_t( 1 ) ;
 
                     _trafo = _trafo * m ;
@@ -279,7 +280,7 @@ namespace natus
                 /// => T(by) * this
                 this_ref_t translate_fl( vec3_cref_t by )
                 {
-                    auto const trans = mat4_t( natus::math::so_matrix::with_identity() )
+                    auto const trans = mat4_t( natus::math::with_identity() )
                         .set_column( 3, vec4_t( by, type_t( 1 ) ) ) ;
 
                     _trafo = trans * _trafo ;
@@ -291,7 +292,7 @@ namespace natus
                 /// => this * T(by)
                 this_ref_t translate_fr( vec3_cref_t by )
                 {
-                    auto const trans = mat4_t( natus::math::so_matrix::with_identity() )
+                    auto const trans = mat4_t( natus::math::with_identity() )
                         .set_column( 3, vec4_t( by, type_t( 1 ) ) ) ;
 
                     _trafo = _trafo * trans ;
@@ -319,37 +320,37 @@ namespace natus
 
                 static this_t scaling( type_t scale )
                 {
-                    return this_t( natus::math::so_matrix::with_identity() ).
+                    return this_t( natus::math::with_identity() ).
                         set_scale( scale ) ;
                 }
 
                 static this_t scaling( vec3_cref_t scale )
                 {
-                    return this_t( natus::math::so_matrix::with_identity() ).
+                    return this_t( natus::math::with_identity() ).
                         set_scale( scale ) ;
                 }
 
                 static this_t translation( vec3_cref_t t )
                 {
-                    return this_t( natus::math::so_matrix::with_identity { } ).
+                    return this_t( natus::math::with_identity { } ).
                         set_translation( t ) ;
                 }
 
                 static this_t rotation_by_euler( vec3_cref_t angles )
                 {
-                    return this_t( natus::math::so_matrix::with_identity { } ).
+                    return this_t( natus::math::with_identity { } ).
                         rotate_by_angle_fr( angles ) ;
                 }
 
                 static this_t rotation_by_axis( vec3_cref_t axis, float_t angle )
                 {
-                    return this_t( natus::math::so_matrix::with_identity { } ).
+                    return this_t( natus::math::with_identity { } ).
                         rotate_by_axis_fr( axis, angle ) ;
                 }
 
                 static this_t rotation_by_matrix( mat3_cref_t m )
                 {
-                    return this_t( natus::math::so_matrix::with_identity { } ).
+                    return this_t( natus::math::with_identity { } ).
                         rotate_by_matrix_fr( m ) ;
                 }
 

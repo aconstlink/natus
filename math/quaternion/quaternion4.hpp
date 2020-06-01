@@ -42,7 +42,7 @@ namespace natus
             }
 
             //************************************************************************************
-            quaternion4( type_t angle, vec3_cref_t axis, natus::math::so_quaternion::axis_normalized )
+            quaternion4( type_t angle, vec3_cref_t axis, natus::math::axis_normalized )
             {
                 this_t::rotatate_norm_axis( axis, angle ) ;
             }

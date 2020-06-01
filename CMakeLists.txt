@@ -123,6 +123,7 @@ list( APPEND subdirs
     "soil"
     "system"
     "gpu"
+    "gfx"
     ${subdirs_header_only}
     )
 
