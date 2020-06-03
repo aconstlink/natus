@@ -145,8 +145,8 @@ namespace natus
             //************************************************************************************
             this_cref_t operator () ( type_t angle, vec3_t const & rot ){
                 angle = angle * type_t(0.5) ;
-                _elem[0] = std::cos( angle ) ;
-                this->vec( rot.normalized() * std::sin( angle ) ) ;
+                _elem[0] = natus::math::fn<type_t>::cos( angle ) ;
+                this->vec( rot.normalized() * natus::math::fn<type_t>::sin( angle ) ) ;
                 return *this ;
             }
 
@@ -307,8 +307,8 @@ namespace natus
             this_ref_t rotatate_norm_axis( vec3_cref_t axis, type_t angle )
             {
                 angle = angle * type_t(0.5) ;
-                _elem[0] = std::cos( angle ) ;
-                this->vec( axis * std::sin( angle ) ) ;
+                _elem[0] = natus::math::fn<type_t>::cos( angle ) ;
+                this->vec( axis * natus::math::fn<type_t>::sin( angle ) ) ;
                 return *this ;
             }
 

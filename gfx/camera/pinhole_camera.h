@@ -47,20 +47,18 @@ namespace natus
             this_ref_t orthographic( float_t const w, float_t const h,
                 float_t const near, float_t const far  )
             {
-                _lens = pinhole_lens_t::create_orthographic( w, h, near, far ) ;
-                _camera->replace_lens( 0, _lens ) ;
+                _lens->make_orthographic( w, h, near, far ) ;
                 return *this ;
             }
 
             this_ref_t perspective_fov( float_t const fov, float_t const aspect,
                 float_t const near, float_t const far  )
             {
-                _lens = pinhole_lens_t::create_perspective_fov( fov, aspect, near, far ) ;
-                _camera->replace_lens( 0, _lens ) ;
+                _lens->make_perspective_fov( fov, aspect, near, far ) ;
                 return *this ;
             }
 
-            this_ref_t transpose_by( natus::math::vec3f_cref_t d )
+            this_ref_t translate_by( natus::math::vec3f_cref_t d )
             {
                 natus::math::m3d::trafof_t t ;
                 t.translate_fr( d ) ;

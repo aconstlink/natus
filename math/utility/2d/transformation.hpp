@@ -37,10 +37,10 @@ namespace natus
 
             public:
 
-                transformation( void_t ) : _trafo( natus::math::so_matrix::with_identity() ) {}
+                transformation( void_t ) : _trafo( natus::math::with_identity() ) {}
                 transformation( this_cref_t rhv ) { *this = rhv ; }
 
-                transformation( vec2_cref_t pos ) : _trafo( natus::math::so_matrix::with_identity() )
+                transformation( vec2_cref_t pos ) : _trafo( natus::math::with_identity() )
                 {
                     this_t::translate_by( pos ) ;
                 }
@@ -57,7 +57,7 @@ namespace natus
                 this_ref_t rotate_by( type_t angle )
                 {
                     // rotation matrix
-                    mat3_t rot( natus::math::so_matrix::with_identity() ) ;
+                    mat3_t rot( natus::math::with_identity() ) ;
 
                     _trafo = rot * _trafo ;
 
@@ -67,7 +67,7 @@ namespace natus
                 /// translate this transformation
                 this_ref_t translate_by( vec2_cref_t by )
                 {
-                    _trafo = mat3_t( natus::math::so_matrix::with_identity() )
+                    _trafo = mat3_t( natus::math::with_identity() )
                         .set_column( 2, vec3_t( by, type_t( 1 ) ) ) * _trafo ;
 
                     return *this ;

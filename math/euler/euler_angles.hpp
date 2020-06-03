@@ -26,7 +26,7 @@ namespace natus
             natus_typedefs( natus::math::quaternion4<T>, quat4 ) ;
 
             natus_typedefs( natus::math::matrix3<T>, mat3 ) ;
-            natus_typedefs( natus::math::so_3d::transformation<T>, trafo ) ;
+            natus_typedefs( natus::math::m3d::transformation<T>, trafo ) ;
 
         private:
 
@@ -103,22 +103,22 @@ namespace natus
             //************************************************************************************
             mat3_t compute( void_t ) const
             {
-                vec3_t const x = vec3_t( natus::math::so_vector::x_axis() ) ;
-                vec3_t const y = vec3_t( natus::math::so_vector::y_axis() ) ;
-                vec3_t const z = vec3_t( natus::math::so_vector::z_axis() ) ;
+                vec3_t const x = vec3_t( natus::math::x_axis() ) ;
+                vec3_t const y = vec3_t( natus::math::y_axis() ) ;
+                vec3_t const z = vec3_t( natus::math::z_axis() ) ;
 
                 switch( _sequence )
                 {
                     case natus::math::euler_sequence::yxz:
                     {
                         auto const mat_a = quat4_t( _angles.x().as_radians(), y,
-                            natus::math::so_quaternion::axis_normalized() ).to_matrix() ;
+                            natus::math::axis_normalized() ).to_matrix() ;
 
                         auto const mat_b = quat4_t( _angles.y().as_radians(), x,
-                            natus::math::so_quaternion::axis_normalized() ).to_matrix() ;
+                            natus::math::axis_normalized() ).to_matrix() ;
 
                         auto const mat_c = quat4_t( _angles.z().as_radians(), z,
-                            natus::math::so_quaternion::axis_normalized() ).to_matrix() ;
+                            natus::math::axis_normalized() ).to_matrix() ;
 
                         return mat_a * mat_b * mat_c ;
                     }

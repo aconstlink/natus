@@ -19,10 +19,10 @@ namespace natus
             {
             public:
 
-                typedef natus::math::so_2d::ray< type_t > ray_t ;
+                typedef natus::math::m2d::ray< type_t > ray_t ;
                 typedef ray_t const& ray_cref_t ;
 
-                typedef natus::math::so_2d::line< type_t > line_t ;
+                typedef natus::math::m2d::line< type_t > line_t ;
                 typedef line_t const& line_cref_t ;
 
                 typedef natus::math::vector2< type_t > vec2_t ;

@@ -120,7 +120,7 @@ namespace natus
                 natus::math::matrix3< type_t > & mat_out,
                 natus::math::matrix4< type_t > const & mat_in ) 
             {
-                typename mat3_t::vec3_t vec ;
+                natus::math::vector3< type_t > vec ;
                 mat_in.get_row(0, vec ) ; // right
                 mat_out.set_column(0,vec) ;
                 mat_in.get_row(1, vec ) ; // up
@@ -188,7 +188,7 @@ namespace natus
             {
                 typedef natus::math::vector3< type_t > vec3_t ;
                 create_lookat_rh( 
-                    vcPos, vec3_t(natus::math::so_vector::y_axis()), 
+                    vcPos, vec3_t(natus::math::y_axis()), 
                     vcAt, inout ) ;
             }
 

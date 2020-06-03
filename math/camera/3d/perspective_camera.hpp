@@ -27,7 +27,7 @@ namespace natus_math
             typedef perspective_camera< type_t > this_t ;
             typedef this_t& this_ref_t ;
 
-            typedef natus::math::so_3d::ray< type_t > ray3_t ;
+            typedef natus::math::m3d::ray< type_t > ray3_t ;
             typedef ray3_t const& ray3_cref_t ;
             typedef ray3_t& ray3_ref_t ;
 
@@ -54,7 +54,7 @@ namespace natus_math
             typedef natus::math::quaternion4< type_t > quat4_t ;
             typedef quat4_t const& quat4_cref_t ;
 
-            typedef natus::math::so_3d::frustum< type_t > frustum_t ;
+            typedef natus::math::m3d::frustum< type_t > frustum_t ;
             typedef frustum_t const& frustum_cref_t ;
             typedef frustum_t* frustum_ptr_t ;
 
@@ -90,7 +90,7 @@ namespace natus_math
 
             this_ref_t translate_only( vec3_cref_t delta )
             {
-                natus::math::so_3d::set_pos_for_camera_matrix( get_position() + delta, _cam ) ;
+                natus::math::m3d::set_pos_for_camera_matrix( get_position() + delta, _cam ) ;
             }
 
             this_ref_t rotate_frame_only_from_right( quat4_cref_t delta )
@@ -101,31 +101,31 @@ namespace natus_math
 
             this_ref_t build_camera_matrix( void_t )
             {
-                natus::math::so_3d::create_view_matrix<type_t>( _cam, _view ) ;
+                natus::math::m3d::create_view_matrix<type_t>( _cam, _view ) ;
                 reconstruct_frustum_planes() ;
                 return *this ;
             }
 
             this_ref_t build_camera_matrix( vec3_cref_t pos )
             {
-                natus::math::so_3d::set_pos_for_camera_matrix<type_t>( pos, _cam ) ;
-                natus::math::so_3d::create_view_matrix<type_t>( _cam, _view ) ;
+                natus::math::m3d::set_pos_for_camera_matrix<type_t>( pos, _cam ) ;
+                natus::math::m3d::create_view_matrix<type_t>( _cam, _view ) ;
                 reconstruct_frustum_planes() ;
                 return *this ;
             }
 
             this_ref_t build_camera_matrix( vec3_cref_t pos, vec3_cref_t target )
             {
-                natus::math::so_3d::create_lookat<type_t>( pos, target, _cam ) ;
-                natus::math::so_3d::create_view_matrix<type_t>( _cam, _view ) ;
+                natus::math::m3d::create_lookat<type_t>( pos, target, _cam ) ;
+                natus::math::m3d::create_view_matrix<type_t>( _cam, _view ) ;
                 reconstruct_frustum_planes() ;
                 return *this ;
             }
 
             this_ref_t build_camera_matrix( vec3_cref_t right, vec3_cref_t up, vec3_cref_t dir )
             {
-                natus::math::so_3d::create_lookat_lh_from_vec<type_t>( get_position(), dir, up, right, _cam ) ;
-                natus::math::so_3d::create_view_matrix<type_t>( _cam, _view ) ;
+                natus::math::m3d::create_lookat_lh_from_vec<type_t>( get_position(), dir, up, right, _cam ) ;
+                natus::math::m3d::create_view_matrix<type_t>( _cam, _view ) ;
                 reconstruct_frustum_planes() ;
                 return *this ;
             }
@@ -138,7 +138,7 @@ namespace natus_math
                 type_t aspect = width / height ;
 
                 _pp = vec4_t( fov, aspect, nz, fz ) ;
-                natus::math::so_3d::create_perspective_fov<type_t>( fov, aspect, nz, fz, _proj ) ;
+                natus::math::m3d::create_perspective_fov<type_t>( fov, aspect, nz, fz, _proj ) ;
                 reconstruct_frustum_planes() ;
                 return *this ;
             }
@@ -151,7 +151,7 @@ namespace natus_math
             /// rebuild from internal properties
             this_ref_t build_projection_matrix( void_t )
             {
-                natus::math::so_3d::create_perspective_fov<type_t>( _pp.x(), _pp.y(), _pp.z(), _pp.w(), _proj ) ;
+                natus::math::m3d::create_perspective_fov<type_t>( _pp.x(), _pp.y(), _pp.z(), _pp.w(), _proj ) ;
                 reconstruct_frustum_planes() ;
                 return *this ;
             }
@@ -210,52 +210,52 @@ namespace natus_math
             vec3_t get_position( void_t ) const
             {
                 vec3_t pos ;
-                natus::math::so_3d::get_pos_from_camera_matrix( pos, _cam ) ;
+                natus::math::m3d::get_pos_from_camera_matrix( pos, _cam ) ;
                 return pos ;
             }
 
             this_ref_t get_position( vec3_ref_t pos ) const
             {
-                natus::math::so_3d::get_pos_from_camera_matrix( pos, _cam ) ;
+                natus::math::m3d::get_pos_from_camera_matrix( pos, _cam ) ;
                 return *this ;
             }
 
             vec3_t get_direction( void_t ) const
             {
                 vec3_t dir ;
-                natus::math::so_3d::get_dir_from_camera_matrix<type_t>( dir, _cam ) ;
+                natus::math::m3d::get_dir_from_camera_matrix<type_t>( dir, _cam ) ;
                 return dir ;
             }
 
             this_ref_t get_direction( vec3_ref_t dir ) const
             {
-                natus::math::so_3d::get_dir_from_camera_matrix<type_t>( dir, _cam ) ;
+                natus::math::m3d::get_dir_from_camera_matrix<type_t>( dir, _cam ) ;
                 return *this ;
             }
 
             vec3_t get_up( void_t ) const
             {
                 vec3_t up ;
-                natus::math::so_3d::get_up_from_camera_matrix<type_t>( up, _cam ) ;
+                natus::math::m3d::get_up_from_camera_matrix<type_t>( up, _cam ) ;
                 return up ;
             }
 
             this_ref_t get_up( vec3_ref_t up ) const
             {
-                natus::math::so_3d::get_up_from_camera_matrix<type_t>( up, _cam ) ;
+                natus::math::m3d::get_up_from_camera_matrix<type_t>( up, _cam ) ;
                 return *this ;
             }
 
             vec3_t get_right( void_t ) const
             {
                 vec3_t right ;
-                natus::math::so_3d::get_right_from_camera_matrix<type_t>( right, _cam ) ;
+                natus::math::m3d::get_right_from_camera_matrix<type_t>( right, _cam ) ;
                 return right ;
             }
 
             this_ref_t get_right( vec3_ref_t right ) const
             {
-                natus::math::so_3d::get_right_from_camera_matrix<type_t>( right, _cam ) ;
+                natus::math::m3d::get_right_from_camera_matrix<type_t>( right, _cam ) ;
                 return *this ;
             }
 
@@ -266,8 +266,8 @@ namespace natus_math
             /// @param norm_pos [in] [-1,1] screen position
             ray3_t create_ray_norm( vec2_cref_t norm_pos ) const
             {
-                type_t w = natus::math::so_3d::get_width_at<float_t>( get_fov(), get_aspect(), type_t( 1 ) ) ;
-                type_t h = natus::math::so_3d::get_height_at<float_t>( get_fov(), type_t( 1 ) ) ;
+                type_t w = natus::math::m3d::get_width_at<float_t>( get_fov(), get_aspect(), type_t( 1 ) ) ;
+                type_t h = natus::math::m3d::get_height_at<float_t>( get_fov(), type_t( 1 ) ) ;
                 return ray3_t( get_position(), _cam * vec3_t( norm_pos * vec2_t( w, h ) * type_t( 0.5 ), type_t( 1 ) ).normalize() ) ;
             }
 

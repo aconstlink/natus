@@ -465,7 +465,7 @@ struct gl3_backend::pimpl
             // build-ins are not needed in the shader variables container.
             if( name_length >= 3 && buffer.equals( 0, 'g' ) && buffer.equals( 1, 'l' ) && buffer.equals( 2, '_' ) ) continue ;
 
-            GLuint location_id = natus::ogl::gl::glGetAttribLocation( program_id, buffer ) ;
+            GLuint const location_id = natus::ogl::gl::glGetAttribLocation( program_id, buffer ) ;
             if( natus::ogl::error::check_and_log( "glGetAttribLocation failed. continue loop." ) ) continue ;
 
             natus::std::string_t const variable_name = natus::std::string_t( ( const char* ) buffer ) ;
