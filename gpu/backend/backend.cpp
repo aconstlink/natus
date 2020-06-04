@@ -44,5 +44,5 @@ backend::backend( this_rref_t rhv ) noexcept
 backend::~backend( void_t ) 
 {
     natus::log::global_t::status( _backend_id != size_t( -1 ),
-        natus_log_fn( "destruction of id : " + ::std::to_string( _backend_id ) ) ) ;
+        natus_log_fn( "destruction of backend type [" + natus::gpu::to_string(_bt) + "] with id : " + ::std::to_string( _backend_id ) ) ) ;
 }
