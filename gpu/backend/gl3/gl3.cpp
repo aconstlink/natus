@@ -942,6 +942,12 @@ struct gl3_backend::pimpl
         natus::ogl::gl::glViewport( 0, 0, vp_width, vp_height ) ;
         natus::ogl::error::check_and_log( natus_log_fn( "glViewport" ) ) ;
     }
+
+    void_t end_frame( void_t ) 
+    {
+        natus::ogl::gl::glFlush() ;
+        natus::ogl::gl::glFinish() ;
+    }
 };
 
 //************************************************************************************************
@@ -1080,4 +1086,5 @@ void_t gl3_backend::render_begin( void_t ) noexcept
 
 void_t gl3_backend::render_end( void_t ) noexcept 
 {
+    _pimpl->end_frame() ;
 }
