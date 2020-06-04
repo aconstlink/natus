@@ -27,12 +27,19 @@ set( GLX_SOURCES
     platform/glx/glx_context.cpp
 )
 
+set( EGL SOURCES
+    platform/egl/egl_window.h
+    platform/egl/egl_window.cpp
+    platform/egl/egl_context.h
+    platform/egl/egl_context.cpp
+)
+
 set( sources 
     api.h
     protos.h
     result.h
     typedefs.h
-    
+
     app.h
     app.cpp
     global.h
@@ -40,7 +47,7 @@ set( sources
     platform/platform_window.h
     platform/platform_application.h
     platform/platform_application.cpp
-    platform/window_info.h   
+    platform/window_info.h
     platform/window_message.h
     platform/window_message_receiver.hpp
     platform/gl_info.h
@@ -49,8 +56,12 @@ set( sources
 
 if( NATUS_GRAPHICS_WGL )
     set( sources ${sources} ${WGL_SOURCES} )
-elseif( NATUS_GRAPHICS_GLX )
+endif()
+if( NATUS_GRAPHICS_GLX )
     set( sources ${sources} ${GLX_SOURCES} )
+endif()
+if( NATUS_GRAPHICS_EGL )
+    set( sources ${sources} ${EGL_SOURCES} )
 endif()
 
 if( NATUS_WINDOW_SYSTEM_WIN32 )
@@ -72,11 +83,11 @@ target_link_libraries( ${cur_lib_name}
     PUBLIC natus_graphics_options 
     PUBLIC natus::system
     #PUBLIC natus::gpx
-   PUBLIC natus::gpu
+    PUBLIC natus::gpu
     PUBLIC natus::concurrent
     PUBLIC natus::log
     PUBLIC natus::memory
-    
+
     #PUBLIC natus::device
     PUBLIC natus::io
 ) 

@@ -6,6 +6,13 @@ set( gl_sources
     gl/convert.hpp
 )
 
+set( es_sources
+    es/es.h
+    es/es.cpp
+    #es/error.hpp
+    #es/convert.hpp
+)
+
 set( wgl_sources
     wgl/wgl.h
     wgl/wgl.cpp
@@ -14,6 +21,11 @@ set( wgl_sources
 set( glx_sources
     glx/glx.h
     glx/glx.cpp
+)
+
+set( egl_sources
+    egl/egl.h
+    egl/egl.cpp
 )
 
 set( sources 
@@ -38,6 +50,7 @@ add_library( ${cur_lib_name} ${NATUS_LIBRARY_BUILD_TYPE} ${sources} )
 add_library( ${cur_alias_name} ALIAS ${cur_lib_name} )
 
 target_link_libraries( ${cur_lib_name}
+  PUBLIC natus_graphics_options 
   PUBLIC OpenGL::GL 
   PUBLIC gl_headers
   PUBLIC natus::std
