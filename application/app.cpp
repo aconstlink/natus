@@ -133,6 +133,33 @@ app::wid_async_t app::create_window(
         natus::application::egl::window_res_t eglw =
             natus::application::egl::window_t( gli, wii ) ;
 
+        pwi.wnd = eglw ;
+
+        natus::application::egl::context_res_t glctx =
+            eglw->get_context() ;
+
+        /*{
+            natus::application::gl_version glv ;
+            glctx->get_gl_version( glv ) ;
+            if( glv.major >= 3 )
+            {
+                backend = natus::gpu::gl3_backend_res_t(
+                    natus::gpu::gl3_backend_t() ) ;
+            }
+        }*/
+
+        ctx = glctx ;
+
+        {
+            pwi.msg_recv = natus::application::window_message_receiver_res_t(
+                natus::application::window_message_receiver_t() ) ;
+            eglw->get_window()->register_listener( pwi.msg_recv ) ; // application
+            eglw->get_window()->register_listener( rnd_msg_recv ) ; // render
+        }
+
+        // show the window after all listeners have been registered.
+        eglw->get_window()->show_window( wii ) ;
+
 #elif defined( NATUS_GRAPHICS_GLX )
 
         natus::application::gl_info_t gli ;

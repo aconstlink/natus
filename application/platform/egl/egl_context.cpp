@@ -177,7 +177,20 @@ void_t context::clear_now( natus::math::vec4f_t const & vec )
 //***************************************************************
 natus::application::result context::create_the_context( gl_info_cref_t gli ) 
 {
-    
+    EGLDisplay display = eglGetDisplay( _display ) ;
+
+    {
+        EGLint major = 0 ;
+        EGLint minor = 0 ;
+        
+        auto const res = eglInitialize( display , &major, &minor ) ;
+        if( res != EGL_TRUE )
+        {
+            natus::log::global_t::error( natus_log_fn("eglInitialize") ) ;
+            return natus::application::result::failed ;
+        }
+    }
+
     return natus::application::result::ok ;
 }
 

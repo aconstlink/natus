@@ -17,15 +17,17 @@ window::window( void_t )
 //***********************************************************************
 window::window( gl_info_cref_t gli, window_info_cref_t wi ) 
 {
+    // the egl window handles renderable surface window
     EGLNativeWindowType wnd = this_t::create_egl_window( wi ) ;
 
+    // the xlib window handles all the xlib messages
     _window = natus::application::xlib::window_res_t(
                 natus::application::xlib::window_t(
                   natus::application::xlib::xlib_application_t::get_display(),
                   wnd ) ) ;
 
-    _context = egl::context_t( gli, wnd, 
-                 natus::application::xlib::xlib_application_t::get_display()  ) ;
+    EGLNativeDisplayType ndt = natus::application::xlib::xlib_application_t::get_display() ;
+    _context = egl::context_t( gli, wnd, ndt ) ;
 
     _vsync = gli.vsync_enabled ;
     
@@ -99,16 +101,13 @@ EGLNativeWindowType window::create_egl_window( window_info_in_t wi )
     {
         return 0 ;
     }
+    
+    XSetWindowAttributes xattr ;
+    xattr.override_redirect = 0 ;
+    XChangeWindowAttributes( display, window, CWOverrideRedirect, &xattr ) ;
 
-    {
-        EGLNativeDisplayType ndt = (EGLNativeDisplayType)display ;
-        auto const res = eglInitialize( display , NULL, NULL ) ;
-        if( res != EGL_TRUE )
-        {
-            natus::log::global_t::error( natus_log_fn("eglInitialize") ) ;
-            return 0 ;
-        }
-    }
+    
+    
     
     XStoreName( display, window, wi.window_name.c_str() ) ;
 
