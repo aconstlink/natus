@@ -27,7 +27,7 @@ set( GLX_SOURCES
     platform/glx/glx_context.cpp
 )
 
-set( EGL SOURCES
+set( EGL_SOURCES
     platform/egl/egl_window.h
     platform/egl/egl_window.cpp
     platform/egl/egl_context.h

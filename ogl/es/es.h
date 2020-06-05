@@ -16,9 +16,9 @@ namespace natus
 {
     namespace ogl
     {
-        struct NATUS_OGL_API gl
+        struct NATUS_OGL_API es
         {
-            natus_this_typedefs( gl ) ;
+            natus_this_typedefs( es ) ;
 
         public:
 

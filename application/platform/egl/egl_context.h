@@ -23,10 +23,10 @@ namespace natus
 
             private:
 
-                Display * _display = NULL ;
-                Window _wnd ;
+                EGLNativeDisplayType _display = NULL ;
+                EGLNativeWindowType _wnd ;
 
-                GLXContext _context ;
+                EGLContext _context ;
 
             public:
 
@@ -36,7 +36,7 @@ namespace natus
             public:
 
                 context( void_t ) ;
-                context( gl_info_in_t, Window wnd, Display * disp ) ;
+                context( gl_info_in_t, EGLNativeWindowType wnd, EGLNativeDisplayType disp ) ;
                 context( this_cref_t ) = delete ;
                 /// allows to move-construct a context.
                 context( this_rref_t ) ;
@@ -44,7 +44,7 @@ namespace natus
 
             private:
 
-                bool_t  determine_gl_version( gl_version & ) const ;
+                bool_t  determine_es_version( gl_version & ) const ;
 
             public:
 
@@ -55,13 +55,13 @@ namespace natus
 
             public:
 
-                natus::application::result create_glx( void_t ) ;
+                natus::application::result create_egl( void_t ) ;
 
             public:
 
                 /// @note a valid window handle must be passed.
-                natus::application::result create_context( 
-                    Display*, Window, GLXContext ) ;
+                //natus::application::result create_context( 
+                  //  EGLNativDisplayType, EGLNativWindowType, ESContext ) ;
 
                 /// Returns ok, if the extension is supported, 
                 /// otherwise, this function fails.
@@ -74,16 +74,16 @@ namespace natus
                 /// wgl extension strings.
                 /// @precondition Must be used after context has 
                 /// been created and made current.
-                natus::application::result get_glx_extension( 
+                natus::application::result get_egl_extension( 
                     strings_out_t ext_list ) ;
 
                 /// @precondition Context must be current.
-                natus::application::result get_gl_extension( 
+                natus::application::result get_es_extension( 
                     strings_out_t ext_list ) ;
 
                 /// @precondition Must be used after context has 
                 /// been created and made current. 
-                natus::application::result get_gl_version( 
+                natus::application::result get_es_version( 
                     natus::application::gl_version & version ) const ;
 
                 /// @precondition Context must be active. 

@@ -7,16 +7,16 @@
 #include <natus/std/vector.hpp>
 
 #include <GL/glcorearb.h>
-#include <GL/glx.h>
-#include <GL/glxext.h>
+#include <EGL/egl.h>
+#include <EGL/eglext.h>
 
 namespace natus 
 {
     namespace ogl
     {
-        struct NATUS_OGL_API glx
+        struct NATUS_OGL_API egl
         {
-            natus_this_typedefs( glx ) ;
+            natus_this_typedefs( egl ) ;
 
         private:
 
@@ -26,7 +26,7 @@ namespace natus
         public: 
 
             /// will init extensions
-            static natus::ogl::result init( Display *, int ) ;
+            static natus::ogl::result init( EGLNativeDisplayType ) ;
 
 
             static bool_t is_supported( char_cptr_t name ) ;

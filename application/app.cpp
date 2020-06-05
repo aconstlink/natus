@@ -15,6 +15,7 @@
 #endif
 #if defined( NATUS_GRAPHICS_EGL )
 #include "platform/egl/egl_context.h"
+#include "platform/egl/egl_window.h"
 #if defined( NATUS_GRAPHICS_OPENGLES )
 #include <natus/gpu/backend/es3/es3.h>
 #endif
@@ -110,6 +111,27 @@ app::wid_async_t app::create_window(
 
         // show the window after all listeners have been registered.
         wglw->get_window()->show_window( wii ) ;
+
+#elif defined( NATUS_GRAPHICS_EGL )
+
+        natus::application::gl_info_t gli ;
+        {
+            gli.vsync_enabled = wi.vsync ;
+        }
+
+        natus::application::window_info_t wii ;
+        {
+            wii.x = wi.x ;
+            wii.y = wi.y ;
+            wii.w = wi.w ;
+            wii.h = wi.h ;
+            wii.window_name = name ;
+            wii.borderless = !wi.borders ;
+            wii.fullscreen = wi.fullscreen ;
+        }
+
+        natus::application::egl::window_res_t eglw =
+            natus::application::egl::window_t( gli, wii ) ;
 
 #elif defined( NATUS_GRAPHICS_GLX )
 
