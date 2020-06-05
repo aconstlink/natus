@@ -158,11 +158,12 @@ HWND window::create_window( window_info const & wi )
         _is_cursor = wil.show_cursor ;
     }
 
+    // WS_POPUP is said to introduce tearing, so it is removed for now
     if( wil.fullscreen )
     {
         ws_ex_style = WS_EX_APPWINDOW /*& ~(WS_EX_DLGMODALFRAME |
                       WS_EX_WINDOWEDGE | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE )*/ ;
-        ws_style = WS_POPUP | SW_SHOWNORMAL;
+        ws_style = /*WS_POPUP |*/ SW_SHOWNORMAL;
         start_x = start_y = 0 ;        
         width = GetSystemMetrics(SM_CXSCREEN) ;
         height = GetSystemMetrics(SM_CYSCREEN) ;
@@ -174,7 +175,7 @@ HWND window::create_window( window_info const & wi )
 
         if( wil.borderless )
         {
-            ws_style = WS_POPUP | SW_SHOWNORMAL;
+            ws_style = /*WS_POPUP |*/ SW_SHOWNORMAL;
         }
         else
         {
