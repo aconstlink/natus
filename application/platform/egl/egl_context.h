@@ -23,10 +23,12 @@ namespace natus
 
             private:
 
-                EGLNativeDisplayType _display = NULL ;
+                EGLNativeDisplayType _ndt = 0 ;
+                EGLDisplay _display = 0 ;
                 EGLNativeWindowType _wnd ;
 
                 EGLContext _context ;
+                EGLSurface _surface ;
 
             public:
 
@@ -44,8 +46,7 @@ namespace natus
 
             private:
 
-                bool_t  determine_es_version( gl_version & ) const ;
-
+                
             public:
 
                 virtual natus::application::result activate( void_t ) ;
@@ -80,11 +81,6 @@ namespace natus
                 /// @precondition Context must be current.
                 natus::application::result get_es_extension( 
                     strings_out_t ext_list ) ;
-
-                /// @precondition Must be used after context has 
-                /// been created and made current. 
-                natus::application::result get_es_version( 
-                    natus::application::gl_version & version ) const ;
 
                 /// @precondition Context must be active. 
                 /// For debug purpose. Just clears the screen.

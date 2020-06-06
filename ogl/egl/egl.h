@@ -6,7 +6,7 @@
 
 #include <natus/std/vector.hpp>
 
-#include <GL/glcorearb.h>
+//#include <GL/glcorearb.h>
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 

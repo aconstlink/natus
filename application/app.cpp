@@ -245,7 +245,7 @@ app::wid_async_t app::create_window(
                     async_->set_window_info( wi ) ;
                 }
             }
-
+            
             async_->wait_for_frame() ;
             async_->system_update() ; 
             ctx_->swap() ;
