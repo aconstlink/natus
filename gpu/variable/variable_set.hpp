@@ -137,25 +137,25 @@ namespace natus
                 {
                 case natus::gpu::type_struct::vec1: 
                     return natus::memory::global_t::alloc( 
-                        natus::gpu::data_variable<T>(), natus_log_fn( "vec1 variable" ) ) ;
+                        natus::gpu::data_variable<T>(), natus_log_fn( "vec1 variable " + name ) ) ;
                 case natus::gpu::type_struct::vec2: 
                     return natus::memory::global_t::alloc( 
-                        natus::gpu::data_variable<natus::math::vector2<T>>(), natus_log_fn( "vec2 variable" ) ) ;
+                        natus::gpu::data_variable<natus::math::vector2<T>>(), natus_log_fn( "vec2 variable " + name ) ) ;
                 case natus::gpu::type_struct::vec3:
                     return natus::memory::global_t::alloc( 
-                        natus::gpu::data_variable<natus::math::vector3<T>>(), natus_log_fn( "vec3 variable" ) ) ;
+                        natus::gpu::data_variable<natus::math::vector3<T>>(), natus_log_fn( "vec3 variable " + name ) ) ;
                 case natus::gpu::type_struct::vec4:
                     return natus::memory::global_t::alloc( 
-                        natus::gpu::data_variable<natus::math::vector4<T>>(), natus_log_fn( "vec4 variable" ) ) ;
+                        natus::gpu::data_variable<natus::math::vector4<T>>(), natus_log_fn( "vec4 variable " + name ) ) ;
                 case natus::gpu::type_struct::mat2:
                     return natus::memory::global_t::alloc( 
-                        natus::gpu::data_variable<natus::math::matrix2<T>>(natus::math::matrix2<T>().identity()), natus_log_fn( "mat2 variable" ) ) ;
+                        natus::gpu::data_variable<natus::math::matrix2<T>>(natus::math::matrix2<T>().identity()), natus_log_fn( "mat2 variable " + name ) ) ;
                 case natus::gpu::type_struct::mat3:
                     return natus::memory::global_t::alloc( 
-                        natus::gpu::data_variable<natus::math::matrix3<T>>(natus::math::matrix3<T>().identity()), natus_log_fn( "mat2 variable" ) ) ;
+                        natus::gpu::data_variable<natus::math::matrix3<T>>(natus::math::matrix3<T>().identity()), natus_log_fn( "mat2 variable " + name ) ) ;
                 case natus::gpu::type_struct::mat4:
                     return natus::memory::global_t::alloc( 
-                        natus::gpu::data_variable<natus::math::matrix4<T>>(natus::math::matrix4<T>().identity()), natus_log_fn( "mat2 variable" ) ) ;
+                        natus::gpu::data_variable<natus::math::matrix4<T>>(natus::math::matrix4<T>().identity()), natus_log_fn( "mat2 variable " + name ) ) ;
                 default:
                     break ;
                 }
