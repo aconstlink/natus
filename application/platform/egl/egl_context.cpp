@@ -79,19 +79,6 @@ natus::application::result context::swap( void_t )
     return natus::application::result::ok ;
 }
 
-//**************************************************************
-/*natus::application::result context::create_context( 
-     Display* display, Window wnd, GLXContext context ) 
-{
-    _display = display ;
-    _wnd = wnd ;
-
-    // the context comes in already create
-    _context = context ;
-
-    return natus::application::result::ok ;
-}*/
-
 //***************************************************************
 natus::application::result context::is_extension_supported( 
     natus::std::string_cref_t extension_name ) 
@@ -134,20 +121,58 @@ natus::application::result context::get_es_extension( this_t::strings_out_t ext_
 }
 
 //****************************************************************
+natus::application::result context::get_es_version( natus::application::gl_version & version ) const 
+{
+    const GLubyte* ch = glGetString(GL_VERSION) ;
+    if( !ch ) return natus::application::result::failed ;
+
+    natus::std::string_t version_string = natus::std::string((const char*)ch) ;
+
+    GLint major = 0;//boost::lexical_cast<GLint, std::string>(*token) ;
+    GLint minor = 0;//boost::lexical_cast<GLint, std::string>(*(++token));
+
+    {
+        glGetIntegerv( GL_MAJOR_VERSION, &major ) ;
+        GLenum err = glGetError() ;
+        if( err != GL_NO_ERROR )
+        {
+            natus::std::string_t const es = ::std::to_string(err) ;
+            natus::log::global::error( 
+                "[context::get_gl_version] : get gl major <"+es+">" ) ;
+        }
+    }
+    {
+        glGetIntegerv( GL_MINOR_VERSION, &minor) ;
+        GLenum err = glGetError() ;
+        if( err != GL_NO_ERROR )
+        {
+            natus::std::string_t es = ::std::to_string(err) ;
+            natus::log::global::error( "[context::get_gl_version] : get gl minor <"+es+">" ) ;
+        }
+    }
+
+    version.major = major ;
+    version.minor = minor ;
+
+    return natus::application::result::ok ;
+}
+
+
+//****************************************************************
 void_t context::clear_now( natus::math::vec4f_t const & vec ) 
 {
     {
         glClearColor( vec.x(), vec.y(), vec.z(), vec.w() ) ;
-        auto const res = glGetError() ;
+        glGetError() ;
     }
     {
-    glClear( GL_COLOR_BUFFER_BIT ) ;
-    auto const res = glGetError() ;
+        glClear( GL_COLOR_BUFFER_BIT ) ;
+        glGetError() ;
     }
 }
 
 //***************************************************************
-natus::application::result context::create_the_context( gl_info_cref_t gli ) 
+natus::application::result context::create_the_context( gl_info_cref_t /*gli*/ ) 
 {
     EGLConfig config ;
     EGLDisplay display = eglGetDisplay( _ndt ) ;
@@ -235,6 +260,7 @@ natus::application::result context::create_the_context( gl_info_cref_t gli )
         glClearColor(1.0f,0.0f,1.0f,1.0f);
         glClear( GL_COLOR_BUFFER_BIT ) ;
         eglSwapBuffers( display, _surface ) ;
+
         eglMakeCurrent( display, EGL_NO_SURFACE, 
                EGL_NO_SURFACE, EGL_NO_CONTEXT ) ;
     }

@@ -179,21 +179,6 @@ namespace natus
             }
 
             //***
-            void_t add_config( natus::gpu::backend_type const bt, natus::gpu::render_configuration_res_t && config )
-            {
-                auto iter = ::std::find_if( _configs.begin(), _configs.end(),
-                    [&] ( data_cref_t d ) { return d.bt == bt ; } ) ;
-
-                if( iter != _configs.end() )
-                {
-                    iter->config = ::std::move( config )  ;
-                    return ;
-                }
-
-                _configs.emplace_back( this_t::data_t( { bt, ::std::move( config ) } )  ) ;
-            }
-
-            //***
             bool_t find_configuration( natus::gpu::backend_type const bt, 
                 natus::gpu::render_configuration_res_t & config ) const noexcept
             {

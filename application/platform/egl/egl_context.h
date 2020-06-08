@@ -82,6 +82,9 @@ namespace natus
                 natus::application::result get_es_extension( 
                     strings_out_t ext_list ) ;
 
+                natus::application::result get_es_version( 
+                   natus::application::gl_version & version ) const ;
+
                 /// @precondition Context must be active. 
                 /// For debug purpose. Just clears the screen.
                 void_t clear_now( natus::math::vec4f_t const & vec ) ;

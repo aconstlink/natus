@@ -5,13 +5,14 @@
 #include "../typedefs.h"
 
 #if defined( NATUS_TARGET_OS_WIN )
-
 #elif defined( NATUS_TARGET_OS_LIN )
 #else
 #endif
 
+#include <GLES3/gl3.h>
+#include <GLES3/gl3ext.h>
 #include <natus/std/list.hpp>
-
+#include "convert.hpp"
 namespace natus
 {
     namespace ogl
@@ -32,6 +33,18 @@ namespace natus
             static natus::ogl::result init( void_t ) ;
 
             static bool_t is_supported( char const* name ) ;
+
+        public:
+
+            static bool_t check_and_log( natus::std::string_in_t msg ) noexcept
+            {
+                GLenum __so__err = glGetError() ;
+                if( __so__err == GL_NO_ERROR ) return false ;
+
+                std::string const __glstring = natus::ogl::to_string( __so__err ) ;
+                natus::log::global_t::error( msg + " " + __glstring ) ;
+                return true ;
+            }
         };
     }
 }

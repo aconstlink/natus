@@ -68,12 +68,6 @@ window::~window( void_t )
 }
 
 //***********************************************************************
-xlib::window_res_t window::create_window( gl_info_in_t, window_info_in_t ) 
-{
-
-}
-
-//***********************************************************************
 GLXFBConfig window::get_config( void_t ) 
 {
     static GLXFBConfig *fbc = nullptr ;

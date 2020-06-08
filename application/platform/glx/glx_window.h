@@ -38,7 +38,6 @@ namespace natus
 
             private:
 
-                xlib::window_res_t create_window( gl_info_in_t, window_info_in_t ) ;
                 Window create_glx_window( window_info_in_t ) ;
             };
             natus_typedef( window ) ;

@@ -88,7 +88,7 @@ namespace natus
                 async_view( natus::gpu::async_res_t const & r, bool_ptr_t b ) : 
                     _async( r ), _access( b ) {}
                 async_view( natus::gpu::async_res_t && r, bool_ptr_t b ) : 
-                    _async( ::std::move( r ) ), _access( _access ) {}
+                    _async( ::std::move( r ) ), _access( b ) {}
                 
             public:
 

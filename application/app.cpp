@@ -138,15 +138,15 @@ app::wid_async_t app::create_window(
         natus::application::egl::context_res_t glctx =
             eglw->get_context() ;
 
-        /*{
+        {
             natus::application::gl_version glv ;
-            glctx->get_gl_version( glv ) ;
+            glctx->get_es_version( glv ) ;
             if( glv.major >= 3 )
             {
-                backend = natus::gpu::gl3_backend_res_t(
-                    natus::gpu::gl3_backend_t() ) ;
+                backend = natus::gpu::es3_backend_res_t(
+                    natus::gpu::es3_backend_t() ) ;
             }
-        }*/
+        }
 
         ctx = glctx ;
 
