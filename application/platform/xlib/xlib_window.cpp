@@ -33,7 +33,7 @@ window::window( this_rref_t rhv ) : platform_window( ::std::move( rhv ) )
     rhv._display = nullptr ;
 
     _handle = rhv._handle ;
-    rhv._handle = NULL ;
+    rhv._handle = 0 ;
 
     this_t::store_this_ptr_in_atom( 
         _display, _handle ) ;
@@ -198,7 +198,7 @@ void_t window::xevent_callback( XEvent const & event )
         XConfigureEvent xce = event.xconfigure ;
         natus::application::resize_message const rm {
                 0,0,
-                xce.width, xce.height
+                (size_t)xce.width, (size_t)xce.height
             } ;
 
             this_t::foreach_listener( [&]( natus::application::iwindow_message_listener_res_t lst ){ lst->on_resize( rm ) ; } ) ;
@@ -214,7 +214,7 @@ void_t window::xevent_callback( XEvent const & event )
             XResizeRequestEvent const & rse = (XResizeRequestEvent const &) event ;
             natus::application::resize_message const rm {
                 attr.x, attr.y, 
-                rse.width, rse.height
+                (size_t)rse.width, (size_t)rse.height
             } ;
 
             this_t::foreach_listener( [&]( natus::application::iwindow_message_listener_res_t lst ){ lst->on_resize( rm ) ; } ) ;
@@ -229,11 +229,11 @@ void_t window::show_window(  window_info const & wi )
 {
     if( wi.show ) 
     {
-        //ShowWindow( _handle, SW_SHOW ) ;
+        XMapWindow( _display, _handle ) ;
     }
     else 
     {
-        //ShowWindow( _handle, SW_HIDE ) ;
+        XUnmapWindow( _display, _handle ) ;
     }
 }
 

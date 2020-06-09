@@ -101,7 +101,7 @@ Window window::create_egl_window( window_info_in_t wi )
     {
         return 0 ;
     }
-    
+
     Atom wm_state;
     wm_state = XInternAtom (display, "_NET_WM_STATE", 0);
 
@@ -123,9 +123,8 @@ Window window::create_egl_window( window_info_in_t wi )
        0,
        SubstructureNotifyMask,
        &xev );
-    
-    
-    XMapWindow( display, window ) ;
+
+    //XMapWindow( display, window ) ;
     XStoreName( display, window, wi.window_name.c_str() ) ;
 
     return window ;

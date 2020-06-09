@@ -14,8 +14,8 @@ namespace natus
 
         struct resize_message
         {
-            size_t x ;
-            size_t y ;
+            int_t x ;
+            int_t y ;
             size_t w ;
             size_t h ;
         };
