@@ -39,7 +39,7 @@ namespace natus
 
         public:
             
-            natus::application::result exec( void_t ) ;
+            int_t exec( void_t ) ;
 
         private:
 

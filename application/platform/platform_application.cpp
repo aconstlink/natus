@@ -97,7 +97,7 @@ void_t platform_application::stop_update_thread( void_t )
 }
 
 //******************************************************
-natus::application::result platform_application::exec( void_t ) 
+int_t platform_application::exec( void_t )
 {
     {
         auto const res = this_t::start_update_thread() ;
@@ -115,5 +115,5 @@ natus::application::result platform_application::exec( void_t )
 
     this_t::stop_update_thread() ;
 
-    return result::ok ;
+    return 0 ;
 }
