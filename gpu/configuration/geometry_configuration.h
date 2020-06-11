@@ -28,6 +28,8 @@ namespace natus
 
         public: 
 
+            geometry_configuration( void_t ) {}
+
             geometry_configuration( natus::std::string_cref_t name ) : _name(name)
             {}
 
@@ -51,22 +53,34 @@ namespace natus
 
             geometry_configuration( this_cref_t rhv ) 
             {
+                *this = rhv ;
+            }
+
+            geometry_configuration( this_rref_t rhv )
+            {
+                *this = ::std::move( rhv ) ;
+            }
+
+            ~geometry_configuration( void_t ) 
+            {}
+
+            this_ref_t operator = ( this_cref_t rhv )
+            {
                 _pt = rhv._pt ;
                 _vb = rhv._vb ;
                 _ib = rhv._ib ;
                 _name = rhv._name ;
+                return *this ;
             }
 
-            geometry_configuration( this_rref_t rhv )
+            this_ref_t operator = ( this_rref_t rhv )
             {
                 _pt = rhv._pt ;
                 _vb = ::std::move( rhv._vb ) ;
                 _ib = ::std::move( rhv._ib ) ;
                 _name = ::std::move( rhv._name ) ;
+                return *this ;
             }
-
-            ~geometry_configuration( void_t ) 
-            {}
 
         public:
 
