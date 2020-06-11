@@ -20,10 +20,8 @@ set( sources
     "backend/null/null.h"
     "backend/null/null.cpp"
    
+    "shader/shader_set.hpp"
     "shader/shader.hpp"
-    "shader/vertex_shader.hpp"
-    "shader/geometry_shader.hpp"
-    "shader/pixel_shader.hpp"
     "shader/variable_binding.h"
 
     "buffer/vertex_attribute.h"

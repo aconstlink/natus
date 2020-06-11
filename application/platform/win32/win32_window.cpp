@@ -311,7 +311,7 @@ void_t window::send_resize( HWND hwnd )
     GetClientRect( hwnd, &rect ) ;
 
     natus::application::resize_message const rm {
-        size_t(rect.left), size_t(rect.top), 
+        int_t(rect.left), int_t(rect.top), 
         size_t(rect.right-rect.left), size_t(rect.bottom-rect.top)
     } ;
 

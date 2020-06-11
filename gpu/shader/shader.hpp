@@ -14,20 +14,11 @@ namespace natus
 {
     namespace gpu
     {
-        template< typename T >
         class shader
         {
             natus_this_typedefs( shader ) ;
 
         private:
-
-            struct variable_binding
-            {
-                natus::std::string_t name ;
-                natus::gpu::binding_point bp ;
-            };
-            natus_typedef( variable_binding ) ;
-            natus::std::vector< variable_binding_t > _bindings ;
 
             natus::std::string_t _code ;
 
@@ -56,38 +47,23 @@ namespace natus
             virtual ~shader( void_t ) 
             {}
 
-            T & operator = ( this_cref_t rhv ) noexcept 
+            this_ref_t operator = ( this_cref_t rhv ) noexcept 
             {
                 _code = rhv._code ;
                 _hash = rhv._hash ;
-                _bindings = rhv._bindings ;
-                return (T&)*this ;
+                return *this ;
             }
 
-            T & operator = ( this_rref_t rhv ) noexcept 
+            this_ref_t operator = ( this_rref_t rhv ) noexcept 
             {
                 _code = ::std::move( rhv._code ) ;
                 _hash = rhv._hash ;
-                rhv._hash = 0 ;
-                _bindings = ::std::move( rhv._bindings ) ;
-                return (T&)*this ;
+                rhv._hash = 0 ;                
+                return *this ;
             }
 
             natus::std::string code( void_t ) const { return _code ; }
-
-        public:
-
-            T & add_input_binding( natus::gpu::binding_point const bp, 
-                natus::std::string_cref_t name )
-            {
-                variable_binding vb ;
-                vb.name = name ;
-                vb.bp = bp ;
-
-                _bindings.push_back( vb ) ;
-
-                return (T&)*this ;
-            }
         };
+        natus_typedef( shader ) ;
     }
 } 

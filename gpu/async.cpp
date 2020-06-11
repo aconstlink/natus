@@ -48,18 +48,6 @@ natus::gpu::result async::configure( natus::gpu::async_id_res_t aid,
 }
 
 //****
-natus::gpu::result async::configure( natus::gpu::async_id_res_t aid, natus::gpu::render_configurations_t configs ) noexcept
-{
-    natus::gpu::render_configuration_res_t config ;
-    if( natus::core::is_not( configs.find_configuration(_backend->get_type(), config ) ) )
-    {
-        return natus::gpu::result::invalid_argument ;
-    }
-
-    return this_t::configure( aid, config ) ;
-}
-
-//****
 natus::gpu::result async::configure( natus::gpu::async_id_res_t aid, natus::gpu::render_configuration_res_t rc ) noexcept 
 {
     //auto const res = aid->swap( natus::gpu::async_result::in_transit ) ;

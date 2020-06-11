@@ -80,9 +80,6 @@ namespace natus
             natus::gpu::result set_window_info( natus::gpu::backend_t::window_info_cref_t ) noexcept ;
 
             natus::gpu::result configure( natus::gpu::async_id_res_t, natus::gpu::geometry_configuration_res_t ) noexcept ;
-            
-            natus::gpu::result configure( natus::gpu::async_id_res_t, natus::gpu::render_configurations_t ) noexcept ;
-
 
             natus::gpu::result configure( natus::gpu::async_id_res_t, natus::gpu::render_configuration_res_t ) noexcept ;
 

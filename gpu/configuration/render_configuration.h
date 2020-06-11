@@ -5,9 +5,8 @@
 #include "../protos.h"
 #include "../typedefs.h"
 
-#include "../shader/vertex_shader.hpp"
-#include "../shader/geometry_shader.hpp"
-#include "../shader/pixel_shader.hpp"
+#include "../shader/shader_set.hpp"
+#include "../buffer/vertex_attribute.h"
 
 #include "../backend/types.h"
 
@@ -23,11 +22,129 @@ namespace natus
         {
             natus_this_typedefs( render_configuration ) ;
 
+        private: // vertex input
+
+            struct vertex_input_binding
+            {
+                natus_this_typedefs( vertex_input_binding ) ;
+
+                vertex_input_binding( void_t ) {}
+                vertex_input_binding( natus::std::string_cref_t name_,
+                    natus::gpu::vertex_attribute const va_ ) : name( name_ ), va( va_ ) {}
+                vertex_input_binding( vertex_input_binding const& rhv )
+                {
+                    *this = rhv ;
+                }
+                vertex_input_binding( vertex_input_binding&& rhv )
+                {
+                    *this = rhv ;
+                }
+                ~vertex_input_binding( void_t ) {}
+
+                this_ref_t operator = ( this_cref_t rhv )
+                {
+                    name = rhv.name; va = rhv.va ;
+                    return *this ;
+                }
+
+                this_ref_t operator = ( this_rref_t rhv )
+                {
+                    name = ::std::move( rhv.name ) ; va = rhv.va ;
+                    return *this ;
+                }
+
+                natus::std::string name ;
+                natus::gpu::vertex_attribute va ;
+            };
+            natus::std::vector< vertex_input_binding > _vertex_inputs ;
+
+        private: // input bindings
+
+            struct variable_binding
+            {
+                natus::std::string_t name ;
+                natus::gpu::binding_point bp ;
+            };
+            natus_typedef( variable_binding ) ;
+            natus::std::vector< variable_binding_t > _bindings ;
+
+        public: 
+
+            this_ref_t add_vertex_input_binding( natus::gpu::vertex_attribute const va,
+                natus::std::string_cref_t name )
+            {
+                auto iter = ::std::find_if( _vertex_inputs.begin(), _vertex_inputs.end(),
+                    [&] ( vertex_input_binding const& b )
+                {
+                    return b.name == name ;
+                } ) ;
+
+                if( iter == _vertex_inputs.end() )
+                {
+                    iter = ::std::find_if( _vertex_inputs.begin(), _vertex_inputs.end(),
+                        [&] ( vertex_input_binding const& b )
+                    {
+                        return b.va == va ;
+                    } ) ;
+                }
+
+                if( iter == _vertex_inputs.end() )
+                {
+                    _vertex_inputs.push_back( vertex_input_binding( name, va ) ) ;
+                    return *this ;
+                }
+                iter->va = va ;
+                return *this ;
+            }
+
+            bool_t find_vertex_input_binding_by_name( natus::std::string_cref_t name,
+                natus::gpu::vertex_attribute& va ) const noexcept
+            {
+                auto iter = ::std::find_if( _vertex_inputs.begin(), _vertex_inputs.end(),
+                    [&] ( vertex_input_binding const& b )
+                {
+                    return b.name == name ;
+                } ) ;
+                if( iter == _vertex_inputs.end() ) return false ;
+
+                va = iter->va ;
+
+                return true ;
+            }
+
+            bool_t find_vertex_input_binding_by_attribute( natus::gpu::vertex_attribute const va,
+                natus::std::string_out_t name ) const noexcept
+            {
+                auto iter = ::std::find_if( _vertex_inputs.begin(), _vertex_inputs.end(),
+                    [&] ( vertex_input_binding const& b )
+                {
+                    return b.va == va ;
+                } ) ;
+                if( iter == _vertex_inputs.end() ) return false ;
+
+                name = iter->name ;
+
+                return true ;
+            }
+
+            this_ref_t add_input_binding( natus::gpu::binding_point const bp,
+                natus::std::string_cref_t name )
+            {
+                variable_binding vb ;
+                vb.name = name ;
+                vb.bp = bp ;
+
+                _bindings.push_back( vb ) ;
+
+                return *this ;
+            }
+
         private:
 
-            natus::gpu::vertex_shader_t _vs ;
-            natus::gpu::geometry_shader_t _gs ;
-            natus::gpu::pixel_shader_t _ps ;
+            typedef ::std::pair< natus::gpu::backend_type, natus::gpu::shader_set > ss_item_t ;
+            typedef natus::std::vector< ss_item_t > shader_sets_t ;
+
+            shader_sets_t _shader_sets ;
 
             natus::std::string_t _geo ;
             natus::std::string_t _name ;
@@ -50,9 +167,9 @@ namespace natus
         public:
 
             // render states
+            // textures
             
-            // geometry
-            this_ref_t set_geometry( natus::std::string_cref_t name ) noexcept 
+            this_ref_t link_geometry( natus::std::string_cref_t name ) noexcept 
             {
                 _geo = name ;
                 return *this ;
@@ -63,58 +180,62 @@ namespace natus
                 return _geo ;
             }
 
-            // textures
-
-            // shaders
-            natus::gpu::vertex_shader_cref_t set_shader( natus::gpu::vertex_shader_cref_t s ) noexcept
+            this_ref_t insert( natus::gpu::backend_type const bt, natus::gpu::shader_set_in_t ss )
             {
-                _vs = s ;
-                return _vs ;
+                auto iter = ::std::find_if( _shader_sets.begin(), _shader_sets.end(),
+                    [&] ( this_t::ss_item_t const& item )
+                {
+                    return item.first == bt ;
+                } ) ;
+
+                if( iter == _shader_sets.end() )
+                {
+                    _shader_sets.emplace_back( ::std::make_pair( bt, ss ) ) ;
+                }
+                else
+                {
+                    iter->second = ss ;
+                }
+
+                return *this ;
             }
 
-            natus::gpu::pixel_shader_cref_t set_shader( natus::gpu::pixel_shader_cref_t s ) noexcept
+            bool_t shader_set( natus::gpu::backend_type const bt, natus::gpu::shader_set_out_t ss ) const
             {
-                _ps = s ;
-                return _ps ;
-            }
+                auto const iter = ::std::find_if( _shader_sets.begin(), _shader_sets.end(), 
+                    [&] ( this_t::ss_item_t const & item ) 
+                { 
+                    return item.first == bt ;
+                } ) ;
 
-            natus::gpu::vertex_shader_cref_t get_vertex_shader( void_t ) const noexcept { return _vs ; }
-            natus::gpu::geometry_shader_cref_t get_geometry_shader( void_t ) const noexcept { return _gs ; }
-            natus::gpu::pixel_shader_cref_t get_pixel_shader( void_t ) const noexcept { return _ps ; }
+                if( iter == _shader_sets.end() ) return false ;
 
-            bool_t has_vertex_shader( void_t ) const noexcept
-            {
-                return natus::core::is_not( _vs.code().empty() ) ;
-            }
+                ss = iter->second ;
 
-            bool_t has_geometry_shader( void_t ) const noexcept 
-            {
-                return natus::core::is_not( _gs.code().empty() ) ; 
-            }
-
-            bool_t has_pixel_shader( void_t ) const noexcept
-            {
-                return natus::core::is_not( _ps.code().empty() ) ;
+                return true ;
             }
 
         public:
 
             this_ref_t operator = ( this_cref_t rhv )
             {
-                _vs = rhv._vs ;
-                _ps = rhv._ps ;
                 _name = rhv._name ;
                 _geo = rhv._geo;
+                _vertex_inputs = rhv._vertex_inputs ;
+                _shader_sets = rhv._shader_sets ;
+                _bindings = rhv._bindings ;
 
                 return *this ;
             }
 
             this_ref_t operator = ( this_rref_t rhv )
             {
-                _vs = ::std::move( rhv._vs ) ;
-                _ps = ::std::move( rhv._ps ) ;
                 _name = ::std::move( rhv._name ) ;
                 _geo = ::std::move( rhv._geo ) ;
+                _vertex_inputs = ::std::move( rhv._vertex_inputs ) ;
+                _shader_sets = ::std::move( rhv._shader_sets ) ;
+                _bindings = ::std::move( rhv._bindings ) ;
+
                 return *this ;
             }
 
@@ -124,75 +245,5 @@ namespace natus
             }
         };
         natus_soil_typedef( render_configuration ) ;
-
-        /// per backend type render configuration
-        class render_configurations
-        {
-            natus_this_typedefs( render_configurations ) ;
-
-        private:
-
-            struct data
-            {
-                natus::gpu::backend_type bt ;
-                natus::gpu::render_configuration_res_t config ;
-            };
-            natus_typedef( data ) ;
-
-            typedef natus::std::vector< data_t > configs_t ;
-            configs_t _configs ;
-
-        public:
-
-            render_configurations( void_t ) {}
-            render_configurations( natus::gpu::backend_type const bt, 
-                natus::gpu::render_configuration_res_t config ) 
-            {
-                _configs.emplace_back( this_t::data_t( { bt, config } ) ) ;
-            }
-
-            render_configurations( this_cref_t rhv )
-            {
-                _configs = rhv._configs ;
-            }
-
-            render_configurations( this_rref_t rhv ) 
-            {
-                _configs = ::std::move( rhv._configs ) ;
-            }
-
-        public:
-
-            //***
-            void_t add_config( natus::gpu::backend_type const bt, natus::gpu::render_configuration_res_t config )
-            {
-                auto iter = ::std::find_if( _configs.begin(), _configs.end(), 
-                    [&] ( data_cref_t d ) { return d.bt == bt ; } ) ;
-
-                if( iter != _configs.end() )
-                {
-                    iter->config = config ;
-                    return ;
-                }
-
-                _configs.emplace_back( this_t::data_t( {bt, config} ) ) ;
-            }
-
-            //***
-            bool_t find_configuration( natus::gpu::backend_type const bt, 
-                natus::gpu::render_configuration_res_t & config ) const noexcept
-            {
-                auto iter = ::std::find_if( _configs.begin(), _configs.end(),
-                    [&] ( data_cref_t d ) { return d.bt == bt ; } ) ;
-
-                if( iter != _configs.end() )
-                {
-                    config = iter->config ;
-                }
-
-                return iter != _configs.end() ;
-            }
-        };
-        natus_soil_typedef( render_configurations ) ;
     }
 }
