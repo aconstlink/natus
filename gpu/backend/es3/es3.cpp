@@ -39,6 +39,9 @@ namespace this_file_es
         size_t num_elements_vb = 0 ;
         size_t num_elements_ib = 0 ;
         
+        size_t sib_vb = 0 ;
+        size_t sib_ib = 0 ;
+
         struct layout_element
         {
             natus::gpu::vertex_attribute va ;
@@ -767,10 +770,25 @@ struct es3_backend::pimpl
         // what about mapped memory?
         {
             GLuint const sib = GLuint( geo->vertex_buffer().get_sib() ) ;
-            glBufferData( GL_ARRAY_BUFFER, sib, 
-                geo->vertex_buffer().data(), GL_STATIC_DRAW ) ;
-            if( natus::ogl::es::check_and_log( natus_log_fn( "glBufferData - vertex buffer" ) ) )
-                return false ;
+            if( sib > config.sib_vb )
+            {
+               glBufferData( GL_ARRAY_BUFFER, sib,
+                    geo->vertex_buffer().data(), GL_STATIC_DRAW ) ;
+                if( natus::ogl::es::check_and_log( natus_log_fn( "glBufferData - vertex buffer" ) ) )
+                    return false ;
+                config.sib_vb = sib ;
+            }
+            else
+            {
+                glBufferSubData( GL_ARRAY_BUFFER, 0, sib, geo->vertex_buffer().data() ) ;
+                natus::ogl::es::check_and_log( natus_log_fn( "glBufferSubData - vertex buffer" ) ) ;
+            }
+        }
+
+        // there may be no index buffer
+        if( config.ib_id == GLuint(-1) )
+        {
+            return true ;
         }
 
         // bind index buffer
@@ -784,10 +802,19 @@ struct es3_backend::pimpl
         // what about mapped memory?
         {
             GLuint const sib = GLuint( geo->index_buffer().get_sib() ) ;
-            glBufferData( GL_ELEMENT_ARRAY_BUFFER, sib, 
-                geo->index_buffer().data(), GL_STATIC_DRAW ) ;
-            if( natus::ogl::es::check_and_log( natus_log_fn( "glBufferData - index buffer" ) ) )
-                return false ;
+            if( sib > config.sib_ib )
+            {
+                glBufferData( GL_ELEMENT_ARRAY_BUFFER, sib,
+                    geo->index_buffer().data(), GL_STATIC_DRAW ) ;
+                if( natus::ogl::es::check_and_log( natus_log_fn( "glBufferData - index buffer" ) ) )
+                    return false ;
+                config.sib_ib = sib ;
+            }
+            else
+            {
+                glBufferSubData( GL_ELEMENT_ARRAY_BUFFER, 0, sib, geo->index_buffer().data() ) ;
+                natus::ogl::es::check_and_log( natus_log_fn( "glBufferSubData - index buffer" ) ) ;
+            }
         }
 
         return true ;
@@ -1012,6 +1039,22 @@ natus::gpu::id_t es3_backend::connect( id_rref_t id, natus::gpu::variable_set_re
     auto const res = _pimpl->connect( id.get_oid(), vs ) ;
 
    
+    return ::std::move( id ) ;
+}
+
+//****
+natus::gpu::id_t es3_backend::update( id_rref_t id, natus::gpu::geometry_configuration_res_t gs ) noexcept 
+{
+    if( id.is_not_valid() )
+    {
+        natus::log::global_t::error( natus_log_fn( "invalid geometry configuration id" ) ) ;
+        return ::std::move( id ) ;
+    }
+
+    auto const res = _pimpl->update( id.get_oid(), gs ) ;
+    natus::log::global_t::error( natus::gpu::is_not( res ),
+        natus_log_fn( "update geometry" ) ) ;
+
     return ::std::move( id ) ;
 }
 
