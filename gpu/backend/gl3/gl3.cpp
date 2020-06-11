@@ -165,7 +165,7 @@ struct gl3_backend::pimpl
         if( oid == size_t(-1) )
         {
             size_t i = 0 ;
-            for( i; i < rconfigs.size(); ++i )
+            for( ; i < rconfigs.size(); ++i )
             {
                 if( natus::core::is_not( rconfigs[ i ].va_id != GLuint( -1 ) ) )
                 {
@@ -179,8 +179,6 @@ struct gl3_backend::pimpl
             rconfigs.resize( oid + 1 ) ;
         }
 
-        bool_t error = false ;
-
         {
             rconfigs[ oid ].name = name ;
         }
@@ -190,7 +188,7 @@ struct gl3_backend::pimpl
         {
             GLuint id = GLuint( -1 ) ;
             natus::ogl::gl::glGenVertexArrays( 1, &id ) ;
-            error = natus::ogl::error::check_and_log(
+            natus::ogl::error::check_and_log(
                 natus_log_fn( "Vertex Array creation" ) ) ;
 
             rconfigs[ oid ].va_id = id ;
@@ -200,7 +198,7 @@ struct gl3_backend::pimpl
         if( rconfigs[oid].pg_id == GLuint(-1) )
         {
             GLuint const id = natus::ogl::gl::glCreateProgram() ;
-            error = natus::ogl::error::check_and_log(
+            natus::ogl::error::check_and_log(
                 natus_log_fn( "Shader Program creation" ) ) ;
 
             rconfigs[ oid ].pg_id = id ;
@@ -214,14 +212,14 @@ struct gl3_backend::pimpl
         if( rconfigs[oid].vs_id == GLuint(-1) )
         {
             GLuint const id = natus::ogl::gl::glCreateShader( GL_VERTEX_SHADER ) ;
-            error = natus::ogl::error::check_and_log(
+            natus::ogl::error::check_and_log(
                 natus_log_fn( "Vertex Shader creation" ) ) ;
 
             rconfigs[ oid ].vs_id = id ;
         }
         {
             natus::ogl::gl::glAttachShader( rconfigs[ oid ].pg_id, rconfigs[oid].vs_id ) ;
-            error = natus::ogl::error::check_and_log(
+            natus::ogl::error::check_and_log(
                 natus_log_fn( "Attaching vertex shader" ) ) ;
         }
 
@@ -245,7 +243,7 @@ struct gl3_backend::pimpl
             if( id == GLuint(-1) )
             {
                 id = natus::ogl::gl::glCreateShader( GL_GEOMETRY_SHADER ) ;
-                error = natus::ogl::error::check_and_log(
+                natus::ogl::error::check_and_log(
                     natus_log_fn( "Geometry Shader creation" ) ) ;
 
                 rconfigs[ oid ].gs_id = id ;
@@ -254,14 +252,14 @@ struct gl3_backend::pimpl
             GLuint const pid = rconfigs[ oid ].pg_id ;
 
             natus::ogl::gl::glAttachShader( pid, id ) ;
-            error = natus::ogl::error::check_and_log(
+            natus::ogl::error::check_and_log(
                 natus_log_fn( "Attaching geometry shader" ) ) ;
 
             // check max output vertices
             {
                 GLint max_out = 0 ;
                 natus::ogl::gl::glGetIntegerv( GL_MAX_GEOMETRY_OUTPUT_VERTICES, &max_out ) ;
-                error = natus::ogl::error::check_and_log(
+                natus::ogl::error::check_and_log(
                     natus_log_fn( "Geometry Shader Max Output Vertices" ) ) ;
                 ( void_t ) max_out ;
             }
@@ -300,12 +298,12 @@ struct gl3_backend::pimpl
             if( id == GLuint(-1) )
             {
                 id = natus::ogl::gl::glCreateShader( GL_FRAGMENT_SHADER ) ;
-                error = natus::ogl::error::check_and_log(
+                natus::ogl::error::check_and_log(
                     natus_log_fn( "Fragment Shader creation" ) ) ;
             }
-            
+
             natus::ogl::gl::glAttachShader( rconfigs[ oid ].pg_id, id ) ;
-            error = natus::ogl::error::check_and_log( natus_log_fn( "Attaching pixel shader" ) ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "Attaching pixel shader" ) ) ;
 
             rconfigs[ oid ].ps_id = id ;
         }

@@ -134,6 +134,8 @@ struct es3_backend::pimpl
     GLsizei vp_width = 0 ;
     GLsizei vp_height = 0 ;
 
+    natus::gpu::backend_type const bt = natus::gpu::backend_type::es3 ;
+
     pimpl( void_t ) 
     {}
 
@@ -176,8 +178,6 @@ struct es3_backend::pimpl
             rconfigs.resize( oid + 1 ) ;
         }
 
-        bool_t error = false ;
-
         {
             rconfigs[ oid ].name = name ;
         }
@@ -187,7 +187,7 @@ struct es3_backend::pimpl
         {
             GLuint id = GLuint( -1 ) ;
             glGenVertexArrays( 1, &id ) ;
-            error = natus::ogl::es::check_and_log(
+            natus::ogl::es::check_and_log(
                 natus_log_fn( "Vertex Array creation" ) ) ;
 
             rconfigs[ oid ].va_id = id ;
@@ -197,7 +197,7 @@ struct es3_backend::pimpl
         if( rconfigs[oid].pg_id == GLuint(-1) )
         {
             GLuint const id = glCreateProgram() ;
-            error = natus::ogl::es::check_and_log(
+            natus::ogl::es::check_and_log(
                 natus_log_fn( "Shader Program creation" ) ) ;
 
             rconfigs[ oid ].pg_id = id ;
@@ -211,30 +211,42 @@ struct es3_backend::pimpl
         if( rconfigs[oid].vs_id == GLuint(-1) )
         {
             GLuint const id = glCreateShader( GL_VERTEX_SHADER ) ;
-            error = natus::ogl::es::check_and_log(
+            natus::ogl::es::check_and_log(
                 natus_log_fn( "Vertex Shader creation" ) ) ;
 
             rconfigs[ oid ].vs_id = id ;
         }
         {
             glAttachShader( rconfigs[ oid ].pg_id, rconfigs[oid].vs_id ) ;
-            error = natus::ogl::es::check_and_log(
+            natus::ogl::es::check_and_log(
                 natus_log_fn( "Attaching vertex shader" ) ) ;
         }
 
+        natus::gpu::shader_set_t ss ;
+        {
+            auto const res = config.shader_set( this_t::bt, ss ) ;
+            if( natus::core::is_not(res) )
+            {
+                natus::log::global_t::warning( natus_log_fn(
+                    "config [" + config.name() + "] has no shaders for " + 
+                    natus::gpu::to_string( this_t::bt ) ) ) ;
+                return oid ;
+            }
+        }
+
         // pixel shader
-        if( config.has_pixel_shader() )
+        if( ss.has_pixel_shader() )
         {
             GLuint id = rconfigs[ oid ].ps_id ;
             if( id == GLuint(-1) )
             {
                 id = glCreateShader( GL_FRAGMENT_SHADER ) ;
-                error = natus::ogl::es::check_and_log(
+                natus::ogl::es::check_and_log(
                     natus_log_fn( "Fragment Shader creation" ) ) ;
             }
-            
+
             glAttachShader( rconfigs[ oid ].pg_id, id ) ;
-            error = natus::ogl::es::check_and_log( natus_log_fn( "Attaching pixel shader" ) ) ;
+            natus::ogl::es::check_and_log( natus_log_fn( "Attaching pixel shader" ) ) ;
 
             rconfigs[ oid ].ps_id = id ;
         }
@@ -417,10 +429,10 @@ struct es3_backend::pimpl
             vd.name = ::std::move( variable_name ) ;
             vd.loc = location_id ;
             vd.type = gl_attrib_type ;
-            
+
             {
                 natus::gpu::vertex_attribute va = natus::gpu::vertex_attribute::undefined ;
-                auto const res = rc.get_vertex_shader().find_input_binding_by_name(vd.name, va) ;
+                auto const res = rc.find_vertex_input_binding_by_name(vd.name, va) ;
                 natus::log::global_t::error( natus::core::is_not( res ), 
                     natus_log_fn("can not find vertex attribute - " + vd.name ) ) ;
                 vd.va = va ;
@@ -630,24 +642,24 @@ struct es3_backend::pimpl
 
         // compile vertex shader
         {
-            this_t::compile_shader( config.vs_id, rc.get_vertex_shader().code() ) ;
-            this_t::compile_shader( config.gs_id, rc.get_geometry_shader().code() ) ;
-            this_t::compile_shader( config.ps_id, rc.get_pixel_shader().code() ) ;
-            this_t::link( config.pg_id ) ;
+            natus::gpu::shader_set_t ss ;
+
+            if( rc.shader_set( this_t::bt, ss ) )
+            {
+                this_t::compile_shader( config.vs_id, ss.vertex_shader().code() ) ;
+                this_t::compile_shader( config.gs_id, ss.geometry_shader().code() ) ;
+                this_t::compile_shader( config.ps_id, ss.pixel_shader().code() ) ;
+                this_t::link( config.pg_id ) ;
+            }
         }
 
-        // vao
-        {
-        }
-        
         {
             this_t::post_link_attributes( config.pg_id, &config, rc ) ;
             this_t::bind_attributes( rc, &config, gconfig ) ;
         }
 
-        
         {
-            this_t::post_link_uniforms( config.pg_id, config ) ;            
+            this_t::post_link_uniforms( config.pg_id, config ) ;
         }
 
         {
