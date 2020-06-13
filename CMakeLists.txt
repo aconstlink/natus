@@ -70,7 +70,7 @@ add_subdirectory( "externals/khronos" )
 #add_subdirectory( "externals/stb" )
 #add_subdirectory( "externals/ogg" )
 #add_subdirectory( "externals/vorbis" )
-#add_subdirectory( "externals/imgui" )
+add_subdirectory( "externals/imgui" )
 
 ##add_subdirectory( "externals/libusb" )
 #add_subdirectory( "externals/glm" )

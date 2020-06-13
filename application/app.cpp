@@ -261,7 +261,7 @@ app::wid_async_t app::create_window(
     _windows.emplace_back( ::std::move( pwi ) ) ;
 
     return ::std::make_pair( _windows.size()-1, 
-        this_t::async_view_t( ::std::move( async ), _access ) ) ;
+        natus::gpu::async_view_t( ::std::move( async ), _access ) ) ;
 }
 
 //***

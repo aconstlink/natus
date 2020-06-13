@@ -110,5 +110,83 @@ namespace natus
             void_t wait_for_frame( void_t ) ;
         };
         natus_soil_typedef( async ) ;
+
+        // restricts access to the async
+        class async_view
+        {
+            natus_this_typedefs( async_view ) ;
+
+        private:
+
+            natus::gpu::async_res_t _async ;
+            bool_ptr_t _access = nullptr ;
+
+        public: 
+
+            async_view( natus::gpu::async_res_t const& r, bool_ptr_t b ) :
+                _async( r ), _access( b ) {}
+            async_view( natus::gpu::async_res_t&& r, bool_ptr_t b ) :
+                _async( ::std::move( r ) ), _access( b ) {}
+
+        public:
+
+            async_view( void_t ) {}
+            async_view( this_cref_t rhv ) :
+                _async( rhv._async ), _access( rhv._access ) {}
+
+            async_view( this_rref_t rhv ) :
+                _async( ::std::move( rhv._async ) ), _access( rhv._access ) {}
+
+            ~async_view( void_t ) {}
+
+            this_ref_t operator = ( this_cref_t rhv )
+            {
+                _async = rhv._async ;
+                _access = rhv._access ;
+                return *this ;
+            }
+
+            this_ref_t operator = ( this_rref_t rhv )
+            {
+                _async = ::std::move( rhv._async ) ;
+                _access = rhv._access ;
+                return *this ;
+            }
+
+            /// communication to the gpu system is only possible 
+            /// during rendering type.
+            bool_t is_accessable( void_t ) const noexcept { return *_access ; }
+
+            natus::gpu::result configure( natus::gpu::async_id_res_t id, natus::gpu::geometry_configuration_res_t config ) noexcept
+            {
+                return _async->configure( id, config ) ;
+            }
+
+            natus::gpu::result configure( natus::gpu::async_id_res_t id, natus::gpu::render_configuration_res_t config ) noexcept
+            {
+                return _async->configure( id, config ) ;
+            }
+
+            natus::gpu::result connect( natus::gpu::async_id_res_t id,
+                natus::gpu::variable_set_res_t vs ) noexcept
+            {
+                return _async->connect( id, vs ) ;
+            }
+
+            natus::gpu::result update( natus::gpu::async_id_res_t id,
+                natus::gpu::geometry_configuration_res_t gs ) noexcept
+            {
+                return _async->update( id, gs ) ;
+            }
+
+            natus::gpu::result render( natus::gpu::async_id_res_t id ) noexcept
+            {
+                return _async->render( id ) ;
+            }
+
+        public:
+
+        };
+        natus_typedef( async_view ) ;
     }
 }

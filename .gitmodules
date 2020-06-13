@@ -2,3 +2,6 @@
 	path = externals/filesystem/gulrak
 	url = https://github.com/gulrak/filesystem.git
 
+[submodule "externals/imgui/imgui"]
+	path = externals/imgui/imgui
+	url = https://github.com/ocornut/imgui.git
