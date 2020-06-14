@@ -23,6 +23,7 @@ set( sources
     "shader/shader_set.hpp"
     "shader/shader.hpp"
     "shader/variable_binding.h"
+    "shader/shader_configuration.h"
 
     "buffer/vertex_attribute.h"
     "buffer/vertex_buffer.hpp"

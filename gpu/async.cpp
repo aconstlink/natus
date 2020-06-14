@@ -61,6 +61,17 @@ natus::gpu::result async::configure( natus::gpu::async_id_res_t aid, natus::gpu:
 }
 
 //****
+natus::gpu::result async::configure( natus::gpu::async_id_res_t aid, natus::gpu::shader_configuration_res_t sc ) noexcept 
+{
+    {
+        natus::concurrent::lock_guard_t lk( _shader_configs_mtx ) ;
+        _shader_configs.push_back( shader_config_data( { aid, sc } ) ) ;
+    }
+
+    return natus::gpu::result::ok ;
+}
+
+//****
 natus::gpu::result async::connect( natus::gpu::async_id_res_t aid, natus::gpu::variable_set_res_t vs ) noexcept 
 {
     {
@@ -133,6 +144,22 @@ void_t async::system_update( void_t ) noexcept
         for( auto& prc : preps )
         {
             natus::gpu::id_t id = _backend->update( prc.aid->id(), ::std::move( prc.config ) ) ;
+            id = prc.aid->set( ::std::move( id ), natus::gpu::async_result::ok ) ;
+            natus::log::global_t::error( id.is_valid(), natus_log_fn(
+                "gpu resource need to be released." ) ) ;
+        }
+    }
+
+    // shader configs
+    {
+        this_t::shader_configs_t preps ;
+        {
+            natus::concurrent::lock_guard_t lk( _shader_configs_mtx ) ;
+            preps = ::std::move( _shader_configs ) ;
+        }
+        for( auto& prc : preps )
+        {
+            natus::gpu::id_t id = _backend->configure( prc.aid->id(), ::std::move( prc.config ) ) ;
             id = prc.aid->set( ::std::move( id ), natus::gpu::async_result::ok ) ;
             natus::log::global_t::error( id.is_valid(), natus_log_fn(
                 "gpu resource need to be released." ) ) ;

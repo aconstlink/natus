@@ -33,7 +33,8 @@ namespace this_file
 
         GLuint vb_id = GLuint( -1 ) ;
         GLuint ib_id = GLuint( -1 ) ;
-        
+        GLuint va_id = GLuint( -1 ) ;
+
         void_ptr_t vb_mem = nullptr ;
         void_ptr_t ib_mem = nullptr ;
 
@@ -65,7 +66,7 @@ namespace this_file
         GLenum pt ;
     };
 
-    struct render_config
+    struct shader_config
     {
         natus::std::string_t name ;
 
@@ -73,7 +74,6 @@ namespace this_file
         GLuint gs_id = GLuint( -1 ) ;
         GLuint ps_id = GLuint( -1 ) ;
         GLuint pg_id = GLuint( -1 ) ;
-        GLuint va_id = GLuint( -1 ) ;
 
         struct attribute_variable
         {
@@ -97,7 +97,7 @@ namespace this_file
 
             // the GL uniform function
             natus::ogl::uniform_funk_t uniform_funk ;
-            
+
             // set by the user in user-space
             natus::gpu::ivariable_ptr_t var ;
 
@@ -107,7 +107,7 @@ namespace this_file
                 natus::ogl::error::check_and_log( natus_log_fn( "glUniform" ) ) ;
             }
 
-            void_t do_copy_funk( void_t ) 
+            void_t do_copy_funk( void_t )
             {
                 ::std::memcpy( mem, var->data_ptr(), natus::ogl::uniform_size_of( type ) ) ;
             }
@@ -117,8 +117,14 @@ namespace this_file
         natus::std::vector< uniform_variable > uniforms ;
 
         void_ptr_t uniform_mem = nullptr ;
+    } ;
+
+    struct render_config
+    {
+        natus::std::string_t name ;
 
         geo_config* geo = nullptr ;
+        shader_config* shaders_ptr = nullptr ;
 
         // user provided variable set
         natus::std::vector< natus::gpu::variable_set_res_t > var_sets ;
@@ -128,6 +134,9 @@ namespace this_file
 struct gl3_backend::pimpl
 {
     natus_this_typedefs( pimpl ) ;
+
+    typedef natus::std::vector< this_file::shader_config > shaders_t ;
+    shaders_t shaders ;
 
     typedef natus::std::vector< this_file::render_config > rconfigs_t ;
     rconfigs_t rconfigs ;
@@ -143,20 +152,24 @@ struct gl3_backend::pimpl
     pimpl( void_t ) 
     {}
 
-    size_t construct_rconfig( size_t oid, natus::std::string_cref_t name, 
-        natus::gpu::render_configuration_ref_t config )  
+    size_t construct_shader_config( size_t oid, natus::std::string_cref_t name,
+        natus::gpu::shader_configuration_ref_t config )
     {
-        // the name is unique
+        //
+        // Array Management
+        //
+
+        // the name must be unique
         {
-            auto iter = ::std::find_if( rconfigs.begin(), rconfigs.end(),
-                [&] ( this_file::render_config const& c )
+            auto iter = ::std::find_if( shaders.begin(), shaders.end(),
+                [&] ( this_file::shader_config const& c )
             {
                 return c.name == name ;
             } ) ;
-            
-            if( iter != rconfigs.end() )
+
+            if( iter != shaders.end() )
             {
-                size_t const i = (iter - rconfigs.begin()) ;
+                size_t const i = ( iter - shaders.begin() ) ;
                 if( natus::log::global_t::error( i != oid && oid != size_t( -1 ),
                     natus_log_fn( "name and id do not fit " ) ) )
                 {
@@ -165,12 +178,14 @@ struct gl3_backend::pimpl
             }
         }
 
-        if( oid == size_t(-1) )
+        if( oid == size_t( -1 ) )
         {
             size_t i = 0 ;
-            for( ; i < rconfigs.size(); ++i )
+            for( ; i < shaders.size(); ++i )
             {
-                if( natus::core::is_not( rconfigs[ i ].va_id != GLuint( -1 ) ) )
+                // here the vertex shader id is used for validity check.
+                // if invalid, that object in the array will be repopulated
+                if( natus::core::is_not( shaders[ i ].vs_id != GLuint( -1 ) ) )
                 {
                     break ;
                 }
@@ -178,50 +193,44 @@ struct gl3_backend::pimpl
             oid = i ;
         }
 
-        if( oid >= rconfigs.size() ) {
-            rconfigs.resize( oid + 1 ) ;
+        if( oid >= shaders.size() ) 
+        {
+            shaders.resize( oid + 1 ) ;
         }
 
-        {
-            rconfigs[ oid ].name = name ;
-        }
+        //
+        // Do Configuration
+        //
 
-        // vertex array object
-        if( rconfigs[oid].va_id == GLuint(-1) )
         {
-            GLuint id = GLuint( -1 ) ;
-            natus::ogl::gl::glGenVertexArrays( 1, &id ) ;
-            natus::ogl::error::check_and_log(
-                natus_log_fn( "Vertex Array creation" ) ) ;
-
-            rconfigs[ oid ].va_id = id ;
+            shaders[ oid ].name = name ;
         }
 
         // program
-        if( rconfigs[oid].pg_id == GLuint(-1) )
+        if( shaders[ oid ].pg_id == GLuint( -1 ) )
         {
             GLuint const id = natus::ogl::gl::glCreateProgram() ;
             natus::ogl::error::check_and_log(
                 natus_log_fn( "Shader Program creation" ) ) ;
 
-            rconfigs[ oid ].pg_id = id ;
+            shaders[ oid ].pg_id = id ;
         }
         {
-            this_t::detach_shaders( rconfigs[ oid ].pg_id ) ;
-            this_t::delete_all_variables( rconfigs[ oid ] ) ;
+            this_t::detach_shaders( shaders[ oid ].pg_id ) ;
+            this_t::delete_all_variables( shaders[ oid ] ) ;
         }
 
         // vertex shader
-        if( rconfigs[oid].vs_id == GLuint(-1) )
+        if( shaders[oid].vs_id == GLuint(-1) )
         {
             GLuint const id = natus::ogl::gl::glCreateShader( GL_VERTEX_SHADER ) ;
             natus::ogl::error::check_and_log(
                 natus_log_fn( "Vertex Shader creation" ) ) ;
 
-            rconfigs[ oid ].vs_id = id ;
+            shaders[ oid ].vs_id = id ;
         }
         {
-            natus::ogl::gl::glAttachShader( rconfigs[ oid ].pg_id, rconfigs[oid].vs_id ) ;
+            natus::ogl::gl::glAttachShader( shaders[ oid ].pg_id, shaders[oid].vs_id ) ;
             natus::ogl::error::check_and_log(
                 natus_log_fn( "Attaching vertex shader" ) ) ;
         }
@@ -241,7 +250,7 @@ struct gl3_backend::pimpl
         // geometry shader
         if( ss.has_geometry_shader() )
         {
-            GLuint id = rconfigs[ oid ].gs_id ;
+            GLuint id = shaders[ oid ].gs_id ;
 
             if( id == GLuint(-1) )
             {
@@ -249,10 +258,10 @@ struct gl3_backend::pimpl
                 natus::ogl::error::check_and_log(
                     natus_log_fn( "Geometry Shader creation" ) ) ;
 
-                rconfigs[ oid ].gs_id = id ;
+                shaders[ oid ].gs_id = id ;
             }
 
-            GLuint const pid = rconfigs[ oid ].pg_id ;
+            GLuint const pid = shaders[ oid ].pg_id ;
 
             natus::ogl::gl::glAttachShader( pid, id ) ;
             natus::ogl::error::check_and_log(
@@ -287,17 +296,17 @@ struct gl3_backend::pimpl
                     */
             }
         }
-        else if( rconfigs[ oid ].gs_id != GLuint(-1) )
+        else if( shaders[ oid ].gs_id != GLuint(-1) )
         {
-            natus::ogl::gl::glDeleteShader( rconfigs[ oid ].gs_id ) ;
+            natus::ogl::gl::glDeleteShader( shaders[ oid ].gs_id ) ;
             natus::ogl::error::check_and_log( natus_log_fn( "glDeleteShader" ) ) ;
-            rconfigs[ oid ].gs_id = GLuint( -1 ) ;
+            shaders[ oid ].gs_id = GLuint( -1 ) ;
         }
 
         // pixel shader
         if( ss.has_pixel_shader() )
         {
-            GLuint id = rconfigs[ oid ].ps_id ;
+            GLuint id = shaders[ oid ].ps_id ;
             if( id == GLuint(-1) )
             {
                 id = natus::ogl::gl::glCreateShader( GL_FRAGMENT_SHADER ) ;
@@ -305,16 +314,16 @@ struct gl3_backend::pimpl
                     natus_log_fn( "Fragment Shader creation" ) ) ;
             }
 
-            natus::ogl::gl::glAttachShader( rconfigs[ oid ].pg_id, id ) ;
+            natus::ogl::gl::glAttachShader( shaders[ oid ].pg_id, id ) ;
             natus::ogl::error::check_and_log( natus_log_fn( "Attaching pixel shader" ) ) ;
 
-            rconfigs[ oid ].ps_id = id ;
+            shaders[ oid ].ps_id = id ;
         }
-        else if( rconfigs[ oid ].ps_id != GLuint( -1 ) )
+        else if( shaders[ oid ].ps_id != GLuint( -1 ) )
         {
-            natus::ogl::gl::glDeleteShader( rconfigs[ oid ].ps_id ) ;
+            natus::ogl::gl::glDeleteShader( shaders[ oid ].ps_id ) ;
             natus::ogl::error::check_and_log( natus_log_fn( "glDeleteShader" ) ) ;
-            rconfigs[ oid ].ps_id = GLuint( -1 ) ;
+            shaders[ oid ].ps_id = GLuint( -1 ) ;
         }
 
         return oid ;
@@ -324,20 +333,20 @@ struct gl3_backend::pimpl
     void_t detach_shaders( GLuint const program_id )
     {
         GLsizei count = 0 ;
-        GLuint shaders[ 10 ] ;
+        GLuint shaders_[ 10 ] ;
 
-        natus::ogl::gl::glGetAttachedShaders( program_id, 10, &count, shaders ) ;
+        natus::ogl::gl::glGetAttachedShaders( program_id, 10, &count, shaders_ ) ;
         natus::ogl::error::check_and_log( natus_log_fn( "glGetAttachedShaders" ) ) ;
 
         for( GLsizei i = 0; i < count; ++i )
         {
-            natus::ogl::gl::glDetachShader( program_id, shaders[ i ] ) ;
+            natus::ogl::gl::glDetachShader( program_id, shaders_[ i ] ) ;
             natus::ogl::error::check_and_log( natus_log_fn( "glDetachShader" ) ) ;
         }
     }
 
     //***********************
-    void_t delete_all_variables( this_file::render_config & config )
+    void_t delete_all_variables( this_file::shader_config & config )
     {
         for( auto & v : config.attributes )
         {
@@ -347,7 +356,8 @@ struct gl3_backend::pimpl
 
         for( auto & v : config.uniforms )
         {
-            // delete memory
+            // delete memory. No dealloc. The memory is 
+            // a pointer to a memory block.
             v.mem = nullptr ;
         }
         config.uniforms.clear() ;
@@ -448,9 +458,11 @@ struct gl3_backend::pimpl
     }
 
     //***********************
-    void_t post_link_attributes( GLuint const program_id, this_file::render_config * config, 
-        natus::gpu::render_configuration_cref_t rc )
+    void_t post_link_attributes( this_file::shader_config & config, 
+        natus::gpu::shader_configuration_cref_t sc )
     {
+        GLuint const program_id = config.pg_id ;
+
         GLint num_active_attributes = 0 ;
         GLint name_length = 0 ;
 
@@ -459,7 +471,7 @@ struct gl3_backend::pimpl
 
         if( num_active_attributes == 0 ) return ;
 
-        config->attributes.resize( num_active_attributes ) ;
+        config.attributes.resize( num_active_attributes ) ;
 
         natus::ogl::gl::glGetProgramiv( program_id, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, &name_length ) ;
         natus::ogl::error::check_and_log( natus_log_fn( 
@@ -485,28 +497,28 @@ struct gl3_backend::pimpl
 
             natus::std::string_t const variable_name = natus::std::string_t( ( const char* ) buffer ) ;
 
-            this_file::render_config::attribute_variable_t vd ;
+            this_file::shader_config::attribute_variable_t vd ;
             vd.name = ::std::move( variable_name ) ;
             vd.loc = location_id ;
             vd.type = gl_attrib_type ;
             
             {
                 natus::gpu::vertex_attribute va = natus::gpu::vertex_attribute::undefined ;
-                auto const res = rc.find_vertex_input_binding_by_name( vd.name, va ) ;
+                auto const res = sc.find_vertex_input_binding_by_name( vd.name, va ) ;
                 natus::log::global_t::error( natus::core::is_not( res ), 
                     natus_log_fn("can not find vertex attribute - " + vd.name ) ) ;
                 vd.va = va ;
             }
-            config->attributes[i] = vd ;
+            config.attributes[i] = vd ;
         }
     }
 
     //***********************
-    bool_t bind_attributes( natus::gpu::render_configuration_cref_t rc, this_file::render_config * config, this_file::geo_config * gconfig )
+    bool_t bind_attributes( this_file::shader_config & sconfig, this_file::geo_config & gconfig )
     {
         // bind vertex array object
         {
-            natus::ogl::gl::glBindVertexArray( config->va_id ) ;
+            natus::ogl::gl::glBindVertexArray( gconfig.va_id ) ;
             if( natus::ogl::error::check_and_log(
                 natus_log_fn( "glBindVertexArray" ) ) )
                 return false ;
@@ -514,7 +526,7 @@ struct gl3_backend::pimpl
 
         // bind vertex buffer
         {
-            natus::ogl::gl::glBindBuffer( GL_ARRAY_BUFFER, gconfig->vb_id ) ;
+            natus::ogl::gl::glBindBuffer( GL_ARRAY_BUFFER, gconfig.vb_id ) ;
             if( natus::ogl::error::check_and_log( 
                 natus_log_fn("glBindBuffer(GL_ARRAY_BUFFER)") ) ) 
                 return false ;
@@ -522,35 +534,35 @@ struct gl3_backend::pimpl
 
         // bind index buffer
         {
-            natus::ogl::gl::glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, gconfig->ib_id ) ;
+            natus::ogl::gl::glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, gconfig.ib_id ) ;
             if( natus::ogl::error::check_and_log( 
                 natus_log_fn( "glBindBuffer(GL_ELEMENT_ARRAY_BUFFER)" ) ) )
                 return false ;
         }
 
         // disable old locations
-        for( size_t i = 0; i < config->attributes.size(); ++i )
+        for( size_t i = 0; i < sconfig.attributes.size(); ++i )
         {
-            natus::ogl::gl::glDisableVertexAttribArray( config->attributes[ i ].loc ) ;
+            natus::ogl::gl::glDisableVertexAttribArray( sconfig.attributes[ i ].loc ) ;
             natus::ogl::error::check_and_log( natus_log_fn( "glDisableVertexAttribArray" ) ) ;
         }
 
-        GLuint uiStride = gconfig->stride ;
+        GLuint uiStride = gconfig.stride ;
         GLuint uiBegin = 0 ;
         GLuint uiOffset = 0 ;
 
-        for( auto & e : gconfig->elements )
+        for( auto & e : gconfig.elements )
         {
             uiBegin += uiOffset ;
             uiOffset = e.sib() ;
 
-            auto iter = ::std::find_if( config->attributes.begin(), config->attributes.end(), 
-                [&]( this_file::render_config::attribute_variable_cref_t av )
+            auto iter = ::std::find_if( sconfig.attributes.begin(), sconfig.attributes.end(), 
+                [&]( this_file::shader_config::attribute_variable_cref_t av )
             {
                 return av.va == e.va ;
             } ) ;
 
-            if( iter == config->attributes.end() ) 
+            if( iter == sconfig.attributes.end() ) 
             {
                 natus::log::global_t::warning( natus_log_fn("invalid vertex attribute") ) ;
                 continue ;
@@ -582,8 +594,10 @@ struct gl3_backend::pimpl
     }
 
     //***********************
-    void_t post_link_uniforms( GLuint const program_id, this_file::render_config & config )
+    void_t post_link_uniforms( this_file::shader_config & config )
     {
+        GLuint const program_id = config.pg_id ;
+
         GLint num_active_uniforms = 0 ;
         GLint name_length = 0 ;
 
@@ -619,7 +633,7 @@ struct gl3_backend::pimpl
 
             natus::std::string const variable_name = natus::std::string( char_cptr_t( buffer ) ) ;
 
-            this_file::render_config::uniform_variable_t vd ;
+            this_file::shader_config::uniform_variable_t vd ;
             vd.name = ::std::move( variable_name ) ;
             vd.loc = location_id ;
             vd.type = gl_uniform_type ;
@@ -653,8 +667,10 @@ struct gl3_backend::pimpl
     }
 
     //***********************
-    void_t update_all_uniforms( GLuint const program_id, this_file::render_config & config )
+    void_t update_all_uniforms( this_file::shader_config & config )
     {
+        GLuint const program_id = config.pg_id ;
+
         {
             natus::ogl::gl::glUseProgram( config.pg_id ) ;
             if( natus::ogl::error::check_and_log( natus_log_fn( "glUseProgram" ) ) )
@@ -667,66 +683,145 @@ struct gl3_backend::pimpl
         }
     }
 
-    bool_t update( size_t const id, natus::gpu::render_configuration_cref_t rc )
+    //***********************
+    size_t construct_render_config( size_t oid, natus::std::string_cref_t name,
+        natus::gpu::render_configuration_ref_t config )
     {
-        auto& config = rconfigs[ id ] ;
-        config.geo = nullptr ;
-
-        this_file::geo_config* gconfig = nullptr ;
-
-        // search for geometry
+        // the name must be unique
         {
-            auto iter = ::std::find_if( geo_configs.begin(), geo_configs.end(),
-                [&] ( this_file::geo_config const& c )
+            auto iter = ::std::find_if( rconfigs.begin(), rconfigs.end(),
+                [&] ( this_file::render_config const& c )
             {
-                return c.name == rc.get_geometry() ;
+                return c.name == name ;
             } ) ;
-            if( iter == geo_configs.end() )
+
+            if( iter != rconfigs.end() )
             {
-                natus::log::global_t::error( natus_log_fn("geometry does not exist - " + 
-                    rc.get_geometry() ) ) ;
-                return false ;
+                size_t const i = ( iter - rconfigs.begin() ) ;
+                if( natus::log::global_t::error( i != oid && oid != size_t( -1 ),
+                    natus_log_fn( "name and id do not fit " ) ) )
+                {
+                    return oid ;
+                }
             }
-            gconfig = &(geo_configs[ iter - geo_configs.begin() ]) ;
         }
 
-        // the geometry configuration is required
-        // by a render configuration
+        if( oid == size_t( -1 ) )
         {
-            config.geo = gconfig ;
+            size_t i = 0 ;
+            for( ; i < rconfigs.size(); ++i )
+            {
+                if( natus::core::is_not( rconfigs[ i ].name.empty() ) )
+                {
+                    break ;
+                }
+            }
+            oid = i ;
         }
+
+        if( oid >= rconfigs.size() ) {
+            rconfigs.resize( oid + 1 ) ;
+        }
+
+        {
+            rconfigs[ oid ].name = name ;
+        }
+
+        return oid ;
+    }
+
+    bool_t update( size_t const id, natus::gpu::shader_configuration_cref_t sc )
+    {
+        auto& sconfig = shaders[ id ] ;
 
         {
             // pre link
         }
 
-        // compile vertex shader
+        // compile
         {
             natus::gpu::shader_set_t ss ;
             {
-                auto const res = rc.shader_set( this_t::bt, ss ) ;
+                auto const res = sc.shader_set( this_t::bt, ss ) ;
                 if( res )
                 {
-                    this_t::compile_shader( config.vs_id, ss.vertex_shader().code() ) ;
-                    this_t::compile_shader( config.gs_id, ss.geometry_shader().code() ) ;
-                    this_t::compile_shader( config.ps_id, ss.pixel_shader().code() ) ;
-                    this_t::link( config.pg_id ) ;
+                    this_t::compile_shader( sconfig.vs_id, ss.vertex_shader().code() ) ;
+                    this_t::compile_shader( sconfig.gs_id, ss.geometry_shader().code() ) ;
+                    this_t::compile_shader( sconfig.ps_id, ss.pixel_shader().code() ) ;
+                    this_t::link( sconfig.pg_id ) ;
                 }
             }
         }
 
-        // vao
         {
-        }
-        
-        {
-            this_t::post_link_attributes( config.pg_id, &config, rc ) ;
-            this_t::bind_attributes( rc, &config, gconfig ) ;
+            this_t::post_link_attributes( sconfig, sc ) ;
+            this_t::post_link_uniforms( sconfig ) ;
         }
 
-        
         {
-            this_t::post_link_uniforms( config.pg_id, config ) ;            
+            //@todo requires render config
+            //this_t::bind_attributes( sconfig, gconfig ) ;
+        }
+
+        // @todo requires render config
+        /*{
+            auto vss = ::std::move( sconfig.var_sets ) ;
+            for( auto vs : vss )
+            {
+                auto const res = this_t::connect( id, vs ) ;
+                natus::log::global_t::warning( natus::core::is_not( res ), natus_log_fn( "connect" ) ) ;
+            }
+        }*/
+
+        //@todo requires render config with variable set and only need to be done if data is new
+        /*{
+            this_t::update_all_uniforms( sconfig ) ;
+        }*/
+        return true ;
+    }
+
+    bool_t update( size_t const id, natus::gpu::render_configuration_cref_t rc )
+    {
+        auto& config = rconfigs[ id ] ;
+        config.geo = nullptr ;
+
+        // find geometry
+        {
+            auto const iter = ::std::find_if( geo_configs.begin(), geo_configs.end(),
+                [&] ( this_file::geo_config const& d )
+            {
+                return d.name == rc.get_geometry() ;
+            } ) ;
+            if( iter == geo_configs.end() )
+            {
+                natus::log::global_t::warning( natus_log_fn(
+                    "no geometry with name [" + rc.get_geometry() + "] for render_config [" + rc.name() + "]" ) ) ;
+                return false ;
+            }
+
+            config.geo = &geo_configs[ ::std::distance( geo_configs.begin(), iter ) ] ;
+        }
+
+        // find shader
+        {
+            auto const iter = ::std::find_if( shaders.begin(), shaders.end(),
+                [&] ( this_file::shader_config const& d )
+            {
+                return d.name == rc.get_shader() ;
+            } ) ;
+            if( iter == shaders.end() )
+            {
+                natus::log::global_t::warning( natus_log_fn(
+                    "no shader with name [" + rc.get_shader() + "] for render_config [" + rc.name() + "]" ) ) ;
+                return false ;
+            }
+
+            config.shaders_ptr = &shaders[ ::std::distance( shaders.begin(), iter ) ] ;
+        }
+        
+        // for binding attributes, the shader and the geometry is required.
+        {
+            this_t::bind_attributes( *config.shaders_ptr, *config.geo ) ;
         }
 
         {
@@ -734,13 +829,11 @@ struct gl3_backend::pimpl
             for( auto vs : vss )
             {
                 auto const res = this_t::connect( id, vs ) ;
-                natus::log::global_t::warning( natus::core::is_not( res ), natus_log_fn( "connect" ) ) ;
+                natus::log::global_t::warning( natus::core::is_not( res ), 
+                    natus_log_fn( "connect" ) ) ;
             }
         }
-
-        {
-            this_t::update_all_uniforms( config.pg_id, config ) ;
-        }
+        
         return true ;
     }
 
@@ -773,7 +866,19 @@ struct gl3_backend::pimpl
 
         bool_t error = false ;
 
+        // vertex array object
+        if( geo_configs[ i ].va_id == GLuint( -1 ) )
+        {
+            GLuint id = GLuint( -1 ) ;
+            natus::ogl::gl::glGenVertexArrays( 1, &id ) ;
+            natus::ogl::error::check_and_log(
+                natus_log_fn( "Vertex Array creation" ) ) ;
+
+            geo_configs[ i ].va_id = id ;
+        }
+
         // vertex buffer
+        if( geo_configs[i].vb_id == GLuint(-1) )
         {
             GLuint id = GLuint( -1 ) ;
             natus::ogl::gl::glGenBuffers( 1, &id ) ;
@@ -784,6 +889,7 @@ struct gl3_backend::pimpl
         }
 
         // index buffer
+        if( geo_configs[i].ib_id == GLuint(-1) )
         {
             GLuint id = GLuint( -1 ) ;
             natus::ogl::gl::glGenBuffers( 1, &id ) ;
@@ -888,8 +994,10 @@ struct gl3_backend::pimpl
     {
         auto& config = rconfigs[ id ] ;
 
+        this_file::shader_config & sconfig = *config.shaders_ptr ;
+
         if( this_t::connect( config, vs ) )
-            this_t::update_all_uniforms( config.pg_id, config ) ;
+            this_t::update_all_uniforms( sconfig ) ;
 
         return true ;
     }
@@ -898,7 +1006,9 @@ struct gl3_backend::pimpl
     {
         config.var_sets.emplace_back( vs ) ;
 
-        for( auto& uv : config.uniforms )
+        this_file::shader_config & sconfig = *config.shaders_ptr ;
+
+        for( auto& uv : sconfig.uniforms )
         {
             // is it a data uniform variable?
             if( natus::ogl::uniform_is_data( uv.type ) )
@@ -922,22 +1032,24 @@ struct gl3_backend::pimpl
     bool_t render( size_t const id, GLsizei const start_element = GLsizei(0), 
         GLsizei const num_elements = GLsizei(-1) )
     {
-        this_file::render_config& config = rconfigs[ id ] ;
+        this_file::render_config & config = rconfigs[ id ] ;
+        this_file::shader_config & sconfig = *config.shaders_ptr ;
+        this_file::geo_config & gconfig = *config.geo ;
 
         {
-            natus::ogl::gl::glBindVertexArray( config.va_id ) ;
+            natus::ogl::gl::glBindVertexArray( gconfig.va_id ) ;
             if( natus::ogl::error::check_and_log( natus_log_fn( "glBindVertexArray" ) ) )
                 return false ;
         }
 
         {
-            natus::ogl::gl::glUseProgram( config.pg_id ) ;
+            natus::ogl::gl::glUseProgram( sconfig.pg_id ) ;
             if( natus::ogl::error::check_and_log( natus_log_fn( "glUseProgram" ) ) )
                 return false ;
         }
 
         {
-            for( auto & uv : config.uniforms )
+            for( auto & uv : sconfig.uniforms )
             {
                 uv.do_copy_funk() ;
                 uv.do_uniform_funk() ;
@@ -1071,7 +1183,34 @@ natus::gpu::id_t gl3_backend::configure( id_rref_t id, natus::gpu::render_config
 {
     {
         id = natus::gpu::id_t( this_t::get_bid(),
-            _pimpl->construct_rconfig( id.get_oid(), config->name(), *config ) ) ;
+            _pimpl->construct_render_config( id.get_oid(), config->name(), *config ) ) ;
+    }
+
+    if( id.is_not_bid( this_t::get_bid() ) )
+    {
+        natus::log::global_t::error( natus_log_fn( "invalid id" ) ) ;
+        return ::std::move( id ) ;
+    }
+
+    size_t const oid = id.get_oid() ;
+
+    {
+        auto const res = _pimpl->update( id.get_oid(), *config ) ;
+        if( natus::core::is_not( res ) )
+        {
+            return ::std::move( id ) ;
+        }
+    }
+
+    return ::std::move( id ) ;
+}
+
+//***
+natus::gpu::id_t gl3_backend::configure( id_rref_t id, natus::gpu::shader_configuration_res_t config ) noexcept
+{
+    {
+        id = natus::gpu::id_t( this_t::get_bid(),
+            _pimpl->construct_shader_config( id.get_oid(), config->name(), *config ) ) ;
     }
 
     if( id.is_not_bid( this_t::get_bid() ) )
