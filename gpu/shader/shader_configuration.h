@@ -70,6 +70,16 @@ namespace natus
 
         public: 
 
+            typedef ::std::function < void_t ( 
+                natus::gpu::vertex_attribute const va, natus::std::string_cref_t name ) > for_each_vab_funk_t ;
+            void_t for_each_vertex_input_binding( for_each_vab_funk_t funk ) const
+            {
+                for( auto const & vib : _vertex_inputs )
+                {
+                    funk( vib.va, vib.name ) ;
+                }
+            }
+
             this_ref_t add_vertex_input_binding( natus::gpu::vertex_attribute const va,
                 natus::std::string_cref_t name )
             {

@@ -75,6 +75,28 @@ namespace this_file
         GLuint ps_id = GLuint( -1 ) ;
         GLuint pg_id = GLuint( -1 ) ;
 
+        struct vertex_input_binding
+        {
+            natus::gpu::vertex_attribute va ;
+            natus::std::string_t name ;
+        };
+        natus::std::vector< vertex_input_binding > vertex_inputs ;
+        
+        bool_t find_vertex_input_binding_by_name( natus::std::string_cref_t name_,
+            natus::gpu::vertex_attribute & va ) const noexcept
+        {
+            auto iter = ::std::find_if( vertex_inputs.begin(), vertex_inputs.end(),
+                [&] ( vertex_input_binding const& b )
+            {
+                return b.name == name_ ;
+            } ) ;
+            if( iter == vertex_inputs.end() ) return false ;
+
+            va = iter->va ;
+
+            return true ;
+        }
+
         struct attribute_variable
         {
             natus::gpu::vertex_attribute va ;
@@ -348,6 +370,8 @@ struct gl3_backend::pimpl
     //***********************
     void_t delete_all_variables( this_file::shader_config & config )
     {
+        config.vertex_inputs.clear() ;
+
         for( auto & v : config.attributes )
         {
             // delete memory
@@ -458,8 +482,7 @@ struct gl3_backend::pimpl
     }
 
     //***********************
-    void_t post_link_attributes( this_file::shader_config & config, 
-        natus::gpu::shader_configuration_cref_t sc )
+    void_t post_link_attributes( this_file::shader_config & config )
     {
         GLuint const program_id = config.pg_id ;
 
@@ -504,7 +527,7 @@ struct gl3_backend::pimpl
             
             {
                 natus::gpu::vertex_attribute va = natus::gpu::vertex_attribute::undefined ;
-                auto const res = sc.find_vertex_input_binding_by_name( vd.name, va ) ;
+                auto const res = config.find_vertex_input_binding_by_name( vd.name, va ) ;
                 natus::log::global_t::error( natus::core::is_not( res ), 
                     natus_log_fn("can not find vertex attribute - " + vd.name ) ) ;
                 vd.va = va ;
@@ -735,7 +758,12 @@ struct gl3_backend::pimpl
         auto& sconfig = shaders[ id ] ;
 
         {
-            // pre link
+            sc.for_each_vertex_input_binding( [&]( 
+                natus::gpu::vertex_attribute const va, natus::std::string_cref_t name )
+            {
+                sconfig.vertex_inputs.emplace_back( this_file::shader_config::vertex_input_binding 
+                    { va, name } ) ;
+            } ) ;
         }
 
         // compile
@@ -754,7 +782,7 @@ struct gl3_backend::pimpl
         }
 
         {
-            this_t::post_link_attributes( sconfig, sc ) ;
+            this_t::post_link_attributes( sconfig ) ;
             this_t::post_link_uniforms( sconfig ) ;
         }
 
