@@ -32,6 +32,14 @@ namespace natus
 
             natus::gpu::backend_type _bt = backend_type::unknown ;
 
+            struct render_detail
+            {
+                size_t start = size_t( 0 ) ;
+                size_t num_elems = size_t( -1 ) ;
+                size_t varset = size_t( 0 ) ;
+            };
+            natus_typedef( render_detail ) ;
+
         public:
 
             virtual id_t configure( id_rref_t id, natus::gpu::geometry_configuration_res_t ) noexcept = 0 ;
@@ -41,7 +49,7 @@ namespace natus
             virtual id_t connect( id_rref_t id, natus::gpu::variable_set_res_t ) noexcept = 0 ;
             virtual id_t update( id_rref_t id, natus::gpu::geometry_configuration_res_t ) noexcept = 0 ;
 
-            virtual id_t render( id_rref_t id ) noexcept = 0 ;
+            virtual id_t render( id_rref_t id, natus::gpu::backend::render_detail_cref_t ) noexcept = 0 ;
 
             //virtual id_t feedback( id_rref_t id ) noexcept = 0 ;
             //virtual id_t compute( id_rref_t id ) noexcept = 0 ;

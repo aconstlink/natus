@@ -74,6 +74,7 @@ namespace natus
             struct render_data
             {
                 natus::gpu::async_id_res_t aid ;
+                natus::gpu::backend::render_detail_t detail ;
             };
             typedef natus::std::vector< render_data > renders_t ;
             renders_t _renders ;
@@ -107,7 +108,7 @@ namespace natus
             natus::gpu::result connect( natus::gpu::async_id_res_t, natus::gpu::variable_set_res_t ) noexcept ;
             natus::gpu::result update( natus::gpu::async_id_res_t, natus::gpu::geometry_configuration_res_t ) noexcept ;
 
-            natus::gpu::result render( natus::gpu::async_id_res_t ) noexcept ;
+            natus::gpu::result render( natus::gpu::async_id_res_t, natus::gpu::backend::render_detail_cref_t ) noexcept ;
 
         public:
 
@@ -197,7 +198,13 @@ namespace natus
 
             natus::gpu::result render( natus::gpu::async_id_res_t id ) noexcept
             {
-                return _async->render( id ) ;
+                natus::gpu::backend_t::render_detail_t detail ;
+                return _async->render( id, detail ) ;
+            }
+
+            natus::gpu::result render( natus::gpu::async_id_res_t id, natus::gpu::backend::render_detail_cref_t detail ) noexcept
+            {
+                return _async->render( id, detail ) ;
             }
 
         public:

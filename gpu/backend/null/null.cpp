@@ -63,7 +63,7 @@ natus::gpu::id_t null_backend::update( id_rref_t id, natus::gpu::geometry_config
 }
 
 //***
-natus::gpu::id_t null_backend::render( id_rref_t id ) noexcept 
+natus::gpu::id_t null_backend::render( id_rref_t id, natus::gpu::backend::render_detail_cref_t ) noexcept 
 {
     return ::std::move( id ) ;
 }

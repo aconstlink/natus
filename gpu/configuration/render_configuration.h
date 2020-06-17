@@ -7,6 +7,7 @@
 
 #include "../shader/shader_configuration.h"
 #include "../buffer/vertex_attribute.h"
+#include "../variable/variable_set.hpp"
 
 #include <natus/std/vector.hpp>
 
@@ -25,6 +26,8 @@ namespace natus
             natus::std::string_t _name ;
             natus::std::string_t _geo ;
             natus::std::string_t _shader ;
+
+            natus::std::vector< natus::gpu::variable_set_res_t > _vars ;
 
         public:
             
@@ -69,6 +72,23 @@ namespace natus
                 return _shader ;
             }
 
+            this_ref_t add_variable_set( natus::gpu::variable_set_res_t vs )
+            {
+                _vars.emplace_back( ::std::move( vs ) ) ;
+                return *this ;
+            }
+
+            typedef ::std::function< void_t ( size_t const i, natus::gpu::variable_set_res_t const & ) > for_each_var_funk_t ;
+
+            void_t for_each( for_each_var_funk_t funk )
+            {
+                size_t i = 0 ;
+                for( auto const & v : _vars )
+                {
+                    funk( i++, v ) ;
+                }
+            }
+
         public:
 
             this_ref_t operator = ( this_cref_t rhv )
@@ -76,6 +96,7 @@ namespace natus
                 _name = rhv._name ;
                 _geo = rhv._geo;
                 _shader = rhv._shader ;
+                _vars = rhv._vars ;
 
                 return *this ;
             }
@@ -85,6 +106,7 @@ namespace natus
                 _name = ::std::move( rhv._name ) ;
                 _geo = ::std::move( rhv._geo ) ;
                 _shader = ::std::move( rhv._shader ) ;
+                _vars = ::std::move( rhv._vars ) ;
 
                 return *this ;
             }

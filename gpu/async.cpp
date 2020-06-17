@@ -91,13 +91,13 @@ natus::gpu::result async::update( natus::gpu::async_id_res_t aid, natus::gpu::ge
 }
 
 //****
-natus::gpu::result async::render( natus::gpu::async_id_res_t aid ) noexcept 
+natus::gpu::result async::render( natus::gpu::async_id_res_t aid, natus::gpu::backend::render_detail_cref_t detail ) noexcept 
 {
     //auto const res = aid->swap( natus::gpu::async_result::in_transit ) ;
     //if( res != natus::gpu::async_result::in_transit )
     {
         natus::concurrent::lock_guard_t lk( _renders_mtx ) ;
-        _renders.push_back( { aid } ) ;
+        _renders.push_back( { aid, detail } ) ;
     }
     return natus::gpu::result::ok ;
 }
@@ -209,7 +209,7 @@ void_t async::system_update( void_t ) noexcept
 
         for( auto& rnd : renders )
         {
-            natus::gpu::id_t id = _backend->render( rnd.aid->id() ) ;
+            natus::gpu::id_t id = _backend->render( rnd.aid->id(), rnd.detail ) ;
 
             id = rnd.aid->set( ::std::move( id ), natus::gpu::async_result::ok ) ;
             natus::log::global_t::error( id.is_valid(), natus_log_fn(

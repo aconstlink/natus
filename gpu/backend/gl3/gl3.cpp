@@ -121,7 +121,7 @@ namespace this_file
             natus::ogl::uniform_funk_t uniform_funk ;
 
             // set by the user in user-space
-            natus::gpu::ivariable_ptr_t var ;
+            //natus::gpu::ivariable_ptr_t var ;
 
             void_t do_uniform_funk( void_t )
             {
@@ -129,7 +129,7 @@ namespace this_file
                 natus::ogl::error::check_and_log( natus_log_fn( "glUniform" ) ) ;
             }
 
-            void_t do_copy_funk( void_t )
+            void_t do_copy_funk( natus::gpu::ivariable_ptr_t var )
             {
                 ::std::memcpy( mem, var->data_ptr(), natus::ogl::uniform_size_of( type ) ) ;
             }
@@ -148,8 +148,18 @@ namespace this_file
         geo_config* geo = nullptr ;
         shader_config* shaders_ptr = nullptr ;
 
+        struct uniform_variable_link
+        {
+            // the index into the shader_config::uniforms array
+            size_t uniform_id ;
+            // the user variable holding the data.
+            natus::gpu::ivariable_ptr_t var ;
+        };
+
         // user provided variable set
-        natus::std::vector< natus::gpu::variable_set_res_t > var_sets ;
+        natus::std::vector< ::std::pair< 
+            natus::gpu::variable_set_res_t, 
+            natus::std::vector< uniform_variable_link > > > var_sets ;
     };
 }
 
@@ -750,6 +760,11 @@ struct gl3_backend::pimpl
             rconfigs[ oid ].name = name ;
         }
 
+        {
+            rconfigs[ oid ].var_sets.clear() ;
+            
+        }
+
         return oid ;
     }
 
@@ -786,29 +801,10 @@ struct gl3_backend::pimpl
             this_t::post_link_uniforms( sconfig ) ;
         }
 
-        {
-            //@todo requires render config
-            //this_t::bind_attributes( sconfig, gconfig ) ;
-        }
-
-        // @todo requires render config
-        /*{
-            auto vss = ::std::move( sconfig.var_sets ) ;
-            for( auto vs : vss )
-            {
-                auto const res = this_t::connect( id, vs ) ;
-                natus::log::global_t::warning( natus::core::is_not( res ), natus_log_fn( "connect" ) ) ;
-            }
-        }*/
-
-        //@todo requires render config with variable set and only need to be done if data is new
-        /*{
-            this_t::update_all_uniforms( sconfig ) ;
-        }*/
         return true ;
     }
 
-    bool_t update( size_t const id, natus::gpu::render_configuration_cref_t rc )
+    bool_t update( size_t const id, natus::gpu::render_configuration_ref_t rc )
     {
         auto& config = rconfigs[ id ] ;
         config.geo = nullptr ;
@@ -853,14 +849,23 @@ struct gl3_backend::pimpl
         }
 
         {
-            auto vss = ::std::move( config.var_sets ) ;
-            for( auto vs : vss )
+            rc.for_each( [&] ( size_t const i, natus::gpu::variable_set_res_t vs )
             {
                 auto const res = this_t::connect( id, vs ) ;
+                natus::log::global_t::warning( natus::core::is_not( res ),
+                    natus_log_fn( "connect" ) ) ;
+            } ) ;
+        }
+
+        /*{
+            auto vss = ::std::move( config.var_sets ) ;
+            for( auto & vs : vss )
+            {
+                auto const res = this_t::connect( id, vs.first ) ;
                 natus::log::global_t::warning( natus::core::is_not( res ), 
                     natus_log_fn( "connect" ) ) ;
             }
-        }
+        }*/
         
         return true ;
     }
@@ -1032,10 +1037,12 @@ struct gl3_backend::pimpl
 
     bool_t connect( this_file::render_config & config, natus::gpu::variable_set_res_t vs )
     {
-        config.var_sets.emplace_back( vs ) ;
+        auto item = ::std::make_pair( vs, 
+            natus::std::vector< this_file::render_config::uniform_variable_link >() ) ;
 
         this_file::shader_config & sconfig = *config.shaders_ptr ;
 
+        size_t id = 0 ;
         for( auto& uv : sconfig.uniforms )
         {
             // is it a data uniform variable?
@@ -1048,16 +1055,21 @@ struct gl3_backend::pimpl
                     natus::log::global_t::error( natus_log_fn( "can not claim variable " + uv.name ) ) ;
                     continue ;
                 }
+                
+                this_file::render_config::uniform_variable_link link ;
+                link.uniform_id = id++ ;
+                link.var = var ;
 
-                uv.var = var ;
-                uv.do_copy_funk() ;
+                item.second.emplace_back( link ) ;
             }
         }
+
+        config.var_sets.emplace_back( item ) ;
 
         return true ;
     }
 
-    bool_t render( size_t const id, GLsizei const start_element = GLsizei(0), 
+    bool_t render( size_t const id, size_t const varset_id = size_t(0), GLsizei const start_element = GLsizei(0), 
         GLsizei const num_elements = GLsizei(-1) )
     {
         this_file::render_config & config = rconfigs[ id ] ;
@@ -1076,10 +1088,13 @@ struct gl3_backend::pimpl
                 return false ;
         }
 
+        if( config.var_sets.size() > varset_id )
         {
-            for( auto & uv : sconfig.uniforms )
+            auto& varset = config.var_sets[ varset_id ] ;
+            for( auto & item : varset.second )
             {
-                uv.do_copy_funk() ;
+                auto & uv = sconfig.uniforms[ item.uniform_id ] ;
+                uv.do_copy_funk( item.var ) ;
                 uv.do_uniform_funk() ;
             }
         }
@@ -1293,7 +1308,7 @@ natus::gpu::id_t gl3_backend::update( id_rref_t id, natus::gpu::geometry_configu
 }
 
 //****
-natus::gpu::id_t gl3_backend::render( id_rref_t id ) noexcept 
+natus::gpu::id_t gl3_backend::render( id_rref_t id, natus::gpu::backend::render_detail_cref_t detail ) noexcept 
 { 
     //natus::log::global_t::status( natus_log_fn("render") ) ;
 
@@ -1303,7 +1318,7 @@ natus::gpu::id_t gl3_backend::render( id_rref_t id ) noexcept
         return ::std::move( id ) ;
     }
 
-    _pimpl->render( id.get_oid() ) ;
+    _pimpl->render( id.get_oid(), detail.varset, (GLsizei)detail.start, (GLsizei)detail.num_elems ) ;
 
     return ::std::move( id ) ;
 }
