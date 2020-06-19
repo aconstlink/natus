@@ -19,17 +19,20 @@ namespace natus
             // backend id
             size_t _bid = size_t( -1 ) ;
 
-            // object id
-            size_t _oid = size_t( -1 ) ;
+            // object id 
+            size_t _oids[natus::gpu::max_backends] ;
 
         public:
 
-            id( void_t ) {}
+            id( void_t ) 
+            {
+                ::std::memset((void_ptr_t)&_oids, (int_t(-1)), sizeof(size_t)*natus::gpu::max_backends ) ;
+            }
 
-            id( size_t const bid, size_t const oid )
+            id( size_t const bid, size_t const oid ) : id()
             {
                 _bid = bid ;
-                _oid = oid ;
+                _oids[ _bid ] = oid ;
             }
             
             id( this_cref_t ) = delete ;
@@ -37,30 +40,34 @@ namespace natus
             id( this_rref_t rhv ) noexcept
             { 
                 _bid = rhv._bid ;
-                _oid = rhv._oid ;
-
                 rhv._bid = size_t( -1 ) ;
-                rhv._oid = size_t( -1 ) ;
+
+                ::std::memcpy( (void_ptr_t)&_oids, (void_ptr_t)&rhv._oids, sizeof( size_t ) * natus::gpu::max_backends ) ;
+                ::std::memset(&rhv._oids, (int_t(-1)), sizeof(size_t)*natus::gpu::max_backends ) ;
             }
 
             virtual ~id( void_t ) 
             {
                 // stuff must be cleaned up!
                 natus_assert( _bid == size_t( -1 ) ) ;
-                natus_assert( _oid == size_t( -1 ) ) ;
+
+                for( auto & oid : _oids )
+                {
+                    natus_assert( oid == size_t( -1 ) ) ;
+                }
             }
 
-            bool_t is_valid( void_t ) const 
+            bool_t is_valid( void_t ) const noexcept
             {
-                return _bid != size_t( -1 ) && _oid != size_t( -1 ) ;
+                return _bid != size_t( -1 ) && _oids[_bid] != size_t( -1 ) ;
             }
 
-            bool_t is_not_valid( void_t ) const 
+            bool_t is_not_valid( void_t ) const noexcept
             {
                 return natus::core::is_not( this_t::is_valid() ) ;
             }
 
-            size_t get_oid( void_t ) const noexcept { return _oid ; }
+            size_t get_oid( void_t ) const noexcept { return _oids[ _bid ] ; }
             size_t get_bid( void_t ) const noexcept { return _bid ; }
             bool_t is_bid( size_t const bid ) const { return _bid == bid ; }
             bool_t is_not_bid( size_t const bid ) const { 
@@ -71,10 +78,10 @@ namespace natus
             this_ref_t operator = ( this_rref_t rhv ) noexcept
             {
                 _bid = rhv._bid ;
-                _oid = rhv._oid ;
-
                 rhv._bid = size_t( -1 ) ;
-                rhv._oid = size_t( -1 ) ;
+
+                ::std::memcpy( ( void_ptr_t ) &_oids, ( void_ptr_t ) &rhv._oids, sizeof( size_t ) * natus::gpu::max_backends ) ;
+                ::std::memset( &rhv._oids, ( int_t( -1 ) ), sizeof( size_t ) * natus::gpu::max_backends ) ;
 
                 return *this ;
             }
