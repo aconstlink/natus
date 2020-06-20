@@ -27,15 +27,11 @@ natus::gpu::id_t null_backend::configure( id_rref_t id, natus::gpu::geometry_con
 }
 
 //***
-natus::gpu::id_t null_backend::configure( id_rref_t id, natus::gpu::render_configuration_res_t ) noexcept 
+natus::gpu::result null_backend::configure( natus::gpu::render_configuration_res_t ) noexcept 
 {
     static size_t number = 0 ;
 
-    natus::gpu::id_t ret = ::std::move( id ) ;
-    if( ret.is_not_valid() ) 
-        ret = natus::gpu::id_t( this_t::get_bid(), ++number ) ;
-
-    return ::std::move( ret ) ;
+    return natus::gpu::result::ok ;
 }
 
 //***
@@ -63,9 +59,9 @@ natus::gpu::id_t null_backend::update( id_rref_t id, natus::gpu::geometry_config
 }
 
 //***
-natus::gpu::id_t null_backend::render( id_rref_t id, natus::gpu::backend::render_detail_cref_t ) noexcept 
+natus::gpu::result null_backend::render( natus::gpu::render_configuration_res_t, natus::gpu::backend::render_detail_cref_t ) noexcept 
 {
-    return ::std::move( id ) ;
+    return natus::gpu::result::ok ;
 }
 
 //***

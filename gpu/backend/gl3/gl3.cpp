@@ -1222,30 +1222,26 @@ natus::gpu::id_t gl3_backend::configure( id_rref_t id,
 }
 
 //****
-natus::gpu::id_t gl3_backend::configure( id_rref_t id, natus::gpu::render_configuration_res_t config ) noexcept 
+natus::gpu::result gl3_backend::configure( natus::gpu::render_configuration_res_t config ) noexcept 
 {
+    natus::gpu::id_res_t id = config->get_id() ;
+
     {
         id = natus::gpu::id_t( this_t::get_bid(),
-            _pimpl->construct_render_config( id.get_oid(), config->name(), *config ) ) ;
+            _pimpl->construct_render_config( id->get_oid(), config->name(), *config ) ) ;
     }
 
-    if( id.is_not_bid( this_t::get_bid() ) )
-    {
-        natus::log::global_t::error( natus_log_fn( "invalid id" ) ) ;
-        return ::std::move( id ) ;
-    }
-
-    size_t const oid = id.get_oid() ;
+    size_t const oid = id->get_oid() ;
 
     {
-        auto const res = _pimpl->update( id.get_oid(), *config ) ;
+        auto const res = _pimpl->update( id->get_oid(), *config ) ;
         if( natus::core::is_not( res ) )
         {
-            return ::std::move( id ) ;
+            return natus::gpu::result::failed ;
         }
     }
 
-    return ::std::move( id ) ;
+    return natus::gpu::result::ok ;
 }
 
 //***
@@ -1308,19 +1304,21 @@ natus::gpu::id_t gl3_backend::update( id_rref_t id, natus::gpu::geometry_configu
 }
 
 //****
-natus::gpu::id_t gl3_backend::render( id_rref_t id, natus::gpu::backend::render_detail_cref_t detail ) noexcept 
+natus::gpu::result gl3_backend::render( natus::gpu::render_configuration_res_t config, natus::gpu::backend::render_detail_cref_t detail ) noexcept 
 { 
+    natus::gpu::id_res_t id = config->get_id() ;
+
     //natus::log::global_t::status( natus_log_fn("render") ) ;
 
-    if( id.is_not_bid( this_t::get_bid() ) || id.is_not_valid() )
+    if( id->is_not_bid( this_t::get_bid() ) || id->is_not_valid() )
     {
         natus::log::global_t::error( natus_log_fn( "invalid id" ) ) ;
-        return ::std::move( id ) ;
+        return natus::gpu::result::failed ;
     }
 
-    _pimpl->render( id.get_oid(), detail.varset, (GLsizei)detail.start, (GLsizei)detail.num_elems ) ;
+    _pimpl->render( id->get_oid(), detail.varset, (GLsizei)detail.start, (GLsizei)detail.num_elems ) ;
 
-    return ::std::move( id ) ;
+    return natus::gpu::result::ok ;
 }
 
 //****

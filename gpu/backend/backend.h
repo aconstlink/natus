@@ -6,7 +6,7 @@
 #include "../protos.h"
 
 
-#include "id.hpp"
+#include "../id.hpp"
 #include "../shader/shader_configuration.h"
 #include "../configuration/render_configuration.h"
 #include "../configuration/geometry_configuration.h"
@@ -43,13 +43,13 @@ namespace natus
         public:
 
             virtual id_t configure( id_rref_t id, natus::gpu::geometry_configuration_res_t ) noexcept = 0 ;
-            virtual id_t configure( id_rref_t id, natus::gpu::render_configuration_res_t ) noexcept = 0 ;
+            virtual natus::gpu::result configure( natus::gpu::render_configuration_res_t ) noexcept = 0 ;
             virtual id_t configure( id_rref_t id, natus::gpu::shader_configuration_res_t ) noexcept = 0 ;
 
             virtual id_t connect( id_rref_t id, natus::gpu::variable_set_res_t ) noexcept = 0 ;
             virtual id_t update( id_rref_t id, natus::gpu::geometry_configuration_res_t ) noexcept = 0 ;
 
-            virtual id_t render( id_rref_t id, natus::gpu::backend::render_detail_cref_t ) noexcept = 0 ;
+            virtual natus::gpu::result render( natus::gpu::render_configuration_res_t, natus::gpu::backend::render_detail_cref_t ) noexcept = 0 ;
 
             //virtual id_t feedback( id_rref_t id ) noexcept = 0 ;
             //virtual id_t compute( id_rref_t id ) noexcept = 0 ;

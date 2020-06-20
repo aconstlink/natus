@@ -36,6 +36,8 @@ namespace natus
                 window( this_rref_t rhv ) ;
                 virtual ~window( void_t ) ;
 
+                this_ref_t operator = ( this_rref_t ) ;
+
             public: // interface
 
                 HWND get_handle( void_t ) ;

@@ -122,6 +122,24 @@ namespace natus
                 return *this ;
             }
 
+            this_ref_t operator = ( value_rref_t v )
+            {
+                if( _data == nullptr ) 
+                {
+                    _data = sptr_t( natus::memory::global_t::alloc<T>( ::std::move( v ) ),
+                        [=] ( T* ptr )
+                    {
+                        natus::memory::global_t::dealloc( ptr ) ;
+                    } ) ;
+                }
+                else
+                {
+                    *_data = ::std::move( v ) ;
+                }
+                
+                return *this ;
+            }
+
             template< class B >
             this_ref_t operator = ( res<B> const & rhv )
             {

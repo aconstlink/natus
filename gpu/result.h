@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include <natus/soil/macros.h>
+
 namespace natus
 {
     namespace gpu
@@ -12,6 +14,7 @@ namespace natus
             invalid,
             invalid_argument
         };
+        natus_soil_typedef( result ) ;
 
 
         enum class async_result

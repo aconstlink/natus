@@ -5,11 +5,12 @@ set( sources
     "protos.h"
     "typedefs.h"
     "types.h"
+    "object.hpp"
 
     "global.h"
     "global.cpp"
+    "id.hpp"
 
-    "backend/id.hpp"
     "backend/types.h"
     "backend/backend.h"
     "backend/backend.cpp"

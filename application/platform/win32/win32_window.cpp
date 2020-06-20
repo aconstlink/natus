@@ -21,6 +21,18 @@ window::window( window_info_cref_t info )
 //***
 window::window( this_rref_t rhv ) : platform_window( ::std::move( rhv ) )
 {
+    *this = ::std::move( rhv ) ;
+}
+
+//***
+window::~window( void_t ) 
+{
+    this_t::destroy_window() ;
+}
+
+//***
+window::this_ref_t window::operator = ( this_rref_t rhv ) 
+{
     _handle = rhv._handle ;
     rhv._handle = NULL ;
     _cursor = rhv._cursor ;
@@ -28,19 +40,15 @@ window::window( this_rref_t rhv ) : platform_window( ::std::move( rhv ) )
 
     if( _handle != NULL )
     {
-        SetWindowLongPtr( _handle, GWLP_USERDATA, (LONG_PTR)this ) ;
+        SetWindowLongPtr( _handle, GWLP_USERDATA, ( LONG_PTR ) this ) ;
     }
-    
+
     _is_fullscreen = rhv._is_fullscreen ;
     _is_cursor = rhv._is_cursor ;
 
     _name = ::std::move( rhv._name ) ;
-}
 
-//***
-window::~window( void_t ) 
-{
-    this_t::destroy_window() ;
+    return *this ;
 }
 
 //***

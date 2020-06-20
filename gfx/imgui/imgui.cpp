@@ -184,7 +184,7 @@ void_t imgui::init( natus::gpu::async_view_ref_t async )
         rc.add_variable_set( _vars ) ;
 
         _rc = ::std::move( rc ) ;
-        async.configure( _rc_id, _rc ) ;
+        async.configure( _rc ) ;
      }
 
     {
@@ -291,7 +291,7 @@ void_t imgui::render( natus::gpu::async_view_ref_t async )
                 rd.num_elems = pcmd->ElemCount ;
                 rd.start = pcmd->VtxOffset ;
                 rd.varset = 0 ;
-                async.render( _rc_id, rd ) ;
+                async.render( _rc, rd ) ;
             }
         }
     }

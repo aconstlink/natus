@@ -4,6 +4,7 @@
 #include "../api.h"
 #include "../protos.h"
 #include "../typedefs.h"
+#include "../object.hpp"
 
 #include "../shader/shader_configuration.h"
 #include "../buffer/vertex_attribute.h"
@@ -17,7 +18,7 @@ namespace natus
 {
     namespace gpu
     {
-        class NATUS_GPU_API render_configuration
+        class NATUS_GPU_API render_configuration : public object
         {
             natus_this_typedefs( render_configuration ) ;
 
@@ -35,12 +36,12 @@ namespace natus
             render_configuration( natus::std::string_cref_t name ) 
                 : _name( name ) {}
 
-            render_configuration( this_cref_t rhv )
+            render_configuration( this_cref_t rhv ) : object( rhv )
             {
                 *this = rhv  ;
             }
 
-            render_configuration( this_rref_t rhv )
+            render_configuration( this_rref_t rhv ) : object( ::std::move( rhv ) )
             {
                 *this = ::std::move( rhv ) ;
             }
