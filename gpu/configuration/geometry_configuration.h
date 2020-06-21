@@ -1,9 +1,7 @@
 
 #pragma once
 
-#include "../api.h"
-#include "../protos.h"
-#include "../typedefs.h"
+#include "../object.hpp"
 
 #include "../backend/types.h"
 #include "../buffer/vertex_buffer.hpp"
@@ -14,7 +12,7 @@ namespace natus
 {
     namespace gpu
     {
-        class NATUS_GPU_API geometry_configuration
+        class NATUS_GPU_API geometry_configuration : public object
         {
             natus_this_typedefs( geometry_configuration ) ;
 

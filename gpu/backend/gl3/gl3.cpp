@@ -946,21 +946,21 @@ struct gl3_backend::pimpl
             }) ;
         }
 
-        {
-            //#error "set all these new values"
-            geo_configs[ i ].num_elements_ib = geo.index_buffer().get_num_elements() ;
-            geo_configs[ i ].num_elements_vb = geo.vertex_buffer().get_num_elements() ;
-            geo_configs[ i ].ib_elem_sib = geo.index_buffer().get_element_sib() ;
-            geo_configs[ i ].ib_type = GL_UNSIGNED_INT ;
-            geo_configs[ i ].pt = natus::gpu::gl3::convert( geo.primitive_type() ) ; 
-        }
-
         return i ;
     }
 
     bool_t update( size_t const id, natus::gpu::geometry_configuration_res_t geo )
     {
         auto& config = geo_configs[ id ] ;
+
+        {
+            //#error "set all these new values"
+            config.num_elements_ib = geo->index_buffer().get_num_elements() ;
+            config.num_elements_vb = geo->vertex_buffer().get_num_elements() ;
+            config.ib_elem_sib = geo->index_buffer().get_element_sib() ;
+            config.ib_type = GL_UNSIGNED_INT ;
+            config.pt = natus::gpu::gl3::convert( geo->primitive_type() ) ;
+        }
 
         // bind vertex buffer
         {
@@ -1195,30 +1195,25 @@ void_t gl3_backend::set_window_info( window_info_cref_t wi ) noexcept
 }
 
 //****
-natus::gpu::id_t gl3_backend::configure( id_rref_t id,
-    natus::gpu::geometry_configuration_res_t gconf ) noexcept 
+natus::gpu::result gl3_backend::configure( natus::gpu::geometry_configuration_res_t gconf ) noexcept 
 {
-    if( id.is_not_valid() )
+    natus::gpu::id_res_t id = gconf->get_id() ;
+
+    if( id->is_not_valid( this_t::get_bid() ) )
     {
         id = natus::gpu::id_t( this_t::get_bid(),
             _pimpl->construct_geo( gconf->name(), *(gconf.get_sptr()) ) ) ;
     }
 
-    if( id.is_not_bid( this_t::get_bid() ) )
     {
-        natus::log::global_t::error( natus_log_fn( "incorrect backend" ) ) ;
-        return ::std::move( id ) ;
-    }
-
-    {
-        auto const res = _pimpl->update( id.get_oid(), gconf ) ;
+        auto const res = _pimpl->update( id->get_oid( this_t::get_bid() ), gconf ) ;
         if( natus::core::is_not( res ) )
         {
-            return ::std::move( id ) ;
+            return natus::gpu::result::failed ;
         }
     }
 
-    return ::std::move( id ) ;
+    return natus::gpu::result::ok ;
 }
 
 //****
@@ -1228,13 +1223,13 @@ natus::gpu::result gl3_backend::configure( natus::gpu::render_configuration_res_
 
     {
         id = natus::gpu::id_t( this_t::get_bid(),
-            _pimpl->construct_render_config( id->get_oid(), config->name(), *config ) ) ;
+            _pimpl->construct_render_config( id->get_oid( this_t::get_bid() ), config->name(), *config ) ) ;
     }
 
-    size_t const oid = id->get_oid() ;
+    size_t const oid = id->get_oid( this_t::get_bid() ) ;
 
     {
-        auto const res = _pimpl->update( id->get_oid(), *config ) ;
+        auto const res = _pimpl->update( oid, *config ) ;
         if( natus::core::is_not( res ) )
         {
             return natus::gpu::result::failed ;
@@ -1245,62 +1240,66 @@ natus::gpu::result gl3_backend::configure( natus::gpu::render_configuration_res_
 }
 
 //***
-natus::gpu::id_t gl3_backend::configure( id_rref_t id, natus::gpu::shader_configuration_res_t config ) noexcept
+natus::gpu::result gl3_backend::configure( natus::gpu::shader_configuration_res_t config ) noexcept
 {
+    natus::gpu::id_res_t id = config->get_id() ;
+
     {
         id = natus::gpu::id_t( this_t::get_bid(),
-            _pimpl->construct_shader_config( id.get_oid(), config->name(), *config ) ) ;
+            _pimpl->construct_shader_config( id->get_oid( this_t::get_bid() ), config->name(), *config ) ) ;
     }
 
-    if( id.is_not_bid( this_t::get_bid() ) )
-    {
-        natus::log::global_t::error( natus_log_fn( "invalid id" ) ) ;
-        return ::std::move( id ) ;
-    }
-
-    size_t const oid = id.get_oid() ;
+    size_t const oid = id->get_oid( this_t::get_bid() ) ;
 
     {
-        auto const res = _pimpl->update( id.get_oid(), *config ) ;
+        auto const res = _pimpl->update( oid, *config ) ;
         if( natus::core::is_not( res ) )
         {
-            return ::std::move( id ) ;
+            return natus::gpu::result::failed ;
         }
     }
 
-    return ::std::move( id ) ;
+    return natus::gpu::result::ok ;
 }
 
 //***
-natus::gpu::id_t gl3_backend::connect( id_rref_t id, natus::gpu::variable_set_res_t vs ) noexcept
+natus::gpu::result gl3_backend::connect( natus::gpu::render_configuration_res_t config, natus::gpu::variable_set_res_t vs ) noexcept
 {
-    if( id.is_not_valid() )
+    natus::gpu::id_res_t id = config->get_id() ;
+
+    if( id->is_not_valid( this_t::get_bid() ) )
     {
         natus::log::global_t::error( natus_log_fn( "invalid render configuration id" ) ) ;
-        return ::std::move( id ) ;
+        return natus::gpu::result::failed ;
     }
 
-    auto const res = _pimpl->connect( id.get_oid(), vs ) ;
+    size_t const oid = id->get_oid( this_t::get_bid() ) ;
+
+    auto const res = _pimpl->connect( oid, vs ) ;
     natus::log::global_t::error( natus::gpu::is_not( res ), 
         natus_log_fn( "connect variable set" ) ) ;
    
-    return ::std::move( id ) ;
+    return natus::gpu::result::ok ;
 }
 
 //****
-natus::gpu::id_t gl3_backend::update( id_rref_t id, natus::gpu::geometry_configuration_res_t gs ) noexcept 
+natus::gpu::result gl3_backend::update( natus::gpu::geometry_configuration_res_t config ) noexcept 
 {
-    if( id.is_not_valid() )
+    natus::gpu::id_res_t id = config->get_id() ;
+
+    if( id->is_not_valid( this_t::get_bid() ) )
     {
         natus::log::global_t::error( natus_log_fn( "invalid geometry configuration id" ) ) ;
-        return ::std::move( id ) ;
+        return natus::gpu::result::failed ;
     }
 
-    auto const res = _pimpl->update( id.get_oid(), gs ) ;
+    size_t const oid = id->get_oid( this_t::get_bid() ) ;
+
+    auto const res = _pimpl->update( oid, config ) ;
     natus::log::global_t::error( natus::gpu::is_not( res ),
         natus_log_fn( "update geometry" ) ) ;
 
-    return ::std::move( id ) ;
+    return natus::gpu::result::ok ;
 }
 
 //****

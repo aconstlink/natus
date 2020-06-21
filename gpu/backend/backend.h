@@ -42,12 +42,12 @@ namespace natus
 
         public:
 
-            virtual id_t configure( id_rref_t id, natus::gpu::geometry_configuration_res_t ) noexcept = 0 ;
+            virtual natus::gpu::result configure( natus::gpu::geometry_configuration_res_t ) noexcept = 0 ;
             virtual natus::gpu::result configure( natus::gpu::render_configuration_res_t ) noexcept = 0 ;
-            virtual id_t configure( id_rref_t id, natus::gpu::shader_configuration_res_t ) noexcept = 0 ;
+            virtual natus::gpu::result configure( natus::gpu::shader_configuration_res_t ) noexcept = 0 ;
 
-            virtual id_t connect( id_rref_t id, natus::gpu::variable_set_res_t ) noexcept = 0 ;
-            virtual id_t update( id_rref_t id, natus::gpu::geometry_configuration_res_t ) noexcept = 0 ;
+            virtual natus::gpu::result connect( natus::gpu::render_configuration_res_t, natus::gpu::variable_set_res_t ) noexcept = 0 ;
+            virtual natus::gpu::result update( natus::gpu::geometry_configuration_res_t ) noexcept = 0 ;
 
             virtual natus::gpu::result render( natus::gpu::render_configuration_res_t, natus::gpu::backend::render_detail_cref_t ) noexcept = 0 ;
 

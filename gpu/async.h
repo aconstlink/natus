@@ -26,7 +26,7 @@ namespace natus
 
             struct shader_config_data
             {
-                natus::gpu::async_id_res_t aid = natus::gpu::async_id_t() ;
+                natus::gpu::result_res_t res ;
                 natus::gpu::shader_configuration_res_t config ;
             };
             typedef natus::std::vector< shader_config_data > shader_configs_t ;
@@ -44,8 +44,9 @@ namespace natus
 
             struct connect_data
             {
-                natus::gpu::async_id_res_t aid = natus::gpu::async_id_t() ;
+                natus::gpu::result_res_t res ;
                 natus::gpu::variable_set_res_t vs ;
+                natus::gpu::render_configuration_res_t config ;
             };
             typedef natus::std::vector< connect_data > connects_t ;
             connects_t _connects ;
@@ -53,7 +54,7 @@ namespace natus
 
             struct gconfig_data
             {
-                natus::gpu::async_id_res_t aid = natus::gpu::async_id_t() ;
+                natus::gpu::result_res_t res ;
                 natus::gpu::geometry_configuration_res_t config ;
             };
             typedef natus::std::vector< gconfig_data > gconfigs_t ;
@@ -63,7 +64,7 @@ namespace natus
 
             struct gupdate_data
             {
-                natus::gpu::async_id_res_t aid = natus::gpu::async_id_t() ;
+                natus::gpu::result_res_t res ;
                 natus::gpu::geometry_configuration_res_t config ;
             };
             typedef natus::std::vector< gupdate_data > gupdates_t ;
@@ -100,14 +101,14 @@ namespace natus
 
             natus::gpu::result set_window_info( natus::gpu::backend_t::window_info_cref_t ) noexcept ;
 
-            natus::gpu::result configure( natus::gpu::async_id_res_t, natus::gpu::geometry_configuration_res_t ) noexcept ;
+            this_ref_t configure( natus::gpu::geometry_configuration_res_t, natus::gpu::result_res_t = natus::gpu::result_res_t() ) noexcept ;
 
             this_ref_t configure( natus::gpu::render_configuration_res_t, natus::gpu::result_res_t = natus::gpu::result_res_t() ) noexcept ;
 
-            natus::gpu::result configure( natus::gpu::async_id_res_t, natus::gpu::shader_configuration_res_t ) noexcept ;
+            this_ref_t configure( natus::gpu::shader_configuration_res_t, natus::gpu::result_res_t = natus::gpu::result_res_t() ) noexcept ;
 
-            natus::gpu::result connect( natus::gpu::async_id_res_t, natus::gpu::variable_set_res_t ) noexcept ;
-            natus::gpu::result update( natus::gpu::async_id_res_t, natus::gpu::geometry_configuration_res_t ) noexcept ;
+            this_ref_t connect( natus::gpu::render_configuration_res_t, natus::gpu::variable_set_res_t, natus::gpu::result_res_t = natus::gpu::result_res_t() ) noexcept ;
+            this_ref_t update( natus::gpu::geometry_configuration_res_t, natus::gpu::result_res_t = natus::gpu::result_res_t() ) noexcept ;
 
             this_ref_t render( natus::gpu::render_configuration_res_t, natus::gpu::backend::render_detail_cref_t, 
                 natus::gpu::result_res_t = natus::gpu::result_res_t() ) noexcept ;
@@ -171,9 +172,11 @@ namespace natus
             /// during rendering type.
             bool_t is_accessable( void_t ) const noexcept { return *_access ; }
 
-            natus::gpu::result configure( natus::gpu::async_id_res_t id, natus::gpu::geometry_configuration_res_t config ) noexcept
+            this_ref_t configure( natus::gpu::geometry_configuration_res_t config,
+                natus::gpu::result_res_t res = natus::gpu::result_res_t() ) noexcept
             {
-                return _async->configure( id, config ) ;
+                _async->configure( config ) ;
+                return *this ;
             }
 
             this_ref_t configure( natus::gpu::render_configuration_res_t config, 
@@ -183,21 +186,26 @@ namespace natus
                 return *this ;
             }
 
-            natus::gpu::result configure( natus::gpu::async_id_res_t id, natus::gpu::shader_configuration_res_t config ) noexcept
+            this_ref_t configure( natus::gpu::shader_configuration_res_t config,
+                natus::gpu::result_res_t res = natus::gpu::result_res_t() ) noexcept
             {
-                return _async->configure( id, config ) ;
+                _async->configure( config, res ) ;
+                return *this ;
             }
 
-            natus::gpu::result connect( natus::gpu::async_id_res_t id,
-                natus::gpu::variable_set_res_t vs ) noexcept
+            this_ref_t connect( natus::gpu::render_configuration_res_t config,
+                natus::gpu::variable_set_res_t vs,
+                natus::gpu::result_res_t res = natus::gpu::result_res_t() ) noexcept
             {
-                return _async->connect( id, vs ) ;
+                _async->connect( config, vs, res ) ;
+                return *this ;
             }
 
-            natus::gpu::result update( natus::gpu::async_id_res_t id,
-                natus::gpu::geometry_configuration_res_t gs ) noexcept
+            this_ref_t update( natus::gpu::geometry_configuration_res_t gs,
+                natus::gpu::result_res_t res = natus::gpu::result_res_t() ) noexcept
             {
-                return _async->update( id, gs ) ;
+                _async->update( gs, res ) ;
+                return *this ;
             }
 
             this_ref_t render( natus::gpu::render_configuration_res_t config, 

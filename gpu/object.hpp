@@ -2,6 +2,7 @@
 #pragma once
 
 #include "api.h"
+#include "protos.h"
 #include "typedefs.h"
 
 #include "id.hpp"

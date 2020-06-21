@@ -1,9 +1,6 @@
 
 #pragma once
 
-#include "../api.h"
-#include "../protos.h"
-#include "../typedefs.h"
 #include "../object.hpp"
 
 #include "../shader/shader_configuration.h"

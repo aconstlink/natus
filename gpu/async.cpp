@@ -35,20 +35,21 @@ natus::gpu::result async::set_window_info( natus::gpu::backend_t::window_info_cr
 }
 
 //****
-natus::gpu::result async::configure( natus::gpu::async_id_res_t aid, 
-    natus::gpu::geometry_configuration_res_t gconfig ) noexcept
+async::this_ref_t async::configure( natus::gpu::geometry_configuration_res_t gconfig, 
+    natus::gpu::result_res_t res ) noexcept
 {
     //auto const res = aid->swap( natus::gpu::async_result::in_transit ) ;
     //if( res != natus::gpu::async_result::in_transit )
     {
         natus::concurrent::lock_guard_t lk( _gconfigs_mtx ) ;
-        _gconfigs.push_back( gconfig_data( { aid, gconfig } ) ) ;
+        _gconfigs.push_back( gconfig_data( { res, gconfig } ) ) ;
     }
-    return natus::gpu::result::ok ;
+    return *this ;
 }
 
 //****
-async::this_ref_t async::configure( natus::gpu::render_configuration_res_t rc, natus::gpu::result_res_t res ) noexcept 
+async::this_ref_t async::configure( natus::gpu::render_configuration_res_t rc, 
+    natus::gpu::result_res_t res ) noexcept 
 {
     //auto const res = aid->swap( natus::gpu::async_result::in_transit ) ;
     //if( res != natus::gpu::async_result::in_transit ) 
@@ -61,33 +62,36 @@ async::this_ref_t async::configure( natus::gpu::render_configuration_res_t rc, n
 }
 
 //****
-natus::gpu::result async::configure( natus::gpu::async_id_res_t aid, natus::gpu::shader_configuration_res_t sc ) noexcept 
+async::this_ref_t async::configure( natus::gpu::shader_configuration_res_t sc,
+    natus::gpu::result_res_t res ) noexcept 
 {
     {
         natus::concurrent::lock_guard_t lk( _shader_configs_mtx ) ;
-        _shader_configs.push_back( shader_config_data( { aid, sc } ) ) ;
+        _shader_configs.push_back( shader_config_data( { res, sc } ) ) ;
     }
 
-    return natus::gpu::result::ok ;
+    return *this ;
 }
 
 //****
-natus::gpu::result async::connect( natus::gpu::async_id_res_t aid, natus::gpu::variable_set_res_t vs ) noexcept 
+async::this_ref_t async::connect( natus::gpu::render_configuration_res_t config, 
+    natus::gpu::variable_set_res_t vs, natus::gpu::result_res_t res ) noexcept 
 {
     {
         natus::concurrent::lock_guard_t lk( _connects_mtx ) ;
-        _connects.push_back( connect_data( { aid, vs } ) ) ;
+        _connects.push_back( connect_data( { res, vs, config } ) ) ;
     }
-    return natus::gpu::result::ok ;
+    return *this ;
 }
 
-natus::gpu::result async::update( natus::gpu::async_id_res_t aid, natus::gpu::geometry_configuration_res_t gs ) noexcept 
+async::this_ref_t async::update( natus::gpu::geometry_configuration_res_t gs, 
+    natus::gpu::result_res_t res ) noexcept 
 {
     {
         natus::concurrent::lock_guard_t lk( _gupdates_mtx ) ;
-        _gupdates.push_back( gupdate_data( { aid, gs } ) ) ;
+        _gupdates.push_back( gupdate_data( { res, gs } ) ) ;
     }
-    return natus::gpu::result::ok ;
+    return *this ;
 }
 
 //****
@@ -127,11 +131,8 @@ void_t async::system_update( void_t ) noexcept
         }
         for( auto& prc : preps )
         {
-            natus::gpu::id_t id = _backend->configure( prc.aid->id(), ::std::move( prc.config ) ) ;
-            id = prc.aid->set( ::std::move( id ), natus::gpu::async_result::ok ) ;
-            natus::log::global_t::error( id.is_valid(), natus_log_fn(
-                "gpu resource need to be released." ) ) ;
-            prc.aid->swap_config( natus::gpu::async_result::ok ) ;
+            auto const res = _backend->configure( ::std::move( prc.config ) ) ;
+            if( prc.res.is_valid() ) prc.res = res ;
         }
     }
 
@@ -144,10 +145,8 @@ void_t async::system_update( void_t ) noexcept
         }
         for( auto& prc : preps )
         {
-            natus::gpu::id_t id = _backend->update( prc.aid->id(), ::std::move( prc.config ) ) ;
-            id = prc.aid->set( ::std::move( id ), natus::gpu::async_result::ok ) ;
-            natus::log::global_t::error( id.is_valid(), natus_log_fn(
-                "gpu resource need to be released." ) ) ;
+            auto const res = _backend->update( ::std::move( prc.config ) ) ;
+            if( prc.res.is_valid() ) prc.res = res ;
         }
     }
 
@@ -160,10 +159,8 @@ void_t async::system_update( void_t ) noexcept
         }
         for( auto& prc : preps )
         {
-            natus::gpu::id_t id = _backend->configure( prc.aid->id(), ::std::move( prc.config ) ) ;
-            id = prc.aid->set( ::std::move( id ), natus::gpu::async_result::ok ) ;
-            natus::log::global_t::error( id.is_valid(), natus_log_fn(
-                "gpu resource need to be released." ) ) ;
+            auto const res = _backend->configure( ::std::move( prc.config ) ) ;
+            if( prc.res.is_valid() ) prc.res = res ;
         }
     }
 
@@ -190,10 +187,8 @@ void_t async::system_update( void_t ) noexcept
         }
         for( auto& prc : preps )
         {
-            natus::gpu::id_t id = _backend->connect( prc.aid->id(), ::std::move( prc.vs ) ) ;
-            id = prc.aid->set( ::std::move( id ), natus::gpu::async_result::ok ) ;
-            natus::log::global_t::error( id.is_valid(), natus_log_fn(
-                "gpu resource need to be released." ) ) ;
+            auto const res = _backend->connect( ::std::move( prc.config ), ::std::move( prc.vs ) ) ;
+            if( prc.res.is_valid() ) prc.res = res ;
         }
     }
 

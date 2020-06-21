@@ -1,9 +1,7 @@
 
 #pragma once
 
-#include "../api.h"
-#include "../protos.h"
-#include "../typedefs.h"
+#include "../object.hpp"
 
 #include "../shader/shader_set.hpp"
 #include "../buffer/vertex_attribute.h"
@@ -18,7 +16,7 @@ namespace natus
 {
     namespace gpu
     {
-        class NATUS_GPU_API shader_configuration
+        class NATUS_GPU_API shader_configuration : public object
         {
             natus_this_typedefs( shader_configuration ) ;
 

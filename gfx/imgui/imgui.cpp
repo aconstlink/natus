@@ -17,13 +17,9 @@ imgui::imgui( this_rref_t rhv )
     natus_move_member_ptr( _ctx, rhv ) ;
 
     _rc = ::std::move( rhv._rc ) ;
-    _rc_id = ::std::move( rhv._rc_id ) ;
-    _sc_id = ::std::move( rhv._sc_id ) ;
     _sc = ::std::move( rhv._sc ) ;
 
     _gc = ::std::move( rhv._gc ) ;
-    _gc_id = ::std::move( rhv._gc_id ) ;
-
 }
 
 //***
@@ -67,7 +63,7 @@ void_t imgui::init( natus::gpu::async_view_ref_t async )
             natus::gpu::primitive_type::triangles,
             ::std::move( vb ), ::std::move( ib ) ) ;
 
-        async.configure( _gc_id, _gc ) ;
+        async.configure( _gc ) ;
     }
 
     // shader config
@@ -165,7 +161,7 @@ void_t imgui::init( natus::gpu::async_view_ref_t async )
                 .add_input_binding( natus::gpu::binding_point::projection_matrix, "u_proj" ) ;
         }
 
-        async.configure( _sc_id, sc ) ;
+        async.configure( sc ) ;
     }
 
     // render configuration
@@ -257,7 +253,7 @@ void_t imgui::render( natus::gpu::async_view_ref_t async )
                     array[ i ] = cmd_list->IdxBuffer.Data[ i ] ;
                 }
             } ) ;
-            async.update( _gc_id, _gc ) ;
+            async.update( _gc ) ;
         }
         
         for( int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++ )

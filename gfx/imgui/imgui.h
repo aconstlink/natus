@@ -23,18 +23,15 @@ namespace natus
 
             ImGuiContext* _ctx ;
 
-            natus::gpu::async_id_res_t _rc_id = natus::gpu::async_id_t() ;
-            natus::gpu::async_id_res_t _sc_id = natus::gpu::async_id_t() ;
-            natus::gpu::render_configuration_res_t _rc ;
-            natus::gpu::shader_configuration_res_t _sc ;
-
             struct vertex 
             { 
                 natus::math::vec2f_t pos ; 
                 natus::math::vec2f_t uv ; 
                 natus::math::vec4f_t color ; 
             } ;
-            natus::gpu::async_id_res_t _gc_id = natus::gpu::async_id_t() ;
+
+            natus::gpu::render_configuration_res_t _rc ;
+            natus::gpu::shader_configuration_res_t _sc ;
             natus::gpu::geometry_configuration_res_t _gc ;
 
             natus::gpu::variable_set_res_t _vars = natus::gpu::variable_set_t() ;

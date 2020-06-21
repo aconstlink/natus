@@ -63,7 +63,19 @@ namespace natus
                 return natus::core::is_not( this_t::is_valid() ) ;
             }
 
+            bool_t is_valid( size_t const bid ) const noexcept
+            {
+                return _bid == bid && _oids[ bid ] != size_t( -1 ) ;
+            }
+
+            bool_t is_not_valid( size_t const bid ) const noexcept
+            {
+                return natus::core::is_not( this_t::is_valid( bid ) ) ;
+            }
+
+
             size_t get_oid( void_t ) const noexcept { return _oids[ _bid ] ; }
+            size_t get_oid( size_t const bid ) const noexcept { return _oids[ bid ] ; }
             size_t get_bid( void_t ) const noexcept { return _bid ; }
             bool_t is_bid( size_t const bid ) const { return _bid == bid ; }
             bool_t is_not_bid( size_t const bid ) const { 
