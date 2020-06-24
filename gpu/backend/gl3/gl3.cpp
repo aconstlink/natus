@@ -52,7 +52,7 @@ namespace this_file
 
             GLuint sib( void_t ) const noexcept 
             {
-                return GLuint( natus::gpu::size_of( type ) +
+                return GLuint( natus::gpu::size_of( type ) *
                     natus::gpu::size_of( type_struct ) ) ;
             }
         };
