@@ -181,6 +181,9 @@ struct gl3_backend::pimpl
 
     natus::gpu::backend_type const bt = natus::gpu::backend_type::gl3 ;
 
+    // the current render state set
+    natus::gpu::render_state_sets_t render_states ;
+
     pimpl( void_t ) 
     {}
 
@@ -1132,6 +1135,79 @@ struct gl3_backend::pimpl
         return true ;
     }
 
+    void_t set_render_states( natus::gpu::render_state_sets_in_t rs ) 
+    {
+        if( render_states.blend_s.do_blend != rs.blend_s.do_blend )
+        {
+            if( rs.blend_s.do_blend )
+            {
+                natus::ogl::gl::glEnable( GL_BLEND ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
+
+                GLenum const glsrc = natus::gpu::gl3::convert( rs.blend_s.src_blend_factor ) ;
+                GLenum const gldst = natus::gpu::gl3::convert( rs.blend_s.dst_blend_factor ) ;
+                natus::ogl::gl::glBlendFunc( glsrc, gldst ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glBlendFunc" ) ) ;
+            }
+            else
+            {
+                natus::ogl::gl::glDisable( GL_BLEND ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glDisable" ) ) ;
+            }
+            
+        }
+
+        if( render_states.depth_s.do_depth_test != rs.depth_s.do_depth_test )
+        {
+            if( rs.depth_s.do_depth_test )
+            {
+                natus::ogl::gl::glEnable( GL_DEPTH_TEST ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
+            }
+            else
+            {
+                natus::ogl::gl::glDisable( GL_DEPTH_TEST ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glDisable" ) ) ;
+            }
+        }
+        
+        if( render_states.polygon_s.do_culling != rs.polygon_s.do_culling )
+        {
+            if( rs.polygon_s.do_culling )
+            {
+                natus::ogl::gl::glEnable( GL_CULL_FACE ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
+            }
+            else
+            {
+                natus::ogl::gl::glDisable( GL_CULL_FACE ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glDisable" ) ) ;
+            }
+        }
+
+        if( render_states.scissor_s.do_scissor_test != rs.scissor_s.do_scissor_test )
+        {
+            if( rs.scissor_s.do_scissor_test )
+            {
+                natus::ogl::gl::glEnable( GL_SCISSOR_TEST ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
+
+                natus::ogl::gl::glScissor(
+                    GLint( rs.scissor_s.rect.x() ), GLint( rs.scissor_s.rect.y() ),
+                    GLsizei( rs.scissor_s.rect.z() ), GLsizei( rs.scissor_s.rect.w() ) ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glScissor" ) ) ;
+            }
+            else
+            {
+                natus::ogl::gl::glDisable( GL_SCISSOR_TEST ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glDisable" ) ) ;
+            }
+        }
+
+
+        render_states = rs ;
+    }
+
     void_t begin_frame( void_t ) 
     {
         //natus::ogl::gl::glClearColor( 0.1f, 0.1f, 0.1f, 1.0f ) ;
@@ -1140,6 +1216,9 @@ struct gl3_backend::pimpl
         //natus::ogl::gl::glClear( GL_COLOR_BUFFER_BIT ) ;
         //natus::ogl::error::check_and_log( natus_log_fn( "glClear" ) ) ;
         
+        // reset render states
+        this_t::set_render_states( *natus::gpu::backend_t::default_render_states() ) ;
+
         natus::ogl::gl::glViewport( 0, 0, vp_width, vp_height ) ;
         natus::ogl::error::check_and_log( natus_log_fn( "glViewport" ) ) ;
     }
@@ -1313,6 +1392,11 @@ natus::gpu::result gl3_backend::render( natus::gpu::render_configuration_res_t c
     {
         natus::log::global_t::error( natus_log_fn( "invalid id" ) ) ;
         return natus::gpu::result::failed ;
+    }
+
+    if( detail.render_states.is_valid() )
+    {
+        _pimpl->set_render_states( *( detail.render_states ) ) ;
     }
 
     _pimpl->render( id->get_oid(), detail.varset, (GLsizei)detail.start, (GLsizei)detail.num_elems ) ;

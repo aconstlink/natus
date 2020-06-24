@@ -18,6 +18,10 @@ set( sources
     "async.cpp"
     "async_id.hpp"
     
+    
+    "state/render_states.h"
+    "state/state_set.h"
+
     "backend/null/null.h"
     "backend/null/null.cpp"
    

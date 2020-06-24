@@ -11,6 +11,7 @@
 #include "../configuration/render_configuration.h"
 #include "../configuration/geometry_configuration.h"
 #include "../variable/variable_set.hpp"
+#include "../state/state_set.h"
 
 namespace natus
 {
@@ -37,6 +38,8 @@ namespace natus
                 size_t start = size_t( 0 ) ;
                 size_t num_elems = size_t( -1 ) ;
                 size_t varset = size_t( 0 ) ;
+                natus::gpu::render_state_sets_res_t render_states = 
+                    this_t::default_render_states() ;
             };
             natus_typedef( render_detail ) ;
 
@@ -65,6 +68,12 @@ namespace natus
             virtual ~backend( void_t ) noexcept ;
 
             natus::gpu::backend_type get_type( void_t ) const noexcept { return _bt ; }
+
+            static natus::gpu::render_state_sets_res_t default_render_states( void_t )
+            {
+                static natus::gpu::render_state_sets_res_t __default_rs = natus::gpu::render_state_sets_t() ;
+                return __default_rs ;
+            }
 
         protected:
 

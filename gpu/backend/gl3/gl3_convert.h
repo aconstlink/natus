@@ -88,5 +88,38 @@ namespace natus
                 return ::std::make_pair( natus::gpu::type::undefined, natus::gpu::type_struct::undefined ) ;
             }
         }
+
+        namespace gl3
+        {
+            namespace detail
+            {
+                static const GLenum convert_blend_factor_gl[] =
+                {
+                    GL_ZERO,
+                    GL_ONE,
+                    GL_SRC_COLOR,
+                    GL_ONE_MINUS_SRC_COLOR,
+                    GL_DST_COLOR,
+                    GL_ONE_MINUS_DST_COLOR,
+                    GL_SRC_ALPHA,
+                    GL_ONE_MINUS_SRC_ALPHA,
+                    GL_DST_ALPHA,
+                    GL_ONE_MINUS_DST_ALPHA,
+                    GL_CONSTANT_COLOR,
+                    GL_ONE_MINUS_CONSTANT_COLOR,
+                    GL_CONSTANT_ALPHA,
+                    GL_ONE_MINUS_CONSTANT_ALPHA,
+                    GL_SRC_ALPHA_SATURATE
+                } ;
+
+                static const size_t convert_blend_factors_gl_size =
+                    sizeof( convert_blend_factor_gl ) / sizeof( convert_blend_factor_gl[ 0 ] ) ;
+            }
+
+            static GLenum convert( blend_factor const bf ) noexcept
+            {
+                return detail::convert_blend_factor_gl[ size_t( bf ) ] ;
+            }
+        }
     }
 }
