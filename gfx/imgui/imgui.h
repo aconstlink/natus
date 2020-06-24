@@ -35,6 +35,10 @@ namespace natus
             natus::gpu::geometry_configuration_res_t _gc ;
 
             natus::gpu::variable_set_res_t _vars = natus::gpu::variable_set_t() ;
+            natus::std::vector< natus::gpu::render_state_sets_res_t > _render_states ;
+
+            uint_t _width = 0 ;
+            uint_t _height = 0 ;
 
         public:
 

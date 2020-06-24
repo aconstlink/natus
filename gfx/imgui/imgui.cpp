@@ -91,7 +91,7 @@ void_t imgui::init( natus::gpu::async_view_ref_t async )
                     {
                         var_uv = in_uv ;
                         var_color = in_color ;
-                        gl_Position = u_proj * u_view * vec4( in_pos, 0.0, 1.0 ) ;
+                        gl_Position = u_proj * vec4( in_pos, 0.0, 1.0 ) ;
                     } )" ) ).
 
                 set_pixel_shader( natus::gpu::shader_t( R"(
@@ -105,7 +105,7 @@ void_t imgui::init( natus::gpu::async_view_ref_t async )
 
                     void main()
                     {    
-                        out_color = var_color * vec4( var_uv, 0.0, 1.0 );//* texture( u_tex, var_uv ) ;
+                        out_color = var_color ;//* vec4( var_uv, 0.0, 1.0 );//* texture( u_tex, var_uv ) ;
                     } )" ) ) 
             ) ;
         }
@@ -188,7 +188,7 @@ void_t imgui::init( natus::gpu::async_view_ref_t async )
         this_t::do_default_imgui_init() ;
 
         ImGui::StyleColorsDark() ;
-
+        
         ImGui::NewFrame() ;
     }
 }
@@ -197,12 +197,7 @@ void_t imgui::init( natus::gpu::async_view_ref_t async )
 void_t imgui::render( natus::gpu::async_view_ref_t async ) 
 {
     natus::gfx::pinhole_camera_t camera ;
-    camera.orthographic( 100.0f, 100.0f, 1.0f, 1000.0f ) ;
-    {
-        auto* var = _vars->data_variable< natus::math::mat4f_t >( "u_view" ) ;
-        var->set( camera.mat_view() ) ;
-    }
-
+    camera.orthographic( float_t( _width ), float_t(_height), 1.0f, 1000.0f ) ;
     
     {
         auto* var = _vars->data_variable< natus::math::mat4f_t >( "u_proj" ) ;
@@ -222,40 +217,71 @@ void_t imgui::render( natus::gpu::async_view_ref_t async )
     ImVec2 clip_off = draw_data->DisplayPos;         // (0,0) unless using multi-viewports
     ImVec2 clip_scale = draw_data->FramebufferScale; // (1,1) unless using retina display which are often (2,2)
 
-    // Render command lists
-    for( int n = 0; n < draw_data->CmdListsCount; n++ )
     {
-        const ImDrawList* cmd_list = draw_data->CmdLists[n];
-
-        // update geometry
+        size_t size = 0 ;
+        for( int n = 0; n < draw_data->CmdListsCount; n++ )
         {
-            _gc->vertex_buffer()
-                .resize( cmd_list->VtxBuffer.Size )
-                .update<this_t::vertex>( [&] ( vertex* array, size_t const ne )
+            const ImDrawList* cmd_list = draw_data->CmdLists[ n ];
+            size += cmd_list->CmdBuffer.Size ;
+        }
+        
+        _gc->vertex_buffer().resize( draw_data->TotalVtxCount ) ;
+        _gc->index_buffer().resize( draw_data->TotalIdxCount ) ;
+
+        _render_states.resize( size ) ;
+        for( auto& rs : _render_states )
+        {
+            rs = natus::gpu::render_state_sets_t() ;
+        }
+    }
+
+    // update geometry
+    {
+        size_t vb_off = 0 ;
+        size_t ib_off = 0 ;
+
+        // Update geometry: Everything is packed into a single vb/ib combo
+        for( int n = 0; n < draw_data->CmdListsCount; n++ )
+        {
+            const ImDrawList* cmd_list = draw_data->CmdLists[ n ];
+
+            _gc->vertex_buffer().update<this_t::vertex>( [&] ( vertex* array, size_t const /*ne*/ )
             {
-                for( size_t i = 0; i < ne; ++i )
+                for( size_t i = 0; i < cmd_list->VtxBuffer.Size; ++i )
                 {
                     ImDrawVert const& imvert = cmd_list->VtxBuffer.Data[ i ] ;
                     auto const c = ImGui::ColorConvertU32ToFloat4( imvert.col ) ;
 
-                    array[ i ].pos = natus::math::vec2f_t( imvert.pos.x, imvert.pos.y ) ;
-                    array[ i ].uv = natus::math::vec2f_t( imvert.uv.x, imvert.uv.y ) ;
-                    array[ i ].color = natus::math::vec4f_t( c.x, c.y, c.z, c.w ) ;
+                    array[ vb_off + i ].pos = natus::math::vec2f_t(
+                        imvert.pos.x - _width * 0.5f, -imvert.pos.y + _height * 0.5f ) ;
+                    array[ vb_off + i ].uv = natus::math::vec2f_t( imvert.uv.x, imvert.uv.y ) ;
+                    array[ vb_off + i ].color = natus::math::vec4f_t( c.x, c.y, c.z, c.w ) ;
                 }
             } );
 
-            _gc->index_buffer()
-                .resize( cmd_list->IdxBuffer.Size )
-                .update<uint_t>( [&] ( uint_t* array, size_t const ne )
+            _gc->index_buffer().update<uint_t>( [&] ( uint_t* array, size_t const /*ne*/ )
             {
-                for( size_t i = 0; i < ne; ++i )
+                for( size_t i = 0 ; i < cmd_list->IdxBuffer.Size; ++i )
                 {
-                    array[ i ] = cmd_list->IdxBuffer.Data[ i ] ;
+                    array[ ib_off + i ] = uint_t( vb_off ) + cmd_list->IdxBuffer.Data[ i ] ;
                 }
             } ) ;
-            async.update( _gc ) ;
+
+            vb_off += cmd_list->VtxBuffer.Size ;
+            ib_off += cmd_list->IdxBuffer.Size ;
         }
-        
+        async.update( _gc ) ;
+    }
+
+    size_t rs_id = 0 ;
+    size_t offset = 0 ;
+    
+
+    // Render command lists
+    for( int n = 0; n < draw_data->CmdListsCount; n++ )
+    {
+        const ImDrawList* cmd_list = draw_data->CmdLists[ n ];
+
         for( int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++ )
         {
             const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[ cmd_i ];
@@ -267,28 +293,36 @@ void_t imgui::render( natus::gpu::async_view_ref_t async )
             clip_rect.z = ( pcmd->ClipRect.z - clip_off.x ) * clip_scale.x;
             clip_rect.w = ( pcmd->ClipRect.w - clip_off.y ) * clip_scale.y;
 
+            
             if( clip_rect.x < fb_width && clip_rect.y < fb_height && clip_rect.z >= 0.0f && clip_rect.w >= 0.0f )
             {
-                /*
-                // Apply scissor/clipping rectangle
-                glScissor( ( int ) clip_rect.x, ( int ) ( fb_height - clip_rect.w ), ( int ) ( clip_rect.z - clip_rect.x ), ( int ) ( clip_rect.w - clip_rect.y ) );
+                {
+                    natus::gpu::scissor_state_set ss ;
+                    ss.do_scissor_test = true ;
+                    ss.rect = natus::math::vec4ui_t( ( uint_t ) clip_rect.x, ( uint_t ) ( fb_height - clip_rect.w ), ( uint_t ) ( clip_rect.z - clip_rect.x ), ( uint_t ) ( clip_rect.w - clip_rect.y ) ) ;
+                    _render_states[ rs_id ]->scissor_s = ss ;
+                }
 
-                // Bind texture, Draw
-                glBindTexture( GL_TEXTURE_2D, ( GLuint ) ( intptr_t ) pcmd->TextureId );
-                #if IMGUI_IMPL_OPENGL_MAY_HAVE_VTX_OFFSET
-                if( g_GlVersion >= 320 )
-                    glDrawElementsBaseVertex( GL_TRIANGLES, ( GLsizei ) pcmd->ElemCount, sizeof( ImDrawIdx ) == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT, ( void* ) ( intptr_t ) ( pcmd->IdxOffset * sizeof( ImDrawIdx ) ), ( GLint ) pcmd->VtxOffset );
-                else
-                    #endif
-                    glDrawElements( GL_TRIANGLES, ( GLsizei ) pcmd->ElemCount, sizeof( ImDrawIdx ) == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT, ( void* ) ( intptr_t ) ( pcmd->IdxOffset * sizeof( ImDrawIdx ) ) );
-                    */
+                {
+                    natus::gpu::blend_state_set bs ;
+                    bs.do_blend = true ;
+                    bs.src_blend_factor = natus::gpu::blend_factor::src_alpha ;
+                    bs.dst_blend_factor = natus::gpu::blend_factor::one_minus_src_alpha ;
+                    _render_states[ rs_id ]->blend_s = bs ;
+                }
 
+                
                 natus::gpu::backend_t::render_detail_t rd ;
                 rd.num_elems = pcmd->ElemCount ;
-                rd.start = pcmd->VtxOffset ;
+                rd.start = offset ;
+                
                 rd.varset = 0 ;
+                rd.render_states = _render_states[ rs_id ] ;
                 async.render( _rc, rd ) ;
             }
+
+            offset += pcmd->ElemCount ;
+            rs_id++ ;
         }
     }
 
@@ -304,7 +338,7 @@ void_t imgui::do_default_imgui_init( void_t )
     io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;          // We can honor io.WantSetMousePos requests (optional, rarely used)
     io.BackendPlatformName = "imgui_impl_natus";
 
-    io.DisplaySize = ImVec2( 100.0f, 100.0f );
+    io.DisplaySize = ImVec2( float_t( _width ), float_t( _height ) ) ;
 
     unsigned char* pixels;
     int width, height;
@@ -368,4 +402,6 @@ void_t imgui::change( window_data_cref_t data )
 {
     ImGuiIO& io = ImGui::GetIO();
     io.DisplaySize = ImVec2( ( float_t ) data.width, ( float_t ) data.height );
+    _width = data.width ;
+    _height = data.height ;
 }
