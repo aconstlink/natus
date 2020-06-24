@@ -282,6 +282,28 @@ natus::application::result app::request_change( this_t::window_info_in_t )
 bool_t app::before_update( void_t ) 
 {
     *_access = false ;
+
+    size_t id = 0 ;
+    for( auto & pwi : _windows )
+    {
+        natus::application::window_message_receiver_t::state_vector sv ;
+        if( pwi.msg_recv->swap_and_reset( sv ) )
+        {
+
+            natus::gpu::backend_t::window_info_t wi ;
+            if( sv.resize_changed )
+            {
+                wi.width = sv.resize_msg.w ;
+                wi.height = sv.resize_msg.h ;
+            }
+
+            this_t::window_event_info_t wei ;
+            wei.w = uint_t( wi.width ) ;
+            wei.h = uint_t( wi.height ) ;
+            this->on_event( id++, wei ) ;
+        }
+    }
+
     return true ;
 }
 

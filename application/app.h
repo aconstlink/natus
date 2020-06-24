@@ -37,6 +37,13 @@ namespace natus
             };
             natus_typedef( window_info ) ;
 
+            struct window_event_info
+            {                
+                uint_t w = 400 ;
+                uint_t h = 400 ;
+            };
+            natus_typedef( window_event_info ) ;
+
         private: // per window info
 
             struct per_window_info
@@ -89,7 +96,7 @@ namespace natus
             virtual natus::application::result on_render( void_t ) = 0 ;
             virtual natus::application::result on_shutdown( void_t ) = 0 ;
 
-            virtual natus::application::result on_event( this_t::window_info_in_t ) 
+            virtual natus::application::result on_event( window_id_t const, this_t::window_event_info_in_t ) 
             { return natus::application::result::ok ; }
 
         protected:
