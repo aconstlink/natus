@@ -33,12 +33,12 @@ namespace natus
             render_configuration( natus::std::string_cref_t name ) 
                 : _name( name ) {}
 
-            render_configuration( this_cref_t rhv ) : object( rhv )
+            render_configuration( this_cref_t rhv ) 
             {
                 *this = rhv  ;
             }
 
-            render_configuration( this_rref_t rhv ) : object( ::std::move( rhv ) )
+            render_configuration( this_rref_t rhv ) 
             {
                 *this = ::std::move( rhv ) ;
             }
@@ -89,8 +89,10 @@ namespace natus
 
         public:
 
-            this_ref_t operator = ( this_cref_t rhv )
+            this_ref_t operator = ( this_cref_t rhv ) noexcept
             {
+                object::operator=( rhv ) ;
+
                 _name = rhv._name ;
                 _geo = rhv._geo;
                 _shader = rhv._shader ;
@@ -99,8 +101,10 @@ namespace natus
                 return *this ;
             }
 
-            this_ref_t operator = ( this_rref_t rhv )
+            this_ref_t operator = ( this_rref_t rhv ) noexcept
             {
+                object::operator=( ::std::move( rhv ) ) ;
+
                 _name = ::std::move( rhv._name ) ;
                 _geo = ::std::move( rhv._geo ) ;
                 _shader = ::std::move( rhv._shader ) ;

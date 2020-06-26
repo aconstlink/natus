@@ -64,6 +64,8 @@ namespace natus
 
             this_ref_t operator = ( this_cref_t rhv )
             {
+                object::operator=( rhv ) ;
+
                 _pt = rhv._pt ;
                 _vb = rhv._vb ;
                 _ib = rhv._ib ;
@@ -73,6 +75,8 @@ namespace natus
 
             this_ref_t operator = ( this_rref_t rhv )
             {
+                object::operator=( ::std::move( rhv ) ) ;
+
                 _pt = rhv._pt ;
                 _vb = ::std::move( rhv._vb ) ;
                 _ib = ::std::move( rhv._ib ) ;

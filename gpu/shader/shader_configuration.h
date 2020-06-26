@@ -212,6 +212,8 @@ namespace natus
 
             this_ref_t operator = ( this_cref_t rhv )
             {
+                object::operator=( rhv ) ;
+
                 _name = rhv._name ;
                 _vertex_inputs = rhv._vertex_inputs ;
                 _shader_sets = rhv._shader_sets ;
@@ -222,6 +224,8 @@ namespace natus
 
             this_ref_t operator = ( this_rref_t rhv )
             {
+                object::operator=( ::std::move( rhv ) ) ;
+
                 _name = ::std::move( rhv._name ) ;
                 _vertex_inputs = ::std::move( rhv._vertex_inputs ) ;
                 _shader_sets = ::std::move( rhv._shader_sets ) ;

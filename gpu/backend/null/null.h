@@ -26,6 +26,7 @@ namespace natus
             virtual natus::gpu::result configure( natus::gpu::geometry_configuration_res_t ) noexcept override ;
             virtual natus::gpu::result configure( natus::gpu::render_configuration_res_t ) noexcept override ;
             virtual natus::gpu::result configure( natus::gpu::shader_configuration_res_t ) noexcept override ;
+            virtual natus::gpu::result configure( natus::gpu::image_configuration_res_t ) noexcept override ;
 
             virtual natus::gpu::result connect( natus::gpu::render_configuration_res_t, natus::gpu::variable_set_res_t ) noexcept ;
             virtual natus::gpu::result update( natus::gpu::geometry_configuration_res_t ) noexcept ;

@@ -31,6 +31,18 @@ namespace natus
             object( this_rref_t rhv ) : _id( ::std::move( rhv._id ) ){}
             ~object( void_t ) {}
 
+            this_ref_t operator = ( this_cref_t rhv ) noexcept
+            {
+                _id = rhv._id ;
+                return *this ;
+            }
+
+            this_ref_t operator = ( this_rref_t rhv ) noexcept
+            {
+                _id = ::std::move( rhv._id ) ;
+                return *this ;
+            }
+
         public:
 
             natus::gpu::id_res_t & get_id( void_t ) noexcept { return _id ; }

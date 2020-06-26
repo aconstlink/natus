@@ -36,10 +36,15 @@ set( sources
 
     "configuration/render_configuration.h"
     "configuration/geometry_configuration.h"
+    "configuration/image_configuration.h"
 
     "variable/variables.hpp"
     "variable/variable_set.hpp"
     "variable/type_traits.hpp"
+
+    "texture/image.hpp"
+    "texture/texture.hpp"
+    "texture/image_types.h"
     )
 
 if( NATUS_GRAPHICS_OPENGL )

@@ -10,6 +10,7 @@
 #include "../shader/shader_configuration.h"
 #include "../configuration/render_configuration.h"
 #include "../configuration/geometry_configuration.h"
+#include "../configuration/image_configuration.h"
 #include "../variable/variable_set.hpp"
 #include "../state/state_set.h"
 
@@ -48,6 +49,7 @@ namespace natus
             virtual natus::gpu::result configure( natus::gpu::geometry_configuration_res_t ) noexcept = 0 ;
             virtual natus::gpu::result configure( natus::gpu::render_configuration_res_t ) noexcept = 0 ;
             virtual natus::gpu::result configure( natus::gpu::shader_configuration_res_t ) noexcept = 0 ;
+            virtual natus::gpu::result configure( natus::gpu::image_configuration_res_t ) noexcept = 0 ;
 
             virtual natus::gpu::result connect( natus::gpu::render_configuration_res_t, natus::gpu::variable_set_res_t ) noexcept = 0 ;
             virtual natus::gpu::result update( natus::gpu::geometry_configuration_res_t ) noexcept = 0 ;

@@ -36,6 +36,13 @@ natus::gpu::result null_backend::configure( natus::gpu::shader_configuration_res
 }
 
 //***
+natus::gpu::result null_backend::configure( natus::gpu::image_configuration_res_t ) noexcept 
+{
+    static size_t number = 0 ;
+    return natus::gpu::result::ok ;
+}
+
+//***
 natus::gpu::result null_backend::connect( natus::gpu::render_configuration_res_t, natus::gpu::variable_set_res_t ) noexcept 
 {
     return natus::gpu::result::ok ;

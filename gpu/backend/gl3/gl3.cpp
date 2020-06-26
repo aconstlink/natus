@@ -18,15 +18,6 @@ using namespace natus::gpu ;
 
 namespace this_file
 {
-    struct camera_config
-    {
-        // proj
-        // view
-        // cam rot
-        // cam pos
-        // viewport
-    };
-
     struct geo_config
     {
         natus::std::string_t name ;
@@ -161,6 +152,14 @@ namespace this_file
             natus::gpu::variable_set_res_t, 
             natus::std::vector< uniform_variable_link > > > var_sets ;
     };
+
+
+    struct image_config
+    {
+        natus::std::string_t name ;
+
+        GLuint smp_id = GLuint( -1 ) ;
+    };
 }
 
 struct gl3_backend::pimpl
@@ -175,6 +174,9 @@ struct gl3_backend::pimpl
 
     typedef natus::std::vector< this_file::geo_config > geo_configs_t ;
     geo_configs_t geo_configs ;
+
+    typedef natus::std::vector< this_file::image_config > image_configs_t ;
+    image_configs_t img_configs ;
 
     GLsizei vp_width = 0 ;
     GLsizei vp_height = 0 ;
@@ -720,6 +722,52 @@ struct gl3_backend::pimpl
     }
 
     //***********************
+    size_t construct_image_config( size_t oid, natus::std::string_cref_t name, 
+        natus::gpu::image_configuration_ref_t config )
+    {
+        // the name is unique
+        {
+            auto iter = ::std::find_if( img_configs.begin(), img_configs.end(),
+                [&] ( this_file::image_config const& config )
+            {
+                return config.name == name ;
+            } ) ;
+
+            if( iter != img_configs.end() )
+                return iter - img_configs.begin() ;
+        }
+
+        size_t i = 0 ;
+        for( i; i < img_configs.size(); ++i )
+        {
+            if( natus::core::is_not( img_configs[ i ].smp_id != GLuint( -1 ) ) )
+            {
+                break ;
+            }
+        }
+
+        if( i == img_configs.size() ) {
+            img_configs.resize( i + 1 ) ;
+        }
+
+        // sampler
+        if( img_configs[ i ].smp_id == GLuint( -1 ) )
+        {
+            GLuint id = GLuint( -1 ) ;
+            natus::ogl::gl::glGenSamplers( 1, &id ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glGenSamplers" ) ) ;
+
+            img_configs[ i ].smp_id = id ;
+        }
+
+        {
+            img_configs[ i ].name = name ;
+        }
+
+        return i ;
+    }
+
+    //***********************
     size_t construct_render_config( size_t oid, natus::std::string_cref_t name,
         natus::gpu::render_configuration_ref_t config )
     {
@@ -1026,6 +1074,11 @@ struct gl3_backend::pimpl
         return true ;
     }
 
+    bool_t update( size_t const id, natus::gpu::image_configuration_res_t config )
+    {
+        return false ;
+    }
+
     bool_t connect( size_t const id, natus::gpu::variable_set_res_t vs )
     {
         auto& config = rconfigs[ id ] ;
@@ -1326,6 +1379,29 @@ natus::gpu::result gl3_backend::configure( natus::gpu::shader_configuration_res_
     {
         id = natus::gpu::id_t( this_t::get_bid(),
             _pimpl->construct_shader_config( id->get_oid( this_t::get_bid() ), config->name(), *config ) ) ;
+    }
+
+    size_t const oid = id->get_oid( this_t::get_bid() ) ;
+
+    {
+        auto const res = _pimpl->update( oid, *config ) ;
+        if( natus::core::is_not( res ) )
+        {
+            return natus::gpu::result::failed ;
+        }
+    }
+
+    return natus::gpu::result::ok ;
+}
+
+//***
+natus::gpu::result gl3_backend::configure( natus::gpu::image_configuration_res_t config ) noexcept 
+{
+    natus::gpu::id_res_t id = config->get_id() ;
+
+    {
+        id = natus::gpu::id_t( this_t::get_bid(), _pimpl->construct_image_config( 
+            id->get_oid( this_t::get_bid() ), config->name(), *config ) ) ;
     }
 
     size_t const oid = id->get_oid( this_t::get_bid() ) ;

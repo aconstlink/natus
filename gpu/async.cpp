@@ -74,6 +74,18 @@ async::this_ref_t async::configure( natus::gpu::shader_configuration_res_t sc,
 }
 
 //****
+async::this_ref_t async::configure( natus::gpu::image_configuration_res_t sc,
+    natus::gpu::result_res_t res ) noexcept 
+{
+    {
+        natus::concurrent::lock_guard_t lk( _image_configs_mtx ) ;
+        _image_configs.push_back( image_config_data( { res, sc } ) ) ;
+    }
+
+    return *this ;
+}
+
+//****
 async::this_ref_t async::connect( natus::gpu::render_configuration_res_t config, 
     natus::gpu::variable_set_res_t vs, natus::gpu::result_res_t res ) noexcept 
 {
@@ -120,6 +132,20 @@ void_t async::system_update( void_t ) noexcept
             _window_info_set = false ;
         }
         _backend->set_window_info( wi ) ;
+    }
+
+    // image configs
+    {
+        this_t::image_configs_t preps ;
+        {
+            natus::concurrent::lock_guard_t lk( _image_configs_mtx ) ;
+            preps = ::std::move( _image_configs ) ;
+        }
+        for( auto& prc : preps )
+        {
+            auto const res = _backend->configure( ::std::move( prc.config ) ) ;
+            if( prc.res.is_valid() ) prc.res = res ;
+        }
     }
 
     // geometry configs
