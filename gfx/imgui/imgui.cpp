@@ -41,6 +41,8 @@ void_t imgui::execute( exec_funk_t funk )
 //***
 void_t imgui::init( natus::gpu::async_view_ref_t async ) 
 {    
+    _ctx = ImGui::CreateContext() ;
+
     // geometry
     {
         // @see struct vertex in the header
@@ -98,14 +100,14 @@ void_t imgui::init( natus::gpu::async_view_ref_t async )
                     #version 140
                             
                     out vec4 out_color ;
-                    //uniform sampler2D u_tex ;
+                    uniform sampler2D u_tex ;
                         
                     in vec2 var_uv ;
                     in vec4 var_color ;
 
                     void main()
                     {    
-                        out_color = var_color ;//* vec4( var_uv, 0.0, 1.0 );//* texture( u_tex, var_uv ) ;
+                        out_color = var_color * texture( u_tex, var_uv ) ;
                     } )" ) ) 
             ) ;
         }
@@ -139,14 +141,14 @@ void_t imgui::init( natus::gpu::async_view_ref_t async )
                     precision mediump float ;
                     layout( location = 0 ) out vec4 out_color ;
                             
-                    //uniform sampler2D u_tex ;
+                    uniform sampler2D u_tex ;
 
                     in vec2 var_uv ;
                     in vec4 var_color ;
 
                     void main()
                     {    
-                        gl_FragColor = var_color * vec4( var_uv, 0.0, 1.0 ); //* texture( u_tex, var_uv ) ;
+                        gl_FragColor = var_color * texture( u_tex, var_uv ) ;
                     } )" ) ) 
             ) ;
         }
@@ -164,6 +166,29 @@ void_t imgui::init( natus::gpu::async_view_ref_t async )
         async.configure( sc ) ;
     }
 
+    // image configuration
+    {
+        ImGuiIO& io = ImGui::GetIO();
+
+        unsigned char* pixels;
+        int width, height;
+        io.Fonts->GetTexDataAsRGBA32( &pixels, &width, &height ) ;
+
+        natus::gpu::image_t img = natus::gpu::image_t( natus::gpu::image_t::dims_t( width, height, 1 ) )
+            .update( [&] ( natus::gpu::image_ptr_t, natus::gpu::image_t::dims_in_t dims, void_ptr_t data_in )
+        {
+            ::std::memcpy( data_in, ( void_cptr_t ) pixels, size_t( width * height * 4 ) ) ;
+        } ) ;
+
+        _ic = natus::gpu::image_configuration_t( "system.imgui.font", ::std::move( img ) )
+            .set_wrap( natus::gpu::texture_wrap_mode::wrap_s, natus::gpu::texture_wrap_type::clamp )
+            .set_wrap( natus::gpu::texture_wrap_mode::wrap_t, natus::gpu::texture_wrap_type::clamp )
+            .set_filter( natus::gpu::texture_filter_mode::min_filter, natus::gpu::texture_filter_type::linear )
+            .set_filter( natus::gpu::texture_filter_mode::mag_filter, natus::gpu::texture_filter_type::linear );
+
+        async.configure( _ic ) ;
+    }
+
     // render configuration
     {
         natus::gpu::render_configuration_t rc( "natus.gfx.imgui" ) ;
@@ -173,9 +198,10 @@ void_t imgui::init( natus::gpu::async_view_ref_t async )
     
         _vars = natus::gpu::variable_set_t() ;
         {
-            //vars->texture_variable( "tex_name", "shader_var_name" ) ;
+            auto * var = _vars->texture_variable( "u_tex" ) ;
+            var->set( "system.imgui.font" ) ;
         }
-        //async.connect( _rc, _vars ) ;
+        
 
         rc.add_variable_set( _vars ) ;
 
@@ -184,7 +210,7 @@ void_t imgui::init( natus::gpu::async_view_ref_t async )
      }
 
     {
-        _ctx = ImGui::CreateContext() ;
+        
         this_t::do_default_imgui_init() ;
 
         ImGui::StyleColorsDark() ;
@@ -339,10 +365,6 @@ void_t imgui::do_default_imgui_init( void_t )
     io.BackendPlatformName = "imgui_impl_natus";
 
     io.DisplaySize = ImVec2( float_t( _width ), float_t( _height ) ) ;
-
-    unsigned char* pixels;
-    int width, height;
-    io.Fonts->GetTexDataAsRGBA32( &pixels, &width, &height );
 
     // Keyboard mapping. ImGui will use those indices to peek into the io.KeysDown[] array.
     /*io.KeyMap[ ImGuiKey_Tab ] = GLFW_KEY_TAB;
