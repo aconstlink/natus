@@ -150,15 +150,32 @@ namespace this_file
         // user provided variable set
         natus::std::vector< ::std::pair< 
             natus::gpu::variable_set_res_t, 
-            natus::std::vector< uniform_variable_link > > > var_sets ;
+            natus::std::vector< uniform_variable_link > > > var_sets_data ;
+        
+        struct uniform_texture_link
+        {
+            // the index into the shader_config::uniforms array
+            size_t uniform_id ;
+            GLint tex_id ;
+            size_t img_id ;
+        };
+        natus::std::vector< ::std::pair<
+            natus::gpu::variable_set_res_t,
+            natus::std::vector< uniform_texture_link > > > var_sets_texture ;
+        
     };
-
 
     struct image_config
     {
         natus::std::string_t name ;
 
-        GLuint smp_id = GLuint( -1 ) ;
+        GLuint tex_id = GLuint( -1 ) ;
+        size_t sib = 0 ;
+
+        GLenum wrap_types[ 3 ] ;
+        GLenum filter_types[ 2 ] ;
+
+        // sampler ids for gl>=3.3
     };
 }
 
@@ -740,7 +757,7 @@ struct gl3_backend::pimpl
         size_t i = 0 ;
         for( i; i < img_configs.size(); ++i )
         {
-            if( natus::core::is_not( img_configs[ i ].smp_id != GLuint( -1 ) ) )
+            if( natus::core::is_not( img_configs[ i ].tex_id != GLuint( -1 ) ) )
             {
                 break ;
             }
@@ -751,19 +768,32 @@ struct gl3_backend::pimpl
         }
 
         // sampler
-        if( img_configs[ i ].smp_id == GLuint( -1 ) )
+        if( img_configs[ i ].tex_id == GLuint( -1 ) )
         {
             GLuint id = GLuint( -1 ) ;
-            natus::ogl::gl::glGenSamplers( 1, &id ) ;
+            natus::ogl::gl::glGenTextures( 1, &id ) ;
             natus::ogl::error::check_and_log( natus_log_fn( "glGenSamplers" ) ) ;
 
-            img_configs[ i ].smp_id = id ;
+            img_configs[ i ].tex_id = id ;
         }
 
         {
             img_configs[ i ].name = name ;
         }
 
+        {
+            for( size_t j=0; j<(size_t)natus::gpu::texture_wrap_mode::size; ++j )
+            {
+                img_configs[ i ].wrap_types[ j ] = natus::gpu::gl3::convert(
+                    config.get_wrap( ( natus::gpu::texture_wrap_mode )j ) );
+            }
+
+            for( size_t j = 0; j < ( size_t ) natus::gpu::texture_filter_mode::size; ++j )
+            {
+                img_configs[ i ].filter_types[ j ] = natus::gpu::gl3::convert(
+                    config.get_filter( ( natus::gpu::texture_filter_mode )j ) );
+            }
+        }
         return i ;
     }
 
@@ -812,8 +842,8 @@ struct gl3_backend::pimpl
         }
 
         {
-            rconfigs[ oid ].var_sets.clear() ;
-            
+            rconfigs[ oid ].var_sets_data.clear() ;
+            rconfigs[ oid ].var_sets_texture.clear() ;
         }
 
         return oid ;
@@ -1074,8 +1104,44 @@ struct gl3_backend::pimpl
         return true ;
     }
 
-    bool_t update( size_t const id, natus::gpu::image_configuration_res_t config )
+    bool_t update( size_t const id, natus::gpu::image_configuration_ref_t confin )
     {
+        this_file::image_config& config = img_configs[ id ] ;
+
+        natus::ogl::gl::glBindTexture( GL_TEXTURE_2D, config.tex_id ) ;
+        if( natus::ogl::error::check_and_log( natus_log_fn( "glBindTexture" ) ) )
+            return false ;
+
+        size_t const sib = confin.image().sib() ;
+        GLenum const target = GL_TEXTURE_2D ;
+        GLint const level = 0 ;
+        GLsizei const width = GLsizei( confin.image().get_dims().x() ) ;
+        GLsizei const height = GLsizei( confin.image().get_dims().y() ) ;
+        GLenum const format = natus::gpu::gl3::convert_to_gl_pixel_format( confin.image().get_image_format() ) ;
+        GLenum const type = natus::gpu::gl3::convert_to_gl_pixel_type( confin.image().get_image_element_type() ) ;
+        void_cptr_t data = confin.image().get_image_ptr() ;
+
+        if( sib == 0 || config.sib < sib )
+        {
+            GLint const border = 0 ;
+            GLint const internal_format = natus::gpu::gl3::convert_to_gl_format( confin.image().get_image_format(), confin.image().get_image_element_type() ) ;
+
+            natus::ogl::gl::glTexImage2D( target, level, internal_format, width, height,
+                border, format, type, data ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glTexImage2D" ) ) ;
+        }
+        else
+        {
+            GLint const xoffset = 0 ;
+            GLint const yoffset = 0 ;
+
+            natus::ogl::gl::glTexSubImage2D( target, level, xoffset, yoffset, width, height,
+                format, type, data ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glTexSubImage2D" ) ) ;
+        }
+
+        config.sib = confin.image().sib() ;
+
         return false ;
     }
 
@@ -1093,8 +1159,11 @@ struct gl3_backend::pimpl
 
     bool_t connect( this_file::render_config & config, natus::gpu::variable_set_res_t vs )
     {
-        auto item = ::std::make_pair( vs, 
+        auto item_data = ::std::make_pair( vs,
             natus::std::vector< this_file::render_config::uniform_variable_link >() ) ;
+
+        auto item_tex = ::std::make_pair( vs,
+            natus::std::vector< this_file::render_config::uniform_texture_link >() ) ;
 
         this_file::shader_config & sconfig = *config.shaders_ptr ;
 
@@ -1104,6 +1173,8 @@ struct gl3_backend::pimpl
             // is it a data uniform variable?
             if( natus::ogl::uniform_is_data( uv.type ) )
             {
+                
+
                 auto const types = natus::gpu::gl3::to_type_type_struct( uv.type ) ;
                 auto* var = vs->data_variable( uv.name, types.first, types.second ) ;
                 if( natus::core::is_nullptr( var ) )
@@ -1116,11 +1187,43 @@ struct gl3_backend::pimpl
                 link.uniform_id = id++ ;
                 link.var = var ;
 
-                item.second.emplace_back( link ) ;
+                item_data.second.emplace_back( link ) ;
+            }
+            else if( natus::ogl::uniform_is_texture( uv.type ) )
+            {
+                auto const types = natus::gpu::gl3::to_type_type_struct( uv.type ) ;
+                auto* var = vs->texture_variable( uv.name ) ;
+
+                if( natus::core::is_nullptr( var ) )
+                {
+                    natus::log::global_t::error( natus_log_fn( "can not claim variable " + uv.name ) ) ;
+                    continue ;
+                }
+
+                size_t i = 0 ;
+                auto const & tx_name = var->get() ;
+                for( auto & cfg : img_configs )
+                {
+                    if( cfg.name == tx_name ) break ;
+                    ++i ;
+                }
+
+                if( i >= img_configs.size() ) 
+                {
+                    natus::log::global_t::warning( natus_log_fn("image not found : " + tx_name ) ) ;
+                    continue ;
+                }
+
+                this_file::render_config::uniform_texture_link link ;
+                link.uniform_id = id++ ;
+                link.tex_id = img_configs[ i ].tex_id ;
+                link.img_id = i ;
+                item_tex.second.emplace_back( link ) ;
             }
         }
 
-        config.var_sets.emplace_back( item ) ;
+        config.var_sets_data.emplace_back( item_data ) ;
+        config.var_sets_texture.emplace_back( item_tex ) ;
 
         return true ;
     }
@@ -1144,14 +1247,48 @@ struct gl3_backend::pimpl
                 return false ;
         }
 
-        if( config.var_sets.size() > varset_id )
+        if( config.var_sets_data.size() > varset_id )
         {
-            auto& varset = config.var_sets[ varset_id ] ;
-            for( auto & item : varset.second )
+            // data vars
             {
-                auto & uv = sconfig.uniforms[ item.uniform_id ] ;
-                uv.do_copy_funk( item.var ) ;
-                uv.do_uniform_funk() ;
+                auto& varset = config.var_sets_data[ varset_id ] ;
+                for( auto& item : varset.second )
+                {
+                    auto& uv = sconfig.uniforms[ item.uniform_id ] ;
+                    uv.do_copy_funk( item.var ) ;
+                    uv.do_uniform_funk() ;
+                }
+            }
+
+            // tex vars
+            {
+                int_t tex_unit = 0 ;
+                auto& varset = config.var_sets_texture[ varset_id ] ;
+                for( auto& item : varset.second )
+                {
+                    natus::ogl::gl::glActiveTexture( GLenum(GL_TEXTURE0 + tex_unit) ) ;
+                    natus::ogl::error::check_and_log( natus_log_fn( "glActiveTexture" ) ) ;
+                    natus::ogl::gl::glBindTexture( GL_TEXTURE_2D, item.tex_id ) ;
+                    natus::ogl::error::check_and_log( natus_log_fn( "glBindTexture" ) ) ;
+
+                    {
+                        auto const& ic = img_configs[ item.img_id ] ;
+                        natus::ogl::gl::glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, ic.wrap_types[0] ) ;
+                        natus::ogl::gl::glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, ic.wrap_types[1] ) ;
+                        natus::ogl::gl::glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, ic.wrap_types[2] ) ;
+                        natus::ogl::gl::glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, ic.filter_types[0] ) ;
+                        natus::ogl::gl::glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, ic.filter_types[1] ) ;
+                        natus::ogl::error::check_and_log( natus_log_fn( "glTexParameteri" ) ) ;
+                    }
+
+                    auto var = natus::gpu::data_variable< int_t >( tex_unit ) ;
+                    auto & uv = sconfig.uniforms[ item.uniform_id ] ;
+                    
+                    uv.do_copy_funk( &var ) ;
+                    uv.do_uniform_funk() ;
+
+                    ++tex_unit ;
+                }
             }
         }
 

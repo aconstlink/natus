@@ -28,6 +28,14 @@ namespace natus
             natus_typedef( data ) ;
             natus::std::vector< data > _variables ;
 
+            struct texture_data
+            {
+                natus::std::string_t name ;
+                natus::gpu::ivariable_ptr_t var ;
+            };
+            natus_typedef( texture_data ) ;
+            natus::std::vector< texture_data > _textures ;
+
             natus::concurrent::mutex_t _mtx ;
 
         public:
@@ -125,6 +133,39 @@ namespace natus
                 }
 
                 return var ;
+            }
+
+            natus::gpu::data_variable< natus::std::string_t > * texture_variable( 
+                natus::std::string_in_t name ) noexcept
+            {
+                natus::gpu::ivariable_ptr_t var = natus::memory::global_t::alloc(
+                    natus::gpu::data_variable<natus::std::string_t>(), natus_log_fn( "texture variable : " + name ) ) ;
+
+                // before inserting, check if name and type match
+                {
+                    natus::concurrent::lock_guard_t lk( _mtx ) ;
+
+                    auto iter = ::std::find_if( _textures.begin(), _textures.end(),
+                        [&] ( this_t::texture_data const& d )
+                    {
+                        return d.name == name ;
+                    } ) ;
+
+                    if( iter != _textures.end() )
+                    {
+                        natus::memory::global_t::dealloc( var ) ;
+
+                        return static_cast< natus::gpu::data_variable< natus::std::string_t >* >( iter->var ) ;
+                    }
+
+                    this_t::texture_data_t d ;
+                    d.name = name ;
+                    d.var = var ;
+
+                    _textures.emplace_back( d ) ;
+                }
+
+                return static_cast< natus::gpu::data_variable< natus::std::string_t >* >( var ) ;
             }
 
         private:

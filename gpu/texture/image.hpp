@@ -4,8 +4,7 @@
 
 #include "../api.h"
 #include "../typedefs.h"
-
-#include "image_types.h"
+#include "../types.h"
 
 #include <natus/math/vector/vector3.hpp>
 
@@ -139,6 +138,8 @@ namespace natus
             {
                 return _iet ;
             }
+
+            void_cptr_t get_image_ptr( void_t ) const noexcept { return _data ; }
 
         public:
 
