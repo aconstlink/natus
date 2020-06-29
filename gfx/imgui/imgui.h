@@ -35,11 +35,16 @@ namespace natus
             natus::gpu::geometry_configuration_res_t _gc ;
             natus::gpu::image_configuration_res_t _ic ;
 
-            natus::gpu::variable_set_res_t _vars = natus::gpu::variable_set_t() ;
+            natus::std::vector< natus::gpu::variable_set_res_t > _vars ;
             natus::std::vector< natus::gpu::render_state_sets_res_t > _render_states ;
 
             uint_t _width = 0 ;
             uint_t _height = 0 ;
+
+            bool_t _texture_added = false ;
+
+        private:
+
 
         public:
 
@@ -64,6 +69,10 @@ namespace natus
             natus_typedef( window_data ) ;
 
             void_t change( window_data_cref_t ) ;
+
+            // Returns an id that can be used to render the passed image.
+            // the image needs to be registered before via an image_configuration.
+            ImTextureID texture( natus::std::string_in_t ) noexcept ;
 
         private:
 

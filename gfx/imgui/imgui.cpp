@@ -8,7 +8,7 @@ using namespace natus::gfx ;
 //***
 imgui::imgui( void_t ) 
 {
-    
+    _vars.emplace_back( natus::gpu::variable_set_t() ) ;
 }
 
 //***
@@ -20,6 +20,8 @@ imgui::imgui( this_rref_t rhv )
     _sc = ::std::move( rhv._sc ) ;
 
     _gc = ::std::move( rhv._gc ) ;
+
+    _vars = ::std::move( rhv._vars ) ;
 }
 
 //***
@@ -173,7 +175,7 @@ void_t imgui::init( natus::gpu::async_view_ref_t async )
         unsigned char* pixels;
         int width, height;
         io.Fonts->GetTexDataAsRGBA32( &pixels, &width, &height ) ;
-
+        io.Fonts->TexID = (ImTextureID) 0 ;
         natus::gpu::image_t img = natus::gpu::image_t( natus::gpu::image_t::dims_t( width, height, 1 ) )
             .update( [&] ( natus::gpu::image_ptr_t, natus::gpu::image_t::dims_in_t dims, void_ptr_t data_in )
         {
@@ -195,15 +197,15 @@ void_t imgui::init( natus::gpu::async_view_ref_t async )
 
         rc.link_geometry( "natus.gfx.imgui" ) ;
         rc.link_shader( "natus.gfx.imgui" ) ;
-    
-        _vars = natus::gpu::variable_set_t() ;
+        
+        // the variable set with id == 0 is the default
+        // imgui variable set for rendering default widgets
         {
-            auto * var = _vars->texture_variable( "u_tex" ) ;
+            auto* var = _vars[ 0 ]->texture_variable( "u_tex" ) ;
             var->set( "system.imgui.font" ) ;
         }
-        
 
-        rc.add_variable_set( _vars ) ;
+        rc.add_variable_set( _vars[0] ) ;
 
         _rc = ::std::move( rc ) ;
         async.configure( _rc ) ;
@@ -225,8 +227,9 @@ void_t imgui::render( natus::gpu::async_view_ref_t async )
     natus::gfx::pinhole_camera_t camera ;
     camera.orthographic( float_t( _width ), float_t(_height), 1.0f, 1000.0f ) ;
     
+    for( auto & vars : _vars )
     {
-        auto* var = _vars->data_variable< natus::math::mat4f_t >( "u_proj" ) ;
+        auto* var = vars->data_variable< natus::math::mat4f_t >( "u_proj" ) ;
         var->set( camera.mat_proj() ) ;
     }
 
@@ -319,7 +322,12 @@ void_t imgui::render( natus::gpu::async_view_ref_t async )
             clip_rect.z = ( pcmd->ClipRect.z - clip_off.x ) * clip_scale.x;
             clip_rect.w = ( pcmd->ClipRect.w - clip_off.y ) * clip_scale.y;
 
-            
+            if( _texture_added )
+            {
+                async.configure( _rc ) ;
+                _texture_added = false ;
+            }
+
             if( clip_rect.x < fb_width && clip_rect.y < fb_height && clip_rect.z >= 0.0f && clip_rect.w >= 0.0f )
             {
                 {
@@ -342,7 +350,7 @@ void_t imgui::render( natus::gpu::async_view_ref_t async )
                 rd.num_elems = pcmd->ElemCount ;
                 rd.start = offset ;
                 
-                rd.varset = 0 ;
+                rd.varset = size_t( pcmd->TextureId ) ;
                 rd.render_states = _render_states[ rs_id ] ;
                 async.render( _rc, rd ) ;
             }
@@ -426,4 +434,34 @@ void_t imgui::change( window_data_cref_t data )
     io.DisplaySize = ImVec2( ( float_t ) data.width, ( float_t ) data.height );
     _width = data.width ;
     _height = data.height ;
+}
+
+//****
+ImTextureID imgui::texture( natus::std::string_in_t name ) noexcept 
+{
+    size_t i = 0 ;
+
+    for( auto& vars : _vars )
+    {
+        auto* var = vars->texture_variable( "u_tex" ) ;
+        if( var->get() == name ) break ;
+
+        i++ ;
+    }
+
+    // @note
+    // places a new variable_set to the render configuration because
+    // there is no other data that needs to be changed per variable_set,
+    // except the data variable that are changed anyway.
+    if( i == _vars.size() )
+    {
+        _vars.emplace_back( natus::gpu::variable_set_t() ) ;
+        _rc->add_variable_set( _vars[ i ] ) ;
+        auto * var = _vars[ i ]->texture_variable( "u_tex" ) ;
+        var->set( name ) ;
+
+        _texture_added = true ;
+    }
+
+    return ImTextureID(i) ;
 }

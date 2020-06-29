@@ -58,6 +58,7 @@ namespace natus
             this_ref_t operator = ( this_rref_t rhv ) noexcept
             {
                 _variables = ::std::move( rhv._variables ) ;
+                _textures = ::std::move( rhv._textures ) ;
                 return *this ;
             }
 
