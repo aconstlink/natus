@@ -157,7 +157,7 @@ natus::application::result context::get_wgl_extension( natus::std::vector< natus
 //***********************************************************************
 natus::application::result context::get_gl_extension( natus::std::vector< natus::std::string_t > & ext_list )
 {
-    const GLubyte * ch = natus::ogl::gl::glGetString( GL_EXTENSIONS ) ;
+    const GLubyte * ch = natus::ogl::glGetString( GL_EXTENSIONS ) ;
     if( !ch ) return natus::application::result::failed ;
 
     natus::std::string_ops::split( natus::std::string_t(char_cptr_t(ch)), ' ', ext_list ) ;
@@ -168,7 +168,7 @@ natus::application::result context::get_gl_extension( natus::std::vector< natus:
 //***********************************************************************
 natus::application::result context::get_gl_version( natus::application::gl_version & version ) const 
 {
-    const GLubyte* ch = natus::ogl::gl::glGetString(GL_VERSION) ;
+    const GLubyte* ch = natus::ogl::glGetString(GL_VERSION) ;
     if( !ch ) return natus::application::result::failed ;
 
     std::string version_string = std::string((const char*)ch) ;
@@ -177,8 +177,8 @@ natus::application::result context::get_gl_version( natus::application::gl_versi
     GLint minor = 0 ;
 
     {
-        natus::ogl::gl::glGetIntegerv( GL_MAJOR_VERSION, &major ) ;
-        GLenum err = natus::ogl::gl::glGetError() ;
+        natus::ogl::glGetIntegerv( GL_MAJOR_VERSION, &major ) ;
+        GLenum err = natus::ogl::glGetError() ;
         if( err != GL_NO_ERROR )
         {
             natus::std::string_t const es = ::std::to_string(err) ;
@@ -186,8 +186,8 @@ natus::application::result context::get_gl_version( natus::application::gl_versi
         }
     }
     {
-        natus::ogl::gl::glGetIntegerv( GL_MINOR_VERSION, &minor) ;
-        GLenum err = natus::ogl::gl::glGetError() ;
+        natus::ogl::glGetIntegerv( GL_MINOR_VERSION, &minor) ;
+        GLenum err = natus::ogl::glGetError() ;
         if( err != GL_NO_ERROR )
         {
             natus::std::string_t es = ::std::to_string(err) ;
@@ -203,10 +203,10 @@ natus::application::result context::get_gl_version( natus::application::gl_versi
 //***********************************************************************
 void_t context::clear_now( natus::math::vec4f_t const & vec ) 
 {
-    natus::ogl::gl::glClearColor( vec.x(), vec.y(), vec.z(), vec.w() ) ;
-    natus::ogl::gl::glClear( GL_COLOR_BUFFER_BIT ) ;
+    natus::ogl::glClearColor( vec.x(), vec.y(), vec.z(), vec.w() ) ;
+    natus::ogl::glClear( GL_COLOR_BUFFER_BIT ) ;
     
-    GLenum const gler = natus::ogl::gl::glGetError() ;
+    GLenum const gler = natus::ogl::glGetError() ;
     natus::log::global::error( gler != GL_NO_ERROR, "[context::clear_now] : glClear" ) ;
 }
 

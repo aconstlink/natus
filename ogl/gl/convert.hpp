@@ -224,56 +224,56 @@ namespace natus
                 //************************************************************
 
             case GL_FLOAT: return [=] ( GLuint loc, GLuint /*count*/, void_ptr_t p )
-            { natus::ogl::gl::glUniform1f( loc, *( const GLfloat* ) p ); } ;
+            { natus::ogl::glUniform1f( loc, *( const GLfloat* ) p ); } ;
 
             case GL_FLOAT_VEC2: return [=] ( GLuint loc, GLuint count, void_ptr_t p )
-            { natus::ogl::gl::glUniform2fv( loc, count, ( const GLfloat* ) p ); } ;
+            { natus::ogl::glUniform2fv( loc, count, ( const GLfloat* ) p ); } ;
 
             case GL_FLOAT_VEC3: return [=] ( GLuint loc, GLuint count, void_ptr_t p )
-            { natus::ogl::gl::glUniform3fv( loc, count, ( const GLfloat* ) p ); } ;
+            { natus::ogl::glUniform3fv( loc, count, ( const GLfloat* ) p ); } ;
 
             case GL_FLOAT_VEC4: return [=] ( GLuint loc, GLuint count, void_ptr_t p )
-            { natus::ogl::gl::glUniform4fv( loc, count, ( const GLfloat* ) p ); } ;
+            { natus::ogl::glUniform4fv( loc, count, ( const GLfloat* ) p ); } ;
 
                 //************************************************************
 
             case GL_INT: return [=] ( GLuint loc, GLuint /*count*/, void_ptr_t p )
-            { natus::ogl::gl::glUniform1i( loc, *( const GLint* ) p ); } ;
+            { natus::ogl::glUniform1i( loc, *( const GLint* ) p ); } ;
 
             case GL_INT_VEC2: return [=] ( GLuint loc, GLuint count, void_ptr_t p )
-            { natus::ogl::gl::glUniform2iv( loc, count, ( const GLint* ) p ); } ;
+            { natus::ogl::glUniform2iv( loc, count, ( const GLint* ) p ); } ;
 
             case GL_INT_VEC3: return [=] ( GLuint loc, GLuint count, void_ptr_t p )
-            { natus::ogl::gl::glUniform3iv( loc, count, ( const GLint* ) p ); } ;
+            { natus::ogl::glUniform3iv( loc, count, ( const GLint* ) p ); } ;
 
             case GL_INT_VEC4: return [=] ( GLuint loc, GLuint count, void_ptr_t p )
-            { natus::ogl::gl::glUniform4iv( loc, count, ( const GLint* ) p ); } ;
+            { natus::ogl::glUniform4iv( loc, count, ( const GLint* ) p ); } ;
 
                 //************************************************************
 
             case GL_UNSIGNED_INT: return [=] ( GLuint loc, GLuint /*count*/, void_ptr_t p )
-            { natus::ogl::gl::glUniform1ui( loc, *( const GLuint* ) p ); } ;
+            { natus::ogl::glUniform1ui( loc, *( const GLuint* ) p ); } ;
 
             case GL_UNSIGNED_INT_VEC2: return [=] ( GLuint loc, GLuint count, void_ptr_t p )
-            { natus::ogl::gl::glUniform2uiv( loc, count, ( const GLuint* ) p ); } ;
+            { natus::ogl::glUniform2uiv( loc, count, ( const GLuint* ) p ); } ;
 
             case GL_UNSIGNED_INT_VEC3: return [=] ( GLuint loc, GLuint count, void_ptr_t p )
-            { natus::ogl::gl::glUniform3uiv( loc, count, ( const GLuint* ) p ); } ;
+            { natus::ogl::glUniform3uiv( loc, count, ( const GLuint* ) p ); } ;
 
             case GL_UNSIGNED_INT_VEC4: return [=] ( GLuint loc, GLuint count, void_ptr_t p )
-            { natus::ogl::gl::glUniform4uiv( loc, count, ( const GLuint* ) p ); } ;
+            { natus::ogl::glUniform4uiv( loc, count, ( const GLuint* ) p ); } ;
 
                 //************************************************************
 
             case GL_FLOAT_MAT2: return [=] ( GLuint loc, GLuint count, void_ptr_t p )
-            { natus::ogl::gl::glUniformMatrix2fv( loc, count, GL_TRUE, ( const GLfloat* ) p ); } ;
+            { natus::ogl::glUniformMatrix2fv( loc, count, GL_TRUE, ( const GLfloat* ) p ); } ;
 
             case GL_FLOAT_MAT3: return [=] ( GLuint loc, GLuint count, void_ptr_t p )
-            { natus::ogl::gl::glUniformMatrix3fv( loc, count, GL_TRUE, ( const GLfloat* ) p ); } ;
+            { natus::ogl::glUniformMatrix3fv( loc, count, GL_TRUE, ( const GLfloat* ) p ); } ;
 
             case GL_FLOAT_MAT4: return [=] ( GLuint loc, GLuint count, void_ptr_t p )
             { 
-                natus::ogl::gl::glUniformMatrix4fv( loc, count, GL_TRUE, ( const GLfloat* ) p ); 
+                natus::ogl::glUniformMatrix4fv( loc, count, GL_TRUE, ( const GLfloat* ) p ); 
             } ;
 
                 //************************************************************
@@ -297,7 +297,7 @@ namespace natus
             case GL_INT_SAMPLER_2D_ARRAY: 
             case GL_UNSIGNED_INT_SAMPLER_2D_ARRAY: 
                 return [=] ( GLuint loc, GLuint count, void_ptr_t p )
-                { natus::ogl::gl::glUniform1iv( loc, count, ( const GLint* ) p ); } ;
+                { natus::ogl::glUniform1iv( loc, count, ( const GLint* ) p ); } ;
 
             default: break ;
             }

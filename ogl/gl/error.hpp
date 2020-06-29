@@ -14,7 +14,7 @@ namespace natus
         {
             static bool_t check_and_log( natus::std::string_in_t msg ) noexcept
             {
-                GLenum __so__err = natus::ogl::gl::glGetError() ;
+                GLenum __so__err = natus::ogl::glGetError() ;
                 if( __so__err == GL_NO_ERROR ) return false ;
 
                 std::string const __glstring = natus::ogl::to_string( __so__err ) ;
