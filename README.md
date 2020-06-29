@@ -4,11 +4,13 @@ Linux GCC (master): [![Build Status](https://travis-ci.org/aconstlink/natus.svg?
 
 
 Linux prerequisites:
-libX11-decel
-mesa-libGLES
-mesa-libGL
-mesa-libGL-devel
-mesa-libEGL
-make
-cmake
-gcc, gcc-c++
+libX11-devel  
+mesa-libGLES  
+mesa-libGLES-devel  
+mesa-libGL  
+mesa-libGL-devel  
+mesa-libEGL  
+mesa-libEGL-devel
+make  
+cmake  
+gcc, gcc-c++  
