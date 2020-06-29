@@ -80,17 +80,17 @@ void_t imgui::init( natus::gpu::async_view_ref_t async )
 
                 set_vertex_shader( natus::gpu::shader_t( R"(
                     #version 140
-                            
+
                     in vec2 in_pos ;
                     in vec2 in_uv ;
                     in vec4 in_color ;
-                            
+
                     uniform mat4 u_proj ;
                     uniform mat4 u_view ;
 
                     out vec2 var_uv ;
                     out vec4 var_color ;
-                            
+
                     void main()
                     {
                         var_uv = in_uv ;
@@ -100,10 +100,10 @@ void_t imgui::init( natus::gpu::async_view_ref_t async )
 
                 set_pixel_shader( natus::gpu::shader_t( R"(
                     #version 140
-                            
+
                     out vec4 out_color ;
                     uniform sampler2D u_tex ;
-                        
+
                     in vec2 var_uv ;
                     in vec4 var_color ;
 
@@ -130,7 +130,7 @@ void_t imgui::init( natus::gpu::async_view_ref_t async )
 
                     out vec2 var_uv ;
                     out vec4 var_color ;
-                            
+
                     void main()
                     {
                         var_uv = in_uv ;
@@ -142,7 +142,7 @@ void_t imgui::init( natus::gpu::async_view_ref_t async )
                     #version 300 es
                     precision mediump float ;
                     layout( location = 0 ) out vec4 out_color ;
-                            
+
                     uniform sampler2D u_tex ;
 
                     in vec2 var_uv ;
@@ -150,7 +150,7 @@ void_t imgui::init( natus::gpu::async_view_ref_t async )
 
                     void main()
                     {    
-                        gl_FragColor = var_color * texture( u_tex, var_uv ) ;
+                        out_color = var_color * texture( u_tex, var_uv ) ;
                     } )" ) ) 
             ) ;
         }
