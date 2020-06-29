@@ -44,6 +44,9 @@ namespace natus
                 context( this_rref_t ) ;
                 ~context( void_t ) ;
 
+                this_ref_t operator = ( this_cref_t ) = delete ;
+                this_ref_t operator = ( this_rref_t ) ;
+
             private:
 
                 

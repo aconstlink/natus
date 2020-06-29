@@ -35,6 +35,21 @@ context::context( this_rref_t rhv )
 }
 
 //****************************************************************
+context::this_ref_t context::operator = ( this_rref_t rhv ) 
+{
+    _display = rhv._display ;
+    rhv._display = NULL ;
+
+    _wnd = rhv._wnd ;
+    rhv._wnd = 0 ;
+
+    _context = rhv._context ;
+    rhv._context = 0 ;
+
+    return *this ;
+}
+
+//****************************************************************
 context::~context( void_t )
 {
     this_t::deactivate() ;
@@ -73,7 +88,7 @@ natus::application::result context::vsync( bool_t const on_off )
 natus::application::result context::swap( void_t ) 
 {
     glXSwapBuffers( _display, _wnd ) ;
-    const GLenum glerr = natus::ogl::gl::glGetError( ) ;
+    const GLenum glerr = natus::ogl::glGetError( ) ;
     natus::log::global_t::warning( glerr != GL_NO_ERROR, 
             natus_log_fn( "glXSwapBuffers" ) ) ;
     return natus::application::result::ok ;
@@ -119,7 +134,7 @@ natus::application::result context::get_glx_extension( this_t::strings_out_t /*e
 //****************************************************************
 natus::application::result context::get_gl_extension( this_t::strings_out_t ext_list )
 {
-    const GLubyte * ch = natus::ogl::gl::glGetString( GL_EXTENSIONS ) ;
+    const GLubyte * ch = natus::ogl::glGetString( GL_EXTENSIONS ) ;
     if( !ch ) return natus::application::result::failed ;
 
     natus::std::string_t extension_string( (const char*)ch) ;
@@ -130,7 +145,7 @@ natus::application::result context::get_gl_extension( this_t::strings_out_t ext_
 //****************************************************************
 natus::application::result context::get_gl_version( natus::application::gl_version & version ) const 
 {
-    const GLubyte* ch = natus::ogl::gl::glGetString(GL_VERSION) ;
+    const GLubyte* ch = natus::ogl::glGetString(GL_VERSION) ;
     if( !ch ) return natus::application::result::failed ;
 
     natus::std::string_t version_string = natus::std::string((const char*)ch) ;
@@ -139,8 +154,8 @@ natus::application::result context::get_gl_version( natus::application::gl_versi
     GLint minor = 0;//boost::lexical_cast<GLint, std::string>(*(++token));
 
     {
-        natus::ogl::gl::glGetIntegerv( GL_MAJOR_VERSION, &major ) ;
-        GLenum err = natus::ogl::gl::glGetError() ;
+        natus::ogl::glGetIntegerv( GL_MAJOR_VERSION, &major ) ;
+        GLenum err = natus::ogl::glGetError() ;
         if( err != GL_NO_ERROR )
         {
             natus::std::string_t const es = ::std::to_string(err) ;
@@ -149,8 +164,8 @@ natus::application::result context::get_gl_version( natus::application::gl_versi
         }
     }
     {
-        natus::ogl::gl::glGetIntegerv( GL_MINOR_VERSION, &minor) ;
-        GLenum err = natus::ogl::gl::glGetError() ;
+        natus::ogl::glGetIntegerv( GL_MINOR_VERSION, &minor) ;
+        GLenum err = natus::ogl::glGetError() ;
         if( err != GL_NO_ERROR )
         {
             natus::std::string_t es = ::std::to_string(err) ;
@@ -167,10 +182,10 @@ natus::application::result context::get_gl_version( natus::application::gl_versi
 //****************************************************************
 void_t context::clear_now( natus::math::vec4f_t const & vec ) 
 {
-    natus::ogl::gl::glClearColor( vec.x(), vec.y(), vec.z(), vec.w() ) ;
-    natus::ogl::gl::glClear( GL_COLOR_BUFFER_BIT ) ;
+    natus::ogl::glClearColor( vec.x(), vec.y(), vec.z(), vec.w() ) ;
+    natus::ogl::glClear( GL_COLOR_BUFFER_BIT ) ;
     
-    GLenum const gler = natus::ogl::gl::glGetError() ;
+    GLenum const gler = natus::ogl::glGetError() ;
     natus::log::global_t::error( gler != GL_NO_ERROR, "[context::clear_now] : glClear" ) ;
 }
 

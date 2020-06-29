@@ -8,8 +8,9 @@
 
 namespace natus
 {
-    namespace ogl
+    namespace es
     {
+        using namespace natus::core::types ;
         struct error
         {
             static bool_t check_and_log( natus::std::string_in_t msg ) noexcept

@@ -39,6 +39,25 @@ context::context( this_rref_t rhv )
     rhv._ndt = 0 ;
 }
 
+context::this_ref_t context::operator = ( this_rref_t rhv ) 
+{
+    _display = rhv._display ;
+    rhv._display = NULL ;
+
+    _wnd = rhv._wnd ;
+    rhv._wnd = 0 ;
+
+    _context = rhv._context ;
+    rhv._context = 0 ;
+
+    _surface = rhv._surface ;
+    rhv._surface = 0 ;
+
+    _ndt = rhv._ndt ;
+    rhv._ndt = 0 ;
+    return *this ;
+}
+
 //****************************************************************
 context::~context( void_t )
 {

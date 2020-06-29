@@ -1,14 +1,12 @@
 
 
-#include "gl3.h"
-#include "gl3_convert.h"
+#include "es3.h"
+#include "es3_convert.h"
 
 #include "../../buffer/vertex_buffer.hpp"
 #include "../../buffer/index_buffer.hpp"
 
-#include <natus/ogl/gl/gl.h>
-#include <natus/ogl/gl/convert.hpp>
-#include <natus/ogl/gl/error.hpp>
+#include <natus/ogl/es/error.hpp>
 #include <natus/memory/global.h>
 #include <natus/memory/guards/malloc_guard.hpp>
 #include <natus/std/vector.hpp>
@@ -117,7 +115,7 @@ namespace this_file_es
             void_t do_uniform_funk( void_t )
             {
                 uniform_funk( loc, 1, mem ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glUniform" ) ) ;
+                natus::es::error::check_and_log( natus_log_fn( "glUniform" ) ) ;
             }
 
             void_t do_copy_funk( natus::gpu::ivariable_ptr_t var )
@@ -179,7 +177,7 @@ namespace this_file_es
     };
 }
 
-struct gl3_backend::pimpl
+struct es3_backend::pimpl
 {
     natus_this_typedefs( pimpl ) ;
 
@@ -198,7 +196,7 @@ struct gl3_backend::pimpl
     GLsizei vp_width = 0 ;
     GLsizei vp_height = 0 ;
 
-    natus::gpu::backend_type const bt = natus::gpu::backend_type::gl3 ;
+    natus::gpu::backend_type const bt = natus::gpu::backend_type::es3 ;
 
     // the current render state set
     natus::gpu::render_state_sets_t render_states ;
@@ -264,7 +262,7 @@ struct gl3_backend::pimpl
         if( shaders[ oid ].pg_id == GLuint( -1 ) )
         {
             GLuint const id = glCreateProgram() ;
-            natus::ogl::error::check_and_log(
+            natus::es::error::check_and_log(
                 natus_log_fn( "Shader Program creation" ) ) ;
 
             shaders[ oid ].pg_id = id ;
@@ -278,14 +276,14 @@ struct gl3_backend::pimpl
         if( shaders[oid].vs_id == GLuint(-1) )
         {
             GLuint const id = glCreateShader( GL_VERTEX_SHADER ) ;
-            natus::ogl::error::check_and_log(
+            natus::es::error::check_and_log(
                 natus_log_fn( "Vertex Shader creation" ) ) ;
 
             shaders[ oid ].vs_id = id ;
         }
         {
             glAttachShader( shaders[ oid ].pg_id, shaders[oid].vs_id ) ;
-            natus::ogl::error::check_and_log(
+            natus::es::error::check_and_log(
                 natus_log_fn( "Attaching vertex shader" ) ) ;
         }
 
@@ -301,62 +299,6 @@ struct gl3_backend::pimpl
             }
         }
 
-        // geometry shader
-        if( ss.has_geometry_shader() )
-        {
-            GLuint id = shaders[ oid ].gs_id ;
-
-            if( id == GLuint(-1) )
-            {
-                id = glCreateShader( GL_GEOMETRY_SHADER ) ;
-                natus::ogl::error::check_and_log(
-                    natus_log_fn( "Geometry Shader creation" ) ) ;
-
-                shaders[ oid ].gs_id = id ;
-            }
-
-            GLuint const pid = shaders[ oid ].pg_id ;
-
-            glAttachShader( pid, id ) ;
-            natus::ogl::error::check_and_log(
-                natus_log_fn( "Attaching geometry shader" ) ) ;
-
-            // check max output vertices
-            {
-                GLint max_out = 0 ;
-                glGetIntegerv( GL_MAX_GEOMETRY_OUTPUT_VERTICES, &max_out ) ;
-                natus::ogl::error::check_and_log(
-                    natus_log_fn( "Geometry Shader Max Output Vertices" ) ) ;
-                ( void_t ) max_out ;
-            }
-
-            // @todo geometry shader program parameters
-            {
-                /*
-                glProgramParameteri( pid, GL_GEOMETRY_INPUT_TYPE, 
-                    ( GLint ) so_gl::convert( shd_ptr->get_input_type() ) ) ;
-                error = natus::ogl::error::check_and_log(
-                    natus_log_fn( "Geometry Shader Input Type" ) ) ;
-
-                glProgramParameteri( pid, GL_GEOMETRY_OUTPUT_TYPE, 
-                    ( GLint ) so_gl::convert( shd_ptr->get_output_type() ) ) ;
-                error = natus::ogl::error::check_and_log(
-                    natus_log_fn( "Geometry Shader Output Type" ) ) ;
-
-                glProgramParameteri( pid, GL_GEOMETRY_VERTICES_OUT, 
-                    ( GLint ) shd_ptr->get_num_output_vertices() ) ;
-                error = natus::ogl::error::check_and_log(
-                    natus_log_fn( "Geometry Shader Vertices Out" ) ) ;
-                    */
-            }
-        }
-        else if( shaders[ oid ].gs_id != GLuint(-1) )
-        {
-            glDeleteShader( shaders[ oid ].gs_id ) ;
-            natus::ogl::error::check_and_log( natus_log_fn( "glDeleteShader" ) ) ;
-            shaders[ oid ].gs_id = GLuint( -1 ) ;
-        }
-
         // pixel shader
         if( ss.has_pixel_shader() )
         {
@@ -364,19 +306,19 @@ struct gl3_backend::pimpl
             if( id == GLuint(-1) )
             {
                 id = glCreateShader( GL_FRAGMENT_SHADER ) ;
-                natus::ogl::error::check_and_log(
+                natus::es::error::check_and_log(
                     natus_log_fn( "Fragment Shader creation" ) ) ;
             }
 
             glAttachShader( shaders[ oid ].pg_id, id ) ;
-            natus::ogl::error::check_and_log( natus_log_fn( "Attaching pixel shader" ) ) ;
+            natus::es::error::check_and_log( natus_log_fn( "Attaching pixel shader" ) ) ;
 
             shaders[ oid ].ps_id = id ;
         }
         else if( shaders[ oid ].ps_id != GLuint( -1 ) )
         {
             glDeleteShader( shaders[ oid ].ps_id ) ;
-            natus::ogl::error::check_and_log( natus_log_fn( "glDeleteShader" ) ) ;
+            natus::es::error::check_and_log( natus_log_fn( "glDeleteShader" ) ) ;
             shaders[ oid ].ps_id = GLuint( -1 ) ;
         }
 
@@ -390,12 +332,12 @@ struct gl3_backend::pimpl
         GLuint shaders_[ 10 ] ;
 
         glGetAttachedShaders( program_id, 10, &count, shaders_ ) ;
-        natus::ogl::error::check_and_log( natus_log_fn( "glGetAttachedShaders" ) ) ;
+        natus::es::error::check_and_log( natus_log_fn( "glGetAttachedShaders" ) ) ;
 
         for( GLsizei i = 0; i < count; ++i )
         {
             glDetachShader( program_id, shaders_[ i ] ) ;
-            natus::ogl::error::check_and_log( natus_log_fn( "glDetachShader" ) ) ;
+            natus::es::error::check_and_log( natus_log_fn( "glDetachShader" ) ) ;
         }
     }
 
@@ -429,11 +371,11 @@ struct gl3_backend::pimpl
         GLchar const* source_string = ( GLchar const* ) ( code.c_str() ) ;
 
         glShaderSource( id, 1, &source_string, 0 ) ;
-        if( natus::ogl::error::check_and_log( natus_log_fn( "glShaderSource" ) ) )
+        if( natus::es::error::check_and_log( natus_log_fn( "glShaderSource" ) ) )
             return false ;
 
         glCompileShader( id ) ;
-        if( natus::ogl::error::check_and_log( natus_log_fn( "glCompileShader" ) ) )
+        if( natus::es::error::check_and_log( natus_log_fn( "glCompileShader" ) ) )
             return false ;
 
         GLint ret ;
@@ -476,7 +418,7 @@ struct gl3_backend::pimpl
     bool_t link( GLuint const program_id )
     {
         glLinkProgram( program_id ) ;
-        if( natus::ogl::error::check_and_log( natus_log_fn( "glLinkProgram" ) ) )
+        if( natus::es::error::check_and_log( natus_log_fn( "glLinkProgram" ) ) )
             return false ;
 
         {
@@ -495,7 +437,7 @@ struct gl3_backend::pimpl
             natus::memory::malloc_guard<char> info_log( length ) ;
 
             glGetProgramInfoLog( program_id, length, 0, info_log ) ;
-            if( natus::ogl::error::check_and_log( natus_log_fn( "glGetProgramInfoLog" ) ) )
+            if( natus::es::error::check_and_log( natus_log_fn( "glGetProgramInfoLog" ) ) )
                 return false ;
 
             std::string info_log_string = std::string( ( const char* ) info_log ) ;
@@ -522,14 +464,14 @@ struct gl3_backend::pimpl
         GLint name_length = 0 ;
 
         glGetProgramiv( program_id, GL_ACTIVE_ATTRIBUTES, &num_active_attributes ) ;
-        natus::ogl::error::check_and_log( natus_log_fn( "glGetProgramiv(GL_ACTIVE_ATTRIBUTES)" ) ) ;
+        natus::es::error::check_and_log( natus_log_fn( "glGetProgramiv(GL_ACTIVE_ATTRIBUTES)" ) ) ;
 
         if( num_active_attributes == 0 ) return ;
 
         config.attributes.resize( num_active_attributes ) ;
 
         glGetProgramiv( program_id, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, &name_length ) ;
-        natus::ogl::error::check_and_log( natus_log_fn( 
+        natus::es::error::check_and_log( natus_log_fn( 
             "glGetProgramiv(GL_ACTIVE_ATTRIBUTE_MAX_LENGTH)" ) ) ;
 
         GLint size ;
@@ -542,13 +484,13 @@ struct gl3_backend::pimpl
             glGetActiveAttrib( program_id, i, name_length, 0, 
                 &size, &gl_attrib_type, buffer ) ;
 
-            if( natus::ogl::error::check_and_log( "glGetActiveAttrib failed. continue loop." ) ) continue ;
+            if( natus::es::error::check_and_log( "glGetActiveAttrib failed. continue loop." ) ) continue ;
 
             // build-ins are not needed in the shader variables container.
             if( name_length >= 3 && buffer.equals( 0, 'g' ) && buffer.equals( 1, 'l' ) && buffer.equals( 2, '_' ) ) continue ;
 
             GLuint const location_id = glGetAttribLocation( program_id, buffer ) ;
-            if( natus::ogl::error::check_and_log( "glGetAttribLocation failed. continue loop." ) ) continue ;
+            if( natus::es::error::check_and_log( "glGetAttribLocation failed. continue loop." ) ) continue ;
 
             natus::std::string_t const variable_name = natus::std::string_t( ( const char* ) buffer ) ;
 
@@ -574,7 +516,7 @@ struct gl3_backend::pimpl
         // bind vertex array object
         {
             glBindVertexArray( gconfig.va_id ) ;
-            if( natus::ogl::error::check_and_log(
+            if( natus::es::error::check_and_log(
                 natus_log_fn( "glBindVertexArray" ) ) )
                 return false ;
         }
@@ -582,7 +524,7 @@ struct gl3_backend::pimpl
         // bind vertex buffer
         {
             glBindBuffer( GL_ARRAY_BUFFER, gconfig.vb_id ) ;
-            if( natus::ogl::error::check_and_log( 
+            if( natus::es::error::check_and_log( 
                 natus_log_fn("glBindBuffer(GL_ARRAY_BUFFER)") ) ) 
                 return false ;
         }
@@ -590,7 +532,7 @@ struct gl3_backend::pimpl
         // bind index buffer
         {
             glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, gconfig.ib_id ) ;
-            if( natus::ogl::error::check_and_log( 
+            if( natus::es::error::check_and_log( 
                 natus_log_fn( "glBindBuffer(GL_ELEMENT_ARRAY_BUFFER)" ) ) )
                 return false ;
         }
@@ -599,7 +541,7 @@ struct gl3_backend::pimpl
         for( size_t i = 0; i < sconfig.attributes.size(); ++i )
         {
             glDisableVertexAttribArray( sconfig.attributes[ i ].loc ) ;
-            natus::ogl::error::check_and_log( natus_log_fn( "glDisableVertexAttribArray" ) ) ;
+            natus::es::error::check_and_log( natus_log_fn( "glDisableVertexAttribArray" ) ) ;
         }
 
         GLuint uiStride = gconfig.stride ;
@@ -623,7 +565,7 @@ struct gl3_backend::pimpl
                 continue ;
             }
             glEnableVertexAttribArray( iter->loc ) ;
-            natus::ogl::error::check_and_log(
+            natus::es::error::check_and_log(
                 natus_log_fn( "glEnableVertexAttribArray" ) ) ;
 
             glVertexAttribPointer(
@@ -635,7 +577,7 @@ struct gl3_backend::pimpl
                 (const GLvoid*)(size_t)uiBegin 
                 ) ;
 
-            natus::ogl::error::check_and_log( natus_log_fn( "glVertexAttribPointer" ) ) ;
+            natus::es::error::check_and_log( natus_log_fn( "glVertexAttribPointer" ) ) ;
         }
 
         // unbind everything
@@ -643,7 +585,7 @@ struct gl3_backend::pimpl
             glBindVertexArray( 0 ) ;
             glBindBuffer( GL_ARRAY_BUFFER, 0 ) ;
             glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 ) ;
-            natus::ogl::error::check_and_log( natus_log_fn( "unbind" ) ) ;
+            natus::es::error::check_and_log( natus_log_fn( "unbind" ) ) ;
         }
         return true ;
     }
@@ -657,14 +599,14 @@ struct gl3_backend::pimpl
         GLint name_length = 0 ;
 
         glGetProgramiv( program_id, GL_ACTIVE_UNIFORMS, &num_active_uniforms ) ;
-        natus::ogl::error::check_and_log( "[glGetProgramiv] : GL_ACTIVE_UNIFORMS" ) ;
+        natus::es::error::check_and_log( "[glGetProgramiv] : GL_ACTIVE_UNIFORMS" ) ;
 
         if( num_active_uniforms == 0 ) return ;
 
         config.uniforms.resize( num_active_uniforms ) ;
 
         glGetProgramiv( program_id, GL_ACTIVE_UNIFORM_MAX_LENGTH, &name_length ) ;
-        natus::ogl::error::check_and_log( "[glGetProgramiv] : GL_ACTIVE_UNIFORM_MAX_LENGTH" ) ;
+        natus::es::error::check_and_log( "[glGetProgramiv] : GL_ACTIVE_UNIFORM_MAX_LENGTH" ) ;
 
         GLint size ;
         GLenum gl_uniform_type ;
@@ -675,13 +617,13 @@ struct gl3_backend::pimpl
         {
             glGetActiveUniform( program_id, i, name_length, 0, 
                 &size, &gl_uniform_type, buffer ) ;
-            if( natus::ogl::error::check_and_log( "[gl_33_api] : glGetActiveUniform" ) ) continue ;
+            if( natus::es::error::check_and_log( "[gl_33_api] : glGetActiveUniform" ) ) continue ;
 
             // build-ins are not needed in the shader variables container.
             if( name_length >= 3 && buffer.equals( 0, 'g' ) && buffer.equals( 1, 'l' ) && buffer.equals( 2, '_' ) ) continue ;
 
             GLuint const location_id = glGetUniformLocation( program_id, buffer ) ;
-            if( natus::ogl::error::check_and_log( "[glGetUniformLocation]" ) ) continue ;
+            if( natus::es::error::check_and_log( "[glGetUniformLocation]" ) ) continue ;
 
             if( natus::log::global_t::error( location_id == GLuint( -1 ), 
                 natus_log_fn( "invalid uniform location id." ) ) ) continue ;
@@ -728,7 +670,7 @@ struct gl3_backend::pimpl
 
         {
             glUseProgram( config.pg_id ) ;
-            if( natus::ogl::error::check_and_log( natus_log_fn( "glUseProgram" ) ) )
+            if( natus::es::error::check_and_log( natus_log_fn( "glUseProgram" ) ) )
                 return ;
         }
 
@@ -772,7 +714,7 @@ struct gl3_backend::pimpl
         {
             GLuint id = GLuint( -1 ) ;
             glGenTextures( 1, &id ) ;
-            natus::ogl::error::check_and_log( natus_log_fn( "glGenSamplers" ) ) ;
+            natus::es::error::check_and_log( natus_log_fn( "glGenSamplers" ) ) ;
 
             img_configs[ i ].tex_id = id ;
         }
@@ -784,13 +726,13 @@ struct gl3_backend::pimpl
         {
             for( size_t j=0; j<(size_t)natus::gpu::texture_wrap_mode::size; ++j )
             {
-                img_configs[ i ].wrap_types[ j ] = natus::gpu::gl3::convert(
+                img_configs[ i ].wrap_types[ j ] = natus::gpu::es3::convert(
                     config.get_wrap( ( natus::gpu::texture_wrap_mode )j ) );
             }
 
             for( size_t j = 0; j < ( size_t ) natus::gpu::texture_filter_mode::size; ++j )
             {
-                img_configs[ i ].filter_types[ j ] = natus::gpu::gl3::convert(
+                img_configs[ i ].filter_types[ j ] = natus::gpu::es3::convert(
                     config.get_filter( ( natus::gpu::texture_filter_mode )j ) );
             }
         }
@@ -985,7 +927,7 @@ struct gl3_backend::pimpl
         {
             GLuint id = GLuint( -1 ) ;
             glGenVertexArrays( 1, &id ) ;
-            natus::ogl::error::check_and_log(
+            natus::es::error::check_and_log(
                 natus_log_fn( "Vertex Array creation" ) ) ;
 
             geo_configs[ i ].va_id = id ;
@@ -996,7 +938,7 @@ struct gl3_backend::pimpl
         {
             GLuint id = GLuint( -1 ) ;
             glGenBuffers( 1, &id ) ;
-            error = natus::ogl::error::check_and_log( 
+            error = natus::es::error::check_and_log( 
                 natus_log_fn( "Vertex Buffer creation" ) ) ;
             
             geo_configs[ i ].vb_id = id ;
@@ -1007,7 +949,7 @@ struct gl3_backend::pimpl
         {
             GLuint id = GLuint( -1 ) ;
             glGenBuffers( 1, &id ) ;
-            error = natus::ogl::error::check_and_log(
+            error = natus::es::error::check_and_log(
                 natus_log_fn( "Index Buffer creation" ) ) ;
             
             geo_configs[ i ].ib_id = id ;
@@ -1040,13 +982,13 @@ struct gl3_backend::pimpl
             config.num_elements_vb = geo->vertex_buffer().get_num_elements() ;
             config.ib_elem_sib = geo->index_buffer().get_element_sib() ;
             config.ib_type = GL_UNSIGNED_INT ;
-            config.pt = natus::gpu::gl3::convert( geo->primitive_type() ) ;
+            config.pt = natus::gpu::es3::convert( geo->primitive_type() ) ;
         }
 
         // bind vertex buffer
         {
             glBindBuffer( GL_ARRAY_BUFFER, config.vb_id ) ;
-            if( natus::ogl::error::check_and_log( natus_log_fn("glBindBuffer - vertex buffer") ) )
+            if( natus::es::error::check_and_log( natus_log_fn("glBindBuffer - vertex buffer") ) )
                 return false ;
         }
 
@@ -1058,14 +1000,14 @@ struct gl3_backend::pimpl
             {
                 glBufferData( GL_ARRAY_BUFFER, sib,
                     geo->vertex_buffer().data(), GL_STATIC_DRAW ) ;
-                if( natus::ogl::error::check_and_log( natus_log_fn( "glBufferData - vertex buffer" ) ) )
+                if( natus::es::error::check_and_log( natus_log_fn( "glBufferData - vertex buffer" ) ) )
                     return false ;
                 config.sib_vb = sib ;
             }
             else
             {
                 glBufferSubData( GL_ARRAY_BUFFER, 0, sib, geo->vertex_buffer().data() ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glBufferSubData - vertex buffer" ) ) ;
+                natus::es::error::check_and_log( natus_log_fn( "glBufferSubData - vertex buffer" ) ) ;
             }
         }
 
@@ -1078,7 +1020,7 @@ struct gl3_backend::pimpl
         // bind index buffer
         {
             glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, config.ib_id ) ;
-            if( natus::ogl::error::check_and_log( natus_log_fn( "glBindBuffer - index buffer" ) ) )
+            if( natus::es::error::check_and_log( natus_log_fn( "glBindBuffer - index buffer" ) ) )
                 return false ;
         }
 
@@ -1090,14 +1032,14 @@ struct gl3_backend::pimpl
             {
                 glBufferData( GL_ELEMENT_ARRAY_BUFFER, sib,
                     geo->index_buffer().data(), GL_STATIC_DRAW ) ;
-                if( natus::ogl::error::check_and_log( natus_log_fn( "glBufferData - index buffer" ) ) )
+                if( natus::es::error::check_and_log( natus_log_fn( "glBufferData - index buffer" ) ) )
                     return false ;
                 config.sib_ib = sib ;
             }
             else
             {
                 glBufferSubData( GL_ELEMENT_ARRAY_BUFFER, 0, sib, geo->index_buffer().data() ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glBufferSubData - index buffer" ) ) ;
+                natus::es::error::check_and_log( natus_log_fn( "glBufferSubData - index buffer" ) ) ;
             }
         }
 
@@ -1109,7 +1051,7 @@ struct gl3_backend::pimpl
         this_file_es::image_config& config = img_configs[ id ] ;
 
         glBindTexture( GL_TEXTURE_2D, config.tex_id ) ;
-        if( natus::ogl::error::check_and_log( natus_log_fn( "glBindTexture" ) ) )
+        if( natus::es::error::check_and_log( natus_log_fn( "glBindTexture" ) ) )
             return false ;
 
         size_t const sib = confin.image().sib() ;
@@ -1117,18 +1059,18 @@ struct gl3_backend::pimpl
         GLint const level = 0 ;
         GLsizei const width = GLsizei( confin.image().get_dims().x() ) ;
         GLsizei const height = GLsizei( confin.image().get_dims().y() ) ;
-        GLenum const format = natus::gpu::gl3::convert_to_gl_pixel_format( confin.image().get_image_format() ) ;
-        GLenum const type = natus::gpu::gl3::convert_to_gl_pixel_type( confin.image().get_image_element_type() ) ;
+        GLenum const format = natus::gpu::es3::convert_to_gl_pixel_format( confin.image().get_image_format() ) ;
+        GLenum const type = natus::gpu::es3::convert_to_gl_pixel_type( confin.image().get_image_element_type() ) ;
         void_cptr_t data = confin.image().get_image_ptr() ;
 
         if( sib == 0 || config.sib < sib )
         {
             GLint const border = 0 ;
-            GLint const internal_format = natus::gpu::gl3::convert_to_gl_format( confin.image().get_image_format(), confin.image().get_image_element_type() ) ;
+            GLint const internal_format = natus::gpu::es3::convert_to_gl_format( confin.image().get_image_format(), confin.image().get_image_element_type() ) ;
 
             glTexImage2D( target, level, internal_format, width, height,
                 border, format, type, data ) ;
-            natus::ogl::error::check_and_log( natus_log_fn( "glTexImage2D" ) ) ;
+            natus::es::error::check_and_log( natus_log_fn( "glTexImage2D" ) ) ;
         }
         else
         {
@@ -1137,7 +1079,7 @@ struct gl3_backend::pimpl
 
             glTexSubImage2D( target, level, xoffset, yoffset, width, height,
                 format, type, data ) ;
-            natus::ogl::error::check_and_log( natus_log_fn( "glTexSubImage2D" ) ) ;
+            natus::es::error::check_and_log( natus_log_fn( "glTexSubImage2D" ) ) ;
         }
 
         config.sib = confin.image().sib() ;
@@ -1175,7 +1117,7 @@ struct gl3_backend::pimpl
             {
                 
 
-                auto const types = natus::gpu::gl3::to_type_type_struct( uv.type ) ;
+                auto const types = natus::gpu::es3::to_type_type_struct( uv.type ) ;
                 auto* var = vs->data_variable( uv.name, types.first, types.second ) ;
                 if( natus::core::is_nullptr( var ) )
                 {
@@ -1191,7 +1133,7 @@ struct gl3_backend::pimpl
             }
             else if( natus::ogl::uniform_is_texture( uv.type ) )
             {
-                auto const types = natus::gpu::gl3::to_type_type_struct( uv.type ) ;
+                auto const types = natus::gpu::es3::to_type_type_struct( uv.type ) ;
                 auto* var = vs->texture_variable( uv.name ) ;
 
                 if( natus::core::is_nullptr( var ) )
@@ -1237,13 +1179,13 @@ struct gl3_backend::pimpl
 
         {
             glBindVertexArray( gconfig.va_id ) ;
-            if( natus::ogl::error::check_and_log( natus_log_fn( "glBindVertexArray" ) ) )
+            if( natus::es::error::check_and_log( natus_log_fn( "glBindVertexArray" ) ) )
                 return false ;
         }
 
         {
             glUseProgram( sconfig.pg_id ) ;
-            if( natus::ogl::error::check_and_log( natus_log_fn( "glUseProgram" ) ) )
+            if( natus::es::error::check_and_log( natus_log_fn( "glUseProgram" ) ) )
                 return false ;
         }
 
@@ -1267,9 +1209,9 @@ struct gl3_backend::pimpl
                 for( auto& item : varset.second )
                 {
                     glActiveTexture( GLenum(GL_TEXTURE0 + tex_unit) ) ;
-                    natus::ogl::error::check_and_log( natus_log_fn( "glActiveTexture" ) ) ;
+                    natus::es::error::check_and_log( natus_log_fn( "glActiveTexture" ) ) ;
                     glBindTexture( GL_TEXTURE_2D, item.tex_id ) ;
-                    natus::ogl::error::check_and_log( natus_log_fn( "glBindTexture" ) ) ;
+                    natus::es::error::check_and_log( natus_log_fn( "glBindTexture" ) ) ;
 
                     {
                         auto const& ic = img_configs[ item.img_id ] ;
@@ -1278,7 +1220,7 @@ struct gl3_backend::pimpl
                         glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, ic.wrap_types[2] ) ;
                         glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, ic.filter_types[0] ) ;
                         glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, ic.filter_types[1] ) ;
-                        natus::ogl::error::check_and_log( natus_log_fn( "glTexParameteri" ) ) ;
+                        natus::es::error::check_and_log( natus_log_fn( "glTexParameteri" ) ) ;
                     }
 
                     auto var = natus::gpu::data_variable< int_t >( tex_unit ) ;
@@ -1310,7 +1252,7 @@ struct gl3_backend::pimpl
                 
                 glDrawElements( pt, ne, glt, offset ) ;
 
-                natus::ogl::error::check_and_log( natus_log_fn( "glDrawElements" ) ) ;
+                natus::es::error::check_and_log( natus_log_fn( "glDrawElements" ) ) ;
             }
             else
             {
@@ -1319,7 +1261,7 @@ struct gl3_backend::pimpl
 
                 glDrawArrays( pt, start_element, ne ) ;
 
-                natus::ogl::error::check_and_log( natus_log_fn( "glDrawArrays" ) ) ;
+                natus::es::error::check_and_log( natus_log_fn( "glDrawArrays" ) ) ;
             }
         }
         return true ;
@@ -1332,17 +1274,17 @@ struct gl3_backend::pimpl
             if( rs.blend_s.do_blend )
             {
                 glEnable( GL_BLEND ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
+                natus::es::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
 
-                GLenum const glsrc = natus::gpu::gl3::convert( rs.blend_s.src_blend_factor ) ;
-                GLenum const gldst = natus::gpu::gl3::convert( rs.blend_s.dst_blend_factor ) ;
+                GLenum const glsrc = natus::gpu::es3::convert( rs.blend_s.src_blend_factor ) ;
+                GLenum const gldst = natus::gpu::es3::convert( rs.blend_s.dst_blend_factor ) ;
                 glBlendFunc( glsrc, gldst ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glBlendFunc" ) ) ;
+                natus::es::error::check_and_log( natus_log_fn( "glBlendFunc" ) ) ;
             }
             else
             {
                 glDisable( GL_BLEND ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glDisable" ) ) ;
+                natus::es::error::check_and_log( natus_log_fn( "glDisable" ) ) ;
             }
             
         }
@@ -1352,12 +1294,12 @@ struct gl3_backend::pimpl
             if( rs.depth_s.do_depth_test )
             {
                 glEnable( GL_DEPTH_TEST ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
+                natus::es::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
             }
             else
             {
                 glDisable( GL_DEPTH_TEST ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glDisable" ) ) ;
+                natus::es::error::check_and_log( natus_log_fn( "glDisable" ) ) ;
             }
         }
         
@@ -1366,12 +1308,12 @@ struct gl3_backend::pimpl
             if( rs.polygon_s.do_culling )
             {
                 glEnable( GL_CULL_FACE ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
+                natus::es::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
             }
             else
             {
                 glDisable( GL_CULL_FACE ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glDisable" ) ) ;
+                natus::es::error::check_and_log( natus_log_fn( "glDisable" ) ) ;
             }
         }
 
@@ -1380,17 +1322,17 @@ struct gl3_backend::pimpl
             if( rs.scissor_s.do_scissor_test )
             {
                 glEnable( GL_SCISSOR_TEST ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
+                natus::es::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
 
                 glScissor(
                     GLint( rs.scissor_s.rect.x() ), GLint( rs.scissor_s.rect.y() ),
                     GLsizei( rs.scissor_s.rect.z() ), GLsizei( rs.scissor_s.rect.w() ) ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glScissor" ) ) ;
+                natus::es::error::check_and_log( natus_log_fn( "glScissor" ) ) ;
             }
             else
             {
                 glDisable( GL_SCISSOR_TEST ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glDisable" ) ) ;
+                natus::es::error::check_and_log( natus_log_fn( "glDisable" ) ) ;
             }
         }
 
@@ -1401,16 +1343,16 @@ struct gl3_backend::pimpl
     void_t begin_frame( void_t ) 
     {
         //glClearColor( 0.1f, 0.1f, 0.1f, 1.0f ) ;
-        //natus::ogl::error::check_and_log( natus_log_fn( "glClearColor" ) ) ;
+        //natus::es::error::check_and_log( natus_log_fn( "glClearColor" ) ) ;
 
         //glClear( GL_COLOR_BUFFER_BIT ) ;
-        //natus::ogl::error::check_and_log( natus_log_fn( "glClear" ) ) ;
+        //natus::es::error::check_and_log( natus_log_fn( "glClear" ) ) ;
         
         // reset render states
         this_t::set_render_states( *natus::gpu::backend_t::default_render_states() ) ;
 
         glViewport( 0, 0, vp_width, vp_height ) ;
-        natus::ogl::error::check_and_log( natus_log_fn( "glViewport" ) ) ;
+        natus::es::error::check_and_log( natus_log_fn( "glViewport" ) ) ;
     }
 
     void_t end_frame( void_t ) 
@@ -1426,27 +1368,27 @@ struct gl3_backend::pimpl
 //************************************************************************************************
 
 //****
-gl3_backend::gl3_backend( void_t ) noexcept : backend( natus::gpu::backend_type::gl3 )
+es3_backend::es3_backend( void_t ) noexcept : backend( natus::gpu::backend_type::es3 )
 {
     _pimpl = natus::memory::global_t::alloc( pimpl(), 
-        natus_log_fn("gl3_backend::pimpl") ) ;
+        natus_log_fn("es3_backend::pimpl") ) ;
 }
 
 //****
-gl3_backend::gl3_backend( this_rref_t rhv ) noexcept : backend( ::std::move( rhv ) )
+es3_backend::es3_backend( this_rref_t rhv ) noexcept : backend( ::std::move( rhv ) )
 {
     natus_move_member_ptr( _pimpl, rhv ) ;
 }
 
 //****
-gl3_backend::~gl3_backend( void_t ) 
+es3_backend::~es3_backend( void_t ) 
 {
     if( natus::core::is_not_nullptr( _pimpl ) )
         natus::memory::global_t::dealloc( _pimpl ) ;
 }
 
 //****
-void_t gl3_backend::set_window_info( window_info_cref_t wi ) noexcept 
+void_t es3_backend::set_window_info( window_info_cref_t wi ) noexcept 
 {
     {
         bool_t change = false ;
@@ -1464,7 +1406,7 @@ void_t gl3_backend::set_window_info( window_info_cref_t wi ) noexcept
 }
 
 //****
-natus::gpu::result gl3_backend::configure( natus::gpu::geometry_configuration_res_t gconf ) noexcept 
+natus::gpu::result es3_backend::configure( natus::gpu::geometry_configuration_res_t gconf ) noexcept 
 {
     natus::gpu::id_res_t id = gconf->get_id() ;
 
@@ -1486,7 +1428,7 @@ natus::gpu::result gl3_backend::configure( natus::gpu::geometry_configuration_re
 }
 
 //****
-natus::gpu::result gl3_backend::configure( natus::gpu::render_configuration_res_t config ) noexcept 
+natus::gpu::result es3_backend::configure( natus::gpu::render_configuration_res_t config ) noexcept 
 {
     natus::gpu::id_res_t id = config->get_id() ;
 
@@ -1509,7 +1451,7 @@ natus::gpu::result gl3_backend::configure( natus::gpu::render_configuration_res_
 }
 
 //***
-natus::gpu::result gl3_backend::configure( natus::gpu::shader_configuration_res_t config ) noexcept
+natus::gpu::result es3_backend::configure( natus::gpu::shader_configuration_res_t config ) noexcept
 {
     natus::gpu::id_res_t id = config->get_id() ;
 
@@ -1532,7 +1474,7 @@ natus::gpu::result gl3_backend::configure( natus::gpu::shader_configuration_res_
 }
 
 //***
-natus::gpu::result gl3_backend::configure( natus::gpu::image_configuration_res_t config ) noexcept 
+natus::gpu::result es3_backend::configure( natus::gpu::image_configuration_res_t config ) noexcept 
 {
     natus::gpu::id_res_t id = config->get_id() ;
 
@@ -1555,7 +1497,7 @@ natus::gpu::result gl3_backend::configure( natus::gpu::image_configuration_res_t
 }
 
 //***
-natus::gpu::result gl3_backend::connect( natus::gpu::render_configuration_res_t config, natus::gpu::variable_set_res_t vs ) noexcept
+natus::gpu::result es3_backend::connect( natus::gpu::render_configuration_res_t config, natus::gpu::variable_set_res_t vs ) noexcept
 {
     natus::gpu::id_res_t id = config->get_id() ;
 
@@ -1575,7 +1517,7 @@ natus::gpu::result gl3_backend::connect( natus::gpu::render_configuration_res_t 
 }
 
 //****
-natus::gpu::result gl3_backend::update( natus::gpu::geometry_configuration_res_t config ) noexcept 
+natus::gpu::result es3_backend::update( natus::gpu::geometry_configuration_res_t config ) noexcept 
 {
     natus::gpu::id_res_t id = config->get_id() ;
 
@@ -1595,7 +1537,7 @@ natus::gpu::result gl3_backend::update( natus::gpu::geometry_configuration_res_t
 }
 
 //****
-natus::gpu::result gl3_backend::render( natus::gpu::render_configuration_res_t config, natus::gpu::backend::render_detail_cref_t detail ) noexcept 
+natus::gpu::result es3_backend::render( natus::gpu::render_configuration_res_t config, natus::gpu::backend::render_detail_cref_t detail ) noexcept 
 { 
     natus::gpu::id_res_t id = config->get_id() ;
 
@@ -1618,12 +1560,12 @@ natus::gpu::result gl3_backend::render( natus::gpu::render_configuration_res_t c
 }
 
 //****
-void_t gl3_backend::render_begin( void_t ) noexcept 
+void_t es3_backend::render_begin( void_t ) noexcept 
 {
     _pimpl->begin_frame() ;
 }
 
-void_t gl3_backend::render_end( void_t ) noexcept 
+void_t es3_backend::render_end( void_t ) noexcept 
 {
     _pimpl->end_frame() ;
 }

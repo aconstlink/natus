@@ -31,7 +31,10 @@ target_include_directories( imgui
 
 export( TARGETS imgui APPEND FILE ${PROJECT_NAME}-targets.cmake)
 
-#target_compile_options(imgui PUBLIC -DIMGUI_DEFINE_MATH_OPERATORS )
+set_target_properties( imgui PROPERTIES POSITION_INDEPENDENT_CODE True )
+if( NATUS_COMPILER_GNU )
+  target_compile_options( imgui PUBLIC -DfPIC )
+endif()
 
 ###########################################################
 # SECTION: Install

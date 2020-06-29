@@ -4,6 +4,9 @@
 #include "typedefs.h"
 #include "result.h"
 
+// memset
+#include <cstring>
+
 namespace natus
 {
     namespace gpu
