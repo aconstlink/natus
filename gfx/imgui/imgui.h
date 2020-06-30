@@ -54,6 +54,7 @@ namespace natus
             ~imgui( void_t ) ;
 
             void_t init( natus::gpu::async_view_ref_t ) ;
+            void_t begin( void_t ) ;
             void_t render( natus::gpu::async_view_ref_t ) ;
 
             typedef ::std::function< void_t ( ImGuiContext* ) > exec_funk_t ;

@@ -35,8 +35,7 @@ imgui::~imgui( void_t )
 
 //***
 void_t imgui::execute( exec_funk_t funk )
-{
-    ImGui::SetCurrentContext( _ctx ) ;
+{    
     funk( _ctx ) ;
 }
 
@@ -217,8 +216,15 @@ void_t imgui::init( natus::gpu::async_view_ref_t async )
 
         ImGui::StyleColorsDark() ;
         
-        ImGui::NewFrame() ;
+        
     }
+}
+
+//***
+void_t imgui::begin( void_t ) 
+{
+    ImGui::SetCurrentContext( _ctx ) ;
+    ImGui::NewFrame() ;
 }
 
 //***
@@ -232,7 +238,7 @@ void_t imgui::render( natus::gpu::async_view_ref_t async )
         auto* var = vars->data_variable< natus::math::mat4f_t >( "u_proj" ) ;
         var->set( camera.mat_proj() ) ;
     }
-
+    
     ImGui::Render() ;
     ImDrawData* draw_data = ImGui::GetDrawData() ;
 
@@ -360,7 +366,7 @@ void_t imgui::render( natus::gpu::async_view_ref_t async )
         }
     }
 
-    ImGui::NewFrame() ;
+    
 }
 
 //****
