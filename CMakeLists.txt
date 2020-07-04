@@ -65,7 +65,7 @@ natus_export_clear()
 add_subdirectory( "externals/filesystem" )
 add_subdirectory( "externals/khronos" )
 #add_subdirectory( "externals/lua" )
-#add_subdirectory( "externals/rtmidi" )
+add_subdirectory( "externals/thestk" )
 #add_subdirectory( "externals/rapidxml" )
 #add_subdirectory( "externals/stb" )
 #add_subdirectory( "externals/ogg" )
@@ -88,7 +88,7 @@ add_subdirectory( "externals/imgui" )
 #find_package( Fmod ) 
 
 if( NATUS_TARGET_OS_WIN )
-    #find_package( XInput REQUIRED )
+    find_package( XInput REQUIRED )
     #find_package( XAudio2 REQUIRED )
  #   find_package( Wddk REQUIRED )
 elseif( NATUS_OS_LINUX )
@@ -124,6 +124,7 @@ list( APPEND subdirs
     "system"
     "gpu"
     "gfx"
+    "device"
     ${subdirs_header_only}
     )
 
