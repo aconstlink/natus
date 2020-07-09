@@ -2,6 +2,7 @@
 #include "platform_application.h"
 #include "../app.h"
 
+#include <natus/device/global.h>
 #include <natus/memory/global.h>
 #include <natus/log/global.h>
 
@@ -66,6 +67,8 @@ natus::application::result platform_application::start_update_thread( void_t )
 
         while( _sd->update_running )
         {
+            natus::device::global_t::system()->update() ;
+
             if( _app->before_update() )
             {
                 _app->on_update() ;

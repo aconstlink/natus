@@ -143,7 +143,7 @@ namespace natus
             template< class B >
             this_ref_t operator = ( res<B> const & rhv )
             {
-                _data = rhv.get_sptr() ;
+                _data = ::std::dynamic_pointer_cast<T>( rhv.get_sptr() ) ;
                 return *this ;
             }
 
@@ -157,6 +157,14 @@ namespace natus
         public:
 
             bool_t is_valid( void_t ) const { return _data != nullptr ; }
+
+        public:
+
+            template< typename B >
+            static bool_t castable( B const & o )
+            {
+                return dynamic_cast< value_ptr_t >( o.get_sptr().get() ) != nullptr ;
+            }
         };
     }
 }

@@ -3,14 +3,24 @@ set( sources
     "api.h"
     "result.h"
     "typedefs.h"
+    "global.h"
+    "global.cpp"
 
-    "physical.hpp"
+    "device.hpp"
     "component.hpp"
     "system.h"
     "system.cpp"
     
     "imodule.h"
+
+    "layouts/ascii.hpp"
+    "layouts/three.hpp"
+    "layouts/ps3.hpp"
+    "layouts/xbox360.hpp"
     
+    "devices/three_button_mouse.hpp"
+    "devices/ascii_keyboard.hpp"
+
     "components/button.hpp"
     "components/key.hpp"
     "components/knob.hpp"

@@ -82,13 +82,11 @@ target_compile_options( ${cur_lib_name} PUBLIC ${NATUS_WINDOW_SYSTEM_DEFINES} )
 target_link_libraries( ${cur_lib_name}
     PUBLIC natus_graphics_options 
     PUBLIC natus::system
-    #PUBLIC natus::gpx
     PUBLIC natus::gpu
     PUBLIC natus::concurrent
     PUBLIC natus::log
     PUBLIC natus::memory
-
-    #PUBLIC natus::device
+    PUBLIC natus::device
     PUBLIC natus::io
 ) 
 

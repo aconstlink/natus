@@ -28,10 +28,6 @@ namespace natus
                 {
                 }
 
-                scroll( natus::std::string_cref_t name, size_t const id ) noexcept : input_component( name, id )
-                {
-                }
-
                 scroll( this_cref_t rhv ) noexcept : input_component( rhv )
                 {
                     _value = rhv._value ;
@@ -54,6 +50,7 @@ namespace natus
 
                 float_t value ( void_t ) const noexcept { return _value ; }
             };
+            natus_typedef( scroll ) ;
         }
     }
 }

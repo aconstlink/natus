@@ -25,10 +25,6 @@ namespace natus
                 {
                 }
 
-                point( natus::std::string_cref_t name, size_t const id ) noexcept : input_component( name, id )
-                {
-                }
-
                 point( this_cref_t rhv ) noexcept : input_component( rhv )
                 {
                     _value = rhv._value ;
@@ -43,7 +39,7 @@ namespace natus
 
             public:
 
-                this_ref_t operator = ( float_t const v ) noexcept
+                this_ref_t operator = ( natus::math::vec2f_cref_t v ) noexcept
                 {
                     _value = v ;
                     return *this ;
@@ -51,6 +47,7 @@ namespace natus
 
                 natus::math::vec2f_cref_t value ( void_t ) const noexcept { return _value ; }
             };
+            natus_typedef( point ) ;
         }
     }
 }

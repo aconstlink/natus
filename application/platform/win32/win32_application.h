@@ -2,8 +2,7 @@
 
 #include "../../api.h"
 #include "../platform_application.h"
-
-//#include <natus/device/protos.h>
+#include <natus/device/modules/win32/rawinput_module.h>
 
 namespace natus
 {
@@ -20,8 +19,8 @@ namespace natus
 
                 /// can be used for special escape key pattern
                 size_t _escape_sequence = 0 ;
-
-                //natus_device::natus_win32::rawinput_api_ptr_t _rawinput_ptr = nullptr ;
+                
+                natus::device::win32::rawinput_module_res_t _rawinput ;
 
             public:
 
