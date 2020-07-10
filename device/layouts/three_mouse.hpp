@@ -66,10 +66,14 @@ namespace natus
                     return __names[ size_t( b ) >= size_t( button::num_buttons ) ? size_t( button::num_buttons ) : size_t( b ) ] ;
                 }
 
-                static float_t get_scroll( this_device_res_t ) noexcept
+                static bool_t get_scroll( this_device_res_t dev, float_t & v ) noexcept
                 {
-                    // @todo
-                    return 0.0f ;
+                    auto* comp = dev->get_component<natus::device::components::scroll_t>(
+                        this_t::input_component::scroll_wheel ) ;
+
+                    v = comp->value() ;
+
+                    return comp->has_changed() ;
                 }
 
                 static natus::math::vec2f_t get_local( this_device_res_t dev ) noexcept

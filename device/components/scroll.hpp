@@ -20,6 +20,7 @@ namespace natus
 
             private:
 
+                bool_t _changed = false ;
                 float_t _value = 0.0f ;
 
             public:
@@ -44,11 +45,19 @@ namespace natus
 
                 this_ref_t operator = ( float_t const v ) noexcept
                 {
+                    _changed = true ;
                     _value = v ;
                     return *this ;
                 }
 
+                bool_t has_changed( void_t ) const { return _changed ; }
                 float_t value ( void_t ) const noexcept { return _value ; }
+
+                virtual void_t update( void_t ) noexcept final
+                {
+                    _changed = false ;
+                    _value = 0.0f ;
+                }
             };
             natus_typedef( scroll ) ;
         }

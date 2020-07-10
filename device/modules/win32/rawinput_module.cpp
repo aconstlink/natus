@@ -138,7 +138,6 @@ void_t rawinput_module::update( void_t )
     // mouse
     {
         natus::concurrent::lock_t lk( _buffer_mtx ) ;
-
         
         {
             // 1. update components
