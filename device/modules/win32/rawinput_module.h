@@ -2,9 +2,8 @@
 #pragma once
 
 #include "../../imodule.h"
-#include "../../layouts/three.hpp"
-#include "../../layouts/ascii.hpp"
-#include "../../devices/three_button_mouse.hpp"
+#include "../../layouts/three_mouse.hpp"
+#include "../../layouts/ascii_keyboard.hpp"
 
 #include <natus/concurrent/mutex.hpp>
 #include <natus/std/vector.hpp>
@@ -24,7 +23,7 @@ namespace natus
 
             private: // mouse typedefs
 
-                typedef natus::device::three_button_mouse_t::button three_button_t ;
+                typedef natus::device::layouts::three_mouse_t::button three_button_t ;
                 typedef natus::device::components::button_state button_state_t ;
 
                 typedef ::std::pair< three_button_t, button_state_t> mouse_button_item_t ;

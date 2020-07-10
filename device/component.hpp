@@ -11,7 +11,7 @@ namespace natus
         class icomponent
         {
         public: 
-            virtual ~icomponent( void_t ) {}
+            virtual void_t update( void_t ) noexcept = 0 ;
         };
         natus_typedef( icomponent ) ;
 
@@ -20,6 +20,7 @@ namespace natus
         public:
 
             virtual ~input_component( void_t ) {}
+            virtual void_t update( void_t ) noexcept {}
         };
         natus_typedef( input_component ) ;
 
@@ -28,6 +29,7 @@ namespace natus
         public:
             
             virtual ~output_component( void_t ) {}
+            virtual void_t update( void_t ) noexcept {}
         };
         natus_typedef( output_component ) ;
     }

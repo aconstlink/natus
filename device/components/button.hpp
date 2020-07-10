@@ -62,6 +62,19 @@ namespace natus
 
                 float_t value ( void_t ) const noexcept { return _value ; }
                 button_state state( void_t ) const noexcept { return _bs ; }
+
+
+                virtual void_t update( void_t ) noexcept final
+                {
+                    if( _bs == natus::device::components::button_state::pressed )
+                    {
+                        _bs = natus::device::components::button_state::pressing ;
+                    }
+                    else if( _bs == natus::device::components::button_state::released )
+                    {
+                        _bs = natus::device::components::button_state::none ;
+                    }
+                }
             };
             natus_typedef( button ) ;
         }

@@ -10,7 +10,7 @@ using namespace natus::device::win32 ;
 
 namespace this_file
 {
-    typedef natus::device::three_button_mouse_t::button three_button_t ;
+    typedef natus::device::layouts::three_mouse_t::button three_button_t ;
     typedef natus::device::components::button_state button_state_t ;
 
     static button_state_t map_raw_button_state_left_to_button_state( USHORT const usButtonFlags )
@@ -90,6 +90,7 @@ rawinput_module::rawinput_module( void_t )
 
     {
         _three_device = natus::device::three_device_t( "Win32 Rawinput Three Button Mouse" ) ;
+        _ascii_device = natus::device::ascii_device_t( "Win32 Rawinput Ascii Keyboard" ) ;
     }
 }
 
@@ -140,30 +141,40 @@ void_t rawinput_module::update( void_t )
 
         
         {
-            natus::device::three_button_mouse_t mouse( _three_device ) ;
-
             // 1. update components
-            // @todo
+            {
+                _three_device->update_components() ;
+                _ascii_device->update_components() ;
+            }
 
             // 2. insert new keys
             for( auto const& item : _three_button_items )
             {
-                auto* btn = mouse.get_component( item.first ) ;
+                auto* btn = natus::device::layouts::three_mouse_t::get_component( 
+                    _three_device, item.first ) ;
+
                 *btn = item.second ;
             }
 
-            //if( _pointer_coords_global.size() > 0 )
-              //  kptr->set_global_position( _pointer_coords_global.back() ) ;
+            if( _pointer_coords_global.size() > 0 )
+            {
+                auto* coord = natus::device::layouts::three_mouse_t::get_global_component(
+                    _three_device ) ;
+
+                *coord = _pointer_coords_global.back() ;
+            }
 
             if( _pointer_coords_local.size() > 0 )
             {
-                auto* coord = mouse.get_pointer_component() ;
+                auto* coord = natus::device::layouts::three_mouse_t::get_local_component(
+                    _three_device ) ;
                 *coord = _pointer_coords_local.back() ;
             }
 
             if( _scroll_items.size() > 0 )
             {
-                auto* scroll = mouse.get_scroll_component() ;
+                auto* scroll = natus::device::layouts::three_mouse_t::get_scroll_component(
+                    _three_device ) ;
                 
                 if( _scroll_items.back() == 65416 ) *scroll = -1.0f ;
                 else if( _scroll_items.back() == 120 ) *scroll = 1.0f ;

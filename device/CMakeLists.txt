@@ -13,13 +13,10 @@ set( sources
     
     "imodule.h"
 
-    "layouts/ascii.hpp"
-    "layouts/three.hpp"
-    "layouts/ps3.hpp"
-    "layouts/xbox360.hpp"
-    
-    "devices/three_button_mouse.hpp"
-    "devices/ascii_keyboard.hpp"
+    "layouts/ascii_keyboard.hpp"
+    "layouts/three_mouse.hpp"
+    "layouts/ps3_controller.hpp"
+    "layouts/xbox360_controller.hpp"
 
     "components/button.hpp"
     "components/key.hpp"
