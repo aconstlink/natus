@@ -71,8 +71,8 @@ namespace natus
             };
             natus_typedef( window_data ) ;
 
-            void_t change( window_data_cref_t ) ;
-            void_t change( natus::device::three_device_res_t ) ;
+            void_t update( window_data_cref_t ) ;
+            void_t update( natus::device::three_device_res_t ) ;
 
             // Returns an id that can be used to render the passed image.
             // the image needs to be registered before via an image_configuration.

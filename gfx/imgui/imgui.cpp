@@ -434,7 +434,7 @@ void_t imgui::do_default_imgui_init( void_t )
 }
 
 //****
-void_t imgui::change( window_data_cref_t data ) 
+void_t imgui::update( window_data_cref_t data ) 
 {
     ImGuiIO& io = ImGui::GetIO();
     io.DisplaySize = ImVec2( ( float_t ) data.width, ( float_t ) data.height );
@@ -443,7 +443,7 @@ void_t imgui::change( window_data_cref_t data )
 }
 
 //****
-void_t imgui::change( natus::device::three_device_res_t mouse ) 
+void_t imgui::update( natus::device::three_device_res_t mouse ) 
 {
     ImGuiIO& io = ImGui::GetIO();
 
