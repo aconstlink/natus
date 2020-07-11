@@ -485,11 +485,11 @@ void_t imgui::change( natus::device::three_device_res_t mouse )
             {
                 io.MouseDown[ 0 ] = true ;
             }
-            if( layout_t::is_pressed( mouse, layout_t::button::right ) )
+            if( layout_t::is_pressing( mouse, layout_t::button::right ) )
             {
                 io.MouseDown[ 1 ] = true ;
             }
-            if( layout_t::is_pressed( mouse, layout_t::button::middle ) )
+            if( layout_t::is_pressing( mouse, layout_t::button::middle ) )
             {
                 io.MouseDown[ 2 ] = true ;
             }
