@@ -221,10 +221,75 @@ void_t imgui::init( natus::gpu::async_view_ref_t async )
 }
 
 //***
-void_t imgui::begin( void_t ) 
+void_t imgui::begin( natus::device::three_device_res_t mouse ) 
 {
     ImGui::SetCurrentContext( _ctx ) ;
     ImGui::NewFrame() ;
+
+    ImGuiIO& io = ImGui::GetIO();
+
+    // handle mouse
+    if( mouse.is_valid() )
+    {
+        // 1. mouse position
+        {
+            if( io.WantSetMousePos )
+            {
+                // @todo set mouse cursor
+            }
+            else
+            {
+                // transforms natus coords to imgui coords.
+                // get_local origin : bottom left upwards
+                // imgui needs origin : top left downwards
+                natus::math::vec2f_t pos = (natus::device::three_device_t::layout_t::get_local( mouse ) -
+                   natus::math::vec2f_t( 0.0f, 1.0f ) ) * natus::math::vec2f_t( 1.0f, -1.0f ) ;
+                
+                pos = pos * natus::math::vec2f_t( 
+                    float_t( io.DisplaySize.x ), 
+                    float_t( io.DisplaySize.y ) ) ;
+
+                io.MousePos = ImVec2( pos.x(), pos.y() ) ;
+            }
+        }
+
+        // 2. buttons
+        {
+            using layout_t = natus::device::three_device_t::layout_t ;
+
+            for( size_t i = 0; i < 3; ++i )
+            {
+                io.MouseDown[ i ] = false ;
+            }
+
+            if( layout_t::is_pressing( mouse, layout_t::button::left ) )
+            {
+                io.MouseDown[ 0 ] = true ;
+            }
+            if( layout_t::is_pressed( mouse, layout_t::button::right ) )
+            {
+                io.MouseDown[ 1 ] = true ;
+            }
+            if( layout_t::is_pressed( mouse, layout_t::button::middle ) )
+            {
+                io.MouseDown[ 2 ] = true ;
+            }
+        }
+
+        // 3. wheel
+        {
+            using layout_t = natus::device::three_device_t::layout_t ;
+
+            float_t const m = 1.0f ; // io.KeyCtrl ? 1.0f : 2.5f ;
+            float_t s ;
+            if( layout_t::get_scroll( mouse, s ) )
+            {
+                s = s / m ;
+                if( io.KeyShift ) io.MouseWheelH = s ;
+                else io.MouseWheel = s ;
+            }
+        }
+    }
 }
 
 //***

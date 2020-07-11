@@ -24,6 +24,9 @@ namespace natus
         class device : public idevice
         {
             natus_this_typedefs( device<L> ) ;
+
+        public:
+
             natus_typedefs( L, layout ) ;
 
         private:
