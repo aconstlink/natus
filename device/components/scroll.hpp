@@ -31,11 +31,13 @@ namespace natus
 
                 scroll( this_cref_t rhv ) noexcept : input_component( rhv )
                 {
+                    _changed = rhv._changed ;
                     _value = rhv._value ;
                 }
 
                 scroll( this_rref_t rhv ) noexcept : input_component( ::std::move( rhv ) )
                 {
+                    _changed = rhv._changed ;
                     _value = rhv._value ;
                 }
 
