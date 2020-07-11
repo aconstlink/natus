@@ -9,7 +9,7 @@ endif()
 option( BUILD_SHARED_LIBS "" ${NATUS_LIBRARY_BUILD_SHARED} )
 option( BUILD_STATIC_LIBS "" ${BUILD_STATIC} )
 option( BUILD_TESTING "" OFF )
-set( RTMIDI_TARGETNAME_UNINSTALL rtmidi_uninstall )
+
 
 #cmake_policy( PUSH )
 #set( CMAKE_POLICY_DEFAULT_CMP0042 OLD )
@@ -17,13 +17,16 @@ set( RTMIDI_TARGETNAME_UNINSTALL rtmidi_uninstall )
 
 add_subdirectory( rtmidi )
 #cmake_policy( POP )
+set( RTMIDI_TARGETNAME_UNINSTALL rtmidi_uninstall CACHE STRING "" FORCE )
 
 if( TARGET rtmidi )
 set_target_properties( rtmidi PROPERTIES FOLDER "natus/externals/rtmidi" )
 else()
 set_target_properties( rtmidi_static PROPERTIES FOLDER "natus/externals/rtmidi" )
 endif()
+if( TARGET rtmidi_uninstall )
 set_target_properties( rtmidi_uninstall PROPERTIES FOLDER "natus/externals/rtmidi" )
+endif()
 set( RTMIDI_INCLUDE_DIRS "${CMAKE_CURRENT_LIST_DIR}/rtmidi" )
 
 if( TARGET rtmidi )
