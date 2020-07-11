@@ -62,11 +62,14 @@ target_compile_options( ${cur_lib_name} PRIVATE ${unwanted_compiler_options} )
 
 target_link_libraries( ${cur_lib_name}
   PRIVATE ${os_libs} 
-  PUBLIC rtmidi
   PUBLIC natus::memory
   PUBLIC natus::log 
     )
 
+if( TARGET rtmidi )
+target_link_libraries( ${cur_lib_name}
+  PUBLIC rtmidi )
+endif()
 ###########################################################
 # SECTION: Build Tree
 ###########################################################

@@ -1,4 +1,9 @@
 
+option( NATUS_RTMIDI off )
+if( NOT NATUS_RTMIDI ) 
+return()
+endif()
+
 set( RTMIDI_INSTALL_HEADER_BASE "include/${PROJECT_NAME}/externals" )
 
 if( NATUS_LIBRARY_BUILD_SHARED )
