@@ -153,14 +153,15 @@ namespace natus
             template< typename T >
             T* get_component( typename layout_t::input_component const c ) noexcept
             {
-                if( size_t( c ) >= size_t( typename layout_t::input_component::num_components ) ) return nullptr ;
+                if( size_t( c ) >= size_t(layout_t::input_component::num_components) ) 
+                    return nullptr ;
                 return dynamic_cast< T* >( _inputs[ size_t( c ) ] ) ;
             }
 
             template< typename T >
             T* get_component( typename layout_t::output_component const c ) noexcept
             {
-                if( size_t( c ) >= size_t( typename layout_t::output_component::num_components ) ) return nullptr ;
+                if( size_t( c ) >= size_t(layout_t::output_component::num_components) ) return nullptr ;
                 return dynamic_cast< T* >( _outputs[ size_t( c ) ] ) ;
             }
 
@@ -168,7 +169,7 @@ namespace natus
 
             bool_t foreach_input( input_funk_t funk ) noexcept
             {
-                for( size_t i = 0; i < size_t( typename layout_t::input_component::num_components ); ++i )
+                for( size_t i = 0; i < size_t( layout_t::input_component::num_components ); ++i )
                 {
                     funk( typename layout_t::input_component( i ), _inputs[ i ] ) ;
                 }
@@ -180,7 +181,7 @@ namespace natus
 
             bool_t foreach_output( output_funk_t funk ) noexcept
             {
-                for( size_t i = 0; i < size_t( typename layout_t::output_component::num_components ); ++i )
+                for( size_t i = 0; i < size_t( layout_t::output_component::num_components ); ++i )
                 {
                     funk( typename layout_t::output_component( i ), _outputs[ i ] ) ;
                 }

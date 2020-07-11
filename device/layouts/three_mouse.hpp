@@ -18,7 +18,7 @@ namespace natus
                 natus_this_typedefs( three_mouse ) ;
                 natus_soil_typedefs( natus::device::device< this_t >, this_device ) ;
 
-                friend class this_device_t ;
+                friend this_device_t ;
 
             public:
 
