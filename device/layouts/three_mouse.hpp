@@ -53,6 +53,23 @@ namespace natus
                     // outputs
                 }
 
+            private:
+
+                this_t::this_device_res_t _dev ;
+
+            public:
+
+                three_mouse( this_t::this_device_res_t dev ) : _dev( ::std::move( dev ) )
+                {
+                    if( !_dev.is_valid() )
+                    {
+                        _dev = this_device_t() ;
+                    }
+                }
+                three_mouse( this_cref_t rhv ) : _dev( rhv._dev ) {}
+                three_mouse( this_rref_t rhv ) : _dev( ::std::move( rhv._dev ) ) {}
+                ~three_mouse( void_t ) {}
+
             public:
 
                 enum class button
@@ -66,9 +83,9 @@ namespace natus
                     return __names[ size_t( b ) >= size_t( button::num_buttons ) ? size_t( button::num_buttons ) : size_t( b ) ] ;
                 }
 
-                static bool_t get_scroll( this_device_res_t dev, float_t & v ) noexcept
+                bool_t get_scroll( float_t & v ) noexcept
                 {
-                    auto* comp = dev->get_component<natus::device::components::scroll_t>(
+                    auto* comp = _dev->get_component<natus::device::components::scroll_t>(
                         this_t::input_component::scroll_wheel ) ;
 
                     v = comp->value() ;
@@ -76,17 +93,17 @@ namespace natus
                     return comp->has_changed() ;
                 }
 
-                static natus::math::vec2f_t get_local( this_device_res_t dev ) noexcept
+                natus::math::vec2f_t get_local( void_t ) noexcept
                 {
-                    auto* comp = dev->get_component<natus::device::components::point_t>(
+                    auto* comp = _dev->get_component<natus::device::components::point_t>(
                         this_t::input_component::local_coords ) ;
 
                     return natus::math::vec2f_t( comp->value() ) ;
                 }
 
-                static natus::math::vec2f_t get_global( this_device_res_t dev ) noexcept
+                natus::math::vec2f_t get_global( void_t ) noexcept
                 {
-                    auto* comp = dev->get_component<natus::device::components::point_t>(
+                    auto* comp = _dev->get_component<natus::device::components::point_t>(
                         this_t::input_component::global_coords ) ;
 
                     return natus::math::vec2f_t( comp->value() ) ;
@@ -94,60 +111,58 @@ namespace natus
 
             public:
 
-                static natus::device::components::button_ptr_t get_component( 
-                    this_device_res_t dev, this_t::button const b ) noexcept
+                 natus::device::components::button_ptr_t get_component( this_t::button const b ) noexcept
                 {
                     natus::device::components::button_ptr_t ret = nullptr ;
 
                     if( b == this_t::button::left )
                     {
-                        ret = dev->get_component<natus::device::components::button_t>(
+                        ret = _dev->get_component<natus::device::components::button_t>(
                             this_t::input_component::left_button ) ;
                     }
                     else if( b == this_t::button::middle )
                     {
-                        ret = dev->get_component<natus::device::components::button_t>(
+                        ret = _dev->get_component<natus::device::components::button_t>(
                             this_t::input_component::middle_button ) ;
                     }
                     else if( b == this_t::button::right )
                     {
-                        ret = dev->get_component<natus::device::components::button_t>(
+                        ret = _dev->get_component<natus::device::components::button_t>(
                             this_t::input_component::right_button ) ;
                     }
 
                     return ret ;
                 }
 
-                static natus::device::components::scroll_ptr_t get_scroll_component( this_device_res_t dev ) noexcept
+                natus::device::components::scroll_ptr_t get_scroll_component( void_t ) noexcept
                 {
-                    return dev->get_component<natus::device::components::scroll_t>(
+                    return _dev->get_component<natus::device::components::scroll_t>(
                         this_t::input_component::scroll_wheel ) ;
                 }
 
-                static natus::device::components::point_ptr_t get_local_component( this_device_res_t dev ) noexcept
+                natus::device::components::point_ptr_t get_local_component( void_t ) noexcept
                 {
-                    return dev->get_component<natus::device::components::point_t>(
+                    return _dev->get_component<natus::device::components::point_t>(
                         this_t::input_component::local_coords ) ;
                 }
 
-                static natus::device::components::point_ptr_t get_global_component( this_device_res_t dev ) noexcept
+                natus::device::components::point_ptr_t get_global_component( void_t ) noexcept
                 {
-                    return dev->get_component<natus::device::components::point_t>(
+                    return _dev->get_component<natus::device::components::point_t>(
                         this_t::input_component::global_coords ) ;
                 }
 
             public:
 
-                static bool_t is_pressed( this_device_res_t dev, this_t::button const b ) noexcept
+                bool_t is_pressed( this_t::button const b ) noexcept
                 {
                     bool_t res = false ;
-                    if( !dev.is_valid() ) return res ;
 
                     switch( b )
                     {
                     case this_t::button::left:
                     {
-                        auto* comp = dev->get_component<natus::device::components::button_t>( this_t::input_component::left_button ) ;
+                        auto* comp = _dev->get_component<natus::device::components::button_t>( this_t::input_component::left_button ) ;
 
                         res = comp->state() == natus::device::components::button_state::pressed ;
                     }
@@ -155,14 +170,14 @@ namespace natus
                     break ;
                     case this_t::button::right:
                     {
-                        auto* comp = dev->get_component<natus::device::components::button_t>( this_t::input_component::right_button ) ;
+                        auto* comp = _dev->get_component<natus::device::components::button_t>( this_t::input_component::right_button ) ;
 
                         res = comp->state() == natus::device::components::button_state::pressed ;
                         break ;
                     }
                     case this_t::button::middle:
                     {
-                        auto* comp = dev->get_component<natus::device::components::button_t>( this_t::input_component::middle_button ) ;
+                        auto* comp = _dev->get_component<natus::device::components::button_t>( this_t::input_component::middle_button ) ;
 
                         res = comp->state() == natus::device::components::button_state::pressed ;
                         break ;
@@ -172,16 +187,15 @@ namespace natus
                     return res ;
                 }
 
-                static bool_t is_pressing( this_device_res_t dev, this_t::button const b ) noexcept
+                bool_t is_pressing( this_t::button const b ) noexcept
                 {
                     bool_t res = false ;
-                    if( !dev.is_valid() ) return res ;
 
                     switch( b )
                     {
                     case this_t::button::left:
                     {
-                        auto* comp = dev->get_component<natus::device::components::button_t>( this_t::input_component::left_button ) ;
+                        auto* comp = _dev->get_component<natus::device::components::button_t>( this_t::input_component::left_button ) ;
 
                         res = comp->state() == natus::device::components::button_state::pressing ;
 
@@ -189,14 +203,14 @@ namespace natus
                     }
                     case this_t::button::right:
                     {
-                        auto* comp = dev->get_component<natus::device::components::button_t>( this_t::input_component::right_button ) ;
+                        auto* comp = _dev->get_component<natus::device::components::button_t>( this_t::input_component::right_button ) ;
 
                         res = comp->state() == natus::device::components::button_state::pressing ;
                         break ;
                     }
                     case this_t::button::middle:
                     {
-                        auto* comp = dev->get_component<natus::device::components::button_t>( this_t::input_component::middle_button ) ;
+                        auto* comp = _dev->get_component<natus::device::components::button_t>( this_t::input_component::middle_button ) ;
 
                         res = comp->state() == natus::device::components::button_state::pressing ;
                         break ;
@@ -206,16 +220,15 @@ namespace natus
                     return res ;
                 }
 
-                static bool_t is_released( this_device_res_t dev, this_t::button const b ) noexcept
+                bool_t is_released( this_t::button const b ) noexcept
                 {
                     bool_t res = false ;
-                    if( !dev.is_valid() ) return res ;
 
                     switch( b )
                     {
                     case this_t::button::left:
                     {
-                        auto* comp = dev->get_component<natus::device::components::button_t>( this_t::input_component::left_button ) ;
+                        auto* comp = _dev->get_component<natus::device::components::button_t>( this_t::input_component::left_button ) ;
 
                         res = comp->state() == natus::device::components::button_state::released ;
 
@@ -223,14 +236,14 @@ namespace natus
                     }
                     case this_t::button::right:
                     {
-                        auto* comp = dev->get_component<natus::device::components::button_t>( this_t::input_component::right_button ) ;
+                        auto* comp = _dev->get_component<natus::device::components::button_t>( this_t::input_component::right_button ) ;
 
                         res = comp->state() == natus::device::components::button_state::released ;
                         break ;
                     }
                     case this_t::button::middle:
                     {
-                        auto* comp = dev->get_component<natus::device::components::button_t>( this_t::input_component::middle_button ) ;
+                        auto* comp = _dev->get_component<natus::device::components::button_t>( this_t::input_component::middle_button ) ;
 
                         res = comp->state() == natus::device::components::button_state::released ;
                         break ;

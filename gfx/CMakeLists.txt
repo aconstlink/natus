@@ -23,6 +23,7 @@ add_library( ${cur_alias_name} ALIAS ${cur_lib_name} )
 
 target_link_libraries( ${cur_lib_name}
   PUBLIC imgui
+  PUBLIC natus::device
   PUBLIC natus::gpu
   PUBLIC natus::memory
   PUBLIC natus::log 

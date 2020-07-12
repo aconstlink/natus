@@ -139,6 +139,8 @@ void_t rawinput_module::update( void_t )
     {
         natus::concurrent::lock_t lk( _buffer_mtx ) ;
         
+        natus::device::layouts::three_mouse_t mouse( _three_device ) ;
+
         {
             // 1. update components
             {
@@ -149,31 +151,27 @@ void_t rawinput_module::update( void_t )
             // 2. insert new keys
             for( auto const& item : _three_button_items )
             {
-                auto* btn = natus::device::layouts::three_mouse_t::get_component( 
-                    _three_device, item.first ) ;
+                auto* btn = mouse.get_component( item.first ) ;
 
                 *btn = item.second ;
             }
 
             if( _pointer_coords_global.size() > 0 )
             {
-                auto* coord = natus::device::layouts::three_mouse_t::get_global_component(
-                    _three_device ) ;
+                auto* coord = mouse.get_global_component() ;
 
                 *coord = _pointer_coords_global.back() ;
             }
 
             if( _pointer_coords_local.size() > 0 )
             {
-                auto* coord = natus::device::layouts::three_mouse_t::get_local_component(
-                    _three_device ) ;
+                auto* coord = mouse.get_local_component() ;
                 *coord = _pointer_coords_local.back() ;
             }
 
             if( _scroll_items.size() > 0 )
             {
-                auto* scroll = natus::device::layouts::three_mouse_t::get_scroll_component(
-                    _three_device ) ;
+                auto* scroll = mouse.get_scroll_component() ;
                 
                 if( _scroll_items.back() == 65416 ) *scroll = -1.0f ;
                 else if( _scroll_items.back() == 120 ) *scroll = 1.0f ;
