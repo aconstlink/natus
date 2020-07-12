@@ -113,8 +113,9 @@ void_t window::create_window( Display * display, Window wnd )
 {
     XSelectInput( display, wnd, 
                   ExposureMask | KeyPressMask | KeyReleaseMask | 
-                  ButtonPressMask | ButtonReleaseMask | 
-                  StructureNotifyMask //| ResizeRedirectMask 
+                  PointerMotionMask | ButtonPressMask | ButtonReleaseMask | 
+                  StructureNotifyMask | VisibilityChangeMask
+                  //| ResizeRedirectMask 
                   ) ;
 
     // prepare per window data
@@ -175,7 +176,7 @@ void_t window::destroy_window( void_t )
 //****************************************************************
 void_t window::xevent_callback( XEvent const & event ) 
 {
-    natus::log::global_t::status( "[window::xevent_callback]" ) ;
+    //natus::log::global_t::status( "[window::xevent_callback]" ) ;
 
     switch( event.type )
     {
@@ -184,14 +185,28 @@ void_t window::xevent_callback( XEvent const & event )
         natus::log::global_t::status("expose") ;
         break ;
 
+    case MotionNotify:
+        natus::log::global_t::status("MotionNotify") ;
+        break;
+
+    case ButtonPress:
+        natus::log::global_t::status("ButtonPress") ;
+        break ;
     case ButtonRelease:
         XClearWindow( event.xany.display, event.xany.window ) ;
         //run = false ;
-        //natus::log::global_t::status("buttonrelease") ;
+        natus::log::global_t::status("ButtonRelease") ;
         break ;
 
+    case KeyPress:
+        natus::log::global_t::status("KeyPress") ;
+        break ;
+
+    case KeyRelease:
+        natus::log::global_t::status("KeyRelease") ;
+        break ;
     case VisibilityNotify:
-        //natus::log::global_t::status("visnotify") ;
+        natus::log::global_t::status("visibility") ;
         break ;
 
     case ConfigureNotify:{

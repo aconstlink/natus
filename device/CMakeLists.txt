@@ -39,6 +39,13 @@ set( win32_sources
     "modules/win32/xinput_module.cpp"
 )
 
+set( linux_sources
+  "modules/linux/evdev_module.h"
+  "modules/linux/evdev_module.cpp"
+  "modules/linux/xlib_module.h"
+  "modules/linux/xlib_module.cpp"
+)
+
 set( unwanted_compiler_options )
 set( os_libs )
 
@@ -52,6 +59,10 @@ if( NATUS_TARGET_OS_WIN )
         # Note: C4005 seem to be a redefinition bug in the window header files.
         set( unwanted_compiler_options "/wd4005" )
     endif()
+endif()
+
+if( NATUS_TARGET_OS_LIN )
+  list( APPEND sources ${linux_sources} )
 endif()
 
 natus_vs_src_dir( sources )

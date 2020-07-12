@@ -81,7 +81,7 @@ namespace natus
                     return *this ;
                 }
 
-                this_ref_t operator = ( this_t::key_type_t const t ) noexcept
+                this_ref_t operator = ( this_t::key_type_t const k ) noexcept
                 {
                     _key_type = k ;
                     return *this ;
