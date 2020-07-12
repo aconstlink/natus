@@ -56,6 +56,80 @@ namespace this_file
     }
 }
 
+namespace this_file
+{
+    typedef natus::device::layouts::ascii_keyboard::ascii_key ascii_key_t ;
+    typedef natus::device::components::key_state key_state_t ;
+    typedef natus::device::layouts::ascii_keyboard_t layout_t ;
+
+    static ascii_key_t map_virtual_keycode_to_ascii_key( WPARAM const wparam )
+    {
+        if( wparam >= 0x30 && wparam <= 0x39 )
+        {
+            size_t dif = size_t( wparam - 0x30 ) ;
+            return layout_t::convert_ascii_number_keys( dif ) ;
+        }
+
+        if( wparam >= 0x41 && wparam <= 0x5a )
+        {
+            size_t dif = size_t( wparam - 0x41 ) ;
+            return layout_t::convert_ascii_letter_keys( dif ) ;
+        }
+
+        // 0 - 9 on numpad
+        if( wparam >= 0x60 && wparam <= 0x69 )
+        {
+            size_t dif = size_t( wparam - 0x60 ) ;
+            return layout_t::convert_ascii_numpad_number_keys( dif ) ;
+        }
+
+        // VK_F1 - VK_F12
+        if( wparam >= 0x70 && wparam <= 0x7B )
+        {
+            size_t dif = size_t( wparam - 0x70 ) ;
+            return layout_t::convert_ascii_function_keys( dif ) ;
+        }
+
+        switch( wparam )
+        {
+        case VK_BACK: return ascii_key_t::back_space ;
+        case VK_TAB: return ascii_key_t::tab ;
+        case VK_RETURN: return ascii_key_t::k_return ;
+        case VK_ESCAPE: return ascii_key_t::escape ;
+        case VK_SPACE: return ascii_key_t::space ;
+        case VK_LEFT: return ascii_key_t::arrow_left ;
+        case VK_UP: return ascii_key_t::arrow_up ;
+        case VK_RIGHT: return ascii_key_t::arrow_right ;
+        case VK_DOWN: return ascii_key_t::arrow_down ;
+        case VK_SHIFT: return ascii_key_t::shift_left ;
+        case VK_LSHIFT: return ascii_key_t::shift_left ;
+        case VK_RSHIFT: return ascii_key_t::shift_right ;
+        case VK_CONTROL: return ascii_key_t::ctrl_left ;
+        case VK_LCONTROL: return ascii_key_t::ctrl_left ;
+        case VK_RCONTROL: return ascii_key_t::ctrl_right ;
+        case VK_ADD: return ascii_key_t::num_add ;
+        case VK_SUBTRACT: return ascii_key_t::num_sub ;
+        case VK_MENU: return ascii_key_t::context ;
+        case 0xBD: return ascii_key_t::minus ;
+        case 0xBB: return ascii_key_t::plus ;
+
+        default: return ascii_key_t::none ;
+        }
+    }
+
+    /// map with window message
+    static key_state_t map_key_state_raw_wm_for_vzt_device( UINT const msg )
+    {
+        switch( msg )
+        {
+        case WM_KEYUP: return key_state_t::released;
+        case WM_KEYDOWN: return key_state_t::pressed ;
+        }
+        return key_state_t::none ;
+    }
+}
+
+
 //***
 rawinput_module::rawinput_module( void_t ) 
 {
@@ -135,20 +209,20 @@ void_t rawinput_module::update( void_t )
     // check for plug and play
     // update all devices
 
+    // 1. update components
+    {
+        _three_device->update_components() ;
+        _ascii_device->update_components() ;
+    }
+
     // mouse
     {
-        natus::concurrent::lock_t lk( _buffer_mtx ) ;
-        
         natus::device::layouts::three_mouse_t mouse( _three_device ) ;
 
-        {
-            // 1. update components
-            {
-                _three_device->update_components() ;
-                _ascii_device->update_components() ;
-            }
+        natus::concurrent::lock_t lk( _buffer_mtx ) ;
 
-            // 2. insert new keys
+        // insert new events
+        {
             for( auto const& item : _three_button_items )
             {
                 auto* btn = mouse.get_component( item.first ) ;
@@ -183,6 +257,21 @@ void_t rawinput_module::update( void_t )
         _pointer_coords_global.clear() ;
         _pointer_coords_local.clear() ;
         _scroll_items.clear() ;
+    }
+
+    // keybaord
+    {
+        natus::device::layouts::ascii_keyboard_t keyboard( _ascii_device ) ;
+
+        natus::concurrent::lock_t lk( _buffer_mtx ) ;
+        
+        {
+            for( auto const& item : _ascii_keyboard_keys )
+            {
+                keyboard.set_state( item.first, item.second ) ;
+            }
+            _ascii_keyboard_keys.clear() ;
+        }
     }
 }
 
@@ -361,10 +450,10 @@ bool_t rawinput_module::handle_input_event( HWND hwnd, UINT msg, WPARAM wParam, 
     {
         natus::concurrent::lock_t lk( _buffer_mtx ) ;
 
-        /*_ascii_keyboard_keys.push_back( ascii_keyboard_key_item_t(
-            so_device::so_win32::map_virtual_keycode_to_ascii_key( raw->data.keyboard.VKey ),
-            so_device::so_win32::map_key_state_raw_wm_for_vzt_device( raw->data.keyboard.Message )
-        ) ) ;*/
+        _ascii_keyboard_keys.push_back( ascii_keyboard_key_item_t(
+            this_file::map_virtual_keycode_to_ascii_key( raw->data.keyboard.VKey ),
+            this_file::map_key_state_raw_wm_for_vzt_device( raw->data.keyboard.Message )
+        ) ) ;
 
         return true ;
     }

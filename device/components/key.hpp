@@ -14,8 +14,17 @@ namespace natus
                 none,
                 pressed,
                 pressing,
-                released
+                released,
+                num_keys
             };
+
+            static natus::std::string_cref_t to_string( natus::device::components::key_state const ks ) noexcept
+            {
+                using ks_t = natus::device::components::key_state ;
+                static natus::std::string_t __key_states[] = { "none", "pressed", "pressing", "released", "invalid" } ;
+                size_t const i = size_t( ks ) >= size_t( ks_t::num_keys ) ? size_t( ks_t::num_keys ) : size_t( ks ) ;
+                return __key_states[ i ] ;
+            }
 
             static bool_t is_valid( key_state ks ) { return ks != key_state::none ; }
             static bool_t is_invalid( key_state ks ) { return ks == key_state::none ; }
@@ -29,8 +38,8 @@ namespace natus
             private:
 
                 key_type_t _key_type ;
-                natus::device::components::key_state _s ;
-                float_t _value ;
+                natus::device::components::key_state _s = natus::device::components::key_state::none ;
+                float_t _value = 0.0f ;
 
             public:
 
@@ -81,6 +90,21 @@ namespace natus
                 float_t value ( void_t ) const noexcept { return _value ; }
                 natus::device::components::key_state state( void_t ) const noexcept { return _s ; }
                 this_t::key_type_t key_type( void_t ) const noexcept { return _key_type ; }
+
+
+                virtual void_t update( void_t ) noexcept final
+                {
+                    using ks_t = natus::device::components::key_state ;
+
+                    if( _s == ks_t::pressed )
+                    {
+                        _s = ks_t::pressing ;
+                    }
+                    else if( _s == ks_t::released )
+                    {
+                        _s = ks_t::none ;
+                    }
+                }
             };
         }
     }

@@ -31,7 +31,7 @@ namespace natus
                 typedef natus::std::vector< int_t > scroll_items_t ;
 
                 typedef natus::std::vector< natus::math::vec2f_t > pointer_coords_t ;
-            
+
             private: // mouse data
 
                 mouse_button_items_t _three_button_items ;
@@ -39,7 +39,19 @@ namespace natus
                 pointer_coords_t _pointer_coords_local ;
                 scroll_items_t _scroll_items ;
 
-            private:
+            private: // keyboard typedefs 
+
+                typedef natus::device::layouts::ascii_keyboard::ascii_key ascii_key_t ;
+                typedef natus::device::components::key_state key_state_t ;
+
+                typedef ::std::pair< ascii_key_t, key_state_t > ascii_keyboard_key_item_t ;
+                typedef natus::std::vector< ascii_keyboard_key_item_t > ascii_keyboard_keys_t ;
+
+            private: // keyboard data 
+
+                ascii_keyboard_keys_t _ascii_keyboard_keys ;
+
+            private: // devices
 
                 natus::device::three_device_res_t _three_device ;
                 natus::device::ascii_device_res_t _ascii_device ;
