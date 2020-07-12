@@ -380,34 +380,36 @@ void_t imgui::do_default_imgui_init( void_t )
 
     io.DisplaySize = ImVec2( float_t( _width ), float_t( _height ) ) ;
 
+    using key_t = natus::device::layouts::ascii_keyboard_t::ascii_key ;
+
     // Keyboard mapping. ImGui will use those indices to peek into the io.KeysDown[] array.
-    /*io.KeyMap[ ImGuiKey_Tab ] = GLFW_KEY_TAB;
-    io.KeyMap[ ImGuiKey_LeftArrow ] = GLFW_KEY_LEFT;
-    io.KeyMap[ ImGuiKey_RightArrow ] = GLFW_KEY_RIGHT;
-    io.KeyMap[ ImGuiKey_UpArrow ] = GLFW_KEY_UP;
-    io.KeyMap[ ImGuiKey_DownArrow ] = GLFW_KEY_DOWN;
-    io.KeyMap[ ImGuiKey_PageUp ] = GLFW_KEY_PAGE_UP;
-    io.KeyMap[ ImGuiKey_PageDown ] = GLFW_KEY_PAGE_DOWN;
-    io.KeyMap[ ImGuiKey_Home ] = GLFW_KEY_HOME;
-    io.KeyMap[ ImGuiKey_End ] = GLFW_KEY_END;
-    io.KeyMap[ ImGuiKey_Insert ] = GLFW_KEY_INSERT;
-    io.KeyMap[ ImGuiKey_Delete ] = GLFW_KEY_DELETE;
-    io.KeyMap[ ImGuiKey_Backspace ] = GLFW_KEY_BACKSPACE;
-    io.KeyMap[ ImGuiKey_Space ] = GLFW_KEY_SPACE;
-    io.KeyMap[ ImGuiKey_Enter ] = GLFW_KEY_ENTER;
-    io.KeyMap[ ImGuiKey_Escape ] = GLFW_KEY_ESCAPE;
-    io.KeyMap[ ImGuiKey_KeyPadEnter ] = GLFW_KEY_KP_ENTER;
-    io.KeyMap[ ImGuiKey_A ] = GLFW_KEY_A;
-    io.KeyMap[ ImGuiKey_C ] = GLFW_KEY_C;
-    io.KeyMap[ ImGuiKey_V ] = GLFW_KEY_V;
-    io.KeyMap[ ImGuiKey_X ] = GLFW_KEY_X;
-    io.KeyMap[ ImGuiKey_Y ] = GLFW_KEY_Y;
-    io.KeyMap[ ImGuiKey_Z ] = GLFW_KEY_Z;*/
+    io.KeyMap[ ImGuiKey_Tab ] = size_t( key_t::tab ) ;
+    io.KeyMap[ ImGuiKey_LeftArrow ] = size_t( key_t::arrow_left );
+    io.KeyMap[ ImGuiKey_RightArrow ] = size_t( key_t::arrow_right );
+    io.KeyMap[ ImGuiKey_UpArrow ] = size_t( key_t::arrow_up );
+    io.KeyMap[ ImGuiKey_DownArrow ] = size_t( key_t::arrow_down );
+    io.KeyMap[ ImGuiKey_PageUp ] = size_t( key_t::one_up );
+    io.KeyMap[ ImGuiKey_PageDown ] = size_t( key_t::one_down );
+    //io.KeyMap[ ImGuiKey_Home ] = size_t( key_t::ho );
+    io.KeyMap[ ImGuiKey_End ] = size_t( key_t::sk_end );
+    io.KeyMap[ ImGuiKey_Insert ] = size_t( key_t::insert );
+    io.KeyMap[ ImGuiKey_Delete ] = size_t( key_t::k_delete );
+    io.KeyMap[ ImGuiKey_Backspace ] = size_t( key_t::back_space );
+    io.KeyMap[ ImGuiKey_Enter ] = size_t( key_t::k_return );
+    io.KeyMap[ ImGuiKey_Escape ] = size_t( key_t::escape );
+    io.KeyMap[ ImGuiKey_Space ] = size_t( key_t::space );
+    io.KeyMap[ ImGuiKey_A ] = size_t( key_t::a );
+    io.KeyMap[ ImGuiKey_C ] = size_t( key_t::c );
+    io.KeyMap[ ImGuiKey_V ] = size_t( key_t::v );
+    io.KeyMap[ ImGuiKey_X ] = size_t( key_t::x );
+    io.KeyMap[ ImGuiKey_Y ] = size_t( key_t::y );
+    io.KeyMap[ ImGuiKey_Z ] = size_t( key_t::z );
+
 
     /*
-    io.SetClipboardTextFn = ImGui_ImplGlfw_SetClipboardText;
-    io.GetClipboardTextFn = ImGui_ImplGlfw_GetClipboardText;
-    io.ClipboardUserData = g_Window;
+    io.SetClipboardTextFn = ;
+    io.GetClipboardTextFn = ;
+    io.ClipboardUserData = ;
     */
 
     // Create mouse cursors
@@ -510,6 +512,56 @@ void_t imgui::update( natus::device::three_device_res_t dev )
             }
         }
     }
+}
+
+//****
+void_t imgui::update( natus::device::ascii_device_res_t dev ) 
+{
+    using ks_t = natus::device::components::key_state ;
+    using layout_t = natus::device::layouts::ascii_keyboard_t ;
+    using key_t = layout_t::ascii_key ;
+
+    // handle keyboard
+    if( !dev.is_valid() ) return ;
+
+    ImGuiIO& io = ImGui::GetIO();
+
+    natus::device::layouts::ascii_keyboard_t keyboard( dev ) ;
+
+    for( size_t i = 0; i < size_t( key_t::num_keys ); ++i )
+    {
+        auto const ks = keyboard.get_state( key_t( i ) ) ;
+
+        if( ks == ks_t::none ) continue ;
+
+        char_t c ;
+        if( layout_t::convert_key_to_ascii_char( key_t(i), c ) )
+        {
+            io.KeysDown[ i ] = ks == ks_t::released ? false : true ;
+            if( !io.KeysDown[ i ] ) io.AddInputCharacter( c ) ;
+        }
+        else if( layout_t::convert_key_to_ascii_number( key_t(i), c ) )
+        {
+            io.KeysDown[ i ] = ks == ks_t::released ? false : true ;
+            if( !io.KeysDown[ i ] ) io.AddInputCharacter( c ) ;
+        }
+        else
+        {
+            io.KeysDown[ i ] = ks == ks_t::pressed || ks == ks_t::pressing ;
+        }
+    }
+
+    io.KeyCtrl = io.KeysDown[ size_t( key_t::ctrl_left ) ] ||
+        io.KeysDown[ size_t( key_t::ctrl_right ) ];
+
+    io.KeyShift = io.KeysDown[ size_t( key_t::shift_left ) ] ||
+        io.KeysDown[ size_t( key_t::shift_right ) ];
+
+    io.KeyAlt = io.KeysDown[ size_t( key_t::alt_left ) ] ||
+        io.KeysDown[ size_t( key_t::alt_right ) ];
+
+    io.KeySuper = io.KeysDown[ size_t( key_t::win_win_left ) ] ||
+        io.KeysDown[ size_t( key_t::win_win_right ) ] ;
 }
 
 //****

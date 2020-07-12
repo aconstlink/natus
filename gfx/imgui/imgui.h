@@ -9,6 +9,7 @@
 #include <natus/gpu/configuration/geometry_configuration.h>
 
 #include <natus/device/layouts/three_mouse.hpp>
+#include <natus/device/layouts/ascii_keyboard.hpp>
 
 #include <natus/soil/macros.h>
 #include <imgui/imgui.h>
@@ -73,6 +74,7 @@ namespace natus
 
             void_t update( window_data_cref_t ) ;
             void_t update( natus::device::three_device_res_t ) ;
+            void_t update( natus::device::ascii_device_res_t ) ;
 
             // Returns an id that can be used to render the passed image.
             // the image needs to be registered before via an image_configuration.

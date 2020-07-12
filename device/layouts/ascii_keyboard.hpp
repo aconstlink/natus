@@ -198,6 +198,8 @@ namespace natus
                     return ascii_key( size_t( ascii_key::num_0 ) + delta ) ;
                 }
 
+                
+
             public:
 
                 enum class input_component
