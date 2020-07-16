@@ -182,6 +182,7 @@ namespace natus
                         res = comp->state() == natus::device::components::button_state::pressed ;
                         break ;
                     }
+                    default: break ;
                     }
 
                     return res ;
@@ -215,6 +216,7 @@ namespace natus
                         res = comp->state() == natus::device::components::button_state::pressing ;
                         break ;
                     }
+                    default:break ;
                     }
 
                     return res ;
@@ -248,6 +250,7 @@ namespace natus
                         res = comp->state() == natus::device::components::button_state::released ;
                         break ;
                     }
+                    default: break ;
                     }
 
                     return res ;

@@ -70,8 +70,10 @@ natus_vs_src_dir( sources )
 add_library( ${cur_lib_name} ${NATUS_LIBRARY_BUILD_TYPE} ${sources} )
 add_library( ${cur_alias_name} ALIAS ${cur_lib_name} ) 
 target_compile_options( ${cur_lib_name} PRIVATE ${unwanted_compiler_options} )
+target_compile_options( ${cur_lib_name} PUBLIC ${NATUS_WINDOW_SYSTEM_DEFINES} )
 
 target_link_libraries( ${cur_lib_name}
+  PUBLIC natus_graphics_options 
   PRIVATE ${os_libs} 
   PUBLIC natus::memory
   PUBLIC natus::log 

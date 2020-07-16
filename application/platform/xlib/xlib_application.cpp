@@ -1,6 +1,7 @@
 #include "xlib_application.h"
 #include "xlib_window.h"
 
+#include <natus/device/global.h>
 #include <natus/log/global.h>
 
 #include <X11/Xlib.h>
@@ -52,12 +53,18 @@ Display * xlib_application::move_display( void_t )
 xlib_application::xlib_application( void_t ) 
 {
     connect_display() ;
+
+    _device_module = natus::device::xlib::xlib_module_t() ;
+    natus::device::global_t::system()->add_module( _device_module ) ;
 }
 
 //***********************************************************************
 xlib_application::xlib_application( natus::application::app_res_t app ) : base_t( app )
 {
     connect_display() ;
+
+    _device_module = natus::device::xlib::xlib_module_t() ;
+    natus::device::global_t::system()->add_module( _device_module ) ;
 }
 //**********************************************************************
 Display * xlib_application::get_display( void_t ) 
@@ -69,6 +76,7 @@ Display * xlib_application::get_display( void_t )
 xlib_application::xlib_application( this_rref_t rhv ) : base_t( ::std::move( rhv ) )
 {
     this_t::move_display() ;
+    _device_module = ::std::move( rhv._device_module ) ;
 }
 
 //**********************************************************************
@@ -138,14 +146,12 @@ natus::application::result xlib_application::on_exec( void_t )
 
             }
 
+            _device_module->handle_input_event( event ) ;
+
             switch( event.type )
             {
             case Expose:
                 natus::log::global_t::status("application expose") ;
-                break ;
-
-            case ButtonRelease:
-                //run = false ;
                 break ;
 
             case DestroyNotify:

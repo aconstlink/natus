@@ -3,6 +3,7 @@
 #include "../../api.h"
 #include "../platform_application.h"
 
+#include <natus/device/modules/linux/xlib_module.h>
 #include <X11/Xlib.h>
 
 namespace natus
@@ -30,6 +31,8 @@ namespace natus
                 static Display * connect_display( void_t ) ;
                 static void_t disconnect_display( void_t ) ;
                 static Display * move_display( void_t ) ;
+
+                natus::device::xlib::xlib_module_res_t _device_module ;
 
             public:
 
