@@ -95,8 +95,8 @@ void_t xlib_module::update( void_t )
             {
                 auto* scroll = mouse.get_scroll_component() ;
                 
-                if( _scroll_items.back() == 65416 ) *scroll = -1.0f ;
-                else if( _scroll_items.back() == 120 ) *scroll = 1.0f ;
+                if( _scroll_items.back() == -1 ) *scroll = -1.0f ;
+                else if( _scroll_items.back() == 1 ) *scroll = 1.0f ;
                 else *scroll = 0.0f ;
             }
         }
@@ -126,18 +126,17 @@ void_t xlib_module::update( void_t )
 //***
 bool_t xlib_module::handle_input_event( XEvent const & event )
 {
+    auto bs = natus::device::components::button_state::none ;
+    auto ks = natus::device::components::key_state::none ;
+
     switch( event.type )
     {
     case MotionNotify:
-        //natus::log::global_t::status("MotionNotify") ;
         {
             XMotionEvent const & ev = event.xmotion ;
-            //natus::log::global_t::status( ::std::to_string(ev.x) + " : " + ::std::to_string(ev.y) ) ;
-            //natus::log::global_t::status( ::std::to_string(ev.x_root) + " : " + ::std::to_string(ev.y_root) ) ;
 
             XWindowAttributes wa ;
             XGetWindowAttributes( ev.display, ev.window, &wa ) ;
-
 
             // do global
             {
@@ -164,27 +163,61 @@ bool_t xlib_module::handle_input_event( XEvent const & event )
                     float_t( ev.x ), float_t( dim.y() - ev.y ) ) / dim ;
                 _pointer_coords_local.push_back( v ) ;
             }
-
         }
         break;
 
     case ButtonPress:
-        natus::log::global_t::status("ButtonPress") ;
+        bs = natus::device::components::button_state::pressed ;
         break ;
 
     case ButtonRelease:
-        XClearWindow( event.xany.display, event.xany.window ) ;
-        //run = false ;
-        natus::log::global_t::status("ButtonRelease") ;
+        bs = natus::device::components::button_state::released ;
         break ;
 
     case KeyPress:
-        natus::log::global_t::status("KeyPress") ;
+        ks = natus::device::components::key_state::pressed ;
         break ;
 
     case KeyRelease:
-        natus::log::global_t::status("KeyRelease") ;
+        ks = natus::device::components::key_state::released ;
         break ;
+    }
+
+    if( bs != natus::device::components::button_state::none )
+    {
+        XButtonEvent const & ev = event.xbutton ;
+
+        this_t::three_button_t tb = this_t::three_button_t::none ;
+
+        if( ev.button == 1 ) tb = this_t::three_button_t::left ;
+        else if( ev.button == 2 ) tb = this_t::three_button_t::right ;
+        else if( ev.button == 3 ) tb = this_t::three_button_t::middle ;
+
+        if( tb != this_t::three_button_t::none )
+        {
+            natus::concurrent::lock_t lk( _buffer_mtx ) ;
+            _three_button_items.push_back( mouse_button_item_t( tb, bs ) ) ;
+        }
+
+        if( (ev.button == 4 || ev.button == 5) && 
+            bs == natus::device::components::button_state::released )
+        {
+            natus::concurrent::lock_t lk( _buffer_mtx ) ;
+            int_t const v = ev.button == 4 ? 1 : -1 ;
+            _scroll_items.push_back( v ) ;
+        }
+    }
+
+    if( ks != natus::device::components::key_state::none )
+    {
+        XKeyEvent const & ev = event.xkey ;
+
+        auto const keysym = XKeycodeToKeysym( ev.display, ev.keycode, 0 ) ;
+        if( keysym != NoSymbol )
+        {
+            natus::log::global_t::status( ::std::to_string(keysym ) ) ;
+        }
+
     }
 
     return true ;

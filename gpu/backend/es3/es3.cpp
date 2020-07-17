@@ -1342,11 +1342,11 @@ struct es3_backend::pimpl
 
     void_t begin_frame( void_t ) 
     {
-        //glClearColor( 0.1f, 0.1f, 0.1f, 1.0f ) ;
-        //natus::es::error::check_and_log( natus_log_fn( "glClearColor" ) ) ;
+        glClearColor( 0.1f, 0.1f, 0.1f, 1.0f ) ;
+        natus::es::error::check_and_log( natus_log_fn( "glClearColor" ) ) ;
 
-        //glClear( GL_COLOR_BUFFER_BIT ) ;
-        //natus::es::error::check_and_log( natus_log_fn( "glClear" ) ) ;
+        glClear( GL_COLOR_BUFFER_BIT ) ;
+        natus::es::error::check_and_log( natus_log_fn( "glClear" ) ) ;
         
         // reset render states
         this_t::set_render_states( *natus::gpu::backend_t::default_render_states() ) ;

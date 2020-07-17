@@ -14,8 +14,17 @@ namespace natus
                 none,
                 pressed,
                 pressing,
-                released
+                released,
+                num_keys
             };
+
+            static natus::std::string_cref_t to_string( natus::device::components::button_state const s ) noexcept
+            {
+                using bs_t = natus::device::components::button_state ;
+                static natus::std::string_t __button_states[] = { "none", "pressed", "pressing", "released", "invalid" } ;
+                size_t const i = size_t( s ) >= size_t( bs_t::num_keys ) ? size_t( bs_t::num_keys ) : size_t( s ) ;
+                return __button_states[ i ] ;
+            }
 
             class button : public input_component
             {
