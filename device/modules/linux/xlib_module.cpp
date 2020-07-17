@@ -1,9 +1,69 @@
 #include "xlib_module.h"
 
 #include <natus/math/vector/vector2.hpp>
+#include <X11/keysym.h>
 
 using namespace natus::device ;
 using namespace natus::device::xlib ;
+
+namespace this_file
+{
+    typedef natus::device::layouts::ascii_keyboard::ascii_key ascii_key_t ;
+    typedef natus::device::components::key_state key_state_t ;
+    typedef natus::device::layouts::ascii_keyboard_t layout_t ;
+
+    static ascii_key_t map_virtual_keycode_to_ascii_key( uint_t const wparam )
+    {
+        if( wparam >= XK_0 && wparam <= XK_9 )
+        {
+            size_t const dif = size_t( wparam - XK_0 ) ;
+            return layout_t::convert_ascii_number_keys( dif ) ;
+        }
+
+        if( wparam >= XK_a && wparam <= XK_z )
+        {
+            size_t dif = size_t( wparam - XK_a ) ;
+            return layout_t::convert_ascii_letter_keys( dif ) ;
+        }
+
+        // 0 - 9 on numpad
+        if( wparam >= XK_KP_0 && wparam <= XK_KP_9 )
+        {
+            size_t dif = size_t( wparam - XK_KP_0 ) ;
+            return layout_t::convert_ascii_numpad_number_keys( dif ) ;
+        }
+
+        if( wparam >= XK_F1 && wparam <= XK_F14 )
+        {
+            size_t dif = size_t( wparam - XK_F1 ) ;
+            return layout_t::convert_ascii_function_keys( dif ) ;
+        }
+
+        switch( wparam )
+        {
+        case XK_BackSpace: return ascii_key_t::back_space ;
+        case XK_Tab: return ascii_key_t::tab ;
+        case XK_Return: return ascii_key_t::k_return ;
+        case XK_Escape: return ascii_key_t::escape ;
+        case XK_space: return ascii_key_t::space ;
+        case XK_Left: return ascii_key_t::arrow_left ;
+        case XK_Up: return ascii_key_t::arrow_up ;
+        case XK_Right: return ascii_key_t::arrow_right ;
+        case XK_Down: return ascii_key_t::arrow_down ;
+        case XK_Shift_L: return ascii_key_t::shift_left ;
+        case XK_Shift_R: return ascii_key_t::shift_right ;
+        case XK_Control_L: return ascii_key_t::ctrl_left ;
+        case XK_Control_R: return ascii_key_t::ctrl_right ;
+        case XK_KP_Add: return ascii_key_t::num_add ;
+        case XK_KP_Subtract: return ascii_key_t::num_sub ;
+        case XK_Menu: return ascii_key_t::context ;
+        case XK_minus: return ascii_key_t::minus ;
+        case XK_plus: return ascii_key_t::plus ;
+
+        default: return ascii_key_t::none ;
+        }
+    }
+}
 
 xlib_module::xlib_module( void_t ) 
 {
@@ -215,7 +275,12 @@ bool_t xlib_module::handle_input_event( XEvent const & event )
         auto const keysym = XKeycodeToKeysym( ev.display, ev.keycode, 0 ) ;
         if( keysym != NoSymbol )
         {
-            natus::log::global_t::status( ::std::to_string(keysym ) ) ;
+            this_file::map_virtual_keycode_to_ascii_key( keysym ) ;
+
+            natus::concurrent::lock_t lk( _buffer_mtx ) ;
+
+        _ascii_keyboard_keys.push_back( ascii_keyboard_key_item_t(
+            this_file::map_virtual_keycode_to_ascii_key( keysym ), ks ) ) ;
         }
 
     }
