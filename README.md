@@ -10,8 +10,9 @@ mesa-libGLES-devel
 mesa-libGL  
 mesa-libGL-devel  
 mesa-libEGL  
-mesa-libEGL-devel
-alsa-devel  
+mesa-libEGL-devel  
+alsa-lib  
+alsa-lib-devel  
 make  
 cmake  
 gcc, gcc-c++  
