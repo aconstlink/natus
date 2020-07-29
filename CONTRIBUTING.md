@@ -4,7 +4,7 @@
 
 Please keep the following in mind BEFORE contributing:
 
-- This project is mainly a private endeavour into game engine coding(I have been doing already for many years now) and a way for me to learn new things, 
+- This project is mainly a personal endeavour into game(real-time interactive) engine coding(I have been doing already for many years now) and a way for me to learn new things, 
 especially in software architecture. 
 
 - The engine may do similar things other well established engines already do. 
