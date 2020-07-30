@@ -101,7 +101,7 @@ public:
 
         intensity_out = uint16_t( new_state.Gamepad.bLeftTrigger ) ;
 
-        if( new_press ) return natus::device::components::button_state::pressed ;
+        if( new_press && !old_press ) return natus::device::components::button_state::pressed ;
         if( new_press && old_press ) return natus::device::components::button_state::pressing ;
         if( old_press && !new_press ) return natus::device::components::button_state::released ;
 
@@ -117,7 +117,8 @@ public:
 
         intensity_out = uint16_t( new_state.Gamepad.bRightTrigger ) ;
 
-        if( new_press ) return natus::device::components::button_state::pressed ;
+        if( new_press && !old_press ) return natus::device::components::button_state::pressed ;
+        if( new_press && old_press ) return natus::device::components::button_state::pressing ;
         if( old_press && !new_press ) return natus::device::components::button_state::released ;
         return natus::device::components::button_state::none ;
     }

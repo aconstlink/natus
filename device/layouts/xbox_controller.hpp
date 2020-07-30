@@ -296,8 +296,8 @@ namespace natus
 
                     switch( b )
                     {
-                    case this_t::dpad::left: ic = this_t::input_component::button_shoulder_left ; break ;
-                    case this_t::dpad::right: ic = this_t::input_component::button_shoulder_right ; break ;
+                    case this_t::dpad::left: ic = this_t::input_component::button_dpad_left ; break ;
+                    case this_t::dpad::right: ic = this_t::input_component::button_dpad_right ; break ;
                     case this_t::dpad::up: ic = this_t::input_component::button_dpad_up ; break ;
                     case this_t::dpad::down: ic = this_t::input_component::button_dpad_down ; break ;
                     default: break ;
