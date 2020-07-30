@@ -25,6 +25,7 @@ namespace natus
                 
                 struct gamepad_data
                 {
+                    bool_t connected = false ;
                     this_t::xinput_device * xinput_ptr = nullptr ;
                     natus::device::xbc_device_res_t dev ;
                 };
@@ -51,7 +52,7 @@ namespace natus
 
             private:
 
-                void_t init_gamepads( void_t ) ;
+                void_t check_gamepads( void_t ) ;
             };
             natus_soil_typedef( xinput_module ) ;
         }

@@ -32,7 +32,7 @@ namespace natus
 
             private:
 
-                natus::device::components::button_state _bs ;
+                natus::device::components::button_state _bs = button_state::none ;
                 float_t _value = 0.0f ;
 
             public:

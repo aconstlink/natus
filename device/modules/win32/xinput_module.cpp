@@ -31,12 +31,15 @@ private:
     /// the current state
     XINPUT_STATE _state ;
 
+    /// the current vibration state
+    XINPUT_VIBRATION _vib ;
 
 public:
 
     xinput_device( void_t )
     {
-        memset( &_state, 0, sizeof( XINPUT_STATE ) ) ;
+        ::std::memset( &_state, 0, sizeof( XINPUT_STATE ) ) ;
+        ::std::memset( &_vib, 0, sizeof( XINPUT_VIBRATION ) ) ;
     }
 
     xinput_device( this_cref_t ) = delete ;
@@ -45,15 +48,15 @@ public:
         _id = rhv._id ;
         rhv._id = DWORD( -1 ) ;
 
-        memcpy( &_state, &rhv._state, sizeof( XINPUT_STATE ) ) ;
+        ::std::memcpy( &_state, &rhv._state, sizeof( XINPUT_STATE ) ) ;
+        ::std::memcpy( &_vib, &rhv._state, sizeof( XINPUT_VIBRATION ) ) ;
     }
     xinput_device( DWORD id )
     {
         _id = id ;
-        memset( &_state, 0, sizeof( XINPUT_STATE ) ) ;
+        ::std::memset( &_state, 0, sizeof( XINPUT_STATE ) ) ;
+        ::std::memset( &_vib, 0, sizeof( XINPUT_VIBRATION ) ) ;
     }
-
-
 
 public:
 
@@ -63,7 +66,7 @@ public:
     }
 
     /// check if a pressed event occurred.
-    bool_t is_pressed( XINPUT_STATE const& new_state, DWORD button ) const
+    bool_t is_pressed( XINPUT_STATE const& new_state, DWORD button ) const noexcept
     {
         bool_t const old_button = bool_t( ( _state.Gamepad.wButtons & button ) != 0 ) ;
         bool_t const new_button = bool_t( ( new_state.Gamepad.wButtons & button ) != 0 ) ;
@@ -72,7 +75,7 @@ public:
     }
 
     /// check if a pressing event occurred.
-    bool_t is_pressing( XINPUT_STATE const& new_state, DWORD button ) const
+    bool_t is_pressing( XINPUT_STATE const& new_state, DWORD button ) const noexcept
     {
         bool_t const old_button = bool_t( ( _state.Gamepad.wButtons & button ) != 0 ) ;
         bool_t const new_button = bool_t( ( new_state.Gamepad.wButtons & button ) != 0 ) ;
@@ -81,7 +84,7 @@ public:
     }
 
     /// check if a released event occurred.
-    bool_t is_released( XINPUT_STATE const& new_state, DWORD button ) const
+    bool_t is_released( XINPUT_STATE const& new_state, DWORD button ) const noexcept
     {
         bool_t const old_button = bool_t( ( _state.Gamepad.wButtons & button ) != 0 ) ;
         bool_t const new_button = bool_t( ( new_state.Gamepad.wButtons & button ) != 0 ) ;
@@ -91,7 +94,7 @@ public:
 
     /// check the state of the left trigger
     natus::device::components::button_state check_left_trigger(
-        XINPUT_STATE const& new_state, uint16_t& intensity_out ) const
+        XINPUT_STATE const& new_state, uint16_t& intensity_out ) const noexcept
     {
         bool_t const old_press = bool_t( _state.Gamepad.bLeftTrigger != 0 ) ;
         bool_t const new_press = bool_t( new_state.Gamepad.bLeftTrigger != 0 ) ;
@@ -99,6 +102,7 @@ public:
         intensity_out = uint16_t( new_state.Gamepad.bLeftTrigger ) ;
 
         if( new_press ) return natus::device::components::button_state::pressed ;
+        if( new_press && old_press ) return natus::device::components::button_state::pressing ;
         if( old_press && !new_press ) return natus::device::components::button_state::released ;
 
         return natus::device::components::button_state::none ;
@@ -106,7 +110,7 @@ public:
 
     /// check the state of the right trigger
     natus::device::components::button_state check_right_trigger(
-        XINPUT_STATE const& new_state, uint16_t& intensity_out ) const
+        XINPUT_STATE const& new_state, uint16_t& intensity_out ) const noexcept
     {
         bool_t const old_press = bool_t( _state.Gamepad.bRightTrigger != 0 ) ;
         bool_t const new_press = bool_t( new_state.Gamepad.bRightTrigger != 0 ) ;
@@ -120,7 +124,7 @@ public:
 
 
     natus::device::components::stick_state check_left_stick(
-        XINPUT_STATE const& new_state, natus::math::vec2f_t& nnc_out ) const
+        XINPUT_STATE const& new_state, natus::math::vec2f_t& nnc_out ) const noexcept
     {
         natus::math::vec2b_t const old_tilt = natus::math::vec2b_t(
             _state.Gamepad.sThumbLX > XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE || _state.Gamepad.sThumbLX < -XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE,
@@ -157,7 +161,7 @@ public:
     }
 
     natus::device::components::stick_state check_left_stick(
-        XINPUT_STATE const& new_state, natus::math::vector2<int16_t>& val_out ) const
+        XINPUT_STATE const& new_state, natus::math::vector2<int16_t>& val_out ) const noexcept
     {
         natus::math::vector2<int16_t> old_xy(
             _state.Gamepad.sThumbLX, _state.Gamepad.sThumbLY ) ;
@@ -186,7 +190,7 @@ public:
     }
 
     natus::device::components::stick_state check_right_stick(
-        XINPUT_STATE const& new_state, natus::math::vec2f_t& nnc_out ) const
+        XINPUT_STATE const& new_state, natus::math::vec2f_t& nnc_out ) const noexcept
     {
         natus::math::vec2b_t const old_tilt = natus::math::vec2b_t(
             _state.Gamepad.sThumbRX > XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE || _state.Gamepad.sThumbRX < -XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE,
@@ -221,7 +225,7 @@ public:
     }
 
     natus::device::components::stick_state check_right_stick(
-        XINPUT_STATE const& new_state, natus::math::vector2<int16_t>& val_out ) const
+        XINPUT_STATE const& new_state, natus::math::vector2<int16_t>& val_out ) const noexcept
     {
         natus::math::vector2<int16_t> old_xy(
             _state.Gamepad.sThumbRX, _state.Gamepad.sThumbRY ) ;
@@ -249,10 +253,21 @@ public:
         return natus::device::components::stick_state::none ;
     }
 
+    bool_t check_vibration( XINPUT_VIBRATION const & new_state ) const noexcept
+    {
+        return ( _vib.wLeftMotorSpeed != new_state.wLeftMotorSpeed ||
+            _vib.wRightMotorSpeed != new_state.wRightMotorSpeed ) ;
+    }
+
     /// exchange the old xinput state with the new one.
     void_t exchange_state( XINPUT_STATE const& new_state )
     {
         _state = new_state ;
+    }
+
+    void_t exchange_state( XINPUT_VIBRATION const & new_state )
+    {
+        _vib = new_state ;
     }
 };
 
@@ -367,7 +382,20 @@ xinput_module::xinput_module( void_t )
     XInputEnable( true ) ;
     #endif
 
-    this_t::init_gamepads() ;
+    // by XInput 1.4 spec. only 4 devices supported.
+    for( DWORD i=0; i<4; ++i )
+    {
+        gamepad_data_t gd ;
+        gd.xinput_ptr = natus::memory::global_t::alloc( xinput_device( i ),
+            natus_log_fn( "xinput_device" ) ) ;
+
+        XINPUT_STATE state ;
+        ::std::memset( ( void_ptr_t ) &state, 0, sizeof(XINPUT_STATE) ) ;
+        gd.xinput_ptr->exchange_state( state ) ;
+        gd.dev = natus::device::xbc_device_t() ;
+
+        _devices.push_back( gd ) ;
+    }
 }
 
 //***
@@ -397,15 +425,25 @@ xinput_module::this_ref_t xinput_module::operator = ( this_rref_t rhv )
 }
 
 //***
-void_t xinput_module::search( natus::device::imodule::search_funk_t ) 
+void_t xinput_module::search( natus::device::imodule::search_funk_t funk ) 
 {
+    for( auto & d : _devices )
+    {
+        funk( d.dev ) ;
+    }
 }
 
 //***
 void_t xinput_module::update( void_t ) 
 {
+    this_t::check_gamepads() ;
+
     for( auto& item : _devices )
     {
+        if( natus::core::is_not( item.connected ) ) continue ;
+
+        item.dev->update_components() ;
+
         natus::device::xbc_device_res_t & dev = item.dev ;
         xinput_device & helper = *item.xinput_ptr ;
 
@@ -416,40 +454,106 @@ void_t xinput_module::update( void_t )
 
         natus::device::layouts::xbox_controller_t ctrl( dev ) ;
 
-        // buttons
+        // buttons : Just the on/off buttons
         {
-            static const ::std::array<DWORD, 6> buttons__ ( 
-                {   XINPUT_GAMEPAD_BACK, XINPUT_GAMEPAD_START, XINPUT_GAMEPAD_A, 
-                    XINPUT_GAMEPAD_B, XINPUT_GAMEPAD_X, XINPUT_GAMEPAD_Y } ) ;
+            static const ::std::array<DWORD, 14> buttons__ (
+                { 
+                    XINPUT_GAMEPAD_BACK, XINPUT_GAMEPAD_START, XINPUT_GAMEPAD_A,
+                    XINPUT_GAMEPAD_B, XINPUT_GAMEPAD_X, XINPUT_GAMEPAD_Y,
+                    XINPUT_GAMEPAD_DPAD_UP, XINPUT_GAMEPAD_DPAD_DOWN,
+                    XINPUT_GAMEPAD_DPAD_RIGHT, XINPUT_GAMEPAD_DPAD_LEFT,
+                    XINPUT_GAMEPAD_LEFT_SHOULDER, XINPUT_GAMEPAD_RIGHT_SHOULDER,
+                    XINPUT_GAMEPAD_LEFT_THUMB, XINPUT_GAMEPAD_RIGHT_THUMB
+                } ) ;
 
             for( auto const & i : buttons__ )
             {
-                auto const b = this_file::map_button_xinput_to_layout( i ) ;
+                auto const b = this_file::map_button_xinput_to_component( i ) ;
                 if( helper.is_pressed( state, i ) )
                 {
-                    *ctrl.get_component( b ) = natus::device::components::button_state::pressed ;
+                    *ctrl.comp_button( b ) = natus::device::components::button_state::pressed ;
+                    *ctrl.comp_button( b ) = 1.0f ;
                 }
                 else if( helper.is_pressing( state, i ) )
                 {
-                    *ctrl.get_component( b ) = natus::device::components::button_state::pressing ;
+                    *ctrl.comp_button( b ) = natus::device::components::button_state::pressing ;
+                    *ctrl.comp_button( b ) = 1.0f ;
                 }
                 else if( helper.is_released(state, i ) )
                 {
-                    *ctrl.get_component( b ) = natus::device::components::button_state::released ;
+                    *ctrl.comp_button( b ) = natus::device::components::button_state::released ;
+                    *ctrl.comp_button( b ) = 0.0f ;
                 }
             }
         }
 
         // triggers
-        {}
+        {
+            uint16_t intensity = 0 ;
+            {
+                auto const bs = helper.check_left_trigger( state, intensity ) ;
+                if( bs != natus::device::components::button_state::none )
+                {
+                    *ctrl.get_component( natus::device::layouts::xbox_controller_t::trigger::left ) = bs ;
+                    *ctrl.get_component( natus::device::layouts::xbox_controller_t::trigger::left ) =
+                        float_t( intensity ) / 255.0f ; ;
+                }
+            }
+            {
+                auto const bs = helper.check_right_trigger( state, intensity ) ;
+                if( bs != natus::device::components::button_state::none )
+                {
+                    *ctrl.get_component( natus::device::layouts::xbox_controller_t::trigger::right ) = bs ;
+                    *ctrl.get_component( natus::device::layouts::xbox_controller_t::trigger::right ) =
+                        float_t( intensity ) / 255.0f ; ;
+                }
+            }
+        }
 
-        // stricks
-        {}
+        // sticks
+        {
+            natus::math::vec2f_t change ;
+            {
+                auto const ss = helper.check_left_stick( state, change ) ;
+                if( ss != natus::device::components::stick_state::none )
+                {
+                    *ctrl.get_component( natus::device::layouts::xbox_controller_t::stick::left ) = ss ;
+                    *ctrl.get_component( natus::device::layouts::xbox_controller_t::stick::left ) = change ;
+                }
+            }
 
-        // motors
-        {}
+            {
+                auto const ss = helper.check_right_stick( state, change ) ;
+                if( ss != natus::device::components::stick_state::none )
+                {
+                    *ctrl.get_component( natus::device::layouts::xbox_controller_t::stick::right ) = ss ;
+                    *ctrl.get_component( natus::device::layouts::xbox_controller_t::stick::right ) = change ;
+                }
+            }
+        }
+
+        // motors - this is output to the controller
+        {
+            XINPUT_VIBRATION vib ;
+            ::std::memset( &vib, 0, sizeof( XINPUT_VIBRATION ) ) ;
+            
+            {
+                auto * motor = ctrl.get_component( natus::device::layouts::xbox_controller_t::motor::left ) ;
+                vib.wLeftMotorSpeed = WORD( 65.535f * motor->value() ) ;
+            }
+
+            {
+                auto* motor = ctrl.get_component( natus::device::layouts::xbox_controller_t::motor::right ) ;
+                vib.wRightMotorSpeed = WORD( 65.535f * motor->value() ) ;
+            }
 
 
+            if( helper.check_vibration( vib ) ) 
+            {
+                XInputSetState( item.xinput_ptr->get_id(), &vib ) ;
+                helper.exchange_state( vib ) ;
+            }
+        }
 
         //
         // must be done after the new state is consumed.
@@ -462,41 +566,34 @@ void_t xinput_module::update( void_t )
 }
 
 //***
-void_t xinput_module::init_gamepads( void_t ) 
-{
-    // by XInput 1.4 spec. only 4 devices supported.
-    for( DWORD i = 0; i < 4; ++i )
+void_t xinput_module::check_gamepads( void_t ) 
+{    
+    DWORD i = 0 ; 
+    for( auto & gd : _devices )
     {
+        XINPUT_CAPABILITIES caps ;
+        DWORD res = XInputGetCapabilities( i, XINPUT_FLAG_GAMEPAD, &caps ) ;
+
+        if( res == ERROR_DEVICE_NOT_CONNECTED ) 
         {
-            XINPUT_CAPABILITIES caps ;
-            DWORD res = XInputGetCapabilities( i, XINPUT_FLAG_GAMEPAD, &caps ) ;
-
-            if( res == ERROR_DEVICE_NOT_CONNECTED ) continue ;
-
-            if( natus::log::global_t::error( res != ERROR_SUCCESS,
-                "[xinput_module::init_gamepads] : Error query controller caps." ) )
-                continue ;
-
-            if( natus::log::global_t::error( caps.Type != XINPUT_DEVTYPE_GAMEPAD,
-                "[xinput_module::init_gamepads] : xinput device is not a gamepad." ) )
-                continue ;
-
-            natus::log::global_t::status( "[xinput_module::init_gamepads] : Device " +
-                ::std::to_string( i ) + ": Gamepad found" ) ;
+            if( gd.connected )
+            {
+                natus::log::global_t::status("[XInput] : device disconnected (" + ::std::to_string(i) + ")" ) ;
+                XINPUT_STATE state ;
+                ::std::memset( ( void_ptr_t ) &state, 0, sizeof( XINPUT_STATE ) ) ;
+                gd.xinput_ptr->exchange_state( state ) ;
+            }
+            gd.connected = false ;
+            continue ;
         }
 
-        XINPUT_STATE state ;
-        DWORD res = XInputGetState( i, &state ) ;
-        if( res != ERROR_SUCCESS ) continue ;
+        if( natus::core::is_not(gd.connected) )
+        {
+            natus::log::global_t::status("[XInput] : device connected (" + ::std::to_string(i) + ")" ) ;
+            gd.connected = true ;
+        }
 
-        gamepad_data_t gd ;
-        gd.xinput_ptr = natus::memory::global_t::alloc( xinput_device( i ),
-            natus_log_fn("xinput_device") ) ;
-        gd.xinput_ptr->exchange_state( state ) ;
-
-        gd.dev = natus::device::xbc_device_t() ;
-
-        _devices.push_back( gd ) ;
+        ++i ;
     }
 }
 

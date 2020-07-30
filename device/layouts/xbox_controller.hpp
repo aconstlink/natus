@@ -91,6 +91,8 @@ namespace natus
                     dev.add_output_component<natus::device::components::motor_t>() ;
                 }
 
+            public: 
+
                 natus::device::components::button_ptr_t comp_button( input_component const ic ) const noexcept
                 {
                     return _dev->get_component<natus::device::components::button_t>( ic ) ;
@@ -119,36 +121,73 @@ namespace natus
                 {
                     none, back, start, a, b, x, y
                 };
+                
+                static natus::std::string_t to_string( button const b ) noexcept
+                {
+                    static const natus::std::string_t __names[] = { "none", "back", "start", "a", "b", "x", "y", "invalid" } ;
+                    return size_t( b ) >= size_t( button::y ) ? __names[ size_t( button::y ) ] : __names[ size_t( b ) ] ;
+                }
 
                 enum class thumb
                 {
                     none, left, right
                 };
 
+                static natus::std::string_t to_string( thumb const b ) noexcept
+                {
+                    static const natus::std::string_t __names[] = { "none", "left", "right", "invalid" } ;
+                    return size_t( b ) >= size_t( thumb::right ) ? __names[ size_t( thumb::right ) ] : __names[ size_t( b ) ] ;
+                }
+
                 enum class shoulder
                 {
                     none, left, right
                 };
+                static natus::std::string_t to_string( shoulder const b ) noexcept
+                {
+                    static const natus::std::string_t __names[] = { "none", "left", "right", "invalid" } ;
+                    return size_t( b ) >= size_t( shoulder::right ) ? __names[ size_t( shoulder::right ) ] : __names[ size_t( b ) ] ;
+                }
 
                 enum class stick
                 {
                     none, left, right 
                 };
+                static natus::std::string_t to_string( stick const b ) noexcept
+                {
+                    static const natus::std::string_t __names[] = { "none", "left", "right", "invalid" } ;
+                    return size_t( b ) >= size_t( stick::right ) ? __names[ size_t( stick::right ) ] : __names[ size_t( b ) ] ;
+                }
 
                 enum class trigger
                 {
                     none, left, right
                 };
+                static natus::std::string_t to_string( trigger const b ) noexcept
+                {
+                    static const natus::std::string_t __names[] = { "none", "left", "right", "invalid" } ;
+                    return size_t( b ) >= size_t( trigger::right ) ? __names[ size_t( trigger::right ) ] : __names[ size_t( b ) ] ;
+                }
 
                 enum class dpad
                 {
                     none, left, right, up, down
                 };
+                static natus::std::string_t to_string( dpad const b ) noexcept
+                {
+                    static const natus::std::string_t __names[] = { "none", "left", "right", "up", "down", "invalid" } ;
+                    return size_t( b ) >= size_t( dpad::down ) ? __names[ size_t( dpad::down ) ] : __names[ size_t( b ) ] ;
+                }
 
                 enum class motor
                 {
                     none, left, right
                 };
+                static natus::std::string_t to_string( motor const b ) noexcept
+                {
+                    static const natus::std::string_t __names[] = { "none", "left", "right", "invalid" } ;
+                    return size_t( b ) >= size_t( motor::right ) ? __names[ size_t( motor::right ) ] : __names[ size_t( b ) ] ;
+                }
 
             public: // is functions
 
