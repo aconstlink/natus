@@ -540,12 +540,12 @@ void_t xinput_module::update( void_t )
             
             {
                 auto * motor = ctrl.get_component( natus::device::layouts::xbox_controller_t::motor::left ) ;
-                vib.wLeftMotorSpeed = WORD( 65.535f * motor->value() ) ;
+                vib.wLeftMotorSpeed = WORD( 65535.0f * motor->value() ) ;
             }
 
             {
                 auto* motor = ctrl.get_component( natus::device::layouts::xbox_controller_t::motor::right ) ;
-                vib.wRightMotorSpeed = WORD( 65.535f * motor->value() ) ;
+                vib.wRightMotorSpeed = WORD( 65535.0f * motor->value() ) ;
             }
 
 

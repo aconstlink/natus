@@ -236,6 +236,15 @@ namespace natus
                     return this_t::get_component( s )->value() ;
                 }
 
+            public: // motor
+
+                this_ref_t set_motor( this_t::motor const m, float_t const v ) noexcept 
+                {
+                    *this_t::get_component( m ) = v ;
+
+                    return *this ;
+                }
+
             public: // get component
 
                 natus::device::components::button_ptr_t get_component( this_t::button const b ) const noexcept
