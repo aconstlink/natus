@@ -16,7 +16,7 @@ set( sources
     "layouts/ascii_keyboard.hpp"
     "layouts/three_mouse.hpp"
     "layouts/ps3_controller.hpp"
-    "layouts/xbox360_controller.hpp"
+    "layouts/xbox_controller.hpp"
 
     "components/button.hpp"
     "components/key.hpp"

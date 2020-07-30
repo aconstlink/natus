@@ -12,26 +12,34 @@ using namespace natus::application::win32 ;
 win32_application::win32_application( void_t ) 
 {
     _rawinput = natus::device::win32::rawinput_module_t() ;
+    _xinput = natus::device::win32::xinput_module_t() ;
+
     natus::device::global_t::system()->add_module( _rawinput ) ;
+    natus::device::global_t::system()->add_module( _xinput ) ;
 }
 
 //***********************************************************************
 win32_application::win32_application( this_rref_t rhv ) : base_t( ::std::move( rhv ) )
 {
     _rawinput = ::std::move( rhv._rawinput ) ;
+    _xinput = ::std::move( rhv._xinput ) ;
 }
 
 //***********************************************************************
 win32_application::win32_application( natus::application::app_res_t app ) : base_t( app )
 {
     _rawinput = natus::device::win32::rawinput_module_t() ;
+    _xinput = natus::device::win32::xinput_module_t() ;
+
     natus::device::global_t::system()->add_module( _rawinput ) ;
+    natus::device::global_t::system()->add_module( _xinput ) ;
 }
 
 //***********************************************************************
 win32_application::~win32_application( void_t )
 {
     // _rawinput_module_ptr will be auto deleted
+    // _xinput also
 }
 
 //***********************************************************************

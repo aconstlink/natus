@@ -2,7 +2,9 @@
 
 #include "../../api.h"
 #include "../platform_application.h"
+
 #include <natus/device/modules/win32/rawinput_module.h>
+#include <natus/device/modules/win32/xinput_module.h>
 
 namespace natus
 {
@@ -21,6 +23,7 @@ namespace natus
                 size_t _escape_sequence = 0 ;
                 
                 natus::device::win32::rawinput_module_res_t _rawinput ;
+                natus::device::win32::xinput_module_res_t _xinput ;
 
             public:
 
