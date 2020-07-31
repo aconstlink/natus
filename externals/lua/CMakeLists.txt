@@ -1,13 +1,13 @@
 
 if( MSVC )
-set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /wd4244 /wd4324 /wd4310" )
+#set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /wd4244 /wd4324 /wd4310" )
 endif()
 
 set( LUA_BUILD_TYPE STATIC )
 option( LUA_BUILD_AS_DLL "Build lua as dynamically linked library" OFF )
 
 
-set( CMAKE_DEBUG_POSTFIX d )
+#set( CMAKE_DEBUG_POSTFIX d )
 
 file( GLOB INCLUDES
   "lua/*.h" )
@@ -43,11 +43,11 @@ elseif( NATUS_TARGET_OS_LIN )
   target_compile_options( lua PUBLIC -LUA_USE_LINUX )
   target_link_libraries( lua PUBLIC m )
 endif()
-add_executable( onelua ${INCLUDES} "lua/onelua.c" )
-target_link_libraries( onelua PRIVATE lua )
-set_target_properties( onelua PROPERTIES LINKER_LANGUAGE C )
+#add_executable( onelua ${INCLUDES} "lua/onelua.c" )
+#target_link_libraries( onelua PRIVATE lua )
+#set_target_properties( onelua PROPERTIES LINKER_LANGUAGE C )
 
-unset( LUA_BUILD_AS_DLL CACHE )
+#unset( LUA_BUILD_AS_DLL CACHE )
 set_target_properties( lua PROPERTIES FOLDER "natus/externals/lua" )
 set_target_properties( onelua PROPERTIES FOLDER "natus/externals/lua" )
 
