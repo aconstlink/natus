@@ -4,8 +4,12 @@ if( MSVC )
 endif()
 
 set( LUA_BUILD_TYPE STATIC )
-option( LUA_BUILD_AS_DLL "Build lua as dynamically linked library" OFF )
 
+if( NATUS_TARGET_OS_WIN )
+  option( LUA_BUILD_AS_DLL "Build lua as dynamically linked library" OFF )
+else()
+  set( LUA_BUILD_AS_DLL OFF )
+endif()
 
 #set( CMAKE_DEBUG_POSTFIX d )
 
@@ -34,21 +38,21 @@ target_include_directories( lua
   PUBLIC $<INSTALL_INTERFACE:"include/${PROJECT_NAME}/externals"> ) 
 
 if( LUA_BUILD_AS_DLL )
-    target_compile_options( lua PUBLIC -LUA_BUILD_AS_DLL -LUA_USE_LONGJMP) 
+    #target_compile_options( lua PUBLIC -LUA_BUILD_AS_DLL -LUA_USE_LONGJMP) 
 endif()
 
 if( NATUS_TARGET_OS_WIN )
   target_compile_options( lua PUBLIC -LUA_USE_WINDOWS )
 elseif( NATUS_TARGET_OS_LIN )
-  target_compile_options( lua PUBLIC -LUA_USE_LINUX )
-  target_link_libraries( lua PUBLIC m )
+  #target_compile_options( lua PUBLIC -LUA_USE_LINUX )
+  #target_link_libraries( lua PUBLIC m )
 endif()
 #add_executable( onelua ${INCLUDES} "lua/onelua.c" )
 #target_link_libraries( onelua PRIVATE lua )
 #set_target_properties( onelua PROPERTIES LINKER_LANGUAGE C )
 
 #unset( LUA_BUILD_AS_DLL CACHE )
-set_target_properties( lua PROPERTIES FOLDER "natus/externals/lua" )
+#set_target_properties( lua PROPERTIES FOLDER "natus/externals/lua" )
 #set_target_properties( onelua PROPERTIES FOLDER "natus/externals/lua" )
 
 ###########################################################
