@@ -45,6 +45,7 @@ elseif( NATUS_TARGET_OS_LIN )
 endif()
 add_executable( onelua ${INCLUDES} "lua/onelua.c" )
 target_link_libraries( onelua PRIVATE lua )
+set_target_properties( onelua PROPERTIES LINKER_LANGUAGE C )
 
 unset( LUA_BUILD_AS_DLL CACHE )
 set_target_properties( lua PROPERTIES FOLDER "natus/externals/lua" )
