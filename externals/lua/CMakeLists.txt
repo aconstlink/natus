@@ -31,9 +31,9 @@ endif()
 
 add_library( lua ${LUA_BUILD_TYPE} ${SOURCES} )
 set_target_properties( lua PROPERTIES LINKER_LANGUAGE C )
-add_executable( onelua ${INCLUDES} "lua/onelua.c" )
 
-target_include_directories( imgui 
+
+target_include_directories( lua
   PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
   PUBLIC $<INSTALL_INTERFACE:"include/${PROJECT_NAME}/externals"> ) 
 
@@ -42,10 +42,13 @@ if( LUA_BUILD_AS_DLL )
 endif()
 
 if( NATUS_TARGET_OS_WIN )
-  target_compile_options( lua PUBLIC -LUA_USE_WINDOWS ) 
-elseif( NATUS_TARGET_OS_LINUX )
-  target_compile_options( lua PUBLIC -LUA_USE_LINUX ) 
+  target_compile_options( lua PUBLIC -LUA_USE_WINDOWS )
+elseif( NATUS_TARGET_OS_LIN )
+  target_compile_options( lua PUBLIC -LUA_USE_LINUX )
+  target_link_libraries( lua PUBLIC m )
 endif()
+add_executable( onelua ${INCLUDES} "lua/onelua.c" )
+target_link_libraries( onelua PRIVATE lua )
 
 unset( LUA_BUILD_AS_DLL CACHE )
 set_target_properties( lua PROPERTIES FOLDER "natus/externals/lua" )
