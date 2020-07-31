@@ -18,7 +18,6 @@ file( GLOB INCLUDES
 file( GLOB SOURCES
   "lua/*.c" )
 
-message( ${SOURCES} )
 list( REMOVE_ITEM SOURCES "${CMAKE_CURRENT_LIST_DIR}/lua/onelua.c")
 
 set( SOURCES 
