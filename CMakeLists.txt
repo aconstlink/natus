@@ -1,5 +1,5 @@
 cmake_minimum_required( VERSION 3.6 )
-project(natus CXX)
+project(natus C CXX)
 
 if( POLICY CMP0079 )
   cmake_policy( SET CMP0079 NEW )
