@@ -49,7 +49,7 @@ endif()
 
 #unset( LUA_BUILD_AS_DLL CACHE )
 set_target_properties( lua PROPERTIES FOLDER "natus/externals/lua" )
-set_target_properties( onelua PROPERTIES FOLDER "natus/externals/lua" )
+#set_target_properties( onelua PROPERTIES FOLDER "natus/externals/lua" )
 
 ###########################################################
 # SECTION: Install
