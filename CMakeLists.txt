@@ -66,7 +66,7 @@ add_subdirectory( "externals/filesystem" )
 add_subdirectory( "externals/khronos" )
 add_subdirectory( "externals/kcat" )
 add_subdirectory( "externals/imgui" )
-#add_subdirectory( "externals/lua" )
+add_subdirectory( "externals/lua" )
 
 #add_subdirectory( "externals/rapidxml" )
 #add_subdirectory( "externals/stb" )

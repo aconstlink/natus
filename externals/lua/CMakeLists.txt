@@ -1,6 +1,3 @@
-if( NOT LUA_INSTALL_HEADER_BASE )
-  set( INSTALL_HEADER_BASE "" )
-endif()
 
 if( MSVC )
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /wd4244 /wd4324 /wd4310" )
@@ -32,7 +29,6 @@ endif()
 add_library( lua ${LUA_BUILD_TYPE} ${SOURCES} )
 set_target_properties( lua PROPERTIES LINKER_LANGUAGE C )
 
-
 target_include_directories( lua
   PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
   PUBLIC $<INSTALL_INTERFACE:"include/${PROJECT_NAME}/externals"> ) 
@@ -58,5 +54,5 @@ set_target_properties( onelua PROPERTIES FOLDER "natus/externals/lua" )
 # SECTION: Install
 ###########################################################
 
-install_headers( "${INCLUDES}" "include/${PROJECT_NAME}/externals/lua" )
-install_library( lua ${PROJECT_NAME}-targets )
+#install_headers( "${INCLUDES}" "include/${PROJECT_NAME}/externals/lua" )
+#install_library( lua ${PROJECT_NAME}-targets )
