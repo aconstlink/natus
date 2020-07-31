@@ -231,9 +231,15 @@ namespace natus
 
             public: // stick
 
-                natus::math::vec2f_t get_stick( this_t::stick const s ) const noexcept
+                bool_t is( this_t::stick const s, natus::device::components::stick_state const ss, natus::math::vec2f_out_t value ) const noexcept
                 {
-                    return this_t::get_component( s )->value() ;
+                    if( this_t::get_component(s)->state() == ss )
+                    {
+                        value = this_t::get_component( s )->value() ;
+                        return true ;
+                    }
+
+                    return false ;
                 }
 
             public: // motor
