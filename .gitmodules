@@ -8,3 +8,6 @@
 [submodule "externals/kcat/openal-soft"]
 	path = externals/kcat/openal-soft
 	url = https://github.com/kcat/openal-soft.git
+[submodule "externals/lua/lua"]
+	path = externals/lua/lua
+	url = https://github.com/lua/lua.git
