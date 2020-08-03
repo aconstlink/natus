@@ -13,6 +13,7 @@ namespace natus
     {
         namespace layouts
         {
+            // physical device layout
             class xbox_controller
             {
                 natus_this_typedefs( xbox_controller ) ;

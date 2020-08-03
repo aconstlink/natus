@@ -69,6 +69,13 @@ namespace natus
                     return *this ;
                 }
 
+                this_ref_t operator = ( this_cref_t rhv ) 
+                {
+                    _bs = rhv._bs ;
+                    _value = rhv._value ;
+                    return *this ;
+                }
+
                 float_t value ( void_t ) const noexcept { return _value ; }
                 button_state state( void_t ) const noexcept { return _bs ; }
 

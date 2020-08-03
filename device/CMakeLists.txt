@@ -8,6 +8,7 @@ set( sources
 
     "device.hpp"
     "component.hpp"
+    "mapping.hpp"
     "system.h"
     "system.cpp"
     
@@ -17,6 +18,7 @@ set( sources
     "layouts/three_mouse.hpp"
     "layouts/ps3_controller.hpp"
     "layouts/xbox_controller.hpp"
+    "layouts/game_controller.hpp"
 
     "components/button.hpp"
     "components/key.hpp"

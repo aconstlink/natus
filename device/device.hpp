@@ -143,13 +143,13 @@ namespace natus
 
             natus::device::input_component_ptr_t get_component( typename layout_t::input_component const c ) noexcept
             {
-                if( size_t( c ) >= size_t( this_t::input_component::num_components ) ) return nullptr ;
+                if( size_t( c ) >= size_t( this_t::layout_t::input_component::num_components ) ) return nullptr ;
                 return _inputs[ size_t( c ) ] ;
             }
 
             natus::device::output_component_ptr_t get_component( typename layout_t::output_component const c ) noexcept
             {
-                if( size_t( c ) >= size_t( this_t::output_component::num_components ) ) return nullptr ;
+                if( size_t( c ) >= size_t( this_t::layout_t::output_component::num_components ) ) return nullptr ;
                 return _outputs[ size_t( c ) ] ;
             }
 
