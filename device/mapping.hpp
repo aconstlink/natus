@@ -80,14 +80,41 @@ namespace natus
             bool_t a_to_b<comp_button_t>( comp_t* ic_a, comp_t* ic_b, mapping_funk_t& funk_out )
             {
                 {
-                    comp_button_t* comp = dynamic_cast< comp_button_t* >( ic_b ) ;
+                    using other_t = comp_button_t ;
+                    other_t* comp = dynamic_cast< other_t* >( ic_b ) ;
                     if( natus::core::is_not_nullptr( comp ) )
                     {
                         funk_out = [&] ( comp_t* a_, comp_t const * b_ )
                         {
                             comp_button_t* a = reinterpret_cast< comp_button_t* >( a_ ) ;
-                            comp_button_t const * b = reinterpret_cast< comp_button_t const* >( b_ ) ;
+                            other_t const * b = reinterpret_cast< other_t const* >( b_ ) ;
                             *a = *b ;
+                        } ;
+                        return true ;
+                    }
+                }
+                {
+                    using other_t = comp_ascii_t ;
+                    other_t* comp = dynamic_cast< other_t* >( ic_b ) ;
+                    if( natus::core::is_not_nullptr( comp ) )
+                    {
+                        funk_out = [&] ( comp_t* a_, comp_t const* b_ )
+                        {
+                            comp_button_t* a = reinterpret_cast< comp_button_t* >( a_ ) ;
+                            other_t const* b = reinterpret_cast< other_t const* >( b_ ) ;
+                            
+                            natus::device::components::button_state bs = components::button_state::none ;
+
+                            switch( b->state() )
+                            {
+                            case natus::device::components::key_state::pressed: bs = components::button_state::pressed ; break ;
+                            case natus::device::components::key_state::pressing: bs = components::button_state::pressing ; break ;
+                            case natus::device::components::key_state::released: bs = components::button_state::released ; break ;
+                            default: break ;
+                            }
+
+                            *a = bs ;
+                            *a = b->value() ;
                         } ;
                         return true ;
                     }

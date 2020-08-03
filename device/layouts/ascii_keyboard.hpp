@@ -212,6 +212,11 @@ namespace natus
                     num_components
                 };
 
+                static input_component ascii_key_to_input_component( this_t::ascii_key const k )
+                {
+                    return input_component( size_t( k ) ) ;
+                }
+
             private:
 
                 static void_t init_components( this_t::this_device_ref_t dev )
