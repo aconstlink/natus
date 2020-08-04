@@ -92,7 +92,20 @@ namespace natus
                             // add the relative stick to the absolute point
                             if( b->has_changed() )
                             {
+                                natus::device::components::stick_state ss = natus::device::components::stick_state::none ;
+
+                                switch( b->state() )
+                                {
+                                case natus::device::components::move_state::moved: 
+                                    ss = natus::device::components::stick_state::tilted ; break ;
+                                case natus::device::components::move_state::moving:
+                                    ss = natus::device::components::stick_state::tilting ; break ;
+                                case natus::device::components::move_state::unmoved:
+                                    ss = natus::device::components::stick_state::untilted ; break ;
+                                }
+
                                 *a = b->rel() ;
+                                *a = ss ;
                             }
                         } ;
                         return true ;
@@ -353,7 +366,26 @@ namespace natus
 
         class imapping 
         { 
+        private:
+
+            natus::std::string_t _name ;
+
+        public:
+
+            imapping( natus::std::string_cref_t name ) : _name(name){}
+            imapping( imapping && rhv ) : _name( ::std::move(rhv._name) ){}
+            imapping( imapping const & rhv ) : _name( rhv._name ) {}
+            virtual ~imapping( void_t ){}
+            
+            natus::std::string_cref_t name( void_t ) const noexcept { return _name ; }
+
+        protected:
+
+            void_t set_name( natus::std::string_cref_t name ) noexcept { _name = name ; }
+            natus::std::string_t move_name( void_t ) noexcept { return ::std::move( _name ) ;  }
+
         public: 
+
             virtual void_t update( void_t ) noexcept = 0; 
         };
         natus_typedef( imapping ) ;
@@ -393,10 +425,11 @@ namespace natus
 
         public:
 
-            mapping( device_a_res_t a, device_b_res_t b ) : _a( a ), _b( b ) {}
-            mapping( this_cref_t rhv ) : _a( rhv._a), _b(rhv._b), 
+            mapping( natus::std::string_cref_t name, device_a_res_t to, device_b_res_t from ) : 
+                imapping( name ), _a( to ), _b( from ) {}
+            mapping( this_cref_t rhv ) : imapping(rhv), _a( rhv._a), _b(rhv._b), 
                 _inputs(rhv._inputs), _outputs(rhv._outputs) {}
-            mapping( this_rref_t rhv ) 
+            mapping( this_rref_t rhv ) : imapping( ::std::move( rhv ) ) 
             {
                 _a = ::std::move( rhv._a ) ;
                 _b = ::std::move( rhv._b ) ;
@@ -406,6 +439,8 @@ namespace natus
 
             this_ref_t operator = ( this_cref_t rhv ) noexcept
             {
+                this_t::set_name( rhv.name() ) ;
+
                 _a = rhv._a ;
                 _b = rhv._b ;
                 _inputs = rhv._inputs ;
@@ -415,6 +450,8 @@ namespace natus
 
             this_ref_t operator = ( this_rref_t rhv ) noexcept
             {
+                this_t::set_name( rhv.move_name() ) ;
+
                 _a = ::std::move( rhv._a ) ;
                 _b = ::std::move( rhv._b ) ;
                 _inputs = ::std::move( rhv._inputs ) ;

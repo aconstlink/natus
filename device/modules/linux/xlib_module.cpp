@@ -144,11 +144,21 @@ void_t xlib_module::update( void_t )
 
                 *coord = _pointer_coords_global.back() ;
             }
+            else
+            {
+                auto* coord = mouse.get_global_component() ;
+                *coord = natus::device::components::move_state::unmoved ;
+            }
 
             if( _pointer_coords_local.size() > 0 )
             {
                 auto* coord = mouse.get_local_component() ;
                 *coord = _pointer_coords_local.back() ;
+            }
+            else
+            {
+                auto* coord = mouse.get_local_component() ;
+                *coord = natus::device::components::move_state::unmoved ;
             }
 
             if( _scroll_items.size() > 0 )
