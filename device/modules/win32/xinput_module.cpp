@@ -155,7 +155,7 @@ public:
         nnc_out = natus::math::vec2f_t( float_t( X ), float_t( Y ) ) * inv_width ;
 
         if( !old_tilt.any() && new_tilt.any() ) return natus::device::components::stick_state::tilted ;
-        if( old_tilt.any() && new_tilt.any() ) return natus::device::components::stick_state::tilted ;
+        if( old_tilt.any() && new_tilt.any() ) return natus::device::components::stick_state::tilting ;
         if( old_tilt.any() && !new_tilt.any() ) return natus::device::components::stick_state::untilted ;
 
         return natus::device::components::stick_state::none ;
@@ -184,7 +184,8 @@ public:
         natus::math::vec2b_t const old_tilt = old_xy.absed().greater_than( natus::math::vec2i16_t( 0 ) ) ;
         natus::math::vec2b_t const new_tilt = new_xy.absed().greater_than( natus::math::vec2i16_t( 0 ) ) ;
 
-        if( new_tilt.any() ) return natus::device::components::stick_state::tilted ;
+        if( !old_tilt.any() && new_tilt.any() ) return natus::device::components::stick_state::tilted ;
+        if( old_tilt.any() && new_tilt.any() ) return natus::device::components::stick_state::tilting ;
         if( old_tilt.any() && !new_tilt.any() ) return natus::device::components::stick_state::untilted ;
 
         return natus::device::components::stick_state::none ;
@@ -220,7 +221,7 @@ public:
         nnc_out = natus::math::vec2f_t( float_t( X ), float_t( Y ) ) * inv_width ;
 
         if( !old_tilt.any() && new_tilt.any() ) return natus::device::components::stick_state::tilted ;
-        if( old_tilt.any() && new_tilt.any() ) return natus::device::components::stick_state::tilted ;
+        if( old_tilt.any() && new_tilt.any() ) return natus::device::components::stick_state::tilting ;
         if( old_tilt.any() && !new_tilt.any() ) return natus::device::components::stick_state::untilted ;
         return natus::device::components::stick_state::none ;
     }
@@ -248,7 +249,8 @@ public:
         natus::math::vec2b_t const old_tilt = old_xy.absed().greater_than( natus::math::vec2i16_t( 0 ) ) ;
         natus::math::vec2b_t const new_tilt = new_xy.absed().greater_than( natus::math::vec2i16_t( 0 ) ) ;
 
-        if( new_tilt.any() ) return natus::device::components::stick_state::tilted ;
+        if( !old_tilt.any() && new_tilt.any() ) return natus::device::components::stick_state::tilted ;
+        if( old_tilt.any() && new_tilt.any() ) return natus::device::components::stick_state::tilting ;
         if( old_tilt.any() && !new_tilt.any() ) return natus::device::components::stick_state::untilted ;
 
         return natus::device::components::stick_state::none ;
