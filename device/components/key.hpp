@@ -87,6 +87,14 @@ namespace natus
                     return *this ;
                 }
 
+                this_ref_t operator = ( this_cref_t const rhv ) noexcept
+                {
+                    _key_type = rhv._key_type ;
+                    _value = rhv._value ;
+                    _s = rhv._s ;
+                    return *this ;
+                }
+
                 float_t value ( void_t ) const noexcept { return _value ; }
                 natus::device::components::key_state state( void_t ) const noexcept { return _s ; }
                 this_t::key_type_t key_type( void_t ) const noexcept { return _key_type ; }

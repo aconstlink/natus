@@ -64,6 +64,13 @@ namespace natus
                     return *this ;
                 }
 
+                this_ref_t operator = ( this_cref_t rhv ) noexcept
+                {
+                    _value = rhv._value ;
+                    _ss = rhv._ss ;
+                    return *this ;
+                }
+
                 natus::math::vec2f_cref_t value ( void_t ) const noexcept { return _value ; }
                 natus::device::components::stick_state state( void_t ) const noexcept { return _ss ; }
 

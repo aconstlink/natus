@@ -30,6 +30,7 @@ namespace natus
 
                 enum class input_component
                 {
+                    // 1d 
                     jump,
                     crouch,
                     shoot,
@@ -49,6 +50,7 @@ namespace natus
                     action_h,
                     action_i,
 
+                    // 2d
                     movement,
                     aim,
 
@@ -70,6 +72,7 @@ namespace natus
 
                     // buttons
                     dev.add_input_component<natus::device::components::button_t>() ; // jump
+                    dev.add_input_component<natus::device::components::button_t>() ;
                     dev.add_input_component<natus::device::components::button_t>() ;
                     dev.add_input_component<natus::device::components::button_t>() ;
                     dev.add_input_component<natus::device::components::button_t>() ;
@@ -137,6 +140,7 @@ namespace natus
                     action_g,
                     action_h,
                     action_i,
+
                     num_buttons
                 };
 

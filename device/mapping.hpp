@@ -20,6 +20,17 @@ namespace natus
 {
     namespace device
     {
+        enum class mapping_detail
+        {
+            one_to_one,
+            negative_x,
+            positive_x,
+            negative_y,
+            positive_y,
+
+            num_details
+        };
+
         namespace detail
         {
             using comp_t = natus::device::icomponent ;
@@ -40,69 +51,245 @@ namespace natus
             typedef ::std::function< void_t ( comp_t*, comp_t const* ) > mapping_funk_t ;
 
             template< typename T >
-            bool_t a_to_b( comp_t* ic_a, comp_t* ic_b, mapping_funk_t& funk_out ) ;
-
-            template<>
-            bool_t a_to_b<void_t>( comp_t* ic_a, comp_t* ic_b, mapping_funk_t& funk_out )
+            bool_t b_to_a( comp_t*, comp_t*, natus::device::mapping_detail const, mapping_funk_t& ) 
             {
-                // inputs
-                if( natus::core::is_not_nullptr( dynamic_cast< comp_button_t* >( ic_a ) ) )
-                {
-                    return a_to_b<comp_button_t>( ic_a, ic_b, funk_out ) ;
-                }
-                if( natus::core::is_not_nullptr( dynamic_cast< comp_ascii_t* >( ic_a ) ) )
-                {
-                    return a_to_b<comp_ascii_t>( ic_a, ic_b, funk_out ) ;
-                }
-                if( natus::core::is_not_nullptr( dynamic_cast< comp_point_t* >( ic_a ) ) )
-                {
-                    return a_to_b<comp_point_t>( ic_a, ic_b, funk_out ) ;
-                }
-                if( natus::core::is_not_nullptr( dynamic_cast< comp_scroll_t* >( ic_a ) ) )
-                {
-                    return a_to_b<comp_scroll_t>( ic_a, ic_b, funk_out ) ;
-                }
-                if( natus::core::is_not_nullptr( dynamic_cast< comp_stick_t* >( ic_a ) ) )
-                {
-                    return a_to_b<comp_stick_t>( ic_a, ic_b, funk_out ) ;
-                }
-
-                // outputs
-                if( natus::core::is_not_nullptr( dynamic_cast< comp_motor_t* >( ic_a ) ) )
-                {
-                    return a_to_b<comp_motor_t>( ic_a, ic_b, funk_out ) ;
-                }
-
                 return false ;
             }
 
-            template<typename T>
-            bool_t a_to_b<comp_button_t>( comp_t* ic_a, comp_t* ic_b, mapping_funk_t& funk_out )
+            template<>
+            bool_t b_to_a<comp_stick_t>( comp_t* ic_a, comp_t* ic_b, 
+                natus::device::mapping_detail const det, mapping_funk_t& funk_out )
             {
+                using a_t = comp_stick_t ;
+
+                // stick to stick
                 {
-                    using other_t = comp_button_t ;
-                    other_t* comp = dynamic_cast< other_t* >( ic_b ) ;
-                    if( natus::core::is_not_nullptr( comp ) )
-                    {
-                        funk_out = [&] ( comp_t* a_, comp_t const * b_ )
-                        {
-                            comp_button_t* a = reinterpret_cast< comp_button_t* >( a_ ) ;
-                            other_t const * b = reinterpret_cast< other_t const* >( b_ ) ;
-                            *a = *b ;
-                        } ;
-                        return true ;
-                    }
-                }
-                {
-                    using other_t = comp_ascii_t ;
-                    other_t* comp = dynamic_cast< other_t* >( ic_b ) ;
+                    using b_t = comp_stick_t ;
+                    b_t* comp = dynamic_cast< b_t* >( ic_b ) ;
                     if( natus::core::is_not_nullptr( comp ) )
                     {
                         funk_out = [&] ( comp_t* a_, comp_t const* b_ )
                         {
-                            comp_button_t* a = reinterpret_cast< comp_button_t* >( a_ ) ;
-                            other_t const* b = reinterpret_cast< other_t const* >( b_ ) ;
+                            a_t* a = reinterpret_cast< a_t* >( a_ ) ;
+                            b_t const* b = reinterpret_cast< b_t const* >( b_ ) ;
+                            if( b->state() != natus::device::components::stick_state::none ) 
+                                *a = *b ;
+                        } ;
+                        return true ;
+                    }
+                }
+                // point to stick
+                {
+                    using b_t = comp_point_t ;
+                    b_t* comp = dynamic_cast< b_t* >( ic_b ) ;
+                    if( natus::core::is_not_nullptr( comp ) )
+                    {
+                        funk_out = [&] ( comp_t* a_, comp_t const* b_ )
+                        {
+                            a_t* a = reinterpret_cast< a_t* >( a_ ) ;
+                            b_t const* b = reinterpret_cast< b_t const* >( b_ ) ;
+
+                            // add the relative stick to the absolute point
+                            if( b->has_changed() )
+                            {
+                                *a = b->rel() ;
+                            }
+                        } ;
+                        return true ;
+                    }
+                }
+                // ascii to stick
+                {
+                    using b_t = comp_ascii_t ;
+                    b_t* comp = dynamic_cast< b_t* >( ic_b ) ;
+                    if( natus::core::is_not_nullptr( comp ) )
+                    {
+                        funk_out = [=] ( comp_t* a_, comp_t const* b_ )
+                        {
+                            a_t* a = reinterpret_cast< a_t* >( a_ ) ;
+                            b_t const* b = reinterpret_cast< b_t const* >( b_ ) ;
                             
+                            if( b->state() != natus::device::components::key_state::none )
+                            {
+                                natus::device::components::stick_state ss = natus::device::components::stick_state::none ;
+                                switch( b->state() ) 
+                                {
+                                case natus::device::components::key_state::pressed: 
+                                    ss = natus::device::components::stick_state::tilted; break ;
+                                case natus::device::components::key_state::pressing: 
+                                    ss = natus::device::components::stick_state::tilting; break ;
+                                case natus::device::components::key_state::released: 
+                                    ss = natus::device::components::stick_state::untilted; break ;
+                                default: break ;
+                                }
+                                
+                                natus::math::vec2f_t v0( a->value() ) ;
+                                float_t const v1 = b->value() ;
+
+                                switch( det )
+                                {                                
+                                case natus::device::mapping_detail::negative_x: v0.x( -v1 ) ; break ;
+                                case natus::device::mapping_detail::positive_x: v0.x( +v1 ) ; break ;
+                                case natus::device::mapping_detail::negative_y: v0.y( -v1 ) ; break ;
+                                case natus::device::mapping_detail::positive_y: v0.y( +v1 ) ; break ;
+                                case natus::device::mapping_detail::one_to_one: // not possible
+                                default: 
+                                    natus::log::global_t::warning( "ascii -> stick mapping not possible. use mapping_detail." ) ;
+                                    break ;
+                                }
+
+                                *a = v0 ;
+                                *a = ss  ;
+                            }
+                        } ;
+                        return true ;
+                    }
+                }
+
+                natus::log::global_t::warning( "[X-to-stick] - no appropriate device component mapping found/possible" ) ;
+
+                return false ;
+            }
+
+            template<>
+            bool_t b_to_a<comp_point_t>( comp_t* ic_a, comp_t* ic_b, 
+                natus::device::mapping_detail const, mapping_funk_t& funk_out )
+            {
+                using a_t = comp_point_t ;
+
+                // point to point
+                {
+                    using b_t = comp_point_t ;
+                    b_t* comp = dynamic_cast< b_t* >( ic_b ) ;
+                    if( natus::core::is_not_nullptr( comp ) )
+                    {
+                        funk_out = [&] ( comp_t* a_, comp_t const* b_ )
+                        {
+                            a_t* a = reinterpret_cast< a_t* >( a_ ) ;
+                            b_t const* b = reinterpret_cast< b_t const* >( b_ ) ;
+                            if( b->has_changed() ) *a = *b ;
+                        } ;
+                        return true ;
+                    }
+                }
+                // stick to point
+                {
+                    using b_t = comp_stick_t ;
+                    b_t* comp = dynamic_cast< b_t* >( ic_b ) ;
+                    if( natus::core::is_not_nullptr( comp ) )
+                    {
+                        funk_out = [&] ( comp_t* a_, comp_t const* b_ )
+                        {
+                            a_t* a = reinterpret_cast< a_t* >( a_ ) ;
+                            b_t const* b = reinterpret_cast< b_t const* >( b_ ) ;
+
+                            // add the relative stick to the absolute point
+                            if( b->state() != natus::device::components::stick_state::none )
+                            {
+                                *a = a->value() + b->value() ;
+                            }
+                        } ;
+                        return true ;
+                    }
+                }
+
+                natus::log::global_t::warning( "[X-to-point] - no appropriate device component mapping found/possible" ) ;
+
+                return false ;
+            }
+
+            template<>
+            bool_t b_to_a<comp_ascii_t>( comp_t* ic_a, comp_t* ic_b, 
+                natus::device::mapping_detail const, mapping_funk_t& funk_out )
+            {
+                using a_t = comp_ascii_t ;
+
+                // ascii to ascii
+                {
+                    using b_t = comp_ascii_t ;
+                    b_t* comp = dynamic_cast< b_t* >( ic_b ) ;
+                    if( natus::core::is_not_nullptr( comp ) )
+                    {
+                        funk_out = [&] ( comp_t* a_, comp_t const* b_ )
+                        {
+                            a_t* a = reinterpret_cast< a_t* >( a_ ) ;
+                            b_t const* b = reinterpret_cast< b_t const* >( b_ ) ;
+                            if( b->state() != natus::device::components::key_state::none )
+                                *a = *b ;
+                        } ;
+                        return true ;
+                    }
+                }
+                // button to ascii
+                {
+                    using b_t = comp_button_t ;
+                    b_t* comp = dynamic_cast< b_t* >( ic_b ) ;
+                    if( natus::core::is_not_nullptr( comp ) )
+                    {
+                        funk_out = [&] ( comp_t* a_, comp_t const* b_ )
+                        {
+                            a_t* a = reinterpret_cast< a_t* >( a_ ) ;
+                            b_t const* b = reinterpret_cast< b_t const* >( b_ ) ;
+
+                            natus::device::components::key_state bs = components::key_state::none ;
+
+                            switch( b->state() )
+                            {
+                            case natus::device::components::button_state::pressed: bs = components::key_state::pressed ; break ;
+                            case natus::device::components::button_state::pressing: bs = components::key_state::pressing ; break ;
+                            case natus::device::components::button_state::released: bs = components::key_state::released ; break ;
+                            default: break ;
+                            }
+
+                            if( bs != components::key_state::none )
+                            {
+                                *a = bs ;
+                                *a = b->value() ;
+                            }
+                        } ;
+                        return true ;
+                    }
+                }
+
+                natus::log::global_t::warning( "[X-to-ascii] - no appropriate device component mapping found/possible" ) ;
+
+                return false ;
+            }
+
+            template<>
+            static bool_t b_to_a<comp_button_t>( comp_t* ic_a, comp_t* ic_b, 
+                natus::device::mapping_detail const, mapping_funk_t& funk_out )
+            {
+                using a_t = comp_button_t ;
+
+                // button to button
+                {
+                    using b_t = comp_button_t ;
+                    b_t* comp = dynamic_cast< b_t* >( ic_b ) ;
+                    if( natus::core::is_not_nullptr( comp ) )
+                    {
+                        funk_out = [&] ( comp_t* a_, comp_t const* b_ )
+                        {
+                            a_t* a = reinterpret_cast< a_t* >( a_ ) ;
+                            b_t const* b = reinterpret_cast< b_t const* >( b_ ) ;
+                            if( b->state() != natus::device::components::button_state::none )
+                                *a = *b ;
+                            
+                        } ;
+                        return true ;
+                    }
+                }
+                // ascii key to button
+                {
+                    using b_t = comp_ascii_t ;
+                    b_t* comp = dynamic_cast< b_t* >( ic_b ) ;
+                    if( natus::core::is_not_nullptr( comp ) )
+                    {
+                        funk_out = [&] ( comp_t* a_, comp_t const* b_ )
+                        {
+                            a_t* a = reinterpret_cast< a_t* >( a_ ) ;
+                            b_t const* b = reinterpret_cast< b_t const* >( b_ ) ;
+
                             natus::device::components::button_state bs = components::button_state::none ;
 
                             switch( b->state() )
@@ -113,14 +300,52 @@ namespace natus
                             default: break ;
                             }
 
-                            *a = bs ;
-                            *a = b->value() ;
+                            if( bs != components::button_state::none )
+                            {
+                                *a = bs ;
+                                *a = b->value() ;
+                            }
                         } ;
                         return true ;
                     }
                 }
 
-                natus::log::global_t::warning( natus_log_fn( "no appropriate device component mapping found" ) ) ;
+                natus::log::global_t::warning( "[X-to-button] - no appropriate device component mapping found/possible" ) ;
+
+                return false ;
+            }
+
+            template<>
+            static bool_t b_to_a<void_t>( comp_t* ic_a, comp_t* ic_b, 
+                natus::device::mapping_detail const det, mapping_funk_t& funk_out )
+            {
+                // inputs
+                if( natus::core::is_not_nullptr( dynamic_cast< comp_button_t* >( ic_a ) ) )
+                {
+                    return b_to_a<comp_button_t>( ic_a, ic_b, det, funk_out ) ;
+                }
+                if( natus::core::is_not_nullptr( dynamic_cast< comp_ascii_t* >( ic_a ) ) )
+                {
+                    return b_to_a<comp_ascii_t>( ic_a, ic_b, det, funk_out ) ;
+                }
+                if( natus::core::is_not_nullptr( dynamic_cast< comp_point_t* >( ic_a ) ) )
+                {
+                    return b_to_a<comp_point_t>( ic_a, ic_b, det, funk_out ) ;
+                }
+                if( natus::core::is_not_nullptr( dynamic_cast< comp_scroll_t* >( ic_a ) ) )
+                {
+                    return b_to_a<comp_scroll_t>( ic_a, ic_b, det, funk_out ) ;
+                }
+                if( natus::core::is_not_nullptr( dynamic_cast< comp_stick_t* >( ic_a ) ) )
+                {
+                    return b_to_a<comp_stick_t>( ic_a, ic_b, det, funk_out ) ;
+                }
+
+                // outputs
+                if( natus::core::is_not_nullptr( dynamic_cast< comp_motor_t* >( ic_a ) ) )
+                {
+                    return b_to_a<comp_motor_t>( ic_a, ic_b, det, funk_out ) ;
+                }
 
                 return false ;
             }
@@ -202,13 +427,14 @@ namespace natus
             // adds or exchanges an input mapping
             bool_t insert( 
                 typename device_a_t::layout_t::input_component const a, 
-                typename device_b_t::layout_t::input_component const b ) noexcept
+                typename device_b_t::layout_t::input_component const b,
+                natus::device::mapping_detail const det = mapping_detail::one_to_one ) noexcept
             {
                 auto * ic_a = _a->get_component( a ) ;
                 auto * ic_b = _b->get_component( b ) ;
 
                 detail::mapping_funk_t funk ;
-                if( detail::a_to_b<void_t>( ic_a, ic_b, funk ) )
+                if( detail::b_to_a<void_t>( ic_a, ic_b, det, funk ) )
                 {
                     _inputs.emplace_back( input_mapping{ a, b, funk } ) ;
                     return true ;
