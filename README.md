@@ -1,8 +1,8 @@
-[![Build Status](https://travis-ci.org/aconstlink/natus.svg?branch=master)](https://travis-ci.org/aconstlink/natus)
-
-# natus
+# natus 
 
 natus is a software framework for real-time interactive audio/visual application.
+
+[![Build Status](https://travis-ci.org/aconstlink/natus.svg?branch=master)](https://travis-ci.org/aconstlink/natus)
 
 ## Installation
 
