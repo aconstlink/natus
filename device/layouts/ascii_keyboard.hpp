@@ -272,6 +272,12 @@ namespace natus
                     return *this ;
                 }
 
+                this_ref_t set_value( this_t::ascii_key const k, float_t const value ) noexcept
+                {
+                    *this_t::get_component( k ) = value ;
+                    return *this ;
+                }
+
                 natus::device::components::key_state get_state( this_t::ascii_key const k ) const noexcept
                 {
                     return this_t::get_component(k)->state() ;

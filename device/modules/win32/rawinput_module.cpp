@@ -268,7 +268,9 @@ void_t rawinput_module::update( void_t )
         {
             for( auto const& item : _ascii_keyboard_keys )
             {
-                keyboard.set_state( item.first, item.second ) ;
+                float_t const value = item.second != natus::device::components::key_state::released ? 1.0f : 0.0f ;
+                keyboard.set_value( item.first, value ) ;
+                keyboard.set_state( item.first, item.second ) ;                
             }
             _ascii_keyboard_keys.clear() ;
         }
