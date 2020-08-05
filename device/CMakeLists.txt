@@ -8,11 +8,14 @@ set( sources
 
     "device.hpp"
     "component.hpp"
+    "imapping.hpp"
     "mapping.hpp"
     "system.h"
     "system.cpp"
     
     "imodule.h"
+    "modules/vdev_module.h"
+    "modules/vdev_module.cpp"
 
     "layouts/ascii_keyboard.hpp"
     "layouts/three_mouse.hpp"

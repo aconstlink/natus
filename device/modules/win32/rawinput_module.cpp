@@ -211,8 +211,8 @@ void_t rawinput_module::update( void_t )
 
     // 1. update components
     {
-        _three_device->update_components() ;
-        _ascii_device->update_components() ;
+        _three_device->update() ;
+        _ascii_device->update() ;
     }
 
     // mouse

@@ -4,6 +4,8 @@
 #include "typedefs.h"
 #include "imodule.h"
 
+#include "modules/vdev_module.h"
+
 namespace natus
 {
     namespace device
@@ -15,6 +17,7 @@ namespace natus
         private:
 
             natus::std::vector< imodule_res_t > _modules ;
+            natus::device::vdev_module_res_t _vdev ;
 
         public:
 

@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include "imapping.hpp"
+
 #include "device.hpp"
 
 #include "components/button.hpp"
@@ -270,7 +272,7 @@ namespace natus
             }
 
             template<>
-            static bool_t b_to_a<comp_button_t>( comp_t* ic_a, comp_t* ic_b, 
+            bool_t b_to_a<comp_button_t>( comp_t* ic_a, comp_t* ic_b, 
                 natus::device::mapping_detail const, mapping_funk_t& funk_out )
             {
                 using a_t = comp_button_t ;
@@ -329,7 +331,7 @@ namespace natus
             }
 
             template<>
-            static bool_t b_to_a<void_t>( comp_t* ic_a, comp_t* ic_b, 
+            bool_t b_to_a<void_t>( comp_t* ic_a, comp_t* ic_b, 
                 natus::device::mapping_detail const det, mapping_funk_t& funk_out )
             {
                 // inputs
@@ -363,34 +365,6 @@ namespace natus
                 return false ;
             }
         }
-
-        class imapping 
-        { 
-        private:
-
-            natus::std::string_t _name ;
-
-        public:
-
-            imapping( natus::std::string_cref_t name ) : _name(name){}
-            imapping( imapping && rhv ) : _name( ::std::move(rhv._name) ){}
-            imapping( imapping const & rhv ) : _name( rhv._name ) {}
-            virtual ~imapping( void_t ){}
-            
-            natus::std::string_cref_t name( void_t ) const noexcept { return _name ; }
-
-        protected:
-
-            void_t set_name( natus::std::string_cref_t name ) noexcept { _name = name ; }
-            natus::std::string_t move_name( void_t ) noexcept { return ::std::move( _name ) ;  }
-
-        public: 
-
-            virtual void_t update( void_t ) noexcept = 0; 
-        };
-        natus_typedef( imapping ) ;
-        using imapping_res_t = natus::soil::res< imapping_t > ;
-
 
         // maps device a to device b
         // device a is user-controlled

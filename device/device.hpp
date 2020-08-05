@@ -6,6 +6,8 @@
 
 #include "component.hpp"
 
+#include "imapping.hpp"
+
 #include <natus/std/vector.hpp>
 
 namespace natus
@@ -35,6 +37,7 @@ namespace natus
 
             natus::std::vector< natus::device::input_component_ptr_t > _inputs ;
             natus::std::vector< natus::device::output_component_ptr_t > _outputs ;
+            natus::std::vector< natus::device::imapping_res_t  > _mappings ;
 
         public:
 
@@ -56,6 +59,7 @@ namespace natus
 
                 _inputs = ::std::move( rhv._inputs ) ;
                 _outputs = ::std::move( rhv._outputs ) ;
+                _mappings = ::std::move( rhv._mappings ) ;
             }
 
             virtual ~device( void_t ) 
@@ -79,6 +83,7 @@ namespace natus
 
                 _inputs = ::std::move( rhv._inputs ) ;
                 _outputs = ::std::move( rhv._outputs ) ;
+                _mappings = ::std::move( rhv._mappings ) ;
                 return *this ;
             }
 
@@ -194,11 +199,25 @@ namespace natus
 
         public:
 
+            void_t add_mapping( natus::device::imapping_res_t m ) noexcept
+            {
+                _mappings.emplace_back( ::std::move( m ) ) ;
+            }
+
+            typedef ::std::function< void_t ( natus::device::imapping_res_t ) > mapping_searach_ft ;
+            void_t search( this_t::mapping_searach_ft funk ) 
+            {
+                for( auto & m : _mappings ) funk( m ) ;
+            }
+
+        public:
+
             // meant for a module to reset the components
-            void_t update_components( void_t ) noexcept
+            void_t update( void_t ) noexcept
             {
                 for( auto* comp : _inputs ) comp->update() ;
                 for( auto* comp : _outputs ) comp->update() ;
+                for( auto& m : _mappings ) m->update() ;
             }
         };
     }

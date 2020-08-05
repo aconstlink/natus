@@ -445,7 +445,7 @@ void_t xinput_module::update( void_t )
     {
         if( natus::core::is_not( item.connected ) ) continue ;
 
-        item.dev->update_components() ;
+        item.dev->update() ;
 
         natus::device::xbc_device_res_t & dev = item.dev ;
         xinput_device & helper = *item.xinput_ptr ;
