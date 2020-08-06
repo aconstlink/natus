@@ -73,7 +73,8 @@ natus::application::result win32_application::on_exec( void_t )
         // will be send if a win32_window is closed.
         if( msg.message == WM_USER )
         {
-            break ;
+            if( msg.wParam == WPARAM( -1 ) )
+                break ;
         }
 
         _rawinput->handle_input_event( msg.hwnd, msg.message,

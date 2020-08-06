@@ -196,7 +196,7 @@ void_t window::xevent_callback( XEvent const & event )
                 (size_t)xce.width, (size_t)xce.height
             } ;
 
-            this_t::foreach_listener( [&]( natus::application::iwindow_message_listener_res_t lst ){ lst->on_resize( rm ) ; } ) ;
+            this_t::foreach_in( [&]( natus::application::iwindow_message_listener_res_t lst ){ lst->on_resize( rm ) ; } ) ;
         break ;}
 
     case ResizeRequest:
@@ -212,7 +212,7 @@ void_t window::xevent_callback( XEvent const & event )
                 (size_t)rse.width, (size_t)rse.height
             } ;
 
-            this_t::foreach_listener( [&]( natus::application::iwindow_message_listener_res_t lst ){ lst->on_resize( rm ) ; } ) ;
+            this_t::foreach_in( [&]( natus::application::iwindow_message_listener_res_t lst ){ lst->on_resize( rm ) ; } ) ;
             XClearArea( event.xany.display, event.xany.window, 0,0,0,0, true ) ;
         }
         break ;

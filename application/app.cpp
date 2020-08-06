@@ -52,7 +52,7 @@ app::~app( void_t )
 }
 
 //***
-app::wid_async_t app::create_window( 
+app::window_async_t app::create_window( 
     natus::std::string_cref_t name, this_t::window_info_in_t wi )
 {
     this_t::per_window_info_t pwi ;
@@ -61,6 +61,9 @@ app::wid_async_t app::create_window(
     natus::application::gfx_context_res_t ctx ;
 
     auto rnd_msg_recv = natus::application::window_message_receiver_res_t(
+        natus::application::window_message_receiver_t() ) ;
+
+    auto gfx_msg_send = natus::application::window_message_receiver_res_t(
         natus::application::window_message_receiver_t() ) ;
 
     {
@@ -102,11 +105,24 @@ app::wid_async_t app::create_window(
 
         ctx = glctx ;
 
+        // window -> other entity
         {
             pwi.msg_recv = natus::application::window_message_receiver_res_t(
                 natus::application::window_message_receiver_t() ) ;
-            wglw->get_window()->register_listener( pwi.msg_recv ) ; // application
-            wglw->get_window()->register_listener( rnd_msg_recv ) ; // render
+            wglw->get_window()->register_in( pwi.msg_recv ) ; // application
+            wglw->get_window()->register_in( rnd_msg_recv ) ; // render
+        }
+
+        // other entity -> window
+        {
+            pwi.msg_send = natus::application::window_message_receiver_res_t(
+                natus::application::window_message_receiver_t() ) ;
+            wglw->get_window()->register_out( pwi.msg_send ) ; // application
+        }
+
+        // other entity -> context
+        {
+            pwi.gfx_send = gfx_msg_send ;
         }
 
         // show the window after all listeners have been registered.
@@ -150,11 +166,24 @@ app::wid_async_t app::create_window(
 
         ctx = glctx ;
 
+        // window -> other entity
         {
             pwi.msg_recv = natus::application::window_message_receiver_res_t(
                 natus::application::window_message_receiver_t() ) ;
-            eglw->get_window()->register_listener( pwi.msg_recv ) ; // application
-            eglw->get_window()->register_listener( rnd_msg_recv ) ; // render
+            eglw->get_window()->register_in( pwi.msg_recv ) ; // application
+            eglw->get_window()->register_in( rnd_msg_recv ) ; // render
+        }
+
+        // other entity -> window
+        {
+            pwi.msg_send = natus::application::window_message_receiver_res_t(
+                natus::application::window_message_receiver_t() ) ;
+            eglw->get_window()->register_out( pwi.msg_send ) ; // application
+        }
+
+        // other entity -> context
+        {
+            pwi.gfx_send = gfx_msg_send ;
         }
 
         // show the window after all listeners have been registered.
@@ -198,11 +227,24 @@ app::wid_async_t app::create_window(
 
         ctx = glctx ;
 
+        // window -> other entity
         {
             pwi.msg_recv = natus::application::window_message_receiver_res_t(
                 natus::application::window_message_receiver_t() ) ;
-            glxw->get_window()->register_listener( pwi.msg_recv ) ; // application
-            glxw->get_window()->register_listener( rnd_msg_recv ) ; // render
+            glxw->get_window()->register_in( pwi.msg_recv ) ; // application
+            glxw->get_window()->register_in( rnd_msg_recv ) ; // render
+        }
+
+        // other entity -> window
+        {
+            pwi.msg_send = natus::application::window_message_receiver_res_t(
+                natus::application::window_message_receiver_t() ) ;
+            glxw->get_window()->register_out( pwi.msg_send ) ; // application
+        }
+
+        // other entity -> context
+        {
+            pwi.gfx_send = gfx_msg_send ;
         }
 
         // show the window after all listeners have been registered.
@@ -212,7 +254,7 @@ app::wid_async_t app::create_window(
         pwi.async = natus::gpu::async_res_t( 
             natus::gpu::async_t( backend ) ) ;
     }
-
+    
     natus::gpu::async_res_t async = pwi.async ;
 
     bool_ptr_t run = natus::memory::global_t::alloc<bool_t>(
@@ -226,6 +268,7 @@ app::wid_async_t app::create_window(
         auto ctx_ = ctx ;
         auto run_ = run ;
         auto recv = rnd_msg_recv ;
+        auto recv2 = gfx_msg_send ;
 
         ctx_->activate() ;
         while( *run_ ) 
@@ -245,6 +288,19 @@ app::wid_async_t app::create_window(
                     async_->set_window_info( wi ) ;
                 }
             }
+
+            {
+                {
+                    natus::application::window_message_receiver_t::state_vector sv ;
+                    if( recv2->swap_and_reset( sv ) )
+                    {
+                        if( sv.vsync_msg_changed )
+                        {
+                            ctx->vsync( sv.vsync_msg.on_off ) ;
+                        }
+                    }
+                }
+            }
             
             async_->wait_for_frame() ;
             async_->system_update() ; 
@@ -260,7 +316,7 @@ app::wid_async_t app::create_window(
     natus::concurrent::lock_guard_t lk( _wmtx ) ;
     _windows.emplace_back( ::std::move( pwi ) ) ;
 
-    return ::std::make_pair( _windows.size()-1, 
+    return ::std::make_pair( this_t::window_view_t( _windows.size()-1, pwi.msg_send, gfx_msg_send ), 
         natus::gpu::async_view_t( ::std::move( async ), _access ) ) ;
 }
 
@@ -286,21 +342,28 @@ bool_t app::before_update( void_t )
     size_t id = 0 ;
     for( auto & pwi : _windows )
     {
-        natus::application::window_message_receiver_t::state_vector sv ;
-        if( pwi.msg_recv->swap_and_reset( sv ) )
+        // check messages from the window
         {
-
-            natus::gpu::backend_t::window_info_t wi ;
-            if( sv.resize_changed )
+            natus::application::window_message_receiver_t::state_vector sv ;
+            if( pwi.msg_recv->swap_and_reset( sv ) )
             {
-                wi.width = sv.resize_msg.w ;
-                wi.height = sv.resize_msg.h ;
-            }
 
-            this_t::window_event_info_t wei ;
-            wei.w = uint_t( wi.width ) ;
-            wei.h = uint_t( wi.height ) ;
-            this->on_event( id++, wei ) ;
+                natus::gpu::backend_t::window_info_t wi ;
+                if( sv.resize_changed )
+                {
+                    wi.width = sv.resize_msg.w ;
+                    wi.height = sv.resize_msg.h ;
+                }
+
+                this_t::window_event_info_t wei ;
+                wei.w = uint_t( wi.width ) ;
+                wei.h = uint_t( wi.height ) ;
+                this->on_event( id++, wei ) ;
+            }
+        }
+
+        // check and send message to the window
+        {
         }
     }
 
@@ -339,6 +402,88 @@ bool_t app::after_render( void_t )
         pwi.async->leave_frame() ;
     }
     return true ;
+}
+
+//***
+app::window_view::window_view( void_t ) 
+{
+}
+
+//***
+app::window_view::window_view( this_rref_t rhv )
+{
+    _id = rhv._id ;
+    _msg_wnd = ::std::move( rhv._msg_wnd ) ;
+    _msg_gfx = ::std::move( rhv._msg_gfx ) ;
+}
+
+//***
+app::window_view::window_view( this_cref_t rhv )
+{
+    _id = rhv._id ;
+    _msg_wnd = rhv._msg_wnd ;
+    _msg_gfx = rhv._msg_gfx ;
+}
+
+//***
+app::window_view::~window_view( void_t )
+{
+}
+
+//***
+app::window_view::this_ref_t app::window_view::operator = ( this_rref_t rhv ) 
+{
+    _id = rhv._id ;
+    _msg_wnd = ::std::move( rhv._msg_wnd ) ;
+    _msg_gfx = ::std::move( rhv._msg_gfx ) ;
+    return *this ;
+}
+
+//***
+app::window_view::this_ref_t app::window_view::operator = ( this_cref_t rhv ) 
+{
+    _id = rhv._id ;
+    _msg_wnd = rhv._msg_wnd ;
+    _msg_gfx = rhv._msg_gfx ;
+    return *this ;
+}
+
+//***
+app::window_view::window_view( window_id_t id, natus::application::window_message_receiver_res_t wnd,
+    natus::application::window_message_receiver_res_t gfx ) :
+    _id( id ), _msg_wnd( wnd ), _msg_gfx( gfx )
+{
+}
+
+//***
+app::window_id_t app::window_view::id( void_t ) const noexcept
+{
+    return _id ;
+}
+
+//***
+void_t app::window_view::resize( size_t const w, size_t const h ) noexcept
+{
+    natus::application::resize_message_t msg ;
+    msg.w = w ;
+    msg.h = h ;
+    _msg_wnd->on_resize( msg ) ;
+}
+
+//***
+void_t app::window_view::vsync( bool_t const onoff ) noexcept
+{
+    natus::application::vsync_message_t msg ;
+    msg.on_off = onoff ;
+    _msg_gfx->on_vsync( msg ) ;
+}
+
+//***
+void_t app::window_view::fullscreen( bool_t const onoff ) noexcept
+{
+    natus::application::fullscreen_message_t msg ;
+    msg.on_off = onoff ;
+    _msg_wnd->on_fullscreen( msg ) ;
 }
 
 //***

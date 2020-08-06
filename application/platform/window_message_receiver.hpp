@@ -12,16 +12,21 @@ namespace natus
 {
     namespace application
     {
+        // system level listener facility
+        // nothing the user ever sees.
         class NATUS_APPLICATION_API iwindow_message_listener
         {
         public: // callbacks
 
-            virtual void_t on_screen( screen_dpi_message_cref_t ) = 0 ;
-            virtual void_t on_screen( screen_size_message_cref_t ) = 0 ;
+            virtual void_t on_screen( screen_dpi_message_cref_t ) noexcept = 0 ;
+            virtual void_t on_screen( screen_size_message_cref_t ) noexcept = 0 ;
 
-            virtual void_t on_resize( resize_message_cref_t ) = 0 ;
-            virtual void_t on_visible( show_message_cref_t ) = 0 ;
-            virtual void_t on_close( close_message_cref_t ) = 0 ;
+            virtual void_t on_resize( resize_message_cref_t ) noexcept = 0 ;
+            virtual void_t on_visible( show_message_cref_t ) noexcept = 0 ;
+            virtual void_t on_close( close_message_cref_t ) noexcept = 0 ;
+
+            virtual void_t on_vsync( vsync_message_cref_t ) noexcept = 0 ;
+            virtual void_t on_fullscreen( fullscreen_message_cref_t ) noexcept = 0 ;
         };
         natus_soil_typedef( iwindow_message_listener ) ;
 
@@ -47,6 +52,12 @@ namespace natus
 
                 natus::application::screen_size_message msize_msg ;
                 bool_t msize_msg_changed = false ;
+
+                natus::application::vsync_message vsync_msg ;
+                bool_t vsync_msg_changed = false ;
+
+                natus::application::fullscreen_message fulls_msg ;
+                bool_t fulls_msg_changed = false ;
             };
             natus_typedef( state_vector ) ;
             typedef bool_t change_state_t ;
@@ -82,19 +93,21 @@ namespace natus
 
         private:
 
-            void_t reset_change_flags( void_t )
+            void_t reset_change_flags( void_t ) noexcept
             {
                 _states.resize_changed = false ;
                 _states.show_changed = false ;
                 _states.close_changed = false ;
                 _states.msize_msg_changed = false ;
                 _states.dpi_msg_changed = false ;
+                _states.vsync_msg_changed = false ;
+                _states.fulls_msg_changed = false ;
                 _has_any_change = false ;
             }
 
         public: // listener interface
 
-            virtual void_t on_screen( screen_dpi_message_cref_t msg ) 
+            virtual void_t on_screen( screen_dpi_message_cref_t msg ) noexcept
             {
                 natus::concurrent::lock_t lk( _mtx ) ;
                 _states.dpi_msg_changed = true ;
@@ -102,7 +115,7 @@ namespace natus
                 _has_any_change = true ;
             }
 
-            virtual void_t on_screen( screen_size_message_cref_t msg ) 
+            virtual void_t on_screen( screen_size_message_cref_t msg ) noexcept
             {
                 natus::concurrent::lock_t lk( _mtx ) ;
                 _states.msize_msg_changed = true ;
@@ -110,7 +123,7 @@ namespace natus
                 _has_any_change = true ;
             }
 
-            virtual void_t on_resize( resize_message_cref_t msg ) 
+            virtual void_t on_resize( resize_message_cref_t msg ) noexcept
             {
                 natus::concurrent::lock_t lk( _mtx ) ;
                 _states.resize_changed = true ;
@@ -118,7 +131,7 @@ namespace natus
                 _has_any_change = true ;
             }
 
-            virtual void_t on_visible( show_message_cref_t msg ) 
+            virtual void_t on_visible( show_message_cref_t msg ) noexcept
             {
                 natus::concurrent::lock_t lk( _mtx ) ;
                 _states.show_changed = true ;
@@ -126,11 +139,27 @@ namespace natus
                 _has_any_change = true ;
             }
 
-            virtual void_t on_close( close_message_cref_t msg ) 
+            virtual void_t on_close( close_message_cref_t msg ) noexcept
             {
                 natus::concurrent::lock_t lk( _mtx ) ;
                 _states.close_changed = true ;
                 _states.close_msg = msg ;
+                _has_any_change = true ;
+            }
+
+            virtual void_t on_vsync( vsync_message_cref_t msg ) noexcept
+            {
+                natus::concurrent::lock_t lk( _mtx ) ;
+                _states.vsync_msg_changed = true ;
+                _states.vsync_msg = msg ;
+                _has_any_change = true ;
+            }
+
+            virtual void_t on_fullscreen( fullscreen_message_cref_t msg ) noexcept
+            {
+                natus::concurrent::lock_t lk( _mtx ) ;
+                _states.fulls_msg_changed = true ;
+                _states.fulls_msg = msg ;
                 _has_any_change = true ;
             }
         };

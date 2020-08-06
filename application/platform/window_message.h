@@ -40,6 +40,18 @@ namespace natus
             uint_t height ;
         };
         natus_typedef( screen_size_message ) ;
+
+        struct vsync_message
+        {
+            bool_t on_off ;
+        };
+        natus_typedef( vsync_message ) ;
+
+        struct fullscreen_message
+        {
+            bool_t on_off ;
+        };
+        natus_typedef( fullscreen_message ) ;
     }
 }
 

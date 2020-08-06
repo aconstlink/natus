@@ -276,11 +276,21 @@ LRESULT CALLBACK window::WndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
     }
         break ;
 
+    case WM_USER:
+        
+        // use wParam==1 for user-controlled window messaging
+        if( wParam == WPARAM(1) )
+        {
+            // check window listener 
+        }
+        break ;
+
     case WM_CLOSE: 
     case WM_DESTROY: 
         this_t::send_destroy() ;
         // post a WM_USER message to the stream so the 
         // win32_application knows when a window is closed.
+        wParam = WPARAM( -1 ) ;
         PostMessage( hwnd, WM_USER, wParam, lParam ) ;
 
         return 0 ;
@@ -306,7 +316,7 @@ void_t window::show_window(  window_info const & wi )
 void_t window::send_show( WPARAM wparam ) 
 {
     natus::application::show_message const amsg { bool_t( wparam == TRUE ) } ;
-    this_t::foreach_listener( [&] ( natus::application::iwindow_message_listener_res_t lst )
+    this_t::foreach_in( [&] ( natus::application::iwindow_message_listener_res_t lst )
     {
         lst->on_visible( amsg ) ;
     } ) ;
@@ -323,7 +333,7 @@ void_t window::send_resize( HWND hwnd )
         size_t(rect.right-rect.left), size_t(rect.bottom-rect.top)
     } ;
 
-    this_t::foreach_listener( [&] ( natus::application::iwindow_message_listener_res_t lst ) 
+    this_t::foreach_in( [&] ( natus::application::iwindow_message_listener_res_t lst ) 
     { 
         lst->on_resize( rm ) ;
     } ) ;
@@ -333,7 +343,7 @@ void_t window::send_resize( HWND hwnd )
 void_t window::send_destroy( void_t ) 
 {
     natus::application::close_message const amsg { true } ;
-    this_t::foreach_listener( [&] ( natus::application::iwindow_message_listener_res_t lst )
+    this_t::foreach_in( [&] ( natus::application::iwindow_message_listener_res_t lst )
     {
         lst->on_close( amsg ) ;
     } ) ;
