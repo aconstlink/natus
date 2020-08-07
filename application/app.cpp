@@ -148,7 +148,6 @@ app::window_async_t app::create_window(
 
         natus::application::egl::window_res_t eglw =
             natus::application::egl::window_t( gli, wii ) ;
-
         pwi.wnd = eglw ;
 
         natus::application::egl::context_res_t glctx =

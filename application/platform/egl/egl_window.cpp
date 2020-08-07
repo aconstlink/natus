@@ -129,3 +129,9 @@ Window window::create_egl_window( window_info_in_t wi )
 
     return window ;
 }
+
+// ***
+void_t window::check_for_messages( void_t ) noexcept
+{
+    _window->check_for_messages() ;
+}

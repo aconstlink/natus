@@ -34,6 +34,8 @@ namespace natus
                 context_res_t get_context( void_t ) const { return _context ; }
                 xlib::window_res_t get_window( void_t ) { return _window ; }
 
+                virtual void_t check_for_messages( void_t ) noexcept ;
+
             private:
 
                 xlib::window_res_t create_window( gl_info_in_t, window_info_in_t ) ;

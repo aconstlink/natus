@@ -151,7 +151,7 @@ natus::application::result xlib_application::on_exec( void_t )
             switch( event.type )
             {
             case Expose:
-                natus::log::global_t::status("application expose") ;
+                //natus::log::global_t::status("application expose") ;
                 break ;
 
             case DestroyNotify:

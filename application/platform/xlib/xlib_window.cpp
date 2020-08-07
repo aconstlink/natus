@@ -181,8 +181,8 @@ void_t window::xevent_callback( XEvent const & event )
     switch( event.type )
     {
     case Expose:
-        XClearWindow( event.xany.display, event.xany.window ) ;
-        natus::log::global_t::status("expose") ;
+        //XClearWindow( event.xany.display, event.xany.window ) ;
+        //natus::log::global_t::status("expose") ;
         break ;
 
     case VisibilityNotify:
@@ -233,6 +233,18 @@ void_t window::show_window(  window_info const & wi )
 }
 
 //***************************************************************
-void_t send_toggle( natus::application::toggle_window_in_t ) 
+void_t window::send_toggle( natus::application::toggle_window_in_t ) 
 {
+}
+
+//***
+void_t window::check_for_messages( void_t ) noexcept 
+{
+    XEvent ev ;
+    ::std::memset( &ev, 0, sizeof(ev) ) ;
+
+    ev.type = Expose ;
+    ev.xexpose.window = _handle ;
+    XSendEvent( _display, _handle, False, ExposureMask, &ev ) ;
+    XFlush(_display) ;
 }
