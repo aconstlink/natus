@@ -366,6 +366,7 @@ bool_t app::before_update( void_t )
         }
 
         // check and send message to the window
+        if( pwi.msg_send->has_any_change() )
         {
             pwi.wnd->check_for_messages() ;
         }

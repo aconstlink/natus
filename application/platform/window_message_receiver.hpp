@@ -91,6 +91,8 @@ namespace natus
                 return changed ;
             }
 
+            bool_t has_any_change( void_t ) const noexcept { return _has_any_change ; }            
+
         private:
 
             void_t reset_change_flags( void_t ) noexcept
