@@ -33,6 +33,8 @@ namespace natus
 
                 context_res_t get_context( void_t ) const { return _context ; }
                 win32::window_res_t get_window( void_t ) { return _window ; }
+
+                virtual void_t check_for_messages( void_t ) noexcept ;
             };
             natus_typedef( window ) ;
             typedef natus::soil::res< window_t > window_res_t ;

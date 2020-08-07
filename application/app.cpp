@@ -311,12 +311,15 @@ app::window_async_t app::create_window(
     } ) ;
     pwi.async = async ;
 
+    auto msg_send = pwi.msg_send ;
+
     // add per window info
     //here
     natus::concurrent::lock_guard_t lk( _wmtx ) ;
     _windows.emplace_back( ::std::move( pwi ) ) ;
+    
 
-    return ::std::make_pair( this_t::window_view_t( _windows.size()-1, pwi.msg_send, gfx_msg_send ), 
+    return ::std::make_pair( this_t::window_view_t( _windows.size()-1, msg_send, gfx_msg_send ), 
         natus::gpu::async_view_t( ::std::move( async ), _access ) ) ;
 }
 
@@ -364,6 +367,7 @@ bool_t app::before_update( void_t )
 
         // check and send message to the window
         {
+            pwi.wnd->check_for_messages() ;
         }
     }
 

@@ -45,3 +45,9 @@ window::~window( void_t )
     _window = win32::window_res_t() ;
     _context = wgl::context_res_t() ;
 }
+
+//***********************************************************************
+void_t window::check_for_messages( void_t ) noexcept 
+{
+    _window->check_for_messages() ;
+}

@@ -60,9 +60,9 @@ HWND window::get_handle( void_t )
 //***
 void_t window::send_toggle( natus::application::toggle_window_in_t di ) 
 {
-    if( di.toggle_fullscreen )
+    if( _is_fullscreen != di.toggle_fullscreen )
     {
-        _is_fullscreen = !_is_fullscreen ;
+        _is_fullscreen = di.toggle_fullscreen ;
 
         {
             DWORD ws_ex_style = WS_EX_APPWINDOW /*& ~(WS_EX_DLGMODALFRAME |
@@ -105,9 +105,9 @@ void_t window::send_toggle( natus::application::toggle_window_in_t di )
     }
 
     /// @todo make it work.
-    if( di.toggle_show_cursor )
+    if( _is_cursor != di.toggle_show_cursor )
     {
-        _is_cursor = !_is_cursor ;
+        _is_cursor = di.toggle_show_cursor ;
         if( natus::core::is_not( _is_cursor ) )
         {
             _cursor = GetCursor() ;
@@ -282,6 +282,19 @@ LRESULT CALLBACK window::WndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
         if( wParam == WPARAM(1) )
         {
             // check window listener 
+            this_t::foreach_out( [&] ( natus::application::window_message_receiver_res_t lst )
+            { 
+                natus::application::window_message_receiver_t::state_vector_t states ;
+                if( lst->swap_and_reset(states) )
+                {
+                    if( states.fulls_msg_changed)
+                    {
+                        natus::application::toggle_window_t tw ;
+                        tw.toggle_fullscreen = states.fulls_msg.on_off ;
+                        this_t::send_toggle( tw ) ;
+                    }
+                }
+            } ) ;
         }
         break ;
 
@@ -297,6 +310,12 @@ LRESULT CALLBACK window::WndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
     }
 
     return DefWindowProc( hwnd, msg, wParam, lParam ) ;
+}
+
+//***
+void_t window::check_for_messages( void_t ) noexcept 
+{
+    PostMessage( _handle, WM_USER, WPARAM( 1 ), 0 ) ;
 }
 
 //***

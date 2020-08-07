@@ -27,7 +27,7 @@ namespace natus
             natus::std::vector< natus::application::iwindow_message_listener_res_t > _ins ;
 
             // other entity -> platform window
-            natus::std::vector< natus::application::iwindow_message_listener_res_t > _outs ;
+            natus::std::vector< natus::application::window_message_receiver_res_t > _outs ;
 
         public:
 
@@ -70,12 +70,12 @@ namespace natus
 
         public: // outs
 
-            void_t register_out( natus::application::iwindow_message_listener_res_t l )
+            void_t register_out( natus::application::window_message_receiver_res_t l )
             {
                 _outs.push_back( ::std::move( l ) ) ;
             }
 
-            void_t unregister_out( natus::application::iwindow_message_listener_res_t l )
+            void_t unregister_out( natus::application::window_message_receiver_res_t l )
             {
                 auto iter = ::std::find_if( _outs.begin(), _outs.end(), [&] ( natus::application::iwindow_message_listener_res_t ls )
                 {
@@ -88,14 +88,16 @@ namespace natus
                 _outs.erase( iter ) ;
             }
 
-            typedef ::std::function< void ( natus::application::iwindow_message_listener_res_t ) > foreach_listener_funk_t ;
-            void_t foreach_out( foreach_listener_funk_t funk )
+            typedef ::std::function< void ( natus::application::window_message_receiver_res_t ) > foreach_out_funk_t ;
+            void_t foreach_out( foreach_out_funk_t funk )
             {
                 for( auto& l : _outs )
                 {
                     funk( l ) ;
                 }
             }
+
+            virtual void_t check_for_messages( void_t ) noexcept = 0 ;
         };
         natus_soil_typedef( platform_window ) ;
     }

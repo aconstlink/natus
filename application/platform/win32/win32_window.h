@@ -46,6 +46,8 @@ namespace natus
 
                 void_t show_window(  window_info const & wi ) ;
 
+                virtual void_t check_for_messages( void_t ) noexcept ;
+
             private:
 
                 HWND create_window( window_info const& ) ;
