@@ -142,6 +142,7 @@ Window window::create_glx_window( window_info_in_t wi )
 
     swa.colormap = cm = XCreateColormap( display,
        root, vi->visual, AllocNone ) ;
+    swa.border_pixel = 0 ;
     //swa.background_pixmap = None ;
     //swa.background_pixel = WhitePixel( diplay, sid ) ;
     //swa.border_pixel = BlackPixel( display, sid )  ;
@@ -153,7 +154,7 @@ Window window::create_glx_window( window_info_in_t wi )
             wi.w,//WidthOfScreen( DefaultScreenOfDisplay( display ) ),
             wi.h,//HeightOfScreen( DefaultScreenOfDisplay( display ) ),
             0, vi->depth, InputOutput, vi->visual, 
-            CWBackPixel | CWColormap | CWEventMask, &swa ) ;
+            CWBackPixel | CWColormap | CWEventMask | CWBorderPixel, &swa ) ;
 
     if( natus::log::global_t::error( !window, 
             "[glx_window::create_glx_window] : XCreateWindow" ) )

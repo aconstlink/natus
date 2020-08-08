@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <X11/Xlib.h>
+#include <X11/Xatom.h>
 
 using namespace natus::application ;
 using namespace natus::application::xlib ;
@@ -37,6 +38,8 @@ window::window( this_rref_t rhv ) : platform_window( ::std::move( rhv ) )
 
     this_t::store_this_ptr_in_atom( 
         _display, _handle ) ;
+
+    _dims = rhv._dims ;
 }
 
 //***************************************************************
@@ -75,10 +78,16 @@ void_t window::create_window( window_info const & wi )
     int width = wi.w ; 
     int height = wi.h ; 
 
+    _dims = natus::math::vec4i_t( start_x, start_y, width, height ) ;
+
     //ShowCursor( wil.show_cursor ) ;
+
 
     if( wil.fullscreen )
     {
+        natus::application::toggle_window_t tw ;
+        tw.toggle_fullscreen = wil.fullscreen ;
+        this_t::send_toggle(tw) ;
     }
     else
     {
@@ -183,21 +192,46 @@ void_t window::xevent_callback( XEvent const & event )
     case Expose:
         //XClearWindow( event.xany.display, event.xany.window ) ;
         //natus::log::global_t::status("expose") ;
+        // check window listener 
+        this_t::foreach_out( [&] ( natus::application::window_message_receiver_res_t lst )
+        { 
+            natus::application::window_message_receiver_t::state_vector_t states ;
+            if( lst->swap_and_reset(states) )
+            {
+                if( states.fulls_msg_changed)
+                {
+                    natus::application::toggle_window_t tw ;
+                    tw.toggle_fullscreen = states.fulls_msg.on_off ;
+                    this_t::send_toggle( tw ) ;
+                }
+            }
+        } ) ;
         break ;
 
     case VisibilityNotify:
         natus::log::global_t::status("visibility") ;
         break ;
 
-    case ConfigureNotify:{
+    case ConfigureNotify:
+    {
         XConfigureEvent xce = event.xconfigure ;
-        natus::application::resize_message const rm {
-                0,0,
-                (size_t)xce.width, (size_t)xce.height
-            } ;
+        natus::application::resize_message const rm 
+        {
+         0,0,
+         (size_t)xce.width, (size_t)xce.height
+        } ;
 
-            this_t::foreach_in( [&]( natus::application::iwindow_message_listener_res_t lst ){ lst->on_resize( rm ) ; } ) ;
-        break ;}
+        this_t::foreach_in( [&]( natus::application::iwindow_message_listener_res_t lst )
+        { 
+            lst->on_resize( rm ) ; 
+        } ) ;
+
+        if( natus::core::is_not( _is_fullscreen ) )
+        {
+            _dims = natus::math::vec4i_t( rm.x, rm.y, rm.w, rm.h ) ;
+        }
+        break ;
+    }
 
     case ResizeRequest:
         {
@@ -212,8 +246,16 @@ void_t window::xevent_callback( XEvent const & event )
                 (size_t)rse.width, (size_t)rse.height
             } ;
 
-            this_t::foreach_in( [&]( natus::application::iwindow_message_listener_res_t lst ){ lst->on_resize( rm ) ; } ) ;
+            this_t::foreach_in( [&]( natus::application::iwindow_message_listener_res_t lst )
+            { 
+                lst->on_resize( rm ) ; 
+            } ) ;
             XClearArea( event.xany.display, event.xany.window, 0,0,0,0, true ) ;
+
+            if( natus::core::is_not( _is_fullscreen ) )
+            {
+                _dims = natus::math::vec4i_t( rm.x, rm.y, rm.w, rm.h ) ;
+            }
         }
         break ;
     }
@@ -233,8 +275,57 @@ void_t window::show_window(  window_info const & wi )
 }
 
 //***************************************************************
-void_t window::send_toggle( natus::application::toggle_window_in_t ) 
+void_t window::send_toggle( natus::application::toggle_window_in_t di ) 
 {
+    if( _is_fullscreen != di.toggle_fullscreen )
+    {
+        _is_fullscreen = di.toggle_fullscreen ;
+
+        natus::math::vec4i_t dims = _dims ;
+
+        if( _is_fullscreen ) 
+        {
+            dims = natus::math::vec4i_t( 0, 0, 
+                 XDisplayWidth( _display, 0 ),
+                 XDisplayHeight( _display, 0 ) ) ;
+
+            XSetWindowBorderWidth( _display, _handle, 0 ) ;
+        }
+
+        uint_t const mask = CWX | CWY | CWWidth | CWHeight | CWBorderWidth | CWStackMode ;
+
+        XWindowChanges wc ;
+        wc.x = dims.x() ;
+        wc.y = dims.y() ;
+        wc.width = dims.z() ;
+        wc.height = dims.w() ;
+        wc.border_width = 0 ;
+        wc.stack_mode = Above ;
+        XConfigureWindow( _display, _handle, mask, &wc ) ;
+
+        
+
+        
+#if 0 // does not work
+        XEvent xev ;
+        ::std::memset( &xev, 0, sizeof(xev) ) ;
+        xev.type = ClientMessage ;
+        xev.xclient.window = _handle ;
+        xev.xclient.message_type = XInternAtom( _display, "_NET_WM_STATE", False ) ;
+        xev.xclient.format = 32 ;
+        xev.xclient.data.l[0] = 1 ;
+        xev.xclient.data.l[1] = XInternAtom( _display, "_NET_WM_STATE_FULLSCREEN", False ) ;
+        xev.xclient.data.l[2] = 0 ;
+        XSendEvent( _display, _handle, False, SubstructureNotifyMask | SubstructureRedirectMask, &xev ) ;
+#endif
+#if 0 // does not work
+        Atom wm_state = XInternAtom( _display, "_NET_WM_STATE", False ) ;
+        Atom wm_fulls = XInternAtom( _display, "_NET_WM_STATE_FULLSCREEN", False ) ;
+        XChangeProperty( _display, _handle, wm_state, XA_ATOM, 32, PropModeReplace, 
+                         (unsigned char *)&wm_fulls, 1 ) ;
+#endif
+    }
+
 }
 
 //***

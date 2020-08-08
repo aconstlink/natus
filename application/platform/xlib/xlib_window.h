@@ -5,6 +5,7 @@
 #include "../toggle_window.h"
 
 #include <natus/std/vector.hpp>
+#include <natus/math/vector/vector4.hpp>
 
 #include <X11/Xlib.h>
 
@@ -26,6 +27,8 @@ namespace natus
 
                 bool_t _is_fullscreen = false ;
                 bool_t _is_cursor = false ;
+
+                natus::math::vec4i_t _dims = natus::math::vec4i_t( 0, 0, 100, 100 ) ;
 
             public:
 
