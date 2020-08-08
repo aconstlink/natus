@@ -38,6 +38,9 @@ endif()
 if( TARGET OpenAL )
   set_target_properties( OpenAL PROPERTIES FOLDER "natus/externals/openal-soft" )
 
+  if( NATUS_COMPILER_GNU )
+    target_compile_options( OpenAL PRIVATE -Wno-conversion )
+  endif()
   if( NATUS_TARGET_OS_WIN )
 
     if( NATUS_COMPILER_MSC )
