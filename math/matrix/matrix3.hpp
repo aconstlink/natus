@@ -7,6 +7,8 @@
 #include "../typedefs.h"
 #include "../utility/fn.hpp"
 
+#include <cstring>
+
 namespace natus
 {
     namespace math
@@ -48,15 +50,13 @@ namespace natus
             //************************************************************************************
             matrix3( this_cref_t rhv ) 
             {
-                _elem[0] = rhv[0] ;
-                _elem[1] = rhv[1] ;
-                _elem[2] = rhv[2] ;
-                _elem[3] = rhv[3] ;
-                _elem[4] = rhv[4] ;
-                _elem[5] = rhv[5] ;
-                _elem[6] = rhv[6] ;
-                _elem[7] = rhv[7] ;
-                _elem[8] = rhv[8] ; 
+                ::std::memcpy( (void_ptr_t)_elem, (void_cptr_t)rhv._elem, sizeof(type_t)*9 ) ;
+            }
+
+            this_ref_t operator = ( this_cref_t rhv ) noexcept
+            {
+                ::std::memcpy( (void_ptr_t)_elem, (void_cptr_t)rhv._elem, sizeof(type_t)*9 ) ;
+                return *this ;
             }
 
             //************************************************************************************

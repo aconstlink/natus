@@ -346,7 +346,7 @@ struct es3_backend::pimpl
     {
         config.vertex_inputs.clear() ;
 
-        for( auto & v : config.attributes )
+        //for( auto & v : config.attributes )
         {
             // delete memory
         }
@@ -669,7 +669,7 @@ struct es3_backend::pimpl
         GLuint const program_id = config.pg_id ;
 
         {
-            glUseProgram( config.pg_id ) ;
+            glUseProgram( program_id ) ;
             if( natus::es::error::check_and_log( natus_log_fn( "glUseProgram" ) ) )
                 return ;
         }
@@ -681,7 +681,7 @@ struct es3_backend::pimpl
     }
 
     //***********************
-    size_t construct_image_config( size_t oid, natus::std::string_cref_t name, 
+    size_t construct_image_config( size_t /*oid*/, natus::std::string_cref_t name, 
         natus::gpu::image_configuration_ref_t config )
     {
         // the name is unique
@@ -697,7 +697,7 @@ struct es3_backend::pimpl
         }
 
         size_t i = 0 ;
-        for( i; i < img_configs.size(); ++i )
+        for( ; i < img_configs.size(); ++i )
         {
             if( natus::core::is_not( img_configs[ i ].tex_id != GLuint( -1 ) ) )
             {
@@ -741,7 +741,7 @@ struct es3_backend::pimpl
 
     //***********************
     size_t construct_render_config( size_t oid, natus::std::string_cref_t name,
-        natus::gpu::render_configuration_ref_t config )
+        natus::gpu::render_configuration_ref_t /*config*/ )
     {
         // the name must be unique
         {
@@ -872,7 +872,7 @@ struct es3_backend::pimpl
         }
 
         {
-            rc.for_each( [&] ( size_t const i, natus::gpu::variable_set_res_t vs )
+            rc.for_each( [&] ( size_t const /*i*/, natus::gpu::variable_set_res_t vs )
             {
                 auto const res = this_t::connect( id, vs ) ;
                 natus::log::global_t::warning( natus::core::is_not( res ),
@@ -908,7 +908,7 @@ struct es3_backend::pimpl
         }
 
         size_t i = 0 ;
-        for( i; i < geo_configs.size(); ++i )
+        for( ; i < geo_configs.size(); ++i )
         {
             if( natus::core::is_not( geo_configs[ i ].vb_id != GLuint(-1) ) )
             {
@@ -940,7 +940,7 @@ struct es3_backend::pimpl
             glGenBuffers( 1, &id ) ;
             error = natus::es::error::check_and_log( 
                 natus_log_fn( "Vertex Buffer creation" ) ) ;
-            
+
             geo_configs[ i ].vb_id = id ;
         }
 
@@ -951,7 +951,7 @@ struct es3_backend::pimpl
             glGenBuffers( 1, &id ) ;
             error = natus::es::error::check_and_log(
                 natus_log_fn( "Index Buffer creation" ) ) ;
-            
+
             geo_configs[ i ].ib_id = id ;
         }
 
@@ -968,6 +968,8 @@ struct es3_backend::pimpl
                 geo_configs[ i ].elements.push_back( le ) ;
             }) ;
         }
+
+        natus::log::global_t::error( error, natus_log_fn("Error occurred" ) ) ;
 
         return i ;
     }
@@ -1133,7 +1135,7 @@ struct es3_backend::pimpl
             }
             else if( natus::ogl::uniform_is_texture( uv.type ) )
             {
-                auto const types = natus::gpu::es3::to_type_type_struct( uv.type ) ;
+                //auto const types = natus::gpu::es3::to_type_type_struct( uv.type ) ;
                 auto* var = vs->texture_variable( uv.name ) ;
 
                 if( natus::core::is_nullptr( var ) )
@@ -1237,10 +1239,10 @@ struct es3_backend::pimpl
         // render section
         {
             GLenum const pt = config.geo->pt ;
-            GLuint const vb = config.geo->vb_id ;
             GLuint const ib = config.geo->ib_id ;
+            //GLuint const vb = config.geo->vb_id ;
 
-            if( ib != size_t(-1) )
+            if( ib != GLuint(-1) )
             {
                 GLsizei const max_elems = GLsizei( config.geo->num_elements_ib ) ;
                 GLsizei const ne = ::std::min( num_elements>=0?num_elements:max_elems, max_elems ) ;
@@ -1391,16 +1393,13 @@ es3_backend::~es3_backend( void_t )
 void_t es3_backend::set_window_info( window_info_cref_t wi ) noexcept 
 {
     {
-        bool_t change = false ;
         if( wi.width != 0 )
         {
             _pimpl->vp_width = GLsizei( wi.width ) ;
-            change = true ;
         }
         if( wi.height != 0 )
         {
             _pimpl->vp_height = GLsizei( wi.height ) ;
-            change = true ;
         }
     }
 }

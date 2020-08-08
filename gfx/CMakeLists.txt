@@ -30,6 +30,10 @@ target_link_libraries( ${cur_lib_name}
   PUBLIC natus_graphics_options 
     )
 
+if( NATUS_COMPILER_GNU )
+  target_compile_options( ${cur_lib_name} PUBLIC -Wno-pessimizing-move )
+endif()
+
 ###########################################################
 # SECTION: Build Tree
 ###########################################################

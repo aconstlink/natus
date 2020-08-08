@@ -159,16 +159,48 @@ namespace natus
         public:
             
             shader_configuration( void_t ) {}
+
             shader_configuration( natus::std::string_cref_t name ) 
                 : _name( name ) {}
-            shader_configuration( this_cref_t rhv )
+
+            shader_configuration( this_cref_t rhv ) : object( rhv )
             {
-                *this = rhv  ;
+                _name = rhv._name ;
+                _vertex_inputs = rhv._vertex_inputs ;
+                _shader_sets = rhv._shader_sets ;
+                _bindings = rhv._bindings ;
             }
 
-            shader_configuration( this_rref_t rhv )
+            shader_configuration( this_rref_t rhv ) : object( ::std::move(rhv) )
             {
-                *this = ::std::move( rhv ) ;
+                _name = ::std::move( rhv._name ) ;
+                _vertex_inputs = ::std::move( rhv._vertex_inputs ) ;
+                _shader_sets = ::std::move( rhv._shader_sets ) ;
+                _bindings = ::std::move( rhv._bindings ) ;
+            }
+
+            this_ref_t operator = ( this_cref_t rhv )
+            {
+                object::operator=( rhv ) ;
+
+                _name = rhv._name ;
+                _vertex_inputs = rhv._vertex_inputs ;
+                _shader_sets = rhv._shader_sets ;
+                _bindings = rhv._bindings ;
+
+                return *this ;
+            }
+
+            this_ref_t operator = ( this_rref_t rhv )
+            {
+                object::operator=( ::std::move( rhv ) ) ;
+
+                _name = ::std::move( rhv._name ) ;
+                _vertex_inputs = ::std::move( rhv._vertex_inputs ) ;
+                _shader_sets = ::std::move( rhv._shader_sets ) ;
+                _bindings = ::std::move( rhv._bindings ) ;
+
+                return *this ;
             }
 
         public:
@@ -210,29 +242,7 @@ namespace natus
 
         public:
 
-            this_ref_t operator = ( this_cref_t rhv )
-            {
-                object::operator=( rhv ) ;
-
-                _name = rhv._name ;
-                _vertex_inputs = rhv._vertex_inputs ;
-                _shader_sets = rhv._shader_sets ;
-                _bindings = rhv._bindings ;
-
-                return *this ;
-            }
-
-            this_ref_t operator = ( this_rref_t rhv )
-            {
-                object::operator=( ::std::move( rhv ) ) ;
-
-                _name = ::std::move( rhv._name ) ;
-                _vertex_inputs = ::std::move( rhv._vertex_inputs ) ;
-                _shader_sets = ::std::move( rhv._shader_sets ) ;
-                _bindings = ::std::move( rhv._bindings ) ;
-
-                return *this ;
-            }
+            
 
             natus::std::string_cref_t name( void_t ) const noexcept
             {

@@ -30,6 +30,7 @@ namespace natus
             typedef vector4< type_t > vec4_t ;
 
             typedef this_t & this_ref_t ;
+            typedef this_t && this_rref_t ;
             typedef this_t const & this_cref_t ;
 
         public: // ctor
@@ -47,6 +48,28 @@ namespace natus
                 for( size_t i=0; i<4; ++i ){
                     _elem[i] = rhv[i] ;
                 }
+            }
+
+            matrix2( this_rref_t rhv ) noexcept
+            {
+                for( size_t i=0; i<4; ++i ){
+                    _elem[i] = rhv[i] ;
+                }
+            }
+
+            this_ref_t operator = ( this_cref_t rhv ) noexcept
+            {
+                for( size_t i=0; i<4; ++i ){
+                    _elem[i] = rhv[i] ;
+                }
+            }
+
+            this_ref_t operator = ( this_rref_t rhv ) noexcept
+            {
+                for( size_t i=0; i<4; ++i ){
+                    _elem[i] = rhv[i] ;
+                }
+                return *this ;
             }
 
             //************************************************************************************

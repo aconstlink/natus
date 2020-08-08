@@ -53,18 +53,25 @@ namespace natus
             image_configuration( natus::std::string_in_t name, natus::gpu::image_rref_t img) :
                 image_configuration( name )
             {
-                
                 _img = ::std::move( img ) ;
             }
 
-            image_configuration( this_cref_t rhv )
+            image_configuration( this_cref_t rhv ) : object( rhv )
             {
-                *this = rhv ;
+                _name = rhv._name ;
+                _img = rhv._img ;
+
+                memcpy( ( void_ptr_t ) _wrap_types, ( void_cptr_t )rhv._wrap_types, sizeof(_wrap_types) ) ;
+                memcpy( ( void_ptr_t ) _filter_types, ( void_cptr_t )rhv._filter_types, sizeof(_filter_types) ) ;
             }
-            
-            image_configuration( this_rref_t rhv )
+
+            image_configuration( this_rref_t rhv ) : object( ::std::move( rhv ) )
             {
-                *this = ::std::move( rhv ) ;
+                _name = ::std::move( rhv._name ) ;
+                _img = ::std::move( rhv._img ) ;
+
+                memcpy( ( void_ptr_t ) _wrap_types, ( void_cptr_t ) rhv._wrap_types, sizeof( _wrap_types ) ) ;
+                memcpy( ( void_ptr_t ) _filter_types, ( void_cptr_t ) rhv._filter_types, sizeof( _filter_types ) ) ;
             }
 
             virtual ~image_configuration( void_t ){}

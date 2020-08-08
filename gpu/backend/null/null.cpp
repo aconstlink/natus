@@ -17,28 +17,28 @@ void_t null_backend::set_window_info( window_info_cref_t ) noexcept
 //***
 natus::gpu::result null_backend::configure( natus::gpu::geometry_configuration_res_t ) noexcept
 {
-    static size_t number = 0 ;
+    //static size_t number = 0 ;
     return natus::gpu::result::ok ;
 }
 
 //***
 natus::gpu::result null_backend::configure( natus::gpu::render_configuration_res_t ) noexcept 
 {
-    static size_t number = 0 ;
+    //static size_t number = 0 ;
     return natus::gpu::result::ok ;
 }
 
 //***
 natus::gpu::result null_backend::configure( natus::gpu::shader_configuration_res_t ) noexcept 
 {
-    static size_t number = 0 ;
+    //static size_t number = 0 ;
     return natus::gpu::result::ok ;
 }
 
 //***
 natus::gpu::result null_backend::configure( natus::gpu::image_configuration_res_t ) noexcept 
 {
-    static size_t number = 0 ;
+    // static size_t number = 0 ;
     return natus::gpu::result::ok ;
 }
 

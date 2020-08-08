@@ -33,14 +33,44 @@ namespace natus
             render_configuration( natus::std::string_cref_t name ) 
                 : _name( name ) {}
 
-            render_configuration( this_cref_t rhv ) 
+            render_configuration( this_cref_t rhv ) : object( rhv )
             {
-                *this = rhv  ;
+                _name = rhv._name ;
+                _geo = rhv._geo;
+                _shader = rhv._shader ;
+                _vars = rhv._vars ;
             }
 
-            render_configuration( this_rref_t rhv ) 
+            render_configuration( this_rref_t rhv ) : object( ::std::move( rhv ) )
             {
-                *this = ::std::move( rhv ) ;
+                _name = ::std::move( rhv._name ) ;
+                _geo = ::std::move( rhv._geo ) ;
+                _shader = ::std::move( rhv._shader ) ;
+                _vars = ::std::move( rhv._vars ) ;
+            }
+
+            this_ref_t operator = ( this_cref_t rhv ) noexcept
+            {
+                object::operator=( rhv ) ;
+
+                _name = rhv._name ;
+                _geo = rhv._geo;
+                _shader = rhv._shader ;
+                _vars = rhv._vars ;
+
+                return *this ;
+            }
+
+            this_ref_t operator = ( this_rref_t rhv ) noexcept
+            {
+                object::operator=( ::std::move( rhv ) ) ;
+
+                _name = ::std::move( rhv._name ) ;
+                _geo = ::std::move( rhv._geo ) ;
+                _shader = ::std::move( rhv._shader ) ;
+                _vars = ::std::move( rhv._vars ) ;
+
+                return *this ;
             }
 
         public:
@@ -88,30 +118,6 @@ namespace natus
             }
 
         public:
-
-            this_ref_t operator = ( this_cref_t rhv ) noexcept
-            {
-                object::operator=( rhv ) ;
-
-                _name = rhv._name ;
-                _geo = rhv._geo;
-                _shader = rhv._shader ;
-                _vars = rhv._vars ;
-
-                return *this ;
-            }
-
-            this_ref_t operator = ( this_rref_t rhv ) noexcept
-            {
-                object::operator=( ::std::move( rhv ) ) ;
-
-                _name = ::std::move( rhv._name ) ;
-                _geo = ::std::move( rhv._geo ) ;
-                _shader = ::std::move( rhv._shader ) ;
-                _vars = ::std::move( rhv._vars ) ;
-
-                return *this ;
-            }
 
             natus::std::string_cref_t name( void_t ) const noexcept
             {

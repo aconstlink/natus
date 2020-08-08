@@ -176,7 +176,7 @@ void_t imgui::init( natus::gpu::async_view_ref_t async )
         io.Fonts->GetTexDataAsRGBA32( &pixels, &width, &height ) ;
         io.Fonts->TexID = (ImTextureID) 0 ;
         natus::gpu::image_t img = natus::gpu::image_t( natus::gpu::image_t::dims_t( width, height, 1 ) )
-            .update( [&] ( natus::gpu::image_ptr_t, natus::gpu::image_t::dims_in_t dims, void_ptr_t data_in )
+            .update( [&] ( natus::gpu::image_ptr_t, natus::gpu::image_t::dims_in_t /*dims*/, void_ptr_t data_in )
         {
             ::std::memcpy( data_in, ( void_cptr_t ) pixels, size_t( width * height * 4 ) ) ;
         } ) ;
@@ -282,7 +282,7 @@ void_t imgui::render( natus::gpu::async_view_ref_t async )
 
             _gc->vertex_buffer().update<this_t::vertex>( [&] ( vertex* array, size_t const /*ne*/ )
             {
-                for( size_t i = 0; i < cmd_list->VtxBuffer.Size; ++i )
+                for( int_t i = 0; i < cmd_list->VtxBuffer.Size; ++i )
                 {
                     ImDrawVert const& imvert = cmd_list->VtxBuffer.Data[ i ] ;
                     auto const c = ImGui::ColorConvertU32ToFloat4( imvert.col ) ;
@@ -296,7 +296,7 @@ void_t imgui::render( natus::gpu::async_view_ref_t async )
 
             _gc->index_buffer().update<uint_t>( [&] ( uint_t* array, size_t const /*ne*/ )
             {
-                for( size_t i = 0 ; i < cmd_list->IdxBuffer.Size; ++i )
+                for( int_t i = 0 ; i < cmd_list->IdxBuffer.Size; ++i )
                 {
                     array[ ib_off + i ] = uint_t( vb_off ) + cmd_list->IdxBuffer.Data[ i ] ;
                 }
@@ -500,7 +500,7 @@ void_t imgui::update( natus::device::three_device_res_t dev )
 
         // 3. wheel
         {
-            using layout_t = natus::device::three_device_t::layout_t ;
+            //using layout_t = natus::device::three_device_t::layout_t ;
 
             float_t const m = 1.0f ; // io.KeyCtrl ? 1.0f : 2.5f ;
             float_t s ;

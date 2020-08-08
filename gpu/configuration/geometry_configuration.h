@@ -49,14 +49,20 @@ namespace natus
                 _ib = ::std::move( ib ) ;
             }
 
-            geometry_configuration( this_cref_t rhv ) 
+            geometry_configuration( this_cref_t rhv ) : object( rhv ) 
             {
-                *this = rhv ;
+                _pt = rhv._pt ;
+                _vb = rhv._vb ;
+                _ib = rhv._ib ;
+                _name = rhv._name ;
             }
 
-            geometry_configuration( this_rref_t rhv )
+            geometry_configuration( this_rref_t rhv ) : object( ::std::move( rhv ) )
             {
-                *this = ::std::move( rhv ) ;
+                _pt = rhv._pt ;
+                _vb = ::std::move( rhv._vb ) ;
+                _ib = ::std::move( rhv._ib ) ;
+                _name = ::std::move( rhv._name ) ;
             }
 
             ~geometry_configuration( void_t ) 

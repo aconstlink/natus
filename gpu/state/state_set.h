@@ -109,7 +109,17 @@ namespace natus
             polygon_state_set polygon_s ;
             scissor_state_set scissor_s ;
 
-            this_ref_t operator = ( this_cref_t rhv )
+            render_state_sets( void_t ) {}
+            render_state_sets( this_cref_t rhv ) noexcept
+            {
+                blend_s = rhv.blend_s ;
+                depth_s = rhv.depth_s ;
+                stencil_s = rhv.stencil_s ;
+                polygon_s = rhv.polygon_s ;
+                scissor_s = rhv.scissor_s ;
+            }
+
+            this_ref_t operator = ( this_cref_t rhv ) noexcept
             {
                 blend_s = rhv.blend_s ;
                 depth_s = rhv.depth_s ;

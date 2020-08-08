@@ -197,9 +197,10 @@ namespace natus
                 case natus::gpu::image_element_type::int8: return GL_BYTE ;
                 case natus::gpu::image_element_type::int16: return GL_SHORT ;
                 case natus::gpu::image_element_type::int32: return GL_INT ;
-                
+
                 case natus::gpu::image_element_type::float16: return GL_FLOAT ;
                 case natus::gpu::image_element_type::float32: return GL_FLOAT ;
+                default: break ;
                 }
                 return 0 ;
             }

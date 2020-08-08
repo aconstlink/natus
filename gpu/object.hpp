@@ -26,7 +26,7 @@ namespace natus
             }
 
             object( id_res_t const & id ) : _id( id ){}
-            object( id_res_t && id ) : _id( ::std::move(_id) ){}
+            object( id_res_t && id ) : _id( ::std::move(id) ){}
             object( this_cref_t rhv ) : _id( rhv._id ) {}
             object( this_rref_t rhv ) : _id( ::std::move( rhv._id ) ){}
             ~object( void_t ) {}

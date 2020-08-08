@@ -186,7 +186,7 @@ namespace natus
             this_ref_t configure( natus::gpu::geometry_configuration_res_t config,
                 natus::gpu::result_res_t res = natus::gpu::result_res_t() ) noexcept
             {
-                _async->configure( config ) ;
+                _async->configure( config, res ) ;
                 return *this ;
             }
 
