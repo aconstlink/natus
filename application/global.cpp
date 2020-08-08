@@ -33,7 +33,12 @@ platform_application_res_t global::create_application( void_t )
 
     #elif defined( NATUS_GRAPHICS_EGL )
 
+    return natus::application::xlib::application_res_t(
+        natus::application::xlib::xlib_application_t() ) ;
+
     #endif
+    
+    return platform_application_res_t() ;
 }
 
 //*********************************************************
@@ -51,5 +56,10 @@ platform_application_res_t global::create_application( natus::application::app_r
 
     #elif defined( NATUS_GRAPHICS_EGL )
 
+    return natus::application::xlib::application_res_t(
+        natus::application::xlib::xlib_application_t( app ) ) ;
+
     #endif
+
+    return platform_application_res_t() ;
 }

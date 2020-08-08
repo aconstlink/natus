@@ -73,6 +73,7 @@ window::~window( void_t )
 //***********************************************************************
 xlib::window_res_t window::create_window( gl_info_in_t, window_info_in_t ) 
 {
+    return xlib::window_res_t() ;
 }
 
 //***********************************************************************

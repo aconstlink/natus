@@ -96,6 +96,10 @@ if( TARGET natus::ogl )
       PUBLIC natus::ogl )
 endif()
 
+if( NATUS_COMPILER_GNU )
+  target_compile_options( ${cur_lib_name} PRIVATE -Wno-deprecated-declarations )
+endif()
+
 ###########################################################
 # SECTION: Build Tree
 ###########################################################
