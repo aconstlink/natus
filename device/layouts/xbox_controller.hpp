@@ -348,7 +348,7 @@ namespace natus
                     {
                     case this_t::stick::left: ic = this_t::input_component::stick_left ; break ;
                     case this_t::stick::right: ic = this_t::input_component::stick_right ; break ;
-                    default: nullptr ;
+                    default: break ;
                     }
 
                     return _dev->get_component<natus::device::components::stick_t>( ic ) ;
@@ -362,7 +362,7 @@ namespace natus
                     {
                     case this_t::motor::left: ic = this_t::output_component::motor_left ; break ;
                     case this_t::motor::right: ic = this_t::output_component::motor_right ; break ;
-                    default: nullptr ;
+                    default: break ;
                     }
 
                     return _dev->get_component<natus::device::components::motor_t>( ic ) ;

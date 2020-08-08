@@ -59,7 +59,7 @@ namespace natus
             }
 
             template<>
-            bool_t b_to_a<comp_stick_t>( comp_t* ic_a, comp_t* ic_b, 
+            bool_t b_to_a<comp_stick_t>( comp_t* /*ic_a*/, comp_t* ic_b, 
                 natus::device::mapping_detail const det, mapping_funk_t& funk_out )
             {
                 using a_t = comp_stick_t ;
@@ -104,6 +104,7 @@ namespace natus
                                     ss = natus::device::components::stick_state::tilting ; break ;
                                 case natus::device::components::move_state::unmoved:
                                     ss = natus::device::components::stick_state::untilted ; break ;
+                                default: break ;
                                 }
 
                                 *a = b->rel() ;
@@ -167,7 +168,7 @@ namespace natus
             }
 
             template<>
-            bool_t b_to_a<comp_point_t>( comp_t* ic_a, comp_t* ic_b, 
+            bool_t b_to_a<comp_point_t>( comp_t* /*ic_a*/, comp_t* ic_b, 
                 natus::device::mapping_detail const, mapping_funk_t& funk_out )
             {
                 using a_t = comp_point_t ;
@@ -214,7 +215,7 @@ namespace natus
             }
 
             template<>
-            bool_t b_to_a<comp_ascii_t>( comp_t* ic_a, comp_t* ic_b, 
+            bool_t b_to_a<comp_ascii_t>( comp_t* /*ic_a*/, comp_t* ic_b, 
                 natus::device::mapping_detail const, mapping_funk_t& funk_out )
             {
                 using a_t = comp_ascii_t ;
@@ -272,7 +273,7 @@ namespace natus
             }
 
             template<>
-            bool_t b_to_a<comp_button_t>( comp_t* ic_a, comp_t* ic_b, 
+            bool_t b_to_a<comp_button_t>( comp_t* /*ic_a*/, comp_t* ic_b, 
                 natus::device::mapping_detail const, mapping_funk_t& funk_out )
             {
                 using a_t = comp_button_t ;

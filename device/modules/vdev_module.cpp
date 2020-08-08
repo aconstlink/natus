@@ -163,7 +163,7 @@ void_t vdev_module::init_controller_1( natus::device::imodule_res_t mod )
             using b_t = natus::device::ascii_device_t ;
 
             using ica_t = a_t::layout_t::input_component ;
-            using icb_t = b_t::layout_t::input_component ;
+            //using icb_t = b_t::layout_t::input_component ;
 
             using mapping_t = natus::device::mapping< a_t, b_t > ;
             mapping_t m( name, g.dev, ascii_dev ) ;

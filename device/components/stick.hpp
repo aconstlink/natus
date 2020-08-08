@@ -27,7 +27,7 @@ namespace natus
 
             private:
 
-                stick_state _ss = stick_state::none ; ;
+                stick_state _ss = stick_state::none ;
                 natus::math::vec2f_t _value ;
 
             public:
