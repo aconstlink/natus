@@ -39,7 +39,7 @@ if( TARGET OpenAL )
   set_target_properties( OpenAL PROPERTIES FOLDER "natus/externals/openal-soft" )
 
   if( NATUS_COMPILER_GNU )
-    target_compile_options( OpenAL PRIVATE -Wno-conversion -Wno-pedantic)
+    target_compile_options( OpenAL PRIVATE -Wno-conversion -Wno-pedantic -Wno-switch)
   endif()
   if( NATUS_TARGET_OS_WIN )
 
