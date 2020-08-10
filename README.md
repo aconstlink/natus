@@ -2,7 +2,7 @@
 
 natus is a software framework for real-time interactive audio/visual application. Ok, ok. It will be :art: :construction:
 
-![Travis (.org)](https://img.shields.io/travis/aconstlink/natus?label=Travis%40master) 
+![Travis (.org)](https://img.shields.io/travis/aconstlink/natus?label=Travis%40master)  
 [![Build Status](https://dev.azure.com/aconstlink/natus/_apis/build/status/aconstlink.natus?branchName=master)](https://dev.azure.com/aconstlink/natus/_build/latest?definitionId=1&branchName=master) :construction:  
 
 ## Prerequisites
