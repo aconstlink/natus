@@ -1,23 +1,32 @@
 # natus 
 
-natus is a software framework for real-time interactive audio/visual application.
+natus is a software framework for real-time interactive audio/visual application. Ok, ok. It will be :art: :construction:
 
 [![Build Status](https://travis-ci.org/aconstlink/natus.svg?branch=master)](https://travis-ci.org/aconstlink/natus)
 
 ## Installation
 
-Windows prerequisites:
-Visual Studio 2019 Community
+Windows prerequisites:  
+ - Visual Studio 2019 Community
+ - CMake
 
 
 Linux prerequisites:  
+For development:
 ```bash
-libX11-devel mesa-libGLES mesa-libGLES-devel mesa-libGL mesa-libGL-devel mesa-libEGL mesa-libEGL-devel alsa-lib alsa-lib-devel make cmake gcc gcc-c++
+libX11-devel mesa-libGLES-devel mesa-libGL-devel mesa-libEGL-devel alsa-lib-devel make cmake gcc gcc-c++
 ```
 
-## Usage
+For execution only
+```bash
+libX11 mesa-libGLES mesa-libGL mesa-libEGL alsa-lib
+```
 
-## Contributing
+## Usage  
+:construction:
+
+## Contributing  
+Please see CONTRIBUTING.md
 
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)
