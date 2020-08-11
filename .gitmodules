@@ -11,3 +11,9 @@
 [submodule "externals/lua/lua"]
 	path = externals/lua/lua
 	url = https://github.com/lua/lua.git
+[submodule "externals/nothings/stb"]
+	path = externals/nothings/stb
+	url = https://github.com/nothings/stb.git
+[submodule "externals/zeux/pugixml"]
+	path = externals/zeux/pugixml
+	url = https://github.com/zeux/pugixml.git
