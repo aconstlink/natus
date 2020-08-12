@@ -2,7 +2,7 @@
 #pragma once
 
 #include "typedefs.h"
-#include <natus/soil/macros.h>
+#include <natus/memory/macros.h>
 
 namespace natus
 {

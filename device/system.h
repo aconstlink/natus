@@ -33,6 +33,6 @@ namespace natus
             void_t search( natus::device::imodule::search_funk_t ) ;
             void_t update( void_t ) ;
         };
-        natus_soil_typedef( system ) ;
+        natus_res_typedef( system ) ;
     }
 }

@@ -100,6 +100,6 @@ namespace natus
             this_ref_t operator = ( this_cref_t ) = delete ;
 
         };
-        natus_soil_typedef( id ) ;
+        natus_res_typedef( id ) ;
     }
 }

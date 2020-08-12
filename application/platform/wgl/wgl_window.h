@@ -37,7 +37,7 @@ namespace natus
                 virtual void_t check_for_messages( void_t ) noexcept ;
             };
             natus_typedef( window ) ;
-            typedef natus::soil::res< window_t > window_res_t ;
+            typedef natus::memory::res< window_t > window_res_t ;
         }
     }
 }

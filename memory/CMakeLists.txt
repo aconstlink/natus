@@ -8,6 +8,8 @@ set( sources
     "allocator.hpp"
     "global.h"
     "global.cpp"
+    "res.hpp"
+    "macros.h"
 
     "macros/handle.h"
     

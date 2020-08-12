@@ -20,7 +20,7 @@ namespace natus
 
             virtual ~idevice( void_t ) {}
         };
-        natus_soil_typedef( idevice ) ;
+        natus_res_typedef( idevice ) ;
 
         template< typename L >
         class device : public idevice

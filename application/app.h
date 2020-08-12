@@ -80,7 +80,7 @@ namespace natus
                 void_t vsync( bool_t const ) noexcept ;
                 void_t fullscreen( bool_t const ) noexcept ;
             };
-            natus_soil_typedef( window_view ) ;
+            natus_res_typedef( window_view ) ;
 
         private: // per window info
 
@@ -161,6 +161,6 @@ namespace natus
             bool_t after_render( void_t ) ;
 
         };
-        natus_soil_typedef( app ) ;
+        natus_res_typedef( app ) ;
     }
 }

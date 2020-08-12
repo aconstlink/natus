@@ -17,6 +17,6 @@ namespace natus
             virtual void_t search( search_funk_t ) = 0 ;
             virtual void_t update( void_t ) = 0 ;
         };
-        natus_soil_typedef( imodule ) ;
+        natus_res_typedef( imodule ) ;
     }
 }

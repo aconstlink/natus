@@ -1,6 +1,6 @@
 #pragma once
 
-#include <natus/soil/macros.h>
+#include <natus/memory/macros.h>
 
 #include <natus/core/types.hpp>
 #include <natus/core/assert.h>

@@ -36,6 +36,6 @@ namespace natus
             virtual void_t render_begin( void_t ) noexcept ;
             virtual void_t render_end( void_t ) noexcept ;
         };
-        natus_soil_typedef( null_backend ) ;
+        natus_res_typedef( null_backend ) ;
     }
 }

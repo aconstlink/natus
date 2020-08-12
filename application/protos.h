@@ -1,6 +1,6 @@
 #pragma once
 
-#include <natus/soil/macros.h>
+#include <natus/memory/macros.h>
 #include <natus/core/macros/typedef.h>
 
 namespace natus

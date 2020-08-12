@@ -28,7 +28,7 @@ namespace natus
             virtual void_t on_vsync( vsync_message_cref_t ) noexcept = 0 ;
             virtual void_t on_fullscreen( fullscreen_message_cref_t ) noexcept = 0 ;
         };
-        natus_soil_typedef( iwindow_message_listener ) ;
+        natus_res_typedef( iwindow_message_listener ) ;
 
         class window_message_receiver : public iwindow_message_listener
         {
@@ -165,6 +165,6 @@ namespace natus
                 _has_any_change = true ;
             }
         };
-        natus_soil_typedef( window_message_receiver ) ;
+        natus_res_typedef( window_message_receiver ) ;
     }
 }

@@ -16,7 +16,7 @@ namespace natus
             class three_mouse
             {
                 natus_this_typedefs( three_mouse ) ;
-                natus_soil_typedefs( natus::device::device< this_t >, this_device ) ;
+                natus_res_typedefs( natus::device::device< this_t >, this_device ) ;
 
                 friend this_device_t ;
 
@@ -258,6 +258,6 @@ namespace natus
             };
             natus_typedef( three_mouse ) ;
         }
-        natus_soil_typedefs( natus::device::device< natus::device::layouts::three_mouse_t>, three_device ) ;
+        natus_res_typedefs( natus::device::device< natus::device::layouts::three_mouse_t>, three_device ) ;
     }
 }

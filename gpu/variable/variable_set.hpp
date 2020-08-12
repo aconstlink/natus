@@ -204,6 +204,6 @@ namespace natus
                 return nullptr ;
             }
         };
-        natus_soil_typedef( variable_set ) ;
+        natus_res_typedef( variable_set ) ;
     }
 }

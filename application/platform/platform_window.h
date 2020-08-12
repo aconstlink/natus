@@ -99,6 +99,6 @@ namespace natus
 
             virtual void_t check_for_messages( void_t ) noexcept = 0 ;
         };
-        natus_soil_typedef( platform_window ) ;
+        natus_res_typedef( platform_window ) ;
     }
 }

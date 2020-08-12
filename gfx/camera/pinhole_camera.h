@@ -78,6 +78,6 @@ namespace natus
                 return _lens->get_view_matrix() ;
             }
         };
-        natus_soil_typedef( pinhole_camera ) ;
+        natus_res_typedef( pinhole_camera ) ;
     }
 }

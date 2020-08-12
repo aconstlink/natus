@@ -135,6 +135,6 @@ namespace natus
             }
 
         };
-        natus_soil_typedef( image_configuration ) ;
+        natus_res_typedef( image_configuration ) ;
     }
 }

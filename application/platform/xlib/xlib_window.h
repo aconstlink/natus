@@ -68,7 +68,7 @@ namespace natus
                 void_t store_this_ptr_in_atom( Display * display, Window wnd ) ;
             };
             natus_typedef( window ) ;
-            typedef natus::soil::res< window_t > window_res_t ;
+            typedef natus::memory::res< window_t > window_res_t ;
         }
     }
 }

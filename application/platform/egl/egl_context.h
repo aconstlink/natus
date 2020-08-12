@@ -5,7 +5,7 @@
 
 #include "../gfx_context.h"
 
-#include <natus/soil/res.hpp>
+#include <natus/memory/res.hpp>
 #include <natus/math/vector/vector4.hpp>
 
 #include <EGL/egl.h>
@@ -98,7 +98,7 @@ namespace natus
                     gl_info_cref_t gli ) ;
             };
             natus_typedef( context ) ;
-            typedef natus::soil::res< context_t > context_res_t ;
+            typedef natus::memory::res< context_t > context_res_t ;
         }
     }
 }

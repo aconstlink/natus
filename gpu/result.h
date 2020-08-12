@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <natus/soil/macros.h>
+#include <natus/memory/macros.h>
 
 namespace natus
 {
@@ -14,7 +14,7 @@ namespace natus
             invalid,
             invalid_argument
         };
-        natus_soil_typedef( result ) ;
+        natus_res_typedef( result ) ;
 
 
         enum class async_result

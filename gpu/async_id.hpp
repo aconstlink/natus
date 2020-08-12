@@ -87,7 +87,7 @@ namespace natus
                 return old ;
             }
         };
-        natus_soil_typedef( async_id ) ;
+        natus_res_typedef( async_id ) ;
     }
 }
 

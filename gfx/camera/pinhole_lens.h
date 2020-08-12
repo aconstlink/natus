@@ -157,6 +157,6 @@ namespace natus
                 natus::math::m3d::create_view_matrix( _lens_matrix, _view_matrix ) ;
             }
         };
-        natus_soil_typedef( pinhole_lens ) ;
+        natus_res_typedef( pinhole_lens ) ;
     }
 }

@@ -11,7 +11,7 @@
 #include <natus/device/layouts/three_mouse.hpp>
 #include <natus/device/layouts/ascii_keyboard.hpp>
 
-#include <natus/soil/macros.h>
+#include <natus/memory/macros.h>
 #include <imgui/imgui.h>
 
 namespace natus
@@ -84,6 +84,6 @@ namespace natus
 
             void_t do_default_imgui_init( void_t ) ;
         };
-        natus_soil_typedef( imgui ) ;
+        natus_res_typedef( imgui ) ;
     }
 }

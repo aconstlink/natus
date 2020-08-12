@@ -2,11 +2,9 @@
 
 #include "api.h"
 #include "typedefs.h"
+#include "global.h"
 
-#include <natus/memory/global.h>
 #include <natus/log/global.h>
-#include <natus/std/vector.hpp>
-#include <natus/std/string.hpp>
 
 #include <functional>
 #include <exception>
@@ -16,7 +14,7 @@
 
 namespace natus
 {
-    namespace soil
+    namespace memory
     {
         template< class T >
         class res 

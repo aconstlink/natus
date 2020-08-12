@@ -49,6 +49,6 @@ namespace natus
 
             void_t init_controller_1( natus::device::imodule_res_t ) ;
         } ;
-        natus_soil_typedef( vdev_module ) ;
+        natus_res_typedef( vdev_module ) ;
     }
 }

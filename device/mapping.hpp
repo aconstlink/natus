@@ -374,8 +374,8 @@ namespace natus
         {
             typedef mapping< device_a, device_b > __this_t ;
             natus_this_typedefs( __this_t ) ;
-            natus_soil_typedef( device_a ) ;
-            natus_soil_typedef( device_b ) ;
+            natus_res_typedef( device_a ) ;
+            natus_res_typedef( device_b ) ;
 
         private:
 

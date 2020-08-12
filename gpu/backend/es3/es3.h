@@ -44,6 +44,6 @@ namespace natus
 
             //
         };
-        natus_soil_typedef( es3_backend ) ;
+        natus_res_typedef( es3_backend ) ;
     }
 }

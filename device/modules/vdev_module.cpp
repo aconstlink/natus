@@ -132,7 +132,7 @@ void_t vdev_module::init_controller_1( natus::device::imodule_res_t mod )
                 natus::log::global_t::warning( natus::core::is_not( res ), "can not do mapping." ) ;
             }
 
-            g.dev->add_mapping( natus::soil::res<mapping_t>( m ) ) ;
+            g.dev->add_mapping( natus::memory::res<mapping_t>( m ) ) ;
         }
     }
 
@@ -203,7 +203,7 @@ void_t vdev_module::init_controller_1( natus::device::imodule_res_t mod )
             }
 
 
-            g.dev->add_mapping( natus::soil::res<mapping_t>( m ) ) ;
+            g.dev->add_mapping( natus::memory::res<mapping_t>( m ) ) ;
         }
     }
 
@@ -245,7 +245,7 @@ void_t vdev_module::init_controller_1( natus::device::imodule_res_t mod )
                 natus::log::global_t::warning( natus::core::is_not( res ), "can not do mapping." ) ;
             }
 
-            g.dev->add_mapping( natus::soil::res<mapping_t>( m ) ) ;
+            g.dev->add_mapping( natus::memory::res<mapping_t>( m ) ) ;
         }
     }
 }

@@ -249,6 +249,6 @@ namespace natus
                 return _name ;
             }
         };
-        natus_soil_typedef( shader_configuration ) ;
+        natus_res_typedef( shader_configuration ) ;
     }
 }

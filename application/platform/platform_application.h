@@ -54,6 +54,6 @@ namespace natus
 
             virtual natus::application::result on_exec( void_t ) = 0 ;
         };
-        natus_soil_typedef( platform_application ) ;
+        natus_res_typedef( platform_application ) ;
     }
 }

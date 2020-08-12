@@ -18,7 +18,7 @@ namespace natus
             class game_controller
             {
                 natus_this_typedefs( game_controller ) ;
-                natus_soil_typedefs( natus::device::device< this_t >, this_device ) ;
+                natus_res_typedefs( natus::device::device< this_t >, this_device ) ;
 
                 friend this_device_t ;
 
@@ -266,8 +266,8 @@ namespace natus
                     return true ;
                 }
             };
-            natus_soil_typedef( game_controller ) ;
+            natus_res_typedef( game_controller ) ;
         }
-        natus_soil_typedefs( natus::device::device< natus::device::layouts::game_controller_t>, game_device ) ;
+        natus_res_typedefs( natus::device::device< natus::device::layouts::game_controller_t>, game_device ) ;
     }
 }

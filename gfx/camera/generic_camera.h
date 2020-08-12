@@ -52,6 +52,6 @@ namespace natus
             typedef ::std::function< void_t ( icamera_ref_t, lens_res_t& ) > lens_funk_t ;
             virtual void_t for_each_lens( lens_funk_t funk )  ;
         };
-        natus_soil_typedef( generic_camera ) ;
+        natus_res_typedef( generic_camera ) ;
     }
 }

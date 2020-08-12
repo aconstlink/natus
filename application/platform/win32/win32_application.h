@@ -43,7 +43,7 @@ namespace natus
                 virtual natus::application::result on_exec( void_t ) ;
             };
             natus_typedef( win32_application ) ;
-            typedef natus::soil::res< win32_application > application_res_t ;
+            typedef natus::memory::res< win32_application > application_res_t ;
         }
     }
 }

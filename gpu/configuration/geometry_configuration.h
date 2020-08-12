@@ -122,6 +122,6 @@ namespace natus
                 return _name ;
             }
         };
-        natus_soil_typedef( geometry_configuration ) ;
+        natus_res_typedef( geometry_configuration ) ;
     }
 }

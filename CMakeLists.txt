@@ -111,7 +111,6 @@ list( APPEND subdirs
     "log"
     "concurrent"
     "io"
-    "soil"
     "system"
     "gpu"
     "gfx"

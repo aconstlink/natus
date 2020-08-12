@@ -54,7 +54,7 @@ namespace natus
 
                 void_t check_gamepads( void_t ) ;
             };
-            natus_soil_typedef( xinput_module ) ;
+            natus_res_typedef( xinput_module ) ;
         }
     }
 }

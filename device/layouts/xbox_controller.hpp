@@ -17,7 +17,7 @@ namespace natus
             class xbox_controller
             {
                 natus_this_typedefs( xbox_controller ) ;
-                natus_soil_typedefs( natus::device::device< this_t >, this_device ) ;
+                natus_res_typedefs( natus::device::device< this_t >, this_device ) ;
 
                 friend this_device_t ;
 
@@ -371,6 +371,6 @@ namespace natus
             } ;
             natus_typedef( xbox_controller ) ;
         }
-        natus_soil_typedefs( natus::device::device< natus::device::layouts::xbox_controller_t>, xbc_device ) ;
+        natus_res_typedefs( natus::device::device< natus::device::layouts::xbox_controller_t>, xbc_device ) ;
     }
 }

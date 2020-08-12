@@ -14,7 +14,7 @@ namespace natus
             class ascii_keyboard
             {
                 natus_this_typedefs( ascii_keyboard ) ;
-                natus_soil_typedefs( natus::device::device< this_t >, this_device ) ;
+                natus_res_typedefs( natus::device::device< this_t >, this_device ) ;
 
                 friend this_device_t ;
 
@@ -285,7 +285,7 @@ namespace natus
             };
             natus_typedef( ascii_keyboard ) ;
         }
-        natus_soil_typedefs( natus::device::device< natus::device::layouts::ascii_keyboard>, ascii_device ) ;
-        natus_soil_typedefs( natus::device::device< natus::device::layouts::ascii_keyboard>, ascii_keyboard_device ) ;
+        natus_res_typedefs( natus::device::device< natus::device::layouts::ascii_keyboard>, ascii_device ) ;
+        natus_res_typedefs( natus::device::device< natus::device::layouts::ascii_keyboard>, ascii_keyboard_device ) ;
     }
 }

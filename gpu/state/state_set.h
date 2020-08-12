@@ -96,7 +96,7 @@ namespace natus
                 return *this ;
             }
         };
-        natus_soil_typedef( view_state_sets ) ;
+        natus_res_typedef( view_state_sets ) ;
 
         // something that can be turned on/off
         struct render_state_sets
@@ -130,6 +130,6 @@ namespace natus
                 return *this ;
             }
         };
-        natus_soil_typedef( render_state_sets ) ;
+        natus_res_typedef( render_state_sets ) ;
     }
 }

@@ -71,7 +71,7 @@ namespace natus
                 void_t send_destroy( void_t ) ;
             };
             natus_typedef( window ) ;
-            typedef natus::soil::res< window > window_res_t ;
+            typedef natus::memory::res< window > window_res_t ;
         }
     }
 }

@@ -81,7 +81,7 @@ namespace natus
 
                 bool_t handle_input_event( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) ;
             };
-            natus_soil_typedef( rawinput_module ) ;
+            natus_res_typedef( rawinput_module ) ;
         }
     }
 }

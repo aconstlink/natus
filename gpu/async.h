@@ -135,7 +135,7 @@ namespace natus
             void_t leave_frame( void_t ) ;
             void_t wait_for_frame( void_t ) ;
         };
-        natus_soil_typedef( async ) ;
+        natus_res_typedef( async ) ;
 
         // restricts access to the async
         class async_view

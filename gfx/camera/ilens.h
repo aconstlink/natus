@@ -31,7 +31,7 @@ namespace natus
             virtual void_t look_at( natus::math::vec3f_cref_t pos,
                 natus::math::vec3f_cref_t up, natus::math::vec3f_cref_t at ) = 0 ;
         };
-        natus_soil_typedef( ilens ) ;
-        typedef natus::soil::res< ilens_t > lens_res_t ;
+        natus_res_typedef( ilens ) ;
+        typedef natus::memory::res< ilens_t > lens_res_t ;
     }
 }

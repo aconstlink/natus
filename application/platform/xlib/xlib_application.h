@@ -56,8 +56,8 @@ namespace natus
 
                 virtual natus::application::result on_exec( void_t ) ;
             };
-            natus_soil_typedef( xlib_application ) ;
-            typedef natus::soil::res< xlib_application > application_res_t ;
+            natus_res_typedef( xlib_application ) ;
+            typedef natus::memory::res< xlib_application > application_res_t ;
         }
     }
 }

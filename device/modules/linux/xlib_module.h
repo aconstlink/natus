@@ -77,7 +77,7 @@ namespace natus
 
                 bool_t handle_input_event( XEvent const & ) ;
             } ;
-            natus_soil_typedef( xlib_module ) ;
+            natus_res_typedef( xlib_module ) ;
         }
     }
 }
