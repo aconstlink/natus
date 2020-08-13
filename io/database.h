@@ -18,13 +18,17 @@ namespace natus
 
             struct file_record
             {
-                natus::io::path_t location ;
+                natus::std::string_t location ;
                 natus::std::string_t extension ;
                 // -1 : invalid
                 // -2 : external
                 uint64_t offset = uint64_t( -1 ) ;
                 uint64_t sib = uint64_t( 0 ) ;
+
+                natus::io::path_t rel ;
+                natus::std::filesystem::file_time_type stamp ;
             };
+            natus_typedef( file_record ) ;
 
             struct file_header
             {
@@ -35,17 +39,41 @@ namespace natus
                 char_t padding[ 20 ] ;
             };
 
-            struct file
+            struct db
             {
                 natus::io::path_t base ;
-                natus::std::string_t name ;
-
-                file_header fh ;
                 natus::std::vector< file_record > records ;
-            };
-            natus_typedef( file ) ;
 
-            file_t _f ;
+                db( void_t ) {}
+                db( db const& rhv ) 
+                { 
+                    base = rhv.base ;
+                    records = rhv.records ;
+                }
+                db( db && rhv )
+                {
+                    base = ::std::move( rhv.base ) ;
+                    records = ::std::move( rhv.records ) ;
+                }
+                ~db( void_t ) {}
+
+                db & operator = ( db const& rhv )
+                {
+                    base = rhv.base ;
+                    records = rhv.records ;
+                    return *this ;
+                }
+
+                db& operator = ( db && rhv )
+                {
+                    base = ::std::move( rhv.base ) ;
+                    records = ::std::move( rhv.records ) ;
+                    return *this ;
+                }
+            };
+            natus_typedef( db ) ;
+
+            db_t _db ;
 
         public:
 
@@ -87,6 +115,8 @@ namespace natus
             bool_t store( natus::std::string_cref_t location /*, binary data*/ ) ;
 
             // load to memory
+
+            void_t dump_to_std( void_t ) const noexcept ;
 
         private:
 
