@@ -9,7 +9,8 @@ natus is a software framework for real-time interactive audio/visual application
 ## Prerequisites
 
 Windows prerequisites:  
- - Visual Studio 2019 Community
+ - Visual Studio 2019 Community **or**
+ - msys/mingw :construction:
  - CMake
 
 
