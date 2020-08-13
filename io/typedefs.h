@@ -3,6 +3,8 @@
 #include "result.h"
 
 #include <natus/memory/global.h>
+#include <natus/memory/res.hpp>
+#include <natus/memory/macros.h>
 
 #include <natus/std/string.hpp>
 #include <natus/std/filesystem.hpp>

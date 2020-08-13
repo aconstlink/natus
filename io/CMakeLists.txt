@@ -13,6 +13,9 @@ set( sources
    
     "system.h"
     "system.cpp"
+
+    "database.h"
+    "database.cpp"
     )
 
 natus_vs_src_dir( sources )
