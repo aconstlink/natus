@@ -2,7 +2,9 @@
 
 #include "api.h"
 #include "typedefs.h"
+#include "handle.h"
 
+#include <natus/concurrent/mrsw.hpp>
 #include <natus/std/vector.hpp>
 
 namespace natus
@@ -74,6 +76,7 @@ namespace natus
             natus_typedef( db ) ;
 
             db_t _db ;
+            mutable natus::concurrent::mrsw_t _ac ;
 
         public:
 
@@ -112,15 +115,18 @@ namespace natus
 
 
             // store from memory
-            bool_t store( natus::std::string_cref_t location /*, binary data*/ ) ;
+            natus::io::store_handle_t store( natus::std::string_cref_t location , char_cptr_t, size_t const ) ;
 
             // load to memory
+            natus::io::load_handle_t load( natus::std::string_cref_t loc ) const ;
 
             void_t dump_to_std( void_t ) const noexcept ;
 
         private:
 
-
+            file_record_t create_file_record( natus::io::path_cref_t, natus::io::path_cref_t ) const noexcept;
+            bool_t lookup( natus::std::string_cref_t loc, file_record_out_t ) const noexcept ;
+            bool_t lookup( db const & db_, natus::std::string_cref_t loc, file_record_out_t ) const noexcept ;
 
         };
         natus_res_typedef( database ) ;

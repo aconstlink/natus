@@ -125,7 +125,7 @@ namespace natus
         public:
 
             natus::io::load_handle_t load( natus::io::path_cref_t ) ;
-            natus::io::store_handle_t store( natus::io::path_cref_t, char_cptr_t, size_t ) ;
+            natus::io::store_handle_t store( natus::io::path_cref_t, char_cptr_t, size_t const ) ;
 
         private:
 

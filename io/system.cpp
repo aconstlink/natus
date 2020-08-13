@@ -104,7 +104,7 @@ natus::io::load_handle_t system::load( natus::io::path_cref_t file_path )
 }
 
 //************************************************************************************
-natus::io::store_handle_t system::store( natus::io::path_cref_t file_path, char_cptr_t data_ptr, size_t sib )
+natus::io::store_handle_t system::store( natus::io::path_cref_t file_path, char_cptr_t data_ptr, size_t const sib )
 {
     this_t::store_item_ptr_t si = this_t::get_store_item() ;
 

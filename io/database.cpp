@@ -1,6 +1,8 @@
 #include "database.h"
+#include "global.h"
 
 #include <natus/std/filesystem.hpp>
+#include <natus/concurrent/mutex.hpp>
 
 #include <sstream>
 #include <iomanip>
@@ -52,57 +54,28 @@ bool_t database::init( natus::io::path_cref_t base )
     {
         for( auto& i : natus::std::filesystem::recursive_directory_iterator( base ) )
         {
-            //natus::log::global_t::status( i.path() ) ;
-
             // only check for files.
             if( i.is_regular_file() )
             {
                 // do not track self
                 if( i.path().stem() == "db" ) continue ;
 
-                // the complete path
-                // i.path()
-
-                this_t::file_record_t fr ;
+                auto const fr = this_t::create_file_record( base, i.path() ) ;
                 
-                // the files' extension
+                // check other files' existence
+                // file names must be unique!
                 {
-                    fr.extension = i.path().extension() ;
-                }
-                
-                // determine file locator
-                {
-                    // the relative path to the base path
-                    auto const p = natus::std::filesystem::relative( i.path(), base ) ;
-
-                    natus::std::string_t loc ;
-                    for( auto j : p.parent_path() )
+                    this_t::file_record_t fr2 ;
+                    if( this_t::lookup( db, fr.location, fr2 ) )
                     {
-                        loc += j ;
-                        loc += "." ;
+                        ::std::stringstream ss = ::std::stringstream() 
+                            << "[db] : "
+                            << "Only unique file names supported. See [" << fr.location << "] with extensions "
+                            << "[" << fr.extension << ", " << fr2.extension << "] " 
+                            << "where [" << fr2.extension << "] already stored" ;
+
+                        natus::log::global_t::error( ss.str() ) ;
                     }
-                    loc += i.path().stem().string() ;
-
-                    fr.location = loc ;
-                    fr.rel = p ;
-                }
-
-                {
-                    // external
-                    fr.offset = uint64_t( -2 ) ;
-
-                    {
-                        ::std::error_code ec ;
-                        fr.sib = i.file_size( ec ) ;
-                        natus::log::global_t::error( (bool_t)ec, 
-                            natus_log_fn( "file_size with [" + ec.message() + "]" ) ) ;
-                    }
-                }
-
-                // store the last write time so 
-                // monitoring can  take palce.
-                {
-                    fr.stamp = i.last_write_time() ;
                 }
 
                 db.records.emplace_back( fr ) ;
@@ -118,7 +91,10 @@ bool_t database::init( natus::io::path_cref_t base )
     {
     }
 
-    _db = ::std::move( db ) ;
+    {
+        natus::concurrent::mrsw_t::writer_lock_t lk( _ac ) ;
+        _db = ::std::move( db ) ;
+    }
 
     return true ;
 }
@@ -214,9 +190,25 @@ bool_t database::unpack( void_t )
 }
 
 //***
-bool_t database::store( natus::std::string_cref_t location /*, binary data*/ )
+natus::io::store_handle_t database::store( natus::std::string_cref_t location, char_cptr_t, size_t const )
 {
-    return true ;
+    natus::io::store_handle_t h ;
+
+
+    return ::std::move( h ) ;
+}
+
+//***
+natus::io::load_handle_t database::load( natus::std::string_cref_t loc ) const
+{
+    this_t::file_record_t fr ;
+    if( natus::core::is_not( this_t::lookup( loc, fr ) ) )
+    {
+        natus::log::global_t::warning( "resource location not found : " + loc ) ;
+        return natus::io::load_handle_t() ;
+    }
+    
+    return natus::io::global_t::load( _db.base / fr.rel ) ;
 }
 
 //***
@@ -250,4 +242,74 @@ void_t database::dump_to_std( void_t ) const noexcept
     }
 
     natus::log::global_t::status( "***************************************************" ) ;
+}
+
+//***
+database::file_record_t database::create_file_record( natus::io::path_cref_t base, natus::io::path_cref_t path ) const noexcept
+{
+    this_t::file_record_t fr ;
+ 
+    // the files' extension
+    {
+        fr.extension = path.extension() ;
+    }
+
+    // determine file locator
+    {
+        // the relative path to the base path
+        auto const p = natus::std::filesystem::relative( path, base ) ;
+
+        natus::std::string_t loc ;
+        for( auto j : p.parent_path() )
+        {
+            loc += j ;
+            loc += "." ;
+        }
+        loc += path.stem().string() ;
+
+        fr.location = loc ;
+        fr.rel = p ;
+    }
+
+    {
+        // external
+        fr.offset = uint64_t( -2 ) ;
+
+        {
+            ::std::error_code ec ;
+            fr.sib = natus::std::filesystem::file_size( path, ec ) ;
+            natus::log::global_t::error( ( bool_t ) ec,
+                natus_log_fn( "file_size with [" + ec.message() + "]" ) ) ;
+        }
+    }
+
+    // store the last write time so 
+    // monitoring can  take palce.
+    {
+        fr.stamp = natus::std::filesystem::last_write_time( path ) ;
+    }
+
+    return ::std::move( fr ) ;
+}
+
+//***
+bool_t database::lookup(  natus::std::string_cref_t loc, this_t::file_record_out_t fro ) const noexcept
+{
+    natus::concurrent::mrsw_t::reader_lock_t lk( _ac ) ;
+    return this_t::lookup( _db, loc, fro ) ;
+}
+
+//***
+bool_t database::lookup( this_t::db const & db_, natus::std::string_cref_t loc, file_record_out_t fro ) const noexcept
+{
+    for( auto& fr : db_.records )
+    {
+        if( fr.location == loc )
+        {
+            fro = fr ;
+            return true ;
+        }
+    }
+
+    return false ;
 }
