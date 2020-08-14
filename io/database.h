@@ -3,6 +3,7 @@
 #include "api.h"
 #include "typedefs.h"
 #include "handle.h"
+#include "monitor.hpp"
 
 #include <natus/concurrent/isleep.hpp>
 #include <natus/concurrent/mrsw.hpp>
@@ -35,6 +36,56 @@ namespace natus
 
                 natus::io::path_t rel ;
                 natus::std::filesystem::file_time_type stamp ;
+
+                natus::std::vector< natus::io::monitor_res_t > monitors ;
+
+                file_record( void_t ) {}
+                file_record( file_record const & rhv ) 
+                {
+                    location = rhv.location ;
+                    extension = rhv.extension ;
+                    offset = rhv.offset ;
+                    sib = rhv.sib ;
+                    rel = rhv.rel ;
+                    stamp = rhv.stamp ;
+                    monitors = rhv.monitors ;
+                }
+
+                file_record( file_record && rhv )
+                {
+                    location = ::std::move( rhv.location ) ;
+                    extension = ::std::move( rhv.extension ) ;
+                    offset = rhv.offset ;
+                    sib = rhv.sib ;
+                    rel = ::std::move( rhv.rel ) ;
+                    stamp = ::std::move( rhv.stamp ) ;
+                    monitors = ::std::move( rhv.monitors ) ;
+                }
+                ~file_record( void_t ) {}
+
+                file_record & operator = ( file_record const& rhv )
+                {
+                    location = rhv.location ;
+                    extension = rhv.extension ;
+                    offset = rhv.offset ;
+                    sib = rhv.sib ;
+                    rel = rhv.rel ;
+                    stamp = rhv.stamp ;
+                    monitors = rhv.monitors ;
+                    return *this ;
+                }
+
+                file_record & operator = ( file_record&& rhv )
+                {
+                    location = ::std::move( rhv.location ) ;
+                    extension = ::std::move( rhv.extension ) ;
+                    offset = rhv.offset ;
+                    sib = rhv.sib ;
+                    rel = ::std::move( rhv.rel ) ;
+                    stamp = ::std::move( rhv.stamp ) ;
+                    monitors = ::std::move( rhv.monitors ) ;
+                    return *this ;
+                }
             };
             natus_typedef( file_record ) ;
 
@@ -51,17 +102,20 @@ namespace natus
             {
                 natus::io::path_t base ;
                 natus::std::vector< file_record > records ;
+                natus::std::vector< natus::io::monitor_res_t > monitors ;
 
                 db( void_t ) {}
                 db( db const& rhv ) 
                 { 
                     base = rhv.base ;
                     records = rhv.records ;
+                    monitors = rhv.monitors ;
                 }
                 db( db && rhv )
                 {
                     base = ::std::move( rhv.base ) ;
                     records = ::std::move( rhv.records ) ;
+                    monitors = ::std::move( rhv.monitors ) ;
                 }
                 ~db( void_t ) {}
 
@@ -69,6 +123,7 @@ namespace natus
                 {
                     base = rhv.base ;
                     records = rhv.records ;
+                    monitors = rhv.monitors ;
                     return *this ;
                 }
 
@@ -76,6 +131,7 @@ namespace natus
                 {
                     base = ::std::move( rhv.base ) ;
                     records = ::std::move( rhv.records ) ;
+                    monitors = ::std::move( rhv.monitors ) ;
                     return *this ;
                 }
             };
@@ -127,6 +183,14 @@ namespace natus
             natus::io::load_handle_t load( natus::std::string_cref_t loc ) const ;
 
             void_t dump_to_std( void_t ) const noexcept ;
+
+        public: // monitor
+
+            void_t attach( natus::std::string_cref_t, natus::io::monitor_res_t ) noexcept ;
+            void_t detach( natus::std::string_cref_t, natus::io::monitor_res_t ) noexcept ;
+            
+            void_t attach( natus::io::monitor_res_t ) noexcept ;
+            void_t detach( natus::io::monitor_res_t mon ) noexcept ;
 
         private:
 

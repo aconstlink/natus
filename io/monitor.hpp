@@ -14,10 +14,33 @@ namespace natus
         {
             natus_this_typedefs( monitor ) ;
 
+        public:
+
+            enum class notify
+            {
+                none,
+                deletion,
+                change,
+                num_values
+            };
+            static natus::std::string_cref_t to_string( this_t::notify const n ) noexcept
+            {
+                static natus::std::string_t __strings[] = { "none", "deletion", "change", "invalid" } ;
+                return __strings[ size_t(n) >= size_t(notify::num_values) ? size_t(notify::num_values) : size_t(n) ] ;
+            }
+
         private:
 
             natus::concurrent::mutex_t _mtx ;
-            natus::std::vector< natus::std::string_t > _changed ;
+
+            struct data
+            {
+                notify n ;
+                natus::std::string_t loc ;
+            };
+            natus_typedef( data ) ;
+
+            natus::std::vector< data_t > _changed ;
 
         public:
 
@@ -42,16 +65,16 @@ namespace natus
 
         public:
 
-            void_t trigger_changed( natus::std::string_cref_t loc ) noexcept
+            void_t trigger_changed( natus::std::string_cref_t loc, notify const n ) noexcept
             {
                 natus::concurrent::lock_guard_t lk( _mtx ) ;
-                this_t::insert( loc ) ;
+                this_t::insert( { n, loc } ) ;
             }
 
-            typedef ::std::function< void_t ( natus::std::string_cref_t ) > foreach_funk_t ;
+            typedef ::std::function< void_t ( natus::std::string_cref_t, this_t::notify const ) > foreach_funk_t ;
             void_t for_each_and_swap( foreach_funk_t funk )
             {
-                natus::std::vector< natus::std::string_t > tmp ;
+                natus::std::vector< this_t::data_t > tmp ;
                 {
                     natus::concurrent::lock_guard_t lk( _mtx ) ;
                     tmp = ::std::move( _changed ) ;
@@ -59,7 +82,7 @@ namespace natus
 
                 for( auto const & item : tmp ) 
                 {
-                    funk( item ) ;
+                    funk( item.loc, item.n ) ;
                 }
             }
 
@@ -69,16 +92,16 @@ namespace natus
             {
                 for( auto const & item : _changed )
                 {
-                    if( item == loc ) return true ;
+                    if( item.loc == loc ) return true ;
                 }
                 return false ;
             }
 
-            void_t insert( natus::std::string_cref_t loc ) noexcept
+            void_t insert( data_cref_t d ) noexcept
             {
-                if( natus::core::is_not( this_t::has( loc ) ) )
+                if( natus::core::is_not( this_t::has( d.loc ) ) )
                 {
-                    _changed.emplace_back( loc ) ;
+                    _changed.emplace_back( d ) ;
                 }
             }
         };

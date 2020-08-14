@@ -252,6 +252,82 @@ void_t database::dump_to_std( void_t ) const noexcept
 }
 
 //***
+void_t database::attach( natus::std::string_cref_t loc, natus::io::monitor_res_t mon ) noexcept 
+{
+    natus::concurrent::mrsw_t::writer_lock_t lk( _ac ) ;
+    
+    for( auto & fr : _db.records )
+    {
+        if( fr.location == loc )
+        {
+            fr.monitors.emplace_back( mon ) ;
+        }
+    }
+}
+
+//***
+void_t database::detach( natus::std::string_cref_t loc, natus::io::monitor_res_t mon ) noexcept 
+{
+    natus::concurrent::mrsw_t::writer_lock_t lk( _ac ) ;
+
+    this_t::file_record_t fr ;
+    if( this_t::lookup( _db, loc, fr ) )
+    {
+        auto iter = ::std::remove_if( fr.monitors.begin(), fr.monitors.end(),
+            [&] ( natus::io::monitor_res_t const& r )
+        {
+            return r.get_sptr() == mon.get_sptr() ;
+        } ) ;
+        if( iter != fr.monitors.end() ) fr.monitors.erase( iter ) ;
+    }
+}
+
+//***
+void_t database::attach( natus::io::monitor_res_t moni ) noexcept 
+{
+    natus::concurrent::mrsw_t::writer_lock_t lk( _ac ) ;
+    auto iter = ::std::find_if( _db.monitors.begin(), _db.monitors.end(), [&]( natus::io::monitor_res_t const & m )
+    {
+        return m.get_sptr() == moni.get_sptr() ;
+    } ) ;
+
+    if( iter != _db.monitors.end() ) return ;
+        
+    _db.monitors.emplace_back( moni ) ;
+}
+
+//***
+void_t database::detach( natus::io::monitor_res_t moni ) noexcept 
+{
+    natus::concurrent::mrsw_t::writer_lock_t lk( _ac ) ;
+
+    // remove from global monitors
+    {
+        auto iter = ::std::remove_if( _db.monitors.begin(), _db.monitors.end(),
+            [&] ( natus::io::monitor_res_t const& r )
+        {
+            return r.get_sptr() == moni.get_sptr() ;
+        } ) ;
+
+        if( iter != _db.monitors.end() ) _db.monitors.erase( iter ) ;
+    }
+    
+    // remove from local monitors
+    {
+        for( auto& fr : _db.records )
+        {
+            auto iter = ::std::remove_if( fr.monitors.begin(), fr.monitors.end(),
+                [&] ( natus::io::monitor_res_t const& r )
+            {
+                return r.get_sptr() == moni.get_sptr() ;
+            } ) ;
+
+            if( iter != fr.monitors.end() ) fr.monitors.erase( iter ) ;
+        }
+    }
+}
+
+//***
 database::file_record_t database::create_file_record( natus::io::path_cref_t base, natus::io::path_cref_t path ) const noexcept
 {
     this_t::file_record_t fr ;
@@ -338,10 +414,12 @@ void_t database::file_change_stamp( this_t::file_record_cref_t fri ) noexcept
 void_t database::file_remove( this_t::file_record_cref_t fri ) noexcept 
 {
     natus::concurrent::mrsw_t::writer_lock_t lk( _ac ) ;
-    _db.records.erase( ::std::remove_if( _db.records.begin(), _db.records.end(), [&]( this_t::file_record_cref_t fr )
+
+    auto iter = ::std::remove_if( _db.records.begin(), _db.records.end(), [&] ( this_t::file_record_cref_t fr )
     {
         return fr.location == fri.location ;
-    } ) ) ;
+    } ) ;
+    if( iter != _db.records.end() ) _db.records.erase( iter ) ;
 }
 
 //***
@@ -368,8 +446,16 @@ void_t database::spawn_monitor( void_t ) noexcept
                 natus::io::path_t const p = db.base / fr.rel ;
                 if( !natus::std::filesystem::exists( p ) )
                 {
-                    // inform about deletion
-                    natus::log::global_t::status( "file deleted : " + fr.location ) ;
+                    for( auto & r : db.monitors ) 
+                    {
+                        r->trigger_changed( fr.location, natus::io::monitor_t::notify::deletion ) ;
+                    }
+
+                    for( auto & r : fr.monitors )
+                    {
+                        r->trigger_changed( fr.location, natus::io::monitor_t::notify::deletion ) ;
+                    }
+
                     this_t::file_remove( fr ) ;
                     continue ;
                 }
@@ -377,8 +463,15 @@ void_t database::spawn_monitor( void_t ) noexcept
                 auto const tp = natus::std::filesystem::last_write_time( p ) ;
                 if( fr.stamp != tp )
                 {
-                    // inform about change
-                    natus::log::global_t::status( "file changed : " + fr.location ) ;
+                    for( auto& r : db.monitors )
+                    {
+                        r->trigger_changed( fr.location, natus::io::monitor_t::notify::change ) ;
+                    }
+
+                    for( auto& r : fr.monitors )
+                    {
+                        r->trigger_changed( fr.location, natus::io::monitor_t::notify::change ) ;
+                    }
 
                     fr.stamp = tp ;
 
