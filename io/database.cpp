@@ -72,7 +72,8 @@ bool_t database::init( natus::io::path_cref_t base )
                     this_t::file_record_t fr2 ;
                     if( this_t::lookup( db, fr.location, fr2 ) )
                     {
-                        ::std::stringstream ss = ::std::stringstream() 
+                        ::std::stringstream ss ;
+                        ss 
                             << "[db] : "
                             << "Only unique file names supported. See [" << fr.location << "] with extensions "
                             << "[" << fr.extension << ", " << fr2.extension << "] " 
