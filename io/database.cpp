@@ -197,7 +197,7 @@ bool_t database::unpack( void_t )
 }
 
 //***
-natus::io::store_handle_t database::store( natus::std::string_cref_t location, char_cptr_t, size_t const )
+natus::io::store_handle_t database::store( natus::std::string_cref_t /*location*/, char_cptr_t, size_t const )
 {
     natus::io::store_handle_t h ;
 

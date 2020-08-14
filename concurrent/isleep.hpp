@@ -29,7 +29,7 @@ namespace natus
             ~interruptable_sleep( void_t ) {}
 
             this_ref_t operator = ( this_cref_t ) = delete ;
-            this_ref_t operator = ( this_rref_t rhv ) { _interruped = rhv._interruped ; }
+            this_ref_t operator = ( this_rref_t rhv ) { _interruped = rhv._interruped ; return *this ; }
 
         public:
 
