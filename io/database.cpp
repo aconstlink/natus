@@ -350,9 +350,11 @@ void_t database::spawn_monitor( void_t ) noexcept
 
     _monitor_thread = natus::concurrent::thread_t( [&] ( void_t )
     { 
-        natus::log::global_t::status("[db] : monitor thread going up @ 500 ms") ;
+        size_t const ms = 500 ;
 
-        while( !_isleep.sleep_for( ::std::chrono::milliseconds(500) ) )
+        natus::log::global_t::status("[db] : monitor thread going up @ " + ::std::to_string(ms) + " ms") ;
+
+        while( !_isleep.sleep_for( ::std::chrono::milliseconds(ms) ) )
         {
             this_t::db_t db ;
             {
@@ -374,7 +376,7 @@ void_t database::spawn_monitor( void_t ) noexcept
                 auto const tp = natus::std::filesystem::last_write_time( p ) ;
                 if( fr.stamp != tp )
                 {
-                    // inform about deletion
+                    // inform about change
                     natus::log::global_t::status( "file changed : " + fr.location ) ;
 
                     fr.stamp = tp ;
