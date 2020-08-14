@@ -18,16 +18,20 @@ database::database( void_t )
 database::database( natus::io::path_cref_t base )
 {
     this_t::init( base ) ;
+    this_t::spawn_monitor() ;
 }
 
 //***
 database::database( this_rref_t rhv )
 {
+    this_t::spawn_monitor() ;
+    _db = ::std::move( rhv._db ) ;
 }
 
 //***
 database::~database( void_t )
 {
+    this_t::join_monitor() ;
 }
 
 //***
@@ -75,6 +79,7 @@ bool_t database::init( natus::io::path_cref_t base )
                             << "where [" << fr2.extension << "] already stored" ;
 
                         natus::log::global_t::error( ss.str() ) ;
+                        continue ;
                     }
                 }
 
@@ -89,6 +94,7 @@ bool_t database::init( natus::io::path_cref_t base )
 
     // spawn monitor thread for file system changes
     {
+        _monitor_thread = natus::concurrent::thread_t([=](){}) ;
     }
 
     {
@@ -293,7 +299,7 @@ database::file_record_t database::create_file_record( natus::io::path_cref_t bas
 }
 
 //***
-bool_t database::lookup(  natus::std::string_cref_t loc, this_t::file_record_out_t fro ) const noexcept
+bool_t database::lookup( natus::std::string_cref_t loc, this_t::file_record_out_t fro ) const noexcept
 {
     natus::concurrent::mrsw_t::reader_lock_t lk( _ac ) ;
     return this_t::lookup( _db, loc, fro ) ;
@@ -312,4 +318,84 @@ bool_t database::lookup( this_t::db const & db_, natus::std::string_cref_t loc, 
     }
 
     return false ;
+}
+
+//***
+void_t database::file_change_stamp( this_t::file_record_cref_t fri ) noexcept 
+{
+    natus::concurrent::mrsw_t::writer_lock_t lk( _ac ) ;
+    auto iter = ::std::find_if( _db.records.begin(), _db.records.end(), [&]( this_t::file_record_cref_t fr )
+    {
+        return fr.location == fri.location ;
+    } ) ;
+
+    if( iter == _db.records.end() ) return ;
+    iter->stamp = fri.stamp ;
+}
+
+//***
+void_t database::file_remove( this_t::file_record_cref_t fri ) noexcept 
+{
+    natus::concurrent::mrsw_t::writer_lock_t lk( _ac ) ;
+    _db.records.erase( ::std::remove_if( _db.records.begin(), _db.records.end(), [&]( this_t::file_record_cref_t fr )
+    {
+        return fr.location == fri.location ;
+    } ) ) ;
+}
+
+//***
+void_t database::spawn_monitor( void_t ) noexcept
+{
+    this_t::join_monitor() ;
+
+    _monitor_thread = natus::concurrent::thread_t( [&] ( void_t )
+    { 
+        natus::log::global_t::status("[db] : monitor thread going up @ 500 ms") ;
+
+        while( !_isleep.sleep_for( ::std::chrono::milliseconds(500) ) )
+        {
+            this_t::db_t db ;
+            {
+                natus::concurrent::mrsw_t::reader_lock_t lk( _ac ) ;
+                db = _db ;
+            }
+
+            for( auto & fr : db.records )
+            {
+                natus::io::path_t const p = db.base / fr.rel ;
+                if( !natus::std::filesystem::exists( p ) )
+                {
+                    // inform about deletion
+                    natus::log::global_t::status( "file deleted : " + fr.location ) ;
+                    this_t::file_remove( fr ) ;
+                    continue ;
+                }
+                
+                auto const tp = natus::std::filesystem::last_write_time( p ) ;
+                if( fr.stamp != tp )
+                {
+                    // inform about deletion
+                    natus::log::global_t::status( "file changed : " + fr.location ) ;
+
+                    fr.stamp = tp ;
+
+                    this_t::file_change_stamp( fr ) ;
+                    continue ;
+                }
+            }
+        }
+
+        natus::log::global_t::status("[db] : monitor thread shutting down") ;
+    } ) ;
+}
+
+//***
+void_t database::join_monitor( void_t ) noexcept 
+{
+    if( _monitor_thread.joinable() ) 
+    { 
+        _isleep.interrupt() ; 
+        _monitor_thread.join() ; 
+        _isleep.reset() ;
+    }
 }

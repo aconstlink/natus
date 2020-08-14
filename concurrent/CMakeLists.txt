@@ -7,6 +7,7 @@ set( sources
     "protos.h"
     "global.h"
     "global.cpp"
+    "isleep.hpp"
 
     "primitive/sync_object.hpp"
 

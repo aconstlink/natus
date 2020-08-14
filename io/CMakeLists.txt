@@ -7,6 +7,7 @@ set( sources
     "typedefs.h"
     "global.h"
     "global.cpp"
+    "monitor.hpp"
 
     "handle.h"
     "handle.cpp"

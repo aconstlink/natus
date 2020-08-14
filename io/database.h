@@ -4,6 +4,7 @@
 #include "typedefs.h"
 #include "handle.h"
 
+#include <natus/concurrent/isleep.hpp>
 #include <natus/concurrent/mrsw.hpp>
 #include <natus/std/vector.hpp>
 
@@ -13,8 +14,12 @@ namespace natus
     {
         class NATUS_IO_API database
         {
-
             natus_this_typedefs( database ) ;
+
+        private: // monitoring stuff
+
+            natus::concurrent::thread_t _monitor_thread ;
+            natus::concurrent::interruptable_sleep_t _isleep ;
 
         private:
 
@@ -24,6 +29,7 @@ namespace natus
                 natus::std::string_t extension ;
                 // -1 : invalid
                 // -2 : external
+                // otherwise : stored in .natus db file
                 uint64_t offset = uint64_t( -1 ) ;
                 uint64_t sib = uint64_t( 0 ) ;
 
@@ -127,7 +133,13 @@ namespace natus
             file_record_t create_file_record( natus::io::path_cref_t, natus::io::path_cref_t ) const noexcept;
             bool_t lookup( natus::std::string_cref_t loc, file_record_out_t ) const noexcept ;
             bool_t lookup( db const & db_, natus::std::string_cref_t loc, file_record_out_t ) const noexcept ;
+            void_t file_change_stamp( this_t::file_record_cref_t ) noexcept ;
+            void_t file_remove( this_t::file_record_cref_t ) noexcept ;
 
+        private: // monitor
+            
+            void_t spawn_monitor( void_t ) noexcept ;
+            void_t join_monitor( void_t ) noexcept ;
         };
         natus_res_typedef( database ) ;
     }
