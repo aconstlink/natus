@@ -49,7 +49,7 @@ bool_t database::init( natus::io::path_cref_t base )
         
         if( res )
         {
-            // file exists. so load it.
+            this_t::load_db_file( loc ) ;
         }
     }
 
@@ -115,6 +115,8 @@ bool_t database::pack( this_t::encryption const )
         natus::std::string_t extension ;
         uint64_t offset ;
         uint64_t sib ;
+        natus::io::path_t path ;
+        bool_t external ;
 
         natus::std::string_t to_string( void_t ) const 
         {
@@ -141,6 +143,8 @@ bool_t database::pack( this_t::encryption const )
         fr__.extension = fr.extension ;
         fr__.offset = offset ;
         fr__.sib = fr.sib ;
+        fr__.path = _db.base / fr.rel ;
+        fr__.external = fr.offset == uint64_t( -2 ) ;
 
         first_data += fr__.size() ;
 
@@ -175,7 +179,28 @@ bool_t database::pack( this_t::encryption const )
 
         // file content 
         {
-            // for each file record, load data and write it to the db.
+            for( auto & fr : records )
+            {
+                if( fr.external )
+                {
+                    this_t::load( fr.location ).wait_for_operation( 
+                        [&]( char_cptr_t data, size_t const sib, natus::io::result const res )
+                    {
+                        if( res == natus::io::result::ok  )
+                        {
+                            outfile.seekp( first_data + fr.offset ) ;
+                            outfile.write( data, sib ) ;
+                        }
+                    } ) ;
+                }
+                else
+                {
+                    // read from db file and store in tmp file
+                }
+                
+
+                outfile.flush() ;
+            }
         }
 
         outfile.flush() ;
@@ -188,6 +213,21 @@ bool_t database::pack( this_t::encryption const )
     }
     natus::std::filesystem::rename( db_new, db_old ) ;
     return true ;
+}
+
+//***
+void_t database::load_db_file( natus::io::path_cref_t p ) 
+{
+    ::std::ifstream ifs( p, ::std::ifstream::binary ) ;
+
+    
+    {
+        natus::std::string_t buffer ;
+        ::std::getline( ifs, buffer ) ;
+
+        uint64_t const offset = ::std::stol( buffer ) ;
+        int const bp = 0 ;
+    }
 }
 
 //***
@@ -215,7 +255,17 @@ natus::io::load_handle_t database::load( natus::std::string_cref_t loc ) const
         return natus::io::load_handle_t() ;
     }
     
-    return natus::io::global_t::load( _db.base / fr.rel ) ;
+    natus::io::load_handle_t lh ;
+    if( fr.offset == uint64_t(-2) )
+    {
+        lh = natus::io::global_t::load( _db.base / fr.rel ) ; ;
+    }
+    else if( fr.offset != uint64_t(-1) )
+    {
+
+    }
+
+    return ::std::move( lh ) ;
 }
 
 //***
@@ -495,3 +545,4 @@ void_t database::join_monitor( void_t ) noexcept
         _isleep.reset() ;
     }
 }
+

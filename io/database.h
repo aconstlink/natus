@@ -204,6 +204,11 @@ namespace natus
             
             void_t spawn_monitor( void_t ) noexcept ;
             void_t join_monitor( void_t ) noexcept ;
+
+        private:
+
+            void_t load_db_file( natus::io::path_cref_t ) ;
+
         };
         natus_res_typedef( database ) ;
     }
