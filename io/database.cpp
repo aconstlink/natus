@@ -35,16 +35,20 @@ database::~database( void_t )
 }
 
 //***
-bool_t database::init( natus::io::path_cref_t base )
+bool_t database::init( natus::io::path_cref_t base, natus::io::path_cref_t name, natus::io::path_cref_t working )
 {
     this_t::db_t db ;
 
     // this is where the db is located
     db.base = base ;
+    // this is where the data stored should be located
+    db.working = db.base / working ;
+    // this is the db name
+    db.name = name ;
 
     // look for db file
     {
-        natus::io::path_t const loc = base / natus::io::path_t( "db.natus" ) ;
+        natus::io::path_t const loc = base / natus::io::path_t(name).replace_extension( natus::io::path_t( ".natus" ) ) ;
         auto const res = natus::std::filesystem::exists( loc ) ;
         
         if( res )
@@ -58,11 +62,17 @@ bool_t database::init( natus::io::path_cref_t base )
     {
         for( auto& i : natus::std::filesystem::recursive_directory_iterator( base ) )
         {
-            // only check for files.
-            if( i.is_regular_file() )
+            // do not go into .xyz directories
+            if( i.is_directory() && i.path().stem().string().find_first_of(".",0) == 0 )
+            {
+                continue ;
+            }
+
+            // files
+            else if( i.is_regular_file() )
             {
                 // do not track self
-                if( i.path().stem() == "db" ) continue ;
+                if( i.path().stem() == name ) continue ;
 
                 auto const fr = this_t::create_file_record( base, i.path() ) ;
                 
@@ -74,7 +84,7 @@ bool_t database::init( natus::io::path_cref_t base )
                     {
                         ::std::stringstream ss ;
                         ss 
-                            << "[db] : "
+                            << "[" << name << ".natus] : "
                             << "Only unique file names supported. See [" << fr.location << "] with extensions "
                             << "[" << fr.extension << ", " << fr2.extension << "] " 
                             << "where [" << fr2.extension << "] already stored" ;
@@ -154,8 +164,8 @@ bool_t database::pack( this_t::encryption const )
     }
 
 
-    natus::io::path_t db_new = _db.base / "db.tmp.natus" ;
-    natus::io::path_t db_old = _db.base / "db.natus" ;
+    natus::io::path_t db_new = _db.base / natus::io::path_t( _db.name ).replace_extension( ".tmp.natus" ) ;
+    natus::io::path_t db_old = _db.base / natus::io::path_t( _db.name ).replace_extension( ".natus" ) ;
     
     // write file
     {
@@ -177,6 +187,8 @@ bool_t database::pack( this_t::encryption const )
             }
         }
 
+        // for testing purposes, do not write content
+        #if 0
         // file content 
         {
             for( auto & fr : records )
@@ -204,6 +216,7 @@ bool_t database::pack( this_t::encryption const )
         }
 
         outfile.flush() ;
+        #endif
         outfile.close() ;
     }
 

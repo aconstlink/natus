@@ -101,22 +101,14 @@ namespace natus
             struct db
             {
                 natus::io::path_t base ;
+                natus::io::path_t working ;
+                natus::io::path_t name ;
                 natus::std::vector< file_record > records ;
                 natus::std::vector< natus::io::monitor_res_t > monitors ;
 
                 db( void_t ) {}
-                db( db const& rhv ) 
-                { 
-                    base = rhv.base ;
-                    records = rhv.records ;
-                    monitors = rhv.monitors ;
-                }
-                db( db && rhv )
-                {
-                    base = ::std::move( rhv.base ) ;
-                    records = ::std::move( rhv.records ) ;
-                    monitors = ::std::move( rhv.monitors ) ;
-                }
+                db( db const& rhv ) { *this = rhv ; }
+                db( db && rhv ) { *this = ::std::move( rhv ) ; }
                 ~db( void_t ) {}
 
                 db & operator = ( db const& rhv )
@@ -124,14 +116,18 @@ namespace natus
                     base = rhv.base ;
                     records = rhv.records ;
                     monitors = rhv.monitors ;
+                    working = rhv.working ;
+                    name = rhv.name ;
                     return *this ;
                 }
 
-                db& operator = ( db && rhv )
+                db & operator = ( db && rhv )
                 {
                     base = ::std::move( rhv.base ) ;
                     records = ::std::move( rhv.records ) ;
                     monitors = ::std::move( rhv.monitors ) ;
+                    working = ::std::move( rhv.working ) ;
+                    name = ::std::move( rhv.name ) ;
                     return *this ;
                 }
             };
@@ -154,7 +150,6 @@ namespace natus
 
             database( this_cref_t ) = delete ;
             database( this_rref_t rhv ) ;
-
             ~database( void_t ) ;
 
         public:
@@ -162,12 +157,14 @@ namespace natus
             // gives access to some file system structure
             // or to a natus database file.
             //
-            // @param base the base path to the resource
+            // @param base the base path to the database file
+            // @param working_rel where the data should be look for/stored at relative to base
             // @param name the resource file/folder name
             //
             // Filesystem: /base/name
             // Natus File: /base/name.natus
-            bool_t init( natus::io::path_cref_t base ) ;
+            bool_t init( natus::io::path_cref_t base, natus::io::path_cref_t name = "db", 
+                natus::io::path_cref_t working_rel = "./" ) ;
 
             // pack the initialized resource into a natus file
             bool_t pack( this_t::encryption const = this_t::encryption::none ) ;
