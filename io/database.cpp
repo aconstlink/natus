@@ -51,7 +51,7 @@ bool_t database::init( natus::io::path_cref_t base, natus::io::path_cref_t worki
 
     // look for db file
     {
-        natus::io::path_t const loc = db.working / natus::io::path_t(name).replace_extension( natus::io::path_t( ".natus" ) ) ;
+        natus::io::path_t const loc = db.base / natus::io::path_t(name).replace_extension( natus::io::path_t( ".natus" ) ) ;
         auto const res = natus::std::filesystem::exists( loc ) ;
         
         if( res )
