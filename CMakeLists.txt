@@ -62,10 +62,10 @@ natus_export_clear()
 # SECTION : Build in and compilable externals
 ################################################################
 
-add_subdirectory( "externals/filesystem" )
+add_subdirectory( "externals/gulrak" )
 add_subdirectory( "externals/khronos" )
 add_subdirectory( "externals/kcat" )
-add_subdirectory( "externals/imgui" )
+add_subdirectory( "externals/ocornut" )
 add_subdirectory( "externals/lua" )
 add_subdirectory( "externals/nothings" )
 #add_subdirectory( "externals/zeux" )
