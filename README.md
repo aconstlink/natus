@@ -45,7 +45,7 @@ cmake ../../natus
 :construction:
 
 ## Roadmap
-For a roadmap, I would like to point out the [Projects Tab](https://github.com/aconstlink/natus/projects). If you looked there, you would find planty of topics the engine will need in the future. There is no particular priority, but if you really need anything, just leave a comment or just ask to contribute something you would like to do.
+For a roadmap, I would like to point out the [Projects Tab](https://github.com/aconstlink/natus/projects). If you looked there, you would find planty of topics the engine will need in the future. There is no particular priority, but if you really need anything, just leave a comment or just ask to [contribute](CONTRIBUTING.md) something you would like to do.
 
 ## Contributing  
 Please see [CONTRIBUTING](CONTRIBUTING.md)
