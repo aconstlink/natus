@@ -160,12 +160,12 @@ namespace natus
             //
             // @param base the base path to the database file
             // @param working_rel where the data should be look for/stored at relative to base
-            // @param name the resource file/folder name
+            // @param name the db file/folder name
             //
             // Filesystem: /base/name
             // Natus File: /base/name.natus
-            bool_t init( natus::io::path_cref_t base, natus::io::path_cref_t name = "db", 
-                natus::io::path_cref_t working_rel = "./" ) ;
+            bool_t init( natus::io::path_cref_t base, natus::io::path_cref_t working_rel = "./", 
+                natus::io::path_cref_t name = "db" ) ;
 
             // pack the initialized resource into a natus file
             bool_t pack( this_t::encryption const = this_t::encryption::none ) ;
