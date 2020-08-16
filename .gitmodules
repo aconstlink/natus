@@ -1,9 +1,9 @@
-[submodule "externals/filesystem/gulrak"]
-	path = externals/filesystem/gulrak
+[submodule "externals/gulrak/filesystem"]
+	path = externals/gulrak/filesystem
 	url = https://github.com/gulrak/filesystem.git
 
-[submodule "externals/imgui/imgui"]
-	path = externals/imgui/imgui
+[submodule "externals/ocornut/imgui"]
+	path = externals/ocornut/imgui
 	url = https://github.com/ocornut/imgui.git
 [submodule "externals/kcat/openal-soft"]
 	path = externals/kcat/openal-soft

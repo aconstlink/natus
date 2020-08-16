@@ -1,7 +1,7 @@
 
 set( GHC_FILESYSTEM_WITH_INSTALL ON )
 
-add_subdirectory( "gulrak" )
+add_subdirectory( "filesystem" )
 
 #set_target_properties( ghc_filesystem PROPERTIES FOLDER "natus/externals" )
 
