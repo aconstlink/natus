@@ -9,15 +9,18 @@
 
 using namespace natus::io ;
 
+static const natus::std::string_t header_desc = "natus db file format 0.1" ;
+
 //***
 database::database( void_t ) 
 {
 }
 
 //***
-database::database( natus::io::path_cref_t base )
+database::database( natus::io::path_cref_t base, natus::io::path_cref_t name,
+    natus::io::path_cref_t working_rel )
 {
-    this_t::init( base ) ;
+    this_t::init( base, name, working_rel ) ;
     this_t::spawn_monitor() ;
 }
 
@@ -35,7 +38,7 @@ database::~database( void_t )
 }
 
 //***
-bool_t database::init( natus::io::path_cref_t base, natus::io::path_cref_t name, natus::io::path_cref_t working )
+bool_t database::init( natus::io::path_cref_t base, natus::io::path_cref_t working, natus::io::path_cref_t name )
 {
     this_t::db_t db ;
 
@@ -48,7 +51,7 @@ bool_t database::init( natus::io::path_cref_t base, natus::io::path_cref_t name,
 
     // look for db file
     {
-        natus::io::path_t const loc = base / natus::io::path_t(name).replace_extension( natus::io::path_t( ".natus" ) ) ;
+        natus::io::path_t const loc = db.working / natus::io::path_t(name).replace_extension( natus::io::path_t( ".natus" ) ) ;
         auto const res = natus::std::filesystem::exists( loc ) ;
         
         if( res )
@@ -58,9 +61,9 @@ bool_t database::init( natus::io::path_cref_t base, natus::io::path_cref_t name,
     }
 
     // look for db file system
-    if( natus::std::filesystem::exists( base ) )
+    if( natus::std::filesystem::exists( db.working ) )
     {
-        for( auto& i : natus::std::filesystem::recursive_directory_iterator( base ) )
+        for( auto& i : natus::std::filesystem::recursive_directory_iterator( db.working ) )
         {
             // do not go into .xyz directories
             if( i.is_directory() && i.path().stem().string().find_first_of(".",0) == 0 )
@@ -74,7 +77,7 @@ bool_t database::init( natus::io::path_cref_t base, natus::io::path_cref_t name,
                 // do not track self
                 if( i.path().stem() == name ) continue ;
 
-                auto const fr = this_t::create_file_record( base, i.path() ) ;
+                auto const fr = this_t::create_file_record( db.working, i.path() ) ;
                 
                 // check other files' existence
                 // file names must be unique!
@@ -173,10 +176,17 @@ bool_t database::pack( this_t::encryption const )
 
         // header info
         {
-            natus::std::string_t s = ::std::to_string( first_data ) ;
-            first_data += s.size() + 1 ;
-            s = ::std::to_string( first_data ) ;
-            outfile << s << "\n" ;
+            {
+                natus::std::string_t const s = header_desc + "\n" ;
+                outfile << s ;
+                first_data += header_desc.size() + 1 ;
+            }
+            {
+                natus::std::string_t s = ::std::to_string( first_data ) ;
+                first_data += s.size() + 1 ;
+                s = ::std::to_string( first_data ) ;
+                outfile << s << "\n" ;
+            }
         }
         
         // records
@@ -188,7 +198,7 @@ bool_t database::pack( this_t::encryption const )
         }
 
         // for testing purposes, do not write content
-        #if 0
+        //#if 0
         // file content 
         {
             for( auto & fr : records )
@@ -214,9 +224,9 @@ bool_t database::pack( this_t::encryption const )
                 outfile.flush() ;
             }
         }
-
+        
+        //#endif
         outfile.flush() ;
-        #endif
         outfile.close() ;
     }
 
@@ -233,13 +243,26 @@ void_t database::load_db_file( natus::io::path_cref_t p )
 {
     ::std::ifstream ifs( p, ::std::ifstream::binary ) ;
 
-    
     {
-        natus::std::string_t buffer ;
-        ::std::getline( ifs, buffer ) ;
+        // check file header description
+        {
+            natus::std::string_t buffer ;
+            ::std::getline( ifs, buffer ) ;
+            if( buffer != header_desc )
+            {
+                natus::log::global_t::error("[db] : Invalid db file. Header description mismatch. Should be " + header_desc + " for file " + p.string() ) ;
+                natus::log::global_t::error("Just repack the data with the appropriate packer version.") ;
+                return ;
+            }
+            natus::log::global_t::status("[db] : Loading db file from " + p.string() ) ;
+        }
+        {
+            natus::std::string_t buffer ;
+            ::std::getline( ifs, buffer ) ;
 
-        uint64_t const offset = ::std::stol( buffer ) ;
-        int const bp = 0 ;
+            uint64_t const offset = ::std::stol( buffer ) ;
+            int const bp = 0 ;
+        }
     }
 }
 
@@ -271,7 +294,7 @@ natus::io::load_handle_t database::load( natus::std::string_cref_t loc ) const
     natus::io::load_handle_t lh ;
     if( fr.offset == uint64_t(-2) )
     {
-        lh = natus::io::global_t::load( _db.base / fr.rel ) ; ;
+        lh = natus::io::global_t::load( _db.working / fr.rel ) ; ;
     }
     else if( fr.offset != uint64_t(-1) )
     {
@@ -506,7 +529,7 @@ void_t database::spawn_monitor( void_t ) noexcept
 
             for( auto & fr : db.records )
             {
-                natus::io::path_t const p = db.base / fr.rel ;
+                natus::io::path_t const p = db.working / fr.rel ;
                 if( !natus::std::filesystem::exists( p ) )
                 {
                     for( auto & r : db.monitors ) 

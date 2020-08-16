@@ -146,7 +146,8 @@ namespace natus
         public:
 
             database( void_t ) ;
-            database( natus::io::path_cref_t base ) ;
+            database( natus::io::path_cref_t base, natus::io::path_cref_t working_rel = "./",
+                natus::io::path_cref_t name = "db" ) ;
 
             database( this_cref_t ) = delete ;
             database( this_rref_t rhv ) ;
