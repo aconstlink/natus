@@ -56,7 +56,8 @@ system::system( this_rref_t rhv )
 }
 
 //************************************************************************************
-natus::io::load_handle_t system::load( natus::io::path_cref_t file_path )
+natus::io::load_handle_t system::load( natus::io::path_cref_t file_path,
+    size_t const offset, size_t const sib )
 {
     this_t::load_item_ptr_t li = this_t::get_load_item() ;
 
@@ -69,8 +70,8 @@ natus::io::load_handle_t system::load( natus::io::path_cref_t file_path )
             // process content
             {
                 is.seekg( 0, is.end ) ;
-                size_t const length = size_t( is.tellg() ) ;
-                is.seekg( 0, is.beg ) ;
+                size_t const length = sib != size_t(-1) ? sib : size_t( is.tellg() ) ;
+                is.seekg( offset, is.beg ) ;
                 
                 char_ptr_t data = natus::memory::global::alloc_raw<char_t>( length ) ;
 
