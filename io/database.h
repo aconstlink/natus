@@ -17,8 +17,6 @@ namespace natus
         {
             natus_this_typedefs( database ) ;
 
-            friend class database ;
-
         private: // monitoring stuff
 
             natus::concurrent::thread_t _monitor_thread ;

@@ -345,7 +345,6 @@ void_t database::load_db_file( this_t::db_ref_t db_, natus::io::path_cref_t p )
 {
     ::std::ifstream ifs( p, ::std::ios::binary ) ;
 
-    uint64_t offset = 0 ;
     size_t num_records = 0 ;
 
     natus::memory::malloc_guard< char_t > data( this_file::length_validator::fixed_length() ) ;
@@ -369,7 +368,6 @@ void_t database::load_db_file( this_t::db_ref_t db_, natus::io::path_cref_t p )
             }
 
             num_records = ::std::stol( token[ 1 ] ) ;
-            offset = (num_records + 1) * this_file::length_validator::fixed_length() ;
         }
         else 
         {
