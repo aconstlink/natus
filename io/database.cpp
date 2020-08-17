@@ -2,14 +2,105 @@
 #include "global.h"
 
 #include <natus/std/filesystem.hpp>
+#include <natus/std/string.hpp>
+#include <natus/std/string/split.hpp>
 #include <natus/concurrent/mutex.hpp>
+#include <natus/memory/guards/malloc_guard.hpp>
 
 #include <sstream>
+#include <streambuf>
 #include <iomanip>
+#include <array>
 
 using namespace natus::io ;
 
 static const natus::std::string_t header_desc = "natus db file format 0.1" ;
+
+namespace this_file
+{
+    using namespace natus::core::types ;
+
+    class obfuscator 
+    {
+        natus_this_typedefs( obfuscator ) ;
+
+    private:
+        
+        natus::memory::malloc_guard< char_t > _mem ;
+
+    public:
+
+        obfuscator( char_cptr_t ptr, size_t const sib ) 
+        { 
+            _mem = natus::memory::malloc_guard< char_t >( ptr, sib ) ;
+        }
+
+        obfuscator( natus::std::string_cref_t s ) 
+        {
+            _mem = natus::memory::malloc_guard< char_t >( s.c_str(), s.size() ) ;
+        }
+
+        obfuscator( this_cref_t rhv ) = delete ;
+        obfuscator( this_rref_t rhv ) 
+        {
+            _mem = ::std::move( rhv._mem ) ;
+        }
+        ~obfuscator( void_t ) {}
+
+    public: 
+
+        this_ref_t encode( void_t ) noexcept
+        {
+            for( size_t i=0; i<_mem.size(); ++i )
+            {
+                //_mem[ i ] = _mem[ i ] ^ 'a' ;
+            }
+            return *this ;
+        }
+
+        this_ref_t decode( void_t ) noexcept
+        {
+            for( size_t i = 0; i < _mem.size(); ++i )
+            {
+                //_mem[ i ] = _mem[ i ] ^ 'a' ;
+            }
+            return *this ;
+        }
+
+        char_cptr_t get( void_t ) const noexcept { return _mem.get() ; }
+        natus::std::string_t to_string( void_t ) const noexcept 
+        {
+            return natus::std::string_t( _mem.get(), _mem.size() ) ;
+        }
+
+        operator natus::std::string_t( void_t ) 
+        {
+            return this_t::to_string() ;
+        }
+    };
+    natus_typedef( obfuscator ) ;
+
+    struct length_validator
+    {
+
+        static bool_t make_string( natus::std::string_cref_t si, natus::std::string_out_t so ) noexcept
+        {
+            ::std::srand( uint_t(si.size()) ) ;
+
+            if( si.size() >= length_validator::fixed_length() ) return false ;
+
+            so = si ;
+            so.resize( length_validator::fixed_length(), '-' ) ;
+            for( size_t i=si.size(); i<so.size(); ++i )
+            {
+                so[ i ] = char_t( ::std::rand() ) ;
+            }
+            return true ;
+        }
+
+        static size_t fixed_length( void_t ) noexcept { return 1024 ; }
+    };
+}
 
 //***
 database::database( void_t ) 
@@ -56,7 +147,7 @@ bool_t database::init( natus::io::path_cref_t base, natus::io::path_cref_t worki
         
         if( res )
         {
-            this_t::load_db_file( loc ) ;
+            this_t::load_db_file( db, loc ) ;
         }
     }
 
@@ -80,19 +171,28 @@ bool_t database::init( natus::io::path_cref_t base, natus::io::path_cref_t worki
                 auto const fr = this_t::create_file_record( db.working, i.path() ) ;
                 
                 // check other files' existence
-                // file names must be unique!
                 {
                     this_t::file_record_t fr2 ;
                     if( this_t::lookup( db, fr.location, fr2 ) )
                     {
-                        ::std::stringstream ss ;
-                        ss 
-                            << "[" << name << ".natus] : "
-                            << "Only unique file names supported. See [" << fr.location << "] with extensions "
-                            << "[" << fr.extension << ", " << fr2.extension << "] " 
-                            << "where [" << fr2.extension << "] already stored" ;
+                        // only unique data entries
+                        if( fr2.offset == size_t(-2) )
+                        {
+                            ::std::stringstream ss ;
+                            ss
+                                << "[" << name << ".natus] : "
+                                << "Only unique file names supported. See [" << fr.location << "] with extensions "
+                                << "[" << fr.extension << ", " << fr2.extension << "] "
+                                << "where [" << fr2.extension << "] already stored" ;
 
-                        natus::log::global_t::error( ss.str() ) ;
+                            natus::log::global_t::error( ss.str() ) ;
+                        }
+
+                        // file system data wins
+                        else
+                        {
+                            this_t::file_change_external( db, fr ) ;
+                        }
                         continue ;
                     }
                 }
@@ -135,7 +235,7 @@ bool_t database::pack( this_t::encryption const )
         {
             ::std::stringstream ss ;
             ss  << location << ":" << extension << ":"
-                << ::std::to_string( offset ) << ":" << ::std::to_string( sib ) << "\n" ;
+                << ::std::to_string( offset ) << ":" << ::std::to_string( sib ) << ": " ;
             return ss.str() ;
         }
 
@@ -147,53 +247,59 @@ bool_t database::pack( this_t::encryption const )
 
     natus::std::vector< __file_record > records ;
     
-    uint64_t first_data = 0 ;
-    uint64_t offset = 0 ;
-    for( auto& fr : _db.records )
+    // base offset to the first data written
+    // (number of records + header ) * length
+    uint64_t const offset = (_db.records.size() + 1) * this_file::length_validator::fixed_length() ;
+
     {
-        __file_record fr__ ;
-        fr__.location = fr.location ;
-        fr__.extension = fr.extension ;
-        fr__.offset = offset ;
-        fr__.sib = fr.sib ;
-        fr__.path = _db.base / fr.rel ;
-        fr__.external = fr.offset == uint64_t( -2 ) ;
+        uint64_t lo = offset ;
 
-        first_data += fr__.size() ;
+        for( auto& fr : _db.records )
+        {
+            __file_record fr__ ;
+            fr__.location = fr.location ;
+            fr__.extension = fr.extension ;
+            fr__.offset = lo ;
+            fr__.sib = fr.sib ;
+            fr__.path = _db.base / fr.rel ;
+            fr__.external = fr.offset == uint64_t( -2 ) ;
 
-        offset += fr.sib ;
-
-        records.push_back( fr__ ) ;
+            lo += fr__.sib ;
+            records.push_back( fr__ ) ;
+        }
     }
-
 
     natus::io::path_t db_new = _db.base / natus::io::path_t( _db.name ).replace_extension( ".tmp.natus" ) ;
     natus::io::path_t db_old = _db.base / natus::io::path_t( _db.name ).replace_extension( ".natus" ) ;
     
     // write file
     {
-        ::std::ofstream outfile ( db_new, ::std::ofstream::binary ) ;
+        ::std::ofstream outfile ( db_new, ::std::ios::binary ) ;
 
         // header info
         {
-            {
-                natus::std::string_t const s = header_desc + "\n" ;
-                outfile << s ;
-                first_data += header_desc.size() + 1 ;
-            }
-            {
-                natus::std::string_t s = ::std::to_string( first_data ) ;
-                first_data += s.size() + 1 ;
-                s = ::std::to_string( first_data ) ;
-                outfile << s << "\n" ;
-            }
+            natus::std::string_t so ;
+            natus::std::string_t const si = this_file::obfuscator_t( 
+                header_desc + ":" + ::std::to_string( _db.records.size() ) + ": " ).encode() ;
+
+            auto const res = this_file::length_validator::make_string( si, so ) ;
+            if( res ) outfile << so ;
+            natus::log::global_t::error( !res, "[db] : header does not fit into fixed length." ) ;
+            
         }
         
         // records
         {
+            natus::std::string_t so ;
+
             for( auto& fr : records )
             {
-                outfile << fr.to_string() ;
+                natus::std::string_t const si = this_file::obfuscator_t( fr.to_string() ).encode() ;
+
+                auto const res = this_file::length_validator::make_string( si, so ) ;
+                if( res ) outfile << so ;
+                natus::log::global_t::warning( !res, "[db] : file record entry too long. Please reduce name length." ) ;
+
             }
         }
 
@@ -203,26 +309,19 @@ bool_t database::pack( this_t::encryption const )
         {
             for( auto & fr : records )
             {
-                if( fr.external )
+                this_t::load( fr.location ).wait_for_operation(
+                    [&] ( char_cptr_t data, size_t const sib, natus::io::result const res )
                 {
-                    this_t::load( fr.location ).wait_for_operation( 
-                        [&]( char_cptr_t data, size_t const sib, natus::io::result const res )
-                    {
-                        if( res == natus::io::result::ok  )
-                        {
-                            outfile.seekp( first_data + fr.offset ) ;
-                            outfile.write( data, sib ) ;
-                        }
-                    } ) ;
-                }
-                else
-                {
-                    // read from db file and store in tmp file
-                }
-                
+                    if( res != natus::io::result::ok ) return ;
 
-                outfile.flush() ;
+                    natus::std::string_t const wdata = this_file::obfuscator_t( data, sib ).encode() ;
+
+                    outfile.seekp( fr.offset ) ;
+                    outfile.write( wdata.c_str(), sib ) ;
+
+                } ) ;
             }
+            outfile.flush() ;
         }
         
         //#endif
@@ -239,29 +338,68 @@ bool_t database::pack( this_t::encryption const )
 }
 
 //***
-void_t database::load_db_file( natus::io::path_cref_t p ) 
+void_t database::load_db_file( this_t::db_ref_t db_, natus::io::path_cref_t p ) 
 {
-    ::std::ifstream ifs( p, ::std::ifstream::binary ) ;
+    ::std::ifstream ifs( p, ::std::ios::binary ) ;
 
+    uint64_t offset = 0 ;
+    size_t num_records = 0 ;
+
+    natus::memory::malloc_guard< char_t > data( this_file::length_validator::fixed_length() ) ;
+
+    // check file header description
     {
-        // check file header description
+        ifs.read( data, this_file::length_validator::fixed_length() ) ;
+
+        natus::std::string_t const buffer = this_file::obfuscator_t( natus::std::string_t( data.get(), this_file::length_validator::fixed_length() ) ).decode() ;
+        
+        natus::std::vector< natus::std::string_t > token ;
+        size_t const num_elems = natus::std::string_ops::split( buffer, ':', token ) ;
+
+        if( num_elems >= 3 )
         {
-            natus::std::string_t buffer ;
-            ::std::getline( ifs, buffer ) ;
-            if( buffer != header_desc )
+            if( token[0] != header_desc )
             {
-                natus::log::global_t::error("[db] : Invalid db file. Header description mismatch. Should be " + header_desc + " for file " + p.string() ) ;
-                natus::log::global_t::error("Just repack the data with the appropriate packer version.") ;
+                natus::log::global_t::error( "[db] : Invalid db file. Header description mismatch. Should be " + header_desc + " for file " + p.string() ) ;
+                natus::log::global_t::error( "[db] : Just repack the data with the appropriate packer version." ) ;
                 return ;
             }
-            natus::log::global_t::status("[db] : Loading db file from " + p.string() ) ;
-        }
-        {
-            natus::std::string_t buffer ;
-            ::std::getline( ifs, buffer ) ;
 
-            uint64_t const offset = ::std::stol( buffer ) ;
-            int const bp = 0 ;
+            num_records = ::std::stol( token[ 1 ] ) ;
+            offset = (num_records + 1) * this_file::length_validator::fixed_length() ;
+        }
+        else 
+        {
+            natus::log::global_t::error( "[db] : can not read db for file " + p.string() ) ;
+            return ;
+        }
+        
+        natus::log::global_t::status( "[db] : Loading db file from " + p.string() ) ;
+    }
+
+    // add file records
+    {
+        for( size_t i = 0; i < num_records; ++i )
+        {
+            ifs.read( data, this_file::length_validator::fixed_length() ) ;
+            natus::std::string_t const buffer = this_file::obfuscator_t( natus::std::string_t( data.get(), this_file::length_validator::fixed_length() ) ).decode() ;
+
+            natus::std::vector< natus::std::string_t > token ;
+            size_t const num_elems = natus::std::string_ops::split( buffer, ':', token ) ;
+
+            if( num_elems < 5 ) 
+            {
+                natus::log::global_t::warning( "[db] : invalid file record" ) ;
+                continue;
+            }
+
+            this_t::file_record_t fr ;
+            fr.location = token[ 0 ] ;
+            fr.extension = token[ 1 ] ;
+            fr.offset = ::std::stol( token[ 2 ] ) ;
+            fr.sib = ::std::stol( token[ 3 ] ) ;
+
+            db_.records.emplace_back( fr ) ;
         }
     }
 }
@@ -294,11 +432,13 @@ natus::io::load_handle_t database::load( natus::std::string_cref_t loc ) const
     natus::io::load_handle_t lh ;
     if( fr.offset == uint64_t(-2) )
     {
-        lh = natus::io::global_t::load( _db.working / fr.rel ) ; ;
+        lh = natus::io::global_t::load( _db.working / fr.rel ) ;
     }
     else if( fr.offset != uint64_t(-1) )
     {
-
+        size_t const offset = fr.offset + _db.offset ;
+        auto const p = _db.base / natus::io::path_t( _db.name ).replace_extension( natus::io::path_t( ".natus" ) ) ;
+        lh = natus::io::global_t::load( p, offset, fr.sib ) ;
     }
 
     return ::std::move( lh ) ;
@@ -509,6 +649,28 @@ void_t database::file_remove( this_t::file_record_cref_t fri ) noexcept
 }
 
 //***
+void_t database::file_change_external( this_t::file_record_cref_t fr ) noexcept 
+{
+    natus::concurrent::mrsw_t::writer_lock_t lk( _ac ) ;
+    return this_t::file_change_external( _db, fr ) ;
+}
+
+//***
+void_t database::file_change_external( this_t::db_t & db,  this_t::file_record_cref_t fri ) noexcept 
+{
+    auto iter = ::std::find_if( db.records.begin(), db.records.end(), [&] ( this_t::file_record_cref_t fr )
+    {
+        return fr.location == fri.location ;
+    } ) ;
+
+    if( iter == db.records.end() ) return ;
+    
+    iter->offset = fri.offset ;
+    iter->sib = fri.sib ;
+    iter->rel = fri.rel ;
+}
+
+//***
 void_t database::spawn_monitor( void_t ) noexcept
 {
     this_t::join_monitor() ;
@@ -529,6 +691,10 @@ void_t database::spawn_monitor( void_t ) noexcept
 
             for( auto & fr : db.records )
             {
+                // is internal? At the moment, there is no
+                // internal db file data change tracking.
+                if( fr.offset != uint64_t( -2 ) ) continue ;
+
                 natus::io::path_t const p = db.working / fr.rel ;
                 if( !natus::std::filesystem::exists( p ) )
                 {
@@ -563,6 +729,25 @@ void_t database::spawn_monitor( void_t ) noexcept
 
                     this_t::file_change_stamp( fr ) ;
                     continue ;
+                }
+            }
+            
+            // if no external is registered, change the update rate
+            {
+                bool_t any_external = false ;
+                for( auto& fr : db.records )
+                {
+                     if( fr.offset == uint64_t( -2 ) ) 
+                     {
+                         any_external = true ;
+                         break ;
+                     }
+                }
+
+                if( !any_external )
+                {
+                    natus::log::global_t::status( "[db] : no external files to track. exiting early." ) ;
+                    break ;
                 }
             }
         }

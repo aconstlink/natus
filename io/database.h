@@ -17,6 +17,8 @@ namespace natus
         {
             natus_this_typedefs( database ) ;
 
+            friend class database ;
+
         private: // monitoring stuff
 
             natus::concurrent::thread_t _monitor_thread ;
@@ -63,7 +65,7 @@ namespace natus
                 }
                 ~file_record( void_t ) {}
 
-                file_record & operator = ( file_record const& rhv )
+                file_record & operator = ( file_record const& rhv ) noexcept
                 {
                     location = rhv.location ;
                     extension = rhv.extension ;
@@ -75,7 +77,7 @@ namespace natus
                     return *this ;
                 }
 
-                file_record & operator = ( file_record&& rhv )
+                file_record & operator = ( file_record&& rhv ) noexcept
                 {
                     location = ::std::move( rhv.location ) ;
                     extension = ::std::move( rhv.extension ) ;
@@ -105,6 +107,7 @@ namespace natus
                 natus::io::path_t name ;
                 natus::std::vector< file_record > records ;
                 natus::std::vector< natus::io::monitor_res_t > monitors ;
+                size_t offset = 0 ;
 
                 db( void_t ) {}
                 db( db const& rhv ) { *this = rhv ; }
@@ -118,6 +121,7 @@ namespace natus
                     monitors = rhv.monitors ;
                     working = rhv.working ;
                     name = rhv.name ;
+                    offset = rhv.offset ;
                     return *this ;
                 }
 
@@ -128,6 +132,7 @@ namespace natus
                     monitors = ::std::move( rhv.monitors ) ;
                     working = ::std::move( rhv.working ) ;
                     name = ::std::move( rhv.name ) ;
+                    offset = rhv.offset ;
                     return *this ;
                 }
             };
@@ -197,6 +202,9 @@ namespace natus
             bool_t lookup( db const & db_, natus::std::string_cref_t loc, file_record_out_t ) const noexcept ;
             void_t file_change_stamp( this_t::file_record_cref_t ) noexcept ;
             void_t file_remove( this_t::file_record_cref_t ) noexcept ;
+            
+            void_t file_change_external( this_t::file_record_cref_t ) noexcept ;
+            static void_t file_change_external( db & db_, this_t::file_record_cref_t ) noexcept ;
 
         private: // monitor
             
@@ -205,7 +213,7 @@ namespace natus
 
         private:
 
-            void_t load_db_file( natus::io::path_cref_t ) ;
+            static void_t load_db_file( db & db_, natus::io::path_cref_t ) ;
 
         };
         natus_res_typedef( database ) ;
