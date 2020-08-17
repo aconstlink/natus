@@ -90,6 +90,13 @@ natus::io::load_handle_t global::load( natus::io::path_cref_t file_path )
 }
 
 //***********************************************************************
+natus::io::load_handle_t global::load( natus::io::path_cref_t file_path,
+    size_t const offset, size_t const sib ) 
+{
+    return this_t::io_system()->load( file_path, offset, sib ) ;
+}
+
+//***********************************************************************
 natus::io::store_handle_t global::store( natus::io::path_cref_t file_path, char_cptr_t data, size_t sib )
 {
     return this_t::io_system()->store( file_path, data, sib ) ;
