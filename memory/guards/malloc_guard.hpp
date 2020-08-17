@@ -34,18 +34,20 @@ namespace natus
             malloc_guard( void_t )
             {}
 
-            malloc_guard( size_t num_elements )
+            malloc_guard( size_t const num_elements )
             {
                 _mem_ptr = natus::memory::global::alloc_raw<type_t>( sizeof( type_t ) * num_elements ) ;
                 _num_elements = num_elements ;
             }
 
-            malloc_guard( type_cptr_t src_ptr, size_t num_elements )
+            malloc_guard( type_cptr_t src_ptr, size_t const num_elements )
             {
-                _mem_ptr = natus::memory::global::alloc_raw<type_t>( sizeof( type_t ) * num_elements ) ;
+                size_t const sib = sizeof( type_t ) * num_elements ;
+
+                _mem_ptr = natus::memory::global::alloc_raw<type_t>( sib ) ;
                 _num_elements = num_elements ;
 
-                memcpy( _mem_ptr, src_ptr, num_elements ) ;
+                ::std::memcpy( _mem_ptr, src_ptr, sib ) ;
             }
 
             malloc_guard( this_rref_t rhv )
