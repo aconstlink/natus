@@ -51,18 +51,22 @@ namespace this_file
 
         this_ref_t encode( void_t ) noexcept
         {
+            static const char_t lut[ 8 ] = { 'a', 'f', 'c', 'd', '5', 'c', '\n', '5' } ;
+
             for( size_t i=0; i<_mem.size(); ++i )
             {
-                //_mem[ i ] = _mem[ i ] ^ 'a' ;
+                _mem[ i ] = _mem[ i ] ^ lut[i%8] ;
             }
             return *this ;
         }
 
         this_ref_t decode( void_t ) noexcept
         {
+            static const char_t lut[ 8 ] = { 'a', 'f', 'c', 'd', '5', 'c', '\n', '5' } ;
+
             for( size_t i = 0; i < _mem.size(); ++i )
             {
-                //_mem[ i ] = _mem[ i ] ^ 'a' ;
+                _mem[ i ] = _mem[ i ] ^ lut[i%8] ;
             }
             return *this ;
         }
@@ -73,7 +77,7 @@ namespace this_file
             return natus::std::string_t( _mem.get(), _mem.size() ) ;
         }
 
-        operator natus::std::string_t( void_t ) 
+        operator natus::std::string_t( void_t ) const noexcept
         {
             return this_t::to_string() ;
         }
@@ -299,7 +303,6 @@ bool_t database::pack( this_t::encryption const )
                 auto const res = this_file::length_validator::make_string( si, so ) ;
                 if( res ) outfile << so ;
                 natus::log::global_t::warning( !res, "[db] : file record entry too long. Please reduce name length." ) ;
-
             }
         }
 
