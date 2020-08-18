@@ -146,7 +146,7 @@ bool_t database::init( natus::io::path_cref_t base, natus::io::path_cref_t worki
 
     // look for db file
     {
-        natus::io::path_t const loc = db.base / natus::io::path_t(name).replace_extension( natus::io::path_t( ".natus" ) ) ;
+        natus::io::path_t const loc = db.base / natus::io::path_t(name).replace_extension( natus::io::path_t( ".ndb" ) ) ;
         auto const res = natus::std::filesystem::exists( loc ) ;
         
         if( res )
@@ -184,7 +184,7 @@ bool_t database::init( natus::io::path_cref_t base, natus::io::path_cref_t worki
                         {
                             ::std::stringstream ss ;
                             ss
-                                << "[" << name << ".natus] : "
+                                << "[" << name << ".ndb] : "
                                 << "Only unique file names supported. See [" << fr.location << "] with extensions "
                                 << "[" << fr.extension << ", " << fr2.extension << "] "
                                 << "where [" << fr2.extension << "] already stored" ;
@@ -273,8 +273,8 @@ bool_t database::pack( this_t::encryption const )
         }
     }
 
-    natus::io::path_t db_new = _db.base / natus::io::path_t( _db.name ).replace_extension( ".tmp.natus" ) ;
-    natus::io::path_t db_old = _db.base / natus::io::path_t( _db.name ).replace_extension( ".natus" ) ;
+    natus::io::path_t db_new = _db.base / natus::io::path_t( _db.name ).replace_extension( ".tmp.ndb" ) ;
+    natus::io::path_t db_old = _db.base / natus::io::path_t( _db.name ).replace_extension( ".ndb" ) ;
     
     // write file
     {
@@ -438,7 +438,7 @@ natus::io::load_handle_t database::load( natus::std::string_cref_t loc ) const
     else if( fr.offset != uint64_t(-1) )
     {
         size_t const offset = fr.offset + _db.offset ;
-        auto const p = _db.base / natus::io::path_t( _db.name ).replace_extension( natus::io::path_t( ".natus" ) ) ;
+        auto const p = _db.base / natus::io::path_t( _db.name ).replace_extension( natus::io::path_t( ".ndb" ) ) ;
         lh = natus::io::global_t::load( p, offset, fr.sib ) ;
     }
 
