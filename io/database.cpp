@@ -170,7 +170,7 @@ bool_t database::init( natus::io::path_cref_t base, natus::io::path_cref_t worki
             else if( i.is_regular_file() )
             {
                 // do not track self
-                if( i.path().stem() == name ) continue ;
+                if( i.path().stem() == name && i.path().extension() == ".ndb" ) continue ;
 
                 auto const fr = this_t::create_file_record( db.working, i.path() ) ;
                 
@@ -576,6 +576,7 @@ database::file_record_t database::create_file_record( natus::io::path_cref_t bas
             loc += "." ;
         }
         loc += path.stem().string() ;
+        loc += path.extension().string() ;
 
         fr.location = loc ;
         fr.rel = p ;
