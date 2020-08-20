@@ -1,7 +1,7 @@
 #include "glx.h"
 
 #include <natus/log/global.h>
-#include <natus/std/string/split.hpp>
+#include <natus/ntd/string/split.hpp>
 
 using namespace natus ;
 using namespace natus::ogl ;
@@ -100,7 +100,7 @@ natus::ogl::result glx::init( Display * display, int screen )
 {
     {
         char_cptr_t extensions = glXQueryExtensionsString( display, screen ) ;
-        natus::std::string_ops::split( natus::std::string_t(char_cptr_t(extensions)), ' ', _glx_extensions ) ;
+        natus::ntd::string_ops::split( natus::ntd::string_t(char_cptr_t(extensions)), ' ', _glx_extensions ) ;
     }
 
     if( !CHECK_AND_LOAD_COND( glXCreateContextAttribs, "glXCreateContextAttribsARB" ) )

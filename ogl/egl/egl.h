@@ -4,7 +4,7 @@
 #include "../typedefs.h"
 #include "../api.h"
 
-#include <natus/std/vector.hpp>
+#include <natus/ntd/vector.hpp>
 
 //#include <GL/glcorearb.h>
 #include <EGL/egl.h>
@@ -20,7 +20,7 @@ namespace natus
 
         private:
 
-            typedef natus::std::vector< natus::std::string > strings_t ;
+            typedef natus::ntd::vector< natus::ntd::string > strings_t ;
             static strings_t _egl_extensions ;
 
         public: 

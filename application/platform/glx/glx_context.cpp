@@ -3,7 +3,7 @@
 
 #include <natus/ogl/gl/gl.h>
 #include <natus/ogl/glx/glx.h>
-#include <natus/std/string/split.hpp>
+#include <natus/ntd/string/split.hpp>
 
 using namespace natus::application ;
 using namespace natus::application::glx ;
@@ -109,7 +109,7 @@ natus::application::result context::create_context(
 
 //***************************************************************
 natus::application::result context::is_extension_supported( 
-    natus::std::string_cref_t extension_name ) 
+    natus::ntd::string_cref_t extension_name ) 
 {
     this_t::strings_t ext_list ;
     if( natus::application::no_success( get_glx_extension(ext_list) ) ) 
@@ -137,8 +137,8 @@ natus::application::result context::get_gl_extension( this_t::strings_out_t ext_
     const GLubyte * ch = natus::ogl::glGetString( GL_EXTENSIONS ) ;
     if( !ch ) return natus::application::result::failed ;
 
-    natus::std::string_t extension_string( (const char*)ch) ;
-    natus::std::string_ops::split( extension_string, ' ', ext_list ) ;
+    natus::ntd::string_t extension_string( (const char*)ch) ;
+    natus::ntd::string_ops::split( extension_string, ' ', ext_list ) ;
     return natus::application::result::ok ;
 }
 
@@ -148,7 +148,7 @@ natus::application::result context::get_gl_version( natus::application::gl_versi
     const GLubyte* ch = natus::ogl::glGetString(GL_VERSION) ;
     if( !ch ) return natus::application::result::failed ;
 
-    natus::std::string_t version_string = natus::std::string((const char*)ch) ;
+    natus::ntd::string_t version_string = natus::ntd::string((const char*)ch) ;
 
     GLint major = 0;//boost::lexical_cast<GLint, std::string>(*token) ;
     GLint minor = 0;//boost::lexical_cast<GLint, std::string>(*(++token));
@@ -158,7 +158,7 @@ natus::application::result context::get_gl_version( natus::application::gl_versi
         GLenum err = natus::ogl::glGetError() ;
         if( err != GL_NO_ERROR )
         {
-            natus::std::string_t const es = ::std::to_string(err) ;
+            natus::ntd::string_t const es = ::std::to_string(err) ;
             natus::log::global::error( 
                 "[context::get_gl_version] : get gl major <"+es+">" ) ;
         }
@@ -168,7 +168,7 @@ natus::application::result context::get_gl_version( natus::application::gl_versi
         GLenum err = natus::ogl::glGetError() ;
         if( err != GL_NO_ERROR )
         {
-            natus::std::string_t es = ::std::to_string(err) ;
+            natus::ntd::string_t es = ::std::to_string(err) ;
             natus::log::global::error( "[context::get_gl_version] : get gl minor <"+es+">" ) ;
         }
     }

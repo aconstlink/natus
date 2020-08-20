@@ -11,7 +11,7 @@
 
 #include <GLES3/gl3.h>
 #include <GLES3/gl3ext.h>
-#include <natus/std/list.hpp>
+#include <natus/ntd/list.hpp>
 #include "convert.hpp"
 namespace natus
 {
@@ -23,7 +23,7 @@ namespace natus
 
         public:
 
-            typedef natus::std::list< natus::std::string > string_list_t ;
+            typedef natus::ntd::list< natus::ntd::string > string_list_t ;
             static string_list_t _extensions ;
 
             static bool_t _init ;
@@ -36,7 +36,7 @@ namespace natus
 
         public:
 
-            static bool_t check_and_log( natus::std::string_in_t msg ) noexcept
+            static bool_t check_and_log( natus::ntd::string_in_t msg ) noexcept
             {
                 GLenum __so__err = glGetError() ;
                 if( __so__err == GL_NO_ERROR ) return false ;

@@ -362,14 +362,14 @@ namespace natus
             return empty_funk ;
         }
 
-        static natus::std::string_t to_string( GLenum const e ) noexcept
+        static natus::ntd::string_t to_string( GLenum const e ) noexcept
         {
             switch( e )
             {
-            case GL_NO_ERROR: return natus::std::string_t( "GL_NO_ERROR" ) ;
-            case GL_INVALID_ENUM: return natus::std::string_t( "GL_INVALID_ENUM" ) ;
-            case GL_INVALID_VALUE: return natus::std::string_t( "GL_INVALID_VALUE" ) ;
-            case GL_INVALID_OPERATION: return natus::std::string_t( "GL_INVALID_OPERATION" ) ;
+            case GL_NO_ERROR: return natus::ntd::string_t( "GL_NO_ERROR" ) ;
+            case GL_INVALID_ENUM: return natus::ntd::string_t( "GL_INVALID_ENUM" ) ;
+            case GL_INVALID_VALUE: return natus::ntd::string_t( "GL_INVALID_VALUE" ) ;
+            case GL_INVALID_OPERATION: return natus::ntd::string_t( "GL_INVALID_OPERATION" ) ;
             default: break ;
             }
             return ::std::to_string( e ) ;
