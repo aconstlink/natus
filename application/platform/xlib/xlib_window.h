@@ -4,7 +4,7 @@
 #include "../window_info.h"
 #include "../toggle_window.h"
 
-#include <natus/std/vector.hpp>
+#include <natus/ntd/vector.hpp>
 #include <natus/math/vector/vector4.hpp>
 
 #include <X11/Xlib.h>

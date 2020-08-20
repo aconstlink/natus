@@ -32,7 +32,7 @@ namespace natus
             public:
 
                 natus_typedefs( 
-                     natus::std::vector< natus::std::string >, strings ) ;
+                     natus::ntd::vector< natus::ntd::string >, strings ) ;
 
             public:
 
@@ -72,7 +72,7 @@ namespace natus
                 /// @precondition Must be used after context has 
                 /// been created and made current.
                 natus::application::result is_extension_supported( 
-                    natus::std::string_cref_t extension_name ) ;
+                    natus::ntd::string_cref_t extension_name ) ;
 
                 /// This function fills the incoming list with all 
                 /// wgl extension strings.

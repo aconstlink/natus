@@ -5,7 +5,7 @@
 #include "../../layouts/ascii_keyboard.hpp"
 
 #include <natus/concurrent/mutex.hpp>
-#include <natus/std/vector.hpp>
+#include <natus/ntd/vector.hpp>
 #include <natus/math/vector/vector2.hpp>
 
 #include <X11/Xlib.h>
@@ -26,10 +26,10 @@ namespace natus
                 typedef natus::device::components::button_state button_state_t ;
 
                 typedef ::std::pair< three_button_t, button_state_t> mouse_button_item_t ;
-                typedef natus::std::vector< mouse_button_item_t > mouse_button_items_t ;
-                typedef natus::std::vector< int_t > scroll_items_t ;
+                typedef natus::ntd::vector< mouse_button_item_t > mouse_button_items_t ;
+                typedef natus::ntd::vector< int_t > scroll_items_t ;
 
-                typedef natus::std::vector< natus::math::vec2f_t > pointer_coords_t ;
+                typedef natus::ntd::vector< natus::math::vec2f_t > pointer_coords_t ;
 
             private: // mouse data
 
@@ -44,7 +44,7 @@ namespace natus
                 typedef natus::device::components::key_state key_state_t ;
 
                 typedef ::std::pair< ascii_key_t, key_state_t > ascii_keyboard_key_item_t ;
-                typedef natus::std::vector< ascii_keyboard_key_item_t > ascii_keyboard_keys_t ;
+                typedef natus::ntd::vector< ascii_keyboard_key_item_t > ascii_keyboard_keys_t ;
 
             private: // keyboard data 
 
