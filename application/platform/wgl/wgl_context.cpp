@@ -5,7 +5,7 @@
 #include <natus/ogl/gl/gl.h>
 #include <natus/ogl/wgl/wgl.h>
 
-#include <natus/std/string/split.hpp>
+#include <natus/ntd/string/split.hpp>
 
 #include <natus/log/global.h>
 
@@ -131,9 +131,9 @@ natus::application::result context::create_context( HWND hwnd )
 }
 
 //***********************************************************************
-natus::application::result context::is_extension_supported( natus::std::string_cref_t extension_name ) 
+natus::application::result context::is_extension_supported( natus::ntd::string_cref_t extension_name ) 
 {
-    natus::std::vector< natus::std::string_t > ext_list ;
+    natus::ntd::vector< natus::ntd::string_t > ext_list ;
     if( natus::application::no_success( get_wgl_extension(ext_list) ) ) return natus::application::result::failed_wgl ;
 
     auto const iter = ::std::find( ext_list.begin(), ext_list.end(), extension_name ) ;
@@ -143,24 +143,24 @@ natus::application::result context::is_extension_supported( natus::std::string_c
 }
 
 //***********************************************************************
-natus::application::result context::get_wgl_extension( natus::std::vector< natus::std::string_t > & ext_list )
+natus::application::result context::get_wgl_extension( natus::ntd::vector< natus::ntd::string_t > & ext_list )
 {
     if( !natus::ogl::wgl::wglGetExtensionsString ) 
         return natus::application::result::invalid_extension ;
 
     char_cptr_t ch = natus::ogl::wgl::wglGetExtensionsString( _hdc ) ;
-    natus::std::string_ops::split( natus::std::string_t(ch), ' ', ext_list ) ;
+    natus::ntd::string_ops::split( natus::ntd::string_t(ch), ' ', ext_list ) ;
 
     return natus::application::result::ok ;
 }
 
 //***********************************************************************
-natus::application::result context::get_gl_extension( natus::std::vector< natus::std::string_t > & ext_list )
+natus::application::result context::get_gl_extension( natus::ntd::vector< natus::ntd::string_t > & ext_list )
 {
     const GLubyte * ch = natus::ogl::glGetString( GL_EXTENSIONS ) ;
     if( !ch ) return natus::application::result::failed ;
 
-    natus::std::string_ops::split( natus::std::string_t(char_cptr_t(ch)), ' ', ext_list ) ;
+    natus::ntd::string_ops::split( natus::ntd::string_t(char_cptr_t(ch)), ' ', ext_list ) ;
 
     return natus::application::result::ok ;
 }
@@ -181,7 +181,7 @@ natus::application::result context::get_gl_version( natus::application::gl_versi
         GLenum err = natus::ogl::glGetError() ;
         if( err != GL_NO_ERROR )
         {
-            natus::std::string_t const es = ::std::to_string(err) ;
+            natus::ntd::string_t const es = ::std::to_string(err) ;
             natus::log::global::error( "[context::get_gl_version] : get gl major <"+es+">" ) ;
         }
     }
@@ -190,7 +190,7 @@ natus::application::result context::get_gl_version( natus::application::gl_versi
         GLenum err = natus::ogl::glGetError() ;
         if( err != GL_NO_ERROR )
         {
-            natus::std::string_t es = ::std::to_string(err) ;
+            natus::ntd::string_t es = ::std::to_string(err) ;
             natus::log::global::error( "[context::get_gl_version] : get gl minor <"+es+">" ) ;
         }
     }

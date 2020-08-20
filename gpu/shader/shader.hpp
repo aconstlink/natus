@@ -5,8 +5,8 @@
 
 #include "../id.hpp"
 
-#include <natus/std/string.hpp>
-#include <natus/std/vector.hpp>
+#include <natus/ntd/string.hpp>
+#include <natus/ntd/vector.hpp>
 
 #include <functional>
 
@@ -20,7 +20,7 @@ namespace natus
 
         private:
 
-            natus::std::string_t _code ;
+            natus::ntd::string_t _code ;
 
             size_t _hash = 0 ;
 
@@ -29,7 +29,7 @@ namespace natus
             shader( void_t ) 
             {}
 
-            shader( natus::std::string_in_t code ) : _code( code ) 
+            shader( natus::ntd::string_in_t code ) : _code( code ) 
             {
                 _hash = ::std::hash<::std::string>{}( code ) ;
             }
@@ -62,7 +62,7 @@ namespace natus
                 return *this ;
             }
 
-            natus::std::string code( void_t ) const { return _code ; }
+            natus::ntd::string code( void_t ) const { return _code ; }
         };
         natus_typedef( shader ) ;
     }

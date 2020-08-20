@@ -1,5 +1,5 @@
 #pragma once
 
-#include <natus/std/string.hpp>
+#include <natus/ntd/string.hpp>
 
-#define natus_log_fn( text ) natus::std::string_t( "[" + natus::std::string_t( __FUNCTION__ ) + "] : " + natus::std::string_t(text) )
+#define natus_log_fn( text ) natus::ntd::string_t( "[" + natus::ntd::string_t( __FUNCTION__ ) + "] : " + natus::ntd::string_t(text) )

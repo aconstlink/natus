@@ -8,7 +8,7 @@
 
 #include "imapping.hpp"
 
-#include <natus/std/vector.hpp>
+#include <natus/ntd/vector.hpp>
 
 namespace natus
 {
@@ -33,11 +33,11 @@ namespace natus
 
         private:
 
-            natus::std::string_t _name ;
+            natus::ntd::string_t _name ;
 
-            natus::std::vector< natus::device::input_component_ptr_t > _inputs ;
-            natus::std::vector< natus::device::output_component_ptr_t > _outputs ;
-            natus::std::vector< natus::device::imapping_res_t  > _mappings ;
+            natus::ntd::vector< natus::device::input_component_ptr_t > _inputs ;
+            natus::ntd::vector< natus::device::output_component_ptr_t > _outputs ;
+            natus::ntd::vector< natus::device::imapping_res_t  > _mappings ;
 
         public:
 
@@ -46,7 +46,7 @@ namespace natus
                 layout_t::init_components(*this) ;
             }
 
-            device( natus::std::string_cref_t name ) noexcept : _name( name ) 
+            device( natus::ntd::string_cref_t name ) noexcept : _name( name ) 
             {
                 layout_t::init_components(*this) ;
             }

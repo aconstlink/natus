@@ -2,7 +2,7 @@
 
 #include "global.h"
 
-#include <natus/std/vector.hpp>
+#include <natus/ntd/vector.hpp>
 #include <natus/log/global.h>
 
 #include <algorithm>
@@ -31,9 +31,9 @@ natus::system::os_type global::compiled_os_type( void_t )
 
 
 //*****************************************************************
-natus::std::vector<natus::system::window_type> global::compiled_window_types( void_t ) 
+natus::ntd::vector<natus::system::window_type> global::compiled_window_types( void_t ) 
 {
-    natus::std::vector< natus::system::window_type > ret ;
+    natus::ntd::vector< natus::system::window_type > ret ;
 
 #if defined( NATUS_OS_WINDOWS )
     ret.push_back( natus::system::window_type::win32 ) ;
@@ -68,9 +68,9 @@ bool_t global::has_compiled_window_type( natus::system::window_type const wt )
 }
 
 //*****************************************************************
-natus::std::vector< natus::system::graphics_type > global::compiled_graphics_types( void_t ) 
+natus::ntd::vector< natus::system::graphics_type > global::compiled_graphics_types( void_t ) 
 {
-    natus::std::vector< natus::system::graphics_type > ret ;
+    natus::ntd::vector< natus::system::graphics_type > ret ;
 
 #if defined( NATUS_GRAPHICS_OPENGL )
     ret.push_back( natus::system::graphics_type::opengl ) ;

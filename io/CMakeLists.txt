@@ -28,7 +28,6 @@ target_link_libraries( ${cur_lib_name}
         PUBLIC natus::concurrent
         PUBLIC natus::log
         PUBLIC natus::memory
-        PUBLIC natus::std
     )   
 
 

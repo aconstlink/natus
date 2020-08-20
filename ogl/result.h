@@ -1,7 +1,7 @@
 #pragma once
 
 #include "typedefs.h"
-#include <natus/std/string.hpp>
+#include <natus/ntd/string.hpp>
 
 namespace natus
 {
@@ -19,13 +19,13 @@ namespace natus
 
         namespace detail
         {
-            static const natus::std::string_t __graphics_result_strings[] = {
+            static const natus::ntd::string_t __graphics_result_strings[] = {
                 "natus::ogl::result"
             } ;
         }
 
         /// not implemented yet.
-        static natus::std::string_cref_t to_string( natus::ogl::result /*res*/ )
+        static natus::ntd::string_cref_t to_string( natus::ogl::result /*res*/ )
         {
             return natus::ogl::detail::__graphics_result_strings[ 0 ] ;
         }

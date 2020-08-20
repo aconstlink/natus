@@ -565,7 +565,7 @@ void_t imgui::update( natus::device::ascii_device_res_t dev )
 }
 
 //****
-ImTextureID imgui::texture( natus::std::string_in_t name ) noexcept 
+ImTextureID imgui::texture( natus::ntd::string_in_t name ) noexcept 
 {
     size_t i = 0 ;
 

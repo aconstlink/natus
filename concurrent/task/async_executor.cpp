@@ -15,7 +15,7 @@ void_t async_executor::consume_and_wait( natus::concurrent::itask_ptr_t root_ptr
     natus::concurrent::itask::locked_tasks_t following_tasks ;
     following_tasks.push_back( root_ptr ) ;
 
-    natus::std::vector< ::std::future<void_t> > futures ;
+    natus::ntd::vector< ::std::future<void_t> > futures ;
 
     while( following_tasks.size() != 0 )
     {
@@ -43,7 +43,7 @@ void_t async_executor::consume_and_wait( natus::concurrent::itask_ptr_t root_ptr
 void_t async_executor::consume_and_wait( tasks_rref_t tasks ) 
 {
     natus::concurrent::semaphore_t sem( tasks.size() ) ;
-    natus::std::vector< ::std::future<void_t> > futures ;
+    natus::ntd::vector< ::std::future<void_t> > futures ;
 
     for( auto * task_ptr : tasks )
     {

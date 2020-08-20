@@ -13,9 +13,9 @@ namespace natus
             natus_this_typedefs( async_executor ) ;
 
             typedef ::std::future<void_t> future_t ;
-            natus_typedefs( natus::std::vector<future_t>, futures ) ;
+            natus_typedefs( natus::ntd::vector<future_t>, futures ) ;
 
-            natus_typedefs( natus::std::vector< itask_ptr_t >, tasks ) ;
+            natus_typedefs( natus::ntd::vector< itask_ptr_t >, tasks ) ;
 
         public:
 

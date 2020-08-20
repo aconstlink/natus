@@ -16,7 +16,7 @@ namespace natus
 
         private:
 
-            natus::std::vector< imodule_res_t > _modules ;
+            natus::ntd::vector< imodule_res_t > _modules ;
             natus::device::vdev_module_res_t _vdev ;
 
         public:

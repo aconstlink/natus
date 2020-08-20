@@ -4,7 +4,7 @@
 #include "../types.h"
 #include "vertex_attribute.h"
 
-#include <natus/std/vector.hpp>
+#include <natus/ntd/vector.hpp>
 
 #include <cstring>
 #include <algorithm>
@@ -26,7 +26,7 @@ namespace natus
                 natus::gpu::type_struct type_struct ;
             };
             natus_typedef( data ) ;
-            natus_typedefs( natus::std::vector< data_t >, datas ) ;
+            natus_typedefs( natus::ntd::vector< data_t >, datas ) ;
 
         private:
 

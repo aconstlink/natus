@@ -6,7 +6,7 @@
 #include "../backend/types.h"
 #include "../buffer/vertex_buffer.hpp"
 #include "../buffer/index_buffer.hpp"
-#include <natus/std/vector.hpp>
+#include <natus/ntd/vector.hpp>
 
 namespace natus
 {
@@ -22,16 +22,16 @@ namespace natus
             natus::gpu::vertex_buffer_t _vb ;
             natus::gpu::index_buffer_t _ib ;
 
-            natus::std::string_t _name ;
+            natus::ntd::string_t _name ;
 
         public: 
 
             geometry_configuration( void_t ) {}
 
-            geometry_configuration( natus::std::string_cref_t name ) : _name(name)
+            geometry_configuration( natus::ntd::string_cref_t name ) : _name(name)
             {}
 
-            geometry_configuration( natus::std::string_cref_t name, natus::gpu::primitive_type const pt, 
+            geometry_configuration( natus::ntd::string_cref_t name, natus::gpu::primitive_type const pt, 
                 natus::gpu::vertex_buffer_cref_t vb, natus::gpu::index_buffer_cref_t ib )
             {
                 _name = name ;
@@ -40,7 +40,7 @@ namespace natus
                 _ib = ib ;
             }
 
-            geometry_configuration( natus::std::string_cref_t name, natus::gpu::primitive_type const pt,
+            geometry_configuration( natus::ntd::string_cref_t name, natus::gpu::primitive_type const pt,
                 natus::gpu::vertex_buffer_rref_t vb, natus::gpu::index_buffer_rref_t ib )
             {
                 _name = name ;
@@ -117,7 +117,7 @@ namespace natus
                 return _ib ;
             }
 
-            natus::std::string_cref_t name( void_t ) const noexcept
+            natus::ntd::string_cref_t name( void_t ) const noexcept
             {
                 return _name ;
             }

@@ -131,7 +131,7 @@ HWND window::create_window( window_info const & wi )
     HINSTANCE hinst = GetModuleHandle(0) ;
     
     static size_t window_number = 0 ;
-    natus::std::string_t class_name = wi.window_name  +" " + ::std::to_string( window_number++ ) ;
+    natus::ntd::string_t class_name = wi.window_name  +" " + ::std::to_string( window_number++ ) ;
 
     HWND hwnd ;
     WNDCLASSA wndclass ;

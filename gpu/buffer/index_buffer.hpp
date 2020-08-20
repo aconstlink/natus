@@ -4,7 +4,7 @@
 #include "../types.h"
 #include "vertex_attribute.h"
 
-#include <natus/std/vector.hpp>
+#include <natus/ntd/vector.hpp>
 #include <cstring>
 
 namespace natus

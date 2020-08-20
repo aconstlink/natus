@@ -5,7 +5,7 @@
 
 namespace natus
 {
-    namespace std
+    namespace ntd
     {
         //template< typename T >
         //using map = ::std::map< T, natus::memory::allocator<T> > ;

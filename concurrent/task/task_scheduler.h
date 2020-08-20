@@ -12,7 +12,7 @@ namespace natus
         {
             natus_this_typedefs( task_scheduler ) ;
 
-            natus_typedefs( natus::std::vector< itask_ptr_t >, tasks ) ;
+            natus_typedefs( natus::ntd::vector< itask_ptr_t >, tasks ) ;
 
         private:
 

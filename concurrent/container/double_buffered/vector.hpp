@@ -2,7 +2,7 @@
 
 #include "../../typedefs.h"
 
-#include <natus/std/vector.hpp>
+#include <natus/ntd/vector.hpp>
 
 namespace natus
 {
@@ -29,7 +29,7 @@ namespace natus
             {
                 natus_this_typedefs( vector< T > ) ;
                 natus_typedefs( T, type ) ;
-                natus_typedefs( natus::std::vector< type_t >, items ) ;
+                natus_typedefs( natus::ntd::vector< type_t >, items ) ;
 
                 struct buffer
                 {

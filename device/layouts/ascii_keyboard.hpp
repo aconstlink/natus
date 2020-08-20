@@ -133,9 +133,9 @@ namespace natus
                 };
                 natus_typedefs( natus::device::components::key< ascii_key >, ascii_component ) ;
 
-                static natus::std::string_cref_t to_string( ascii_key const k ) noexcept
+                static natus::ntd::string_cref_t to_string( ascii_key const k ) noexcept
                 {
-                    static natus::std::string_t __keys[] = { "none", "escape", "f1", "f2", "f3", "f4", "f5", "f6", "f7",
+                    static natus::ntd::string_t __keys[] = { "none", "escape", "f1", "f2", "f3", "f4", "f5", "f6", "f7",
                         "f8", "f9", "f10", "f11", "f12", "f13", "f14", "print", "pause", "a", "b", "c", "d", "e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z","k_0","k_1","k_2","k_3","k_4","k_5","k_6","k_7","k_8","k_9","num_0","num_1","num_2","num_3","num_4","num_5","num_6","num_7","num_8","num_9","num_komma","num_sub","num_add","num_mult","num_div","num_caps","num_return","shift_left","shift_right","ctrl_left","ctrl_right","alt_left","alt_right","k_return","back_space","space","tab","tab_lock","sharp","plus","minus","komma","point","insert","k_delete","pos1","sk_end","one_up","one_down","arrow_left","arrow_right","arrow_up","arrow_down","lower_than","context","win_win_left","win_win_right","mac_control", "invalid"} ;
 
                     size_t const i = size_t( k ) >= size_t( ascii_key::num_keys ) ? size_t( ascii_key::num_keys ) : size_t( k );

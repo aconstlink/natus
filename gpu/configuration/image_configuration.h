@@ -4,7 +4,7 @@
 
 #include "../texture/image.hpp"
 
-#include <natus/std/vector.hpp>
+#include <natus/ntd/vector.hpp>
 
 #include <algorithm>
 
@@ -18,7 +18,7 @@ namespace natus
 
         private:
 
-            natus::std::string_t _name ;
+            natus::ntd::string_t _name ;
             natus::gpu::image_t _img ;
 
             natus::gpu::texture_wrap_type _wrap_types[ (size_t)natus::gpu::texture_wrap_mode::size ] ;
@@ -38,7 +38,7 @@ namespace natus
                     _filter_types[ i ] = natus::gpu::texture_filter_type::nearest ;
                 }
             }
-            image_configuration( natus::std::string_in_t name ) : _name( name )
+            image_configuration( natus::ntd::string_in_t name ) : _name( name )
             {
                 for( size_t i = 0; i < ( size_t ) natus::gpu::texture_wrap_mode::size; ++i )
                 {
@@ -50,7 +50,7 @@ namespace natus
                     _filter_types[ i ] = natus::gpu::texture_filter_type::nearest ;
                 }
             }
-            image_configuration( natus::std::string_in_t name, natus::gpu::image_rref_t img) :
+            image_configuration( natus::ntd::string_in_t name, natus::gpu::image_rref_t img) :
                 image_configuration( name )
             {
                 _img = ::std::move( img ) ;
@@ -102,7 +102,7 @@ namespace natus
                 return *this ;
             }
 
-            natus::std::string_cref_t name( void_t ) const noexcept
+            natus::ntd::string_cref_t name( void_t ) const noexcept
             {
                 return _name ;
             }

@@ -18,10 +18,10 @@ namespace natus
                 num_states
             };
 
-            static natus::std::string_cref_t to_string( natus::device::components::motor_state const s ) noexcept
+            static natus::ntd::string_cref_t to_string( natus::device::components::motor_state const s ) noexcept
             {
                 using bs_t = natus::device::components::motor_state ;
-                static natus::std::string_t __states[] = { "none", "on", "running", "off", "invalid" } ;
+                static natus::ntd::string_t __states[] = { "none", "on", "running", "off", "invalid" } ;
                 size_t const i = size_t( s ) >= size_t( bs_t::num_states ) ? size_t( bs_t::num_states ) : size_t( s ) ;
                 return __states[ i ] ;
             }

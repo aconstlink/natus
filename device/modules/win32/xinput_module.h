@@ -5,7 +5,7 @@
 #include "../../layouts/xbox_controller.hpp"
 
 #include <natus/concurrent/mutex.hpp>
-#include <natus/std/vector.hpp>
+#include <natus/ntd/vector.hpp>
 #include <natus/math/vector/vector2.hpp>
 
 #include <windows.h>
@@ -30,7 +30,7 @@ namespace natus
                     natus::device::xbc_device_res_t dev ;
                 };
                 natus_typedef( gamepad_data ) ;
-                natus_typedefs( natus::std::vector<gamepad_data_t>, devices ) ;
+                natus_typedefs( natus::ntd::vector<gamepad_data_t>, devices ) ;
 
             private:
 

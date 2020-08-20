@@ -6,9 +6,9 @@
 #include <natus/memory/global.h>
 #include <natus/memory/allocator.hpp>
 
-#include <natus/std/string.hpp>
-#include <natus/std/map.hpp>
-#include <natus/std/vector.hpp>
+#include <natus/ntd/string.hpp>
+#include <natus/ntd/map.hpp>
+#include <natus/ntd/vector.hpp>
 
 #include <natus/core/types.hpp>
 #include <natus/core/macros/typedef.h>
@@ -39,7 +39,7 @@ namespace natus
 
         namespace detail
         {
-            typedef natus::std::map< natus::std::string_t, itask_ptr_t > task_map_t ;
+            typedef natus::ntd::map< natus::ntd::string_t, itask_ptr_t > task_map_t ;
         }
 
         natus_typedefs( natus::concurrent::detail::task_map_t, task_map ) ;

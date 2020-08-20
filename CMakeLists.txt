@@ -95,7 +95,7 @@ endif()
 
 set( subdirs_header_only 
     "core"
-    "std"
+    "ntd"
     "math"
     )
 

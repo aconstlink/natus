@@ -112,7 +112,7 @@ namespace natus
                 ~per_window_info( void_t ) {}
             };
             natus_typedef( per_window_info ) ;
-            typedef natus::std::vector< per_window_info_t > windows_t ;
+            typedef natus::ntd::vector< per_window_info_t > windows_t ;
             natus::concurrent::mutex_t _wmtx ;
             windows_t _windows ;
 
@@ -145,7 +145,7 @@ namespace natus
             typedef ::std::pair< this_t::window_view_t, natus::gpu::async_view_t > window_async_t ;
 
             this_t::window_async_t create_window( 
-                natus::std::string_cref_t name, this_t::window_info_in_t ) ;
+                natus::ntd::string_cref_t name, this_t::window_info_in_t ) ;
 
             natus::application::result request_change( this_t::window_info_in_t ) ;
 

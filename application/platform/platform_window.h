@@ -9,7 +9,7 @@
 #include "window_message.h"
 #include "window_message_receiver.hpp"
 
-#include <natus/std/vector.hpp>
+#include <natus/ntd/vector.hpp>
 
 #include <algorithm>
 
@@ -24,10 +24,10 @@ namespace natus
         private:
 
             // platform window -> other entity
-            natus::std::vector< natus::application::iwindow_message_listener_res_t > _ins ;
+            natus::ntd::vector< natus::application::iwindow_message_listener_res_t > _ins ;
 
             // other entity -> platform window
-            natus::std::vector< natus::application::window_message_receiver_res_t > _outs ;
+            natus::ntd::vector< natus::application::window_message_receiver_res_t > _outs ;
 
         public:
 

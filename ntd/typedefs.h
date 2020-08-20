@@ -5,7 +5,7 @@
 
 namespace natus
 {
-    namespace std
+    namespace ntd
     {
         using namespace natus::core::types ;
     }

@@ -63,14 +63,14 @@ namespace natus
 
                 /// Returns ok, if the extension is supported, otherwise, this function fails.
                 /// @precondition Must be used after context has been created and made current.
-                natus::application::result is_extension_supported( natus::std::string_cref_t extension_name ) ;
+                natus::application::result is_extension_supported( natus::ntd::string_cref_t extension_name ) ;
 
                 /// This function fills the incoming list with all wgl extension strings.
                 /// @precondition Must be used after context has been created and made current.
-                natus::application::result get_wgl_extension( natus::std::vector< natus::std::string_t >& ext_list ) ;
+                natus::application::result get_wgl_extension( natus::ntd::vector< natus::ntd::string_t >& ext_list ) ;
 
                 /// @precondition Context must be current.
-                natus::application::result get_gl_extension( natus::std::vector< natus::std::string_t >& ext_list ) ;
+                natus::application::result get_gl_extension( natus::ntd::vector< natus::ntd::string_t >& ext_list ) ;
 
                 /// @precondition Must be used after context has been created and made current. 
                 result get_gl_version( natus::application::gl_version& version ) const ;

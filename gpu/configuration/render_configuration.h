@@ -7,7 +7,7 @@
 #include "../buffer/vertex_attribute.h"
 #include "../variable/variable_set.hpp"
 
-#include <natus/std/vector.hpp>
+#include <natus/ntd/vector.hpp>
 
 #include <algorithm>
 
@@ -21,16 +21,16 @@ namespace natus
 
         private:
 
-            natus::std::string_t _name ;
-            natus::std::string_t _geo ;
-            natus::std::string_t _shader ;
+            natus::ntd::string_t _name ;
+            natus::ntd::string_t _geo ;
+            natus::ntd::string_t _shader ;
 
-            natus::std::vector< natus::gpu::variable_set_res_t > _vars ;
+            natus::ntd::vector< natus::gpu::variable_set_res_t > _vars ;
 
         public:
             
             render_configuration( void_t ) {}
-            render_configuration( natus::std::string_cref_t name ) 
+            render_configuration( natus::ntd::string_cref_t name ) 
                 : _name( name ) {}
 
             render_configuration( this_cref_t rhv ) : object( rhv )
@@ -78,24 +78,24 @@ namespace natus
             // render states
             // textures
             
-            this_ref_t link_geometry( natus::std::string_cref_t name ) noexcept 
+            this_ref_t link_geometry( natus::ntd::string_cref_t name ) noexcept 
             {
                 _geo = name ;
                 return *this ;
             }
 
-            natus::std::string_cref_t get_geometry( void_t ) const noexcept
+            natus::ntd::string_cref_t get_geometry( void_t ) const noexcept
             {
                 return _geo ;
             }
 
-            this_ref_t link_shader( natus::std::string_cref_t name ) noexcept
+            this_ref_t link_shader( natus::ntd::string_cref_t name ) noexcept
             {
                 _shader = name ;
                 return *this ;
             }
 
-            natus::std::string_cref_t get_shader( void_t ) const noexcept
+            natus::ntd::string_cref_t get_shader( void_t ) const noexcept
             {
                 return _shader ;
             }
@@ -119,7 +119,7 @@ namespace natus
 
         public:
 
-            natus::std::string_cref_t name( void_t ) const noexcept
+            natus::ntd::string_cref_t name( void_t ) const noexcept
             {
                 return _name ;
             }

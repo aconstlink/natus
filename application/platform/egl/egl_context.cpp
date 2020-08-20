@@ -1,7 +1,7 @@
 #include "egl_context.h"
 #include "egl_window.h"
 
-#include <natus/std/string/split.hpp>
+#include <natus/ntd/string/split.hpp>
 #include <GLES3/gl3.h>
 
 using namespace natus::application ;
@@ -100,7 +100,7 @@ natus::application::result context::swap( void_t )
 
 //***************************************************************
 natus::application::result context::is_extension_supported( 
-    natus::std::string_cref_t extension_name ) 
+    natus::ntd::string_cref_t extension_name ) 
 {
     this_t::strings_t ext_list ;
     if( natus::application::no_success( get_egl_extension(ext_list) ) ) 
@@ -122,8 +122,8 @@ natus::application::result context::get_egl_extension( this_t::strings_out_t ext
     char_cptr_t ch = eglQueryString( _display, EGL_EXTENSIONS ) ;
     if( !ch ) return natus::application::result::failed ;
     
-    natus::std::string_t extension_string( (const char*)ch) ;
-    natus::std::string_ops::split( extension_string, ' ', ext_list ) ;
+    natus::ntd::string_t extension_string( (const char*)ch) ;
+    natus::ntd::string_ops::split( extension_string, ' ', ext_list ) ;
 
     return natus::application::result::ok ;
 }
@@ -134,8 +134,8 @@ natus::application::result context::get_es_extension( this_t::strings_out_t ext_
     const GLubyte * ch = glGetString( GL_EXTENSIONS ) ;
     if( !ch ) return natus::application::result::failed ;
 
-    natus::std::string_t extension_string( (const char*)ch) ;
-    natus::std::string_ops::split( extension_string, ' ', ext_list ) ;
+    natus::ntd::string_t extension_string( (const char*)ch) ;
+    natus::ntd::string_ops::split( extension_string, ' ', ext_list ) ;
     return natus::application::result::ok ;
 }
 
@@ -145,7 +145,7 @@ natus::application::result context::get_es_version( natus::application::gl_versi
     const GLubyte* ch = glGetString(GL_VERSION) ;
     if( !ch ) return natus::application::result::failed ;
 
-    natus::std::string_t version_string = natus::std::string((const char*)ch) ;
+    natus::ntd::string_t version_string = natus::ntd::string((const char*)ch) ;
 
     GLint major = 0;//boost::lexical_cast<GLint, std::string>(*token) ;
     GLint minor = 0;//boost::lexical_cast<GLint, std::string>(*(++token));
@@ -155,7 +155,7 @@ natus::application::result context::get_es_version( natus::application::gl_versi
         GLenum err = glGetError() ;
         if( err != GL_NO_ERROR )
         {
-            natus::std::string_t const es = ::std::to_string(err) ;
+            natus::ntd::string_t const es = ::std::to_string(err) ;
             natus::log::global::error( 
                 "[context::get_gl_version] : get gl major <"+es+">" ) ;
         }
@@ -165,7 +165,7 @@ natus::application::result context::get_es_version( natus::application::gl_versi
         GLenum err = glGetError() ;
         if( err != GL_NO_ERROR )
         {
-            natus::std::string_t es = ::std::to_string(err) ;
+            natus::ntd::string_t es = ::std::to_string(err) ;
             natus::log::global::error( "[context::get_gl_version] : get gl minor <"+es+">" ) ;
         }
     }

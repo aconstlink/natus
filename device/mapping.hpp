@@ -388,7 +388,7 @@ namespace natus
                 typename device_b_t::layout_t::input_component b ;
                 detail::mapping_funk_t funk ;
             };
-            natus::std::vector< input_mapping > _inputs ;
+            natus::ntd::vector< input_mapping > _inputs ;
 
             struct output_mapping
             {
@@ -396,11 +396,11 @@ namespace natus
                 typename device_b_t::layout_t::output_component b ;
                 detail::mapping_funk_t funk ;
             };
-            natus::std::vector< output_mapping > _outputs ;
+            natus::ntd::vector< output_mapping > _outputs ;
 
         public:
 
-            mapping( natus::std::string_cref_t name, device_a_res_t to, device_b_res_t from ) : 
+            mapping( natus::ntd::string_cref_t name, device_a_res_t to, device_b_res_t from ) : 
                 imapping( name ), _a( to ), _b( from ) {}
             mapping( this_cref_t rhv ) : imapping(rhv), _a( rhv._a), _b(rhv._b), 
                 _inputs(rhv._inputs), _outputs(rhv._outputs) {}

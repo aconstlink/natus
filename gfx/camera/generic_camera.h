@@ -4,7 +4,7 @@
 #include "ilens.h"
 
 #include <natus/math/utility/3d/transformation.hpp>
-#include <natus/std/vector.hpp>
+#include <natus/ntd/vector.hpp>
 
 namespace natus
 {
@@ -13,7 +13,7 @@ namespace natus
         class NATUS_GFX_API generic_camera : public icamera
         {
             natus_this_typedefs( generic_camera ) ;
-            natus_typedefs( natus::std::vector<lens_res_t>, lenses ) ;
+            natus_typedefs( natus::ntd::vector<lens_res_t>, lenses ) ;
 
         private:
 

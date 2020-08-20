@@ -111,12 +111,12 @@ natus::io::store_handle_t system::store( natus::io::path_cref_t file_path, char_
 
     natus::concurrent::thread_t( [=]( void_t )
     {
-        natus::std::filesystem::path p( file_path ) ;
+        natus::ntd::filesystem::path p( file_path ) ;
 
         // 1. check if the directory exists. if not, create it
-        if( natus::core::is_not( natus::std::filesystem::exists( p.parent_path() ) ) )
+        if( natus::core::is_not( natus::ntd::filesystem::exists( p.parent_path() ) ) )
         {
-            auto const ec = natus::std::filesystem::create_directories( p.parent_path() ) ;
+            auto const ec = natus::ntd::filesystem::create_directories( p.parent_path() ) ;
 
             if( natus::core::is_not( ec ) )
             {

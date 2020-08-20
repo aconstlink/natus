@@ -1,7 +1,7 @@
 #pragma once
 
 #include "typedefs.h"
-#include <natus/std/string.hpp>
+#include <natus/ntd/string.hpp>
 
 namespace natus
 {
@@ -37,7 +37,7 @@ namespace natus
 
         namespace detail
         {
-            static natus::std::string_t const type_string_array[] =
+            static natus::ntd::string_t const type_string_array[] =
             {
                 "t_not_implemented"
             } ;
@@ -49,7 +49,7 @@ namespace natus
                 sizeof ( int ), sizeof ( unsigned int ), sizeof ( float ), sizeof ( double ), sizeof ( bool )
             } ;
 
-            static natus::std::string_t const type_structure_string_array[] =
+            static natus::ntd::string_t const type_structure_string_array[] =
             {
                 "ts_not_implemented"
             } ;
@@ -73,12 +73,12 @@ namespace natus
             } ;
         }
 
-        static natus::std::string_cref_t to_string( type const /*t*/ ) noexcept
+        static natus::ntd::string_cref_t to_string( type const /*t*/ ) noexcept
         {
             return detail::type_string_array[ 0 ] ;
         }
 
-        static natus::std::string_cref_t to_string( type_struct const /*t*/ ) noexcept
+        static natus::ntd::string_cref_t to_string( type_struct const /*t*/ ) noexcept
         {
             return detail::type_structure_string_array[ 0 ] ;
         }
@@ -120,7 +120,7 @@ namespace natus
 
         namespace detail
         {
-            static natus::std::string_t const primitive_type_string_array[] =
+            static natus::ntd::string_t const primitive_type_string_array[] =
             {
                 "undefined", "points", "lines", "triangles"
             } ;
@@ -140,7 +140,7 @@ namespace natus
             } ;
         }
 
-        static natus::std::string_cref_t to_string( primitive_type const pt )
+        static natus::ntd::string_cref_t to_string( primitive_type const pt )
         {
             return detail::primitive_type_string_array[ size_t( pt ) ] ;
         }

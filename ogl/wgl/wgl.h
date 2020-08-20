@@ -4,8 +4,8 @@
 #include "../typedefs.h"
 #include "../api.h"
 
-#include <natus/std/vector.hpp>
-#include <natus/std/string.hpp>
+#include <natus/ntd/vector.hpp>
+#include <natus/ntd/string.hpp>
 
 #include <windows.h>
 #include <GL/glcorearb.h>
@@ -21,7 +21,7 @@ namespace natus
 
         private:
 
-            typedef natus::std::vector< natus::std::string_t > strings_t ;
+            typedef natus::ntd::vector< natus::ntd::string_t > strings_t ;
             static strings_t _wgl_extensions ;
 
         public: 

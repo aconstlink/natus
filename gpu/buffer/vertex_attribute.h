@@ -1,6 +1,6 @@
 #pragma once
 
-#include <natus/std/string.hpp>
+#include <natus/ntd/string.hpp>
 
 namespace natus
 {
@@ -31,14 +31,14 @@ namespace natus
 
         namespace detail
         {
-            static natus::std::string_t const vertex_attribute_string_array[] =
+            static natus::ntd::string_t const vertex_attribute_string_array[] =
             {
                 "undefined", "position", "normal", "tangent", "binormal", "color0", "color1", "texcood0",
                 "texcood1", "texcood2", "texcood3", "texcood4", "texcood5", "texcood6", "texcood7"
             } ;
         }
 
-        static natus::std::string_cref_t to_string( vertex_attribute va ) noexcept
+        static natus::ntd::string_cref_t to_string( vertex_attribute va ) noexcept
         {
             return detail::vertex_attribute_string_array[ size_t( va ) ] ;
         }

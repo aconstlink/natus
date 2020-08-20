@@ -1,7 +1,7 @@
 #pragma once
 
-#include <natus/std/string.hpp>
-#include <natus/std/vector.hpp>
+#include <natus/ntd/string.hpp>
+#include <natus/ntd/vector.hpp>
 #include <natus/memory/global.h>
 #include <natus/core/types.hpp>
 #include <natus/core/macros/typedef.h>

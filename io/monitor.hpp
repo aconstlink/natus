@@ -2,8 +2,8 @@
 
 #include "typedefs.h"
 
-#include <natus/std/vector.hpp>
-#include <natus/std/string.hpp>
+#include <natus/ntd/vector.hpp>
+#include <natus/ntd/string.hpp>
 #include <natus/concurrent/mutex.hpp>
 
 namespace natus
@@ -23,9 +23,9 @@ namespace natus
                 change,
                 num_values
             };
-            static natus::std::string_cref_t to_string( this_t::notify const n ) noexcept
+            static natus::ntd::string_cref_t to_string( this_t::notify const n ) noexcept
             {
-                static natus::std::string_t __strings[] = { "none", "deletion", "change", "invalid" } ;
+                static natus::ntd::string_t __strings[] = { "none", "deletion", "change", "invalid" } ;
                 return __strings[ size_t(n) >= size_t(notify::num_values) ? size_t(notify::num_values) : size_t(n) ] ;
             }
 
@@ -36,11 +36,11 @@ namespace natus
             struct data
             {
                 notify n ;
-                natus::std::string_t loc ;
+                natus::ntd::string_t loc ;
             };
             natus_typedef( data ) ;
 
-            natus::std::vector< data_t > _changed ;
+            natus::ntd::vector< data_t > _changed ;
 
         public:
 
@@ -65,16 +65,16 @@ namespace natus
 
         public:
 
-            void_t trigger_changed( natus::std::string_cref_t loc, notify const n ) noexcept
+            void_t trigger_changed( natus::ntd::string_cref_t loc, notify const n ) noexcept
             {
                 natus::concurrent::lock_guard_t lk( _mtx ) ;
                 this_t::insert( { n, loc } ) ;
             }
 
-            typedef ::std::function< void_t ( natus::std::string_cref_t, this_t::notify const ) > foreach_funk_t ;
+            typedef ::std::function< void_t ( natus::ntd::string_cref_t, this_t::notify const ) > foreach_funk_t ;
             void_t for_each_and_swap( foreach_funk_t funk )
             {
-                natus::std::vector< this_t::data_t > tmp ;
+                natus::ntd::vector< this_t::data_t > tmp ;
                 {
                     natus::concurrent::lock_guard_t lk( _mtx ) ;
                     tmp = ::std::move( _changed ) ;
@@ -88,7 +88,7 @@ namespace natus
 
         private:
 
-            bool_t has( natus::std::string_cref_t loc ) noexcept
+            bool_t has( natus::ntd::string_cref_t loc ) noexcept
             {
                 for( auto const & item : _changed )
                 {

@@ -4,9 +4,9 @@
 
 namespace natus
 {
-    namespace std
+    namespace ntd
     {
-        using utf8 = natus::std::string_t ;
+        using utf8 = natus::ntd::string_t ;
         natus_typedefs( utf8, utf8 ) ;
     }
 }

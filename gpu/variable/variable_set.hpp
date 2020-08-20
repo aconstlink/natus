@@ -4,8 +4,8 @@
 #include "variables.hpp"
 #include "type_traits.hpp"
 
-#include <natus/std/string.hpp>
-#include <natus/std/vector.hpp>
+#include <natus/ntd/string.hpp>
+#include <natus/ntd/vector.hpp>
 #include <natus/concurrent/mutex.hpp>
 
 namespace natus
@@ -20,21 +20,21 @@ namespace natus
 
             struct data
             {
-                natus::std::string_t name ;
+                natus::ntd::string_t name ;
                 natus::gpu::type type ;
                 natus::gpu::type_struct type_struct ;
                 natus::gpu::ivariable_ptr_t var ;
             };
             natus_typedef( data ) ;
-            natus::std::vector< data > _variables ;
+            natus::ntd::vector< data > _variables ;
 
             struct texture_data
             {
-                natus::std::string_t name ;
+                natus::ntd::string_t name ;
                 natus::gpu::ivariable_ptr_t var ;
             };
             natus_typedef( texture_data ) ;
-            natus::std::vector< texture_data > _textures ;
+            natus::ntd::vector< texture_data > _textures ;
 
             natus::concurrent::mutex_t _mtx ;
 
@@ -67,7 +67,7 @@ namespace natus
         public:
 
             template< class T >
-            natus::gpu::data_variable< T > * data_variable( natus::std::string_cref_t name ) noexcept
+            natus::gpu::data_variable< T > * data_variable( natus::ntd::string_cref_t name ) noexcept
             {
                 auto const type = natus::gpu::type_traits< T >::gpu_type ;
                 auto const type_struct = natus::gpu::type_traits< T >::gpu_type_struct ;
@@ -76,7 +76,7 @@ namespace natus
                     this_t::data_variable( name, type, type_struct ) ) ;
             }
 
-            natus::gpu::ivariable_ptr_t data_variable( natus::std::string_cref_t name,
+            natus::gpu::ivariable_ptr_t data_variable( natus::ntd::string_cref_t name,
                 natus::gpu::type const t, natus::gpu::type_struct const ts ) noexcept
             {
                 natus::gpu::ivariable_ptr_t var = nullptr ;
@@ -136,11 +136,11 @@ namespace natus
                 return var ;
             }
 
-            natus::gpu::data_variable< natus::std::string_t > * texture_variable( 
-                natus::std::string_in_t name ) noexcept
+            natus::gpu::data_variable< natus::ntd::string_t > * texture_variable( 
+                natus::ntd::string_in_t name ) noexcept
             {
                 natus::gpu::ivariable_ptr_t var = natus::memory::global_t::alloc(
-                    natus::gpu::data_variable<natus::std::string_t>(), natus_log_fn( "texture variable : " + name ) ) ;
+                    natus::gpu::data_variable<natus::ntd::string_t>(), natus_log_fn( "texture variable : " + name ) ) ;
 
                 // before inserting, check if name and type match
                 {
@@ -156,7 +156,7 @@ namespace natus
                     {
                         natus::memory::global_t::dealloc( var ) ;
 
-                        return static_cast< natus::gpu::data_variable< natus::std::string_t >* >( iter->var ) ;
+                        return static_cast< natus::gpu::data_variable< natus::ntd::string_t >* >( iter->var ) ;
                     }
 
                     this_t::texture_data_t d ;
@@ -166,14 +166,14 @@ namespace natus
                     _textures.emplace_back( d ) ;
                 }
 
-                return static_cast< natus::gpu::data_variable< natus::std::string_t >* >( var ) ;
+                return static_cast< natus::gpu::data_variable< natus::ntd::string_t >* >( var ) ;
             }
 
         private:
 
             template< typename T >
             natus::gpu::ivariable_ptr_t from_type_struct( 
-                natus::std::string_cref_t name, natus::gpu::type_struct const ts ) noexcept
+                natus::ntd::string_cref_t name, natus::gpu::type_struct const ts ) noexcept
             {
                 switch( ts )
                 {

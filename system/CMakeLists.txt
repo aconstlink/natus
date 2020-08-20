@@ -20,7 +20,6 @@ target_link_libraries( ${cur_lib_name}
     PUBLIC natus::concurrent
     PUBLIC natus::io
     PUBLIC natus::memory
-    PUBLIC natus::std
     PUBLIC natus::core 
     PRIVATE natus_graphics_options 
     )

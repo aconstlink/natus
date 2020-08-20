@@ -13,7 +13,7 @@
 #include <GL/glcorearb.h>
 //#define GL_VERSION_1_1 0
 
-#include <natus/std/list.hpp>
+#include <natus/ntd/list.hpp>
 
 namespace natus
 {
@@ -25,7 +25,7 @@ namespace natus
 
         public:
 
-            typedef natus::std::list< natus::std::string > string_list_t ;
+            typedef natus::ntd::list< natus::ntd::string > string_list_t ;
             static string_list_t _extensions ;
 
             static void_ptr_t load_gl_function( char_cptr_t name ) ;

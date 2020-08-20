@@ -7,24 +7,24 @@
 
 namespace natus
 {
-    namespace std
+    namespace ntd
     {
         /// not thread safe stack
         template< typename O, size_t pre_alloc >
         class stack
         {
-            typedef natus::std::stack< O, pre_alloc > __stack_t ;
+            typedef natus::ntd::stack< O, pre_alloc > __stack_t ;
             natus_this_typedefs( __stack_t ) ;
 
 
             natus_typedefs( O, object ) ;
-            typedef natus::std::vector< object_t > stack_t ;
+            typedef natus::ntd::vector< object_t > stack_t ;
 
             typedef ::std::function< void_t( object_cref_t, bool_t const, bool_t const ) > for_each_funk_t ;
 
         private:
 
-            natus::std::vector< object_t > _stack ;
+            natus::ntd::vector< object_t > _stack ;
 
             /// one above top of stack
             /// top of stack is last pushed

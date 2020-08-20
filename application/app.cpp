@@ -53,7 +53,7 @@ app::~app( void_t )
 
 //***
 app::window_async_t app::create_window( 
-    natus::std::string_cref_t name, this_t::window_info_in_t wi )
+    natus::ntd::string_cref_t name, this_t::window_info_in_t wi )
 {
     this_t::per_window_info_t pwi ;
     natus::gpu::backend_res_t backend = natus::gpu::null_backend_res_t(

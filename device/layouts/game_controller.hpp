@@ -144,9 +144,9 @@ namespace natus
                     num_buttons
                 };
 
-                static natus::std::string_t to_string( this_t::button const b ) noexcept
+                static natus::ntd::string_t to_string( this_t::button const b ) noexcept
                 {
-                    static const natus::std::string_t __names[] = { "jump", "crouch", "shoot", "interact", "pause", 
+                    static const natus::ntd::string_t __names[] = { "jump", "crouch", "shoot", "interact", "pause", 
                         "menu", "home", "action_a", "action_b", "action_c", "action_d", "action_e", "action_f", "action_g",
                         "action_h", "action_i", "invalid" } ;
                     return size_t( b ) >= size_t( button::num_buttons ) ? __names[ size_t( button::num_buttons ) ] : __names[ size_t( b ) ] ;
@@ -156,9 +156,9 @@ namespace natus
                 {
                     movement, aim, num_dirs
                 };
-                static natus::std::string_t to_string( this_t::directional const b ) noexcept
+                static natus::ntd::string_t to_string( this_t::directional const b ) noexcept
                 {
-                    static const natus::std::string_t __names[] = { "movement", "aim", "invalid" } ;
+                    static const natus::ntd::string_t __names[] = { "movement", "aim", "invalid" } ;
                     return size_t( b ) >= size_t( directional::num_dirs ) ? __names[ size_t( directional::num_dirs ) ] : __names[ size_t( b ) ] ;
                 }
 
@@ -166,9 +166,9 @@ namespace natus
                 {
                     a, b, num_vibs
                 };
-                static natus::std::string_t to_string( this_t::vibration const b ) noexcept
+                static natus::ntd::string_t to_string( this_t::vibration const b ) noexcept
                 {
-                    static const natus::std::string_t __names[] = { "a", "b", "invalid" } ;
+                    static const natus::ntd::string_t __names[] = { "a", "b", "invalid" } ;
                     return size_t( b ) >= size_t( vibration::num_vibs ) ? __names[ size_t( vibration::num_vibs ) ] : __names[ size_t( b ) ] ;
                 }
 

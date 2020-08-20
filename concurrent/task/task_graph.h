@@ -2,8 +2,8 @@
 
 #include "itask.h"
 
-#include <natus/std/map.hpp>
-#include <natus/std/string.hpp>
+#include <natus/ntd/map.hpp>
+#include <natus/ntd/string.hpp>
 
 #include <natus/core/macros/move.h>
 
@@ -135,7 +135,7 @@ namespace natus
 
         namespace detail
         {
-            typedef natus::std::map< natus::std::string, task_graph_t > __task_graph_map_t ;
+            typedef natus::ntd::map< natus::ntd::string, task_graph_t > __task_graph_map_t ;
         }
         natus_typedefs( detail::__task_graph_map_t, task_graph_map ) ;
     }

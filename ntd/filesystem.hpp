@@ -6,7 +6,7 @@
 #include <filesystem>
 namespace natus
 {
-    namespace std
+    namespace ntd
     {
         namespace filesystem = ::std::filesystem ;
         namespace fs = ::std::filesystem ;
@@ -19,7 +19,7 @@ namespace natus
 #include <ghc/filesystem.hpp>
 namespace natus
 {
-    namespace std
+    namespace ntd
     {
         namespace filesystem = ghc::filesystem ;
         namespace fs = ghc::filesystem ;

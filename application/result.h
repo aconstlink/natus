@@ -1,7 +1,7 @@
 #pragma once
 
 #include <natus/core/assert.h>
-#include <natus/std/string.hpp>
+#include <natus/ntd/string.hpp>
 
 namespace natus
 {
@@ -27,7 +27,7 @@ namespace natus
         namespace detail
         {
             /// not implemented yet.
-            static natus::std::string_t const _app_result_strings[] =
+            static natus::ntd::string_t const _app_result_strings[] =
             {
                 "natus::application::result"
             } ;
@@ -44,7 +44,7 @@ namespace natus
             return !success( res );
         }
 
-        static natus::std::string_cref_t to_string( natus::application::result /*res*/ )
+        static natus::ntd::string_cref_t to_string( natus::application::result /*res*/ )
         {
             return natus::application::detail::_app_result_strings[ 0 ] ;
         }

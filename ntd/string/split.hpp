@@ -7,12 +7,12 @@
 
 namespace natus
 {    
-    namespace std
+    namespace ntd
     {
         struct string_ops
         {
-            static size_t split( natus::std::string_cref_t string_in, char_t deli,
-                natus::std::vector<natus::std::string_t>& split_out )
+            static size_t split( natus::ntd::string_cref_t string_in, char_t deli,
+                natus::ntd::vector<natus::ntd::string_t>& split_out )
             {
                 size_t num_found = 0 ;
                 size_t found_at = 0 ;

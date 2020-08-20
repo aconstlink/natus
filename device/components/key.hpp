@@ -18,10 +18,10 @@ namespace natus
                 num_keys
             };
 
-            static natus::std::string_cref_t to_string( natus::device::components::key_state const ks ) noexcept
+            static natus::ntd::string_cref_t to_string( natus::device::components::key_state const ks ) noexcept
             {
                 using ks_t = natus::device::components::key_state ;
-                static natus::std::string_t __key_states[] = { "none", "pressed", "pressing", "released", "invalid" } ;
+                static natus::ntd::string_t __key_states[] = { "none", "pressed", "pressing", "released", "invalid" } ;
                 size_t const i = size_t( ks ) >= size_t( ks_t::num_keys ) ? size_t( ks_t::num_keys ) : size_t( ks ) ;
                 return __key_states[ i ] ;
             }

@@ -77,9 +77,9 @@ namespace natus
                     none, left, right, middle, num_buttons
                 };
 
-                static natus::std::string_cref_t to_string( button const b ) noexcept
+                static natus::ntd::string_cref_t to_string( button const b ) noexcept
                 {
-                    static natus::std::string __names[] = { "none", "left", "right", "middle", "invalid" } ;
+                    static natus::ntd::string __names[] = { "none", "left", "right", "middle", "invalid" } ;
                     return __names[ size_t( b ) >= size_t( button::num_buttons ) ? size_t( button::num_buttons ) : size_t( b ) ] ;
                 }
 

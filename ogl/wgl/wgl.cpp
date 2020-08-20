@@ -1,7 +1,7 @@
 #include "wgl.h"
 
 #include <natus/log/global.h>
-#include <natus/std/string/split.hpp>
+#include <natus/ntd/string/split.hpp>
 
 using namespace natus::ogl ;
 
@@ -97,7 +97,7 @@ natus::ogl::result wgl::init( HDC hdc )
     {
         char const * wglext = wglGetExtensionsString( hdc );
 
-        natus::std::string_ops::split( natus::std::string_t(char_cptr_t(wglext)), ' ', _wgl_extensions ) ;
+        natus::ntd::string_ops::split( natus::ntd::string_t(char_cptr_t(wglext)), ' ', _wgl_extensions ) ;
     }
 
     if( this_t::is_supported("WGL_ARB_buffer_region") )

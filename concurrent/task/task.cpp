@@ -37,7 +37,7 @@ void_t task::execute( locked_tasks_ref_t tasks_follow )
         natus_assert( _num_tasks_in == 0 ) ;
     }
 
-    natus::std::vector< itask_ptr_t > this_tasks ;
+    natus::ntd::vector< itask_ptr_t > this_tasks ;
 
     // 1. run
     this->run() ;

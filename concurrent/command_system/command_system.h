@@ -5,7 +5,7 @@
 #include "command.h"
 #include "command_system_state.h"
 
-#include <natus/std/vector.hpp>
+#include <natus/ntd/vector.hpp>
 
 namespace natus
 {
@@ -22,7 +22,7 @@ namespace natus
                 }
 
                 size_t cur_pos ;
-                natus::std::vector< command_ptr_t > buffer ;
+                natus::ntd::vector< command_ptr_t > buffer ;
 
             } ;
 

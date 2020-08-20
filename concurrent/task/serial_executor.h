@@ -10,7 +10,7 @@ namespace natus
         {
             natus_this_typedefs( serial_executor ) ;
 
-            natus_typedefs( natus::std::vector< itask_ptr_t >, tasks ) ;
+            natus_typedefs( natus::ntd::vector< itask_ptr_t >, tasks ) ;
 
         public:
 

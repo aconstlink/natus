@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <natus/std/string.hpp>
+#include <natus/ntd/string.hpp>
 
 namespace natus
 {
@@ -19,13 +19,13 @@ namespace natus
 
         namespace detail
         {
-            static natus::std::string_t const __binding_point_names[] = { 
+            static natus::ntd::string_t const __binding_point_names[] = { 
                 "undefined", "projection_matrix","view_matrix","camera_matrix","camera_position",
                 "viewport_dimension"
             } ;
         }
 
-        static natus::std::string_cref_t to_string( binding_point const bp ) noexcept
+        static natus::ntd::string_cref_t to_string( binding_point const bp ) noexcept
         {
             return detail::__binding_point_names[size_t(bp)] ;
         }

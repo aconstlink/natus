@@ -64,14 +64,14 @@ namespace natus
         };
 
         template<>
-        class data_variable<natus::std::string_t> : public ivariable
+        class data_variable<natus::ntd::string_t> : public ivariable
         {
-            natus_this_typedefs( data_variable< natus::std::string_t > ) ;
-            natus_typedefs( natus::std::string_t, value ) ;
+            natus_this_typedefs( data_variable< natus::ntd::string_t > ) ;
+            natus_typedefs( natus::ntd::string_t, value ) ;
 
         private:
 
-            natus::std::string_t _value ;
+            natus::ntd::string_t _value ;
             size_t _hash = 0 ;
 
         public:
@@ -98,13 +98,13 @@ namespace natus
             void_t set( value_cref_t v ) noexcept 
             { 
                 _value = v ; 
-                _hash = ::std::hash<natus::std::string_t>{}(v) ; 
+                _hash = ::std::hash<natus::ntd::string_t>{}(v) ; 
             }
 
             void_t set( value_rref_t v ) noexcept 
             { 
                 _value = ::std::move( v ) ; 
-                _hash = ::std::hash<natus::std::string_t>{}(_value) ; 
+                _hash = ::std::hash<natus::ntd::string_t>{}(_value) ; 
             }
 
             value_cref_t get( void_t ) const noexcept { return _value ; }

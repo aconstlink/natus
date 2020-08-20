@@ -26,7 +26,7 @@ namespace natus
 
                 HCURSOR _cursor = NULL ;
 
-                natus::std::string _name = "WIN32 Window";
+                natus::ntd::string _name = "WIN32 Window";
 
             public:
 

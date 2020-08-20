@@ -3,7 +3,7 @@
 #include "../imodule.h"
 #include "../layouts/game_controller.hpp"
 
-#include <natus/std/vector.hpp>
+#include <natus/ntd/vector.hpp>
 
 namespace natus
 {
@@ -22,7 +22,7 @@ namespace natus
 
                 natus::device::game_device_res_t dev ;
             };
-            natus::std::vector < data > _games ;
+            natus::ntd::vector < data > _games ;
 
         public:
 

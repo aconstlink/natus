@@ -22,7 +22,6 @@ add_library( ${cur_lib_name} ${NATUS_LIBRARY_BUILD_TYPE} ${sources} )
 add_library( ${cur_alias_name} ALIAS ${cur_lib_name} )
 
 target_link_libraries( ${cur_lib_name}
-        INTERFACE natus::log
         INTERFACE natus::memory
         INTERFACE ghc_filesystem_install )
 

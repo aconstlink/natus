@@ -4,7 +4,7 @@
 #include "../mutex.hpp"
 #include "../typedefs.h"
 
-#include <natus/std/vector.hpp>
+#include <natus/ntd/vector.hpp>
 
 namespace natus
 {
@@ -14,7 +14,7 @@ namespace natus
         {
             natus_this_typedefs( job_scheduler ) ;
 
-            natus_typedefs( natus::std::vector< natus::concurrent::thread_t >, threads ) ;
+            natus_typedefs( natus::ntd::vector< natus::concurrent::thread_t >, threads ) ;
 
         public:
 
@@ -29,7 +29,7 @@ namespace natus
             };
             natus_typedef( job_data ) ;
 
-            natus_typedefs( natus::std::vector< job_data_t >, jobs ) ;
+            natus_typedefs( natus::ntd::vector< job_data_t >, jobs ) ;
 
         private:
 

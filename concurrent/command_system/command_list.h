@@ -2,7 +2,7 @@
 
 #include "command.h"
 
-#include <natus/std/vector.hpp>
+#include <natus/ntd/vector.hpp>
 
 namespace natus
 {
@@ -11,7 +11,7 @@ namespace natus
         class command_list : public command
         {
             typedef command_list this_t ;
-            typedef natus::std::vector< command_ptr_t > commands_t ;
+            typedef natus::ntd::vector< command_ptr_t > commands_t ;
 
         private:
 

@@ -7,7 +7,7 @@
 
 #include <natus/concurrent/isleep.hpp>
 #include <natus/concurrent/mrsw.hpp>
-#include <natus/std/vector.hpp>
+#include <natus/ntd/vector.hpp>
 
 namespace natus
 {
@@ -26,8 +26,8 @@ namespace natus
 
             struct file_record
             {
-                natus::std::string_t location ;
-                natus::std::string_t extension ;
+                natus::ntd::string_t location ;
+                natus::ntd::string_t extension ;
                 // -1 : invalid
                 // -2 : external
                 // otherwise : stored in .natus db file
@@ -35,9 +35,9 @@ namespace natus
                 uint64_t sib = uint64_t( 0 ) ;
 
                 natus::io::path_t rel ;
-                natus::std::filesystem::file_time_type stamp ;
+                natus::ntd::filesystem::file_time_type stamp ;
 
-                natus::std::vector< natus::io::monitor_res_t > monitors ;
+                natus::ntd::vector< natus::io::monitor_res_t > monitors ;
 
                 file_record( void_t ) {}
                 file_record( file_record const & rhv ) 
@@ -105,8 +105,8 @@ namespace natus
                 natus::io::path_t base ;
                 natus::io::path_t working ;
                 natus::io::path_t name ;
-                natus::std::vector< file_record > records ;
-                natus::std::vector< natus::io::monitor_res_t > monitors ;
+                natus::ntd::vector< file_record > records ;
+                natus::ntd::vector< natus::io::monitor_res_t > monitors ;
                 size_t offset = 0 ;
 
                 db( void_t ) {}
@@ -180,30 +180,30 @@ namespace natus
 
 
             // store from memory
-            natus::io::store_handle_t store( natus::std::string_cref_t location , char_cptr_t, size_t const ) ;
+            natus::io::store_handle_t store( natus::ntd::string_cref_t location , char_cptr_t, size_t const ) ;
 
             // load to memory
-            natus::io::load_handle_t load( natus::std::string_cref_t loc ) const ;
+            natus::io::load_handle_t load( natus::ntd::string_cref_t loc ) const ;
 
             void_t dump_to_std( void_t ) const noexcept ;
 
         public: // monitor
 
-            void_t attach( natus::std::string_cref_t, natus::io::monitor_res_t ) noexcept ;
-            void_t detach( natus::std::string_cref_t, natus::io::monitor_res_t ) noexcept ;
+            void_t attach( natus::ntd::string_cref_t, natus::io::monitor_res_t ) noexcept ;
+            void_t detach( natus::ntd::string_cref_t, natus::io::monitor_res_t ) noexcept ;
             
             void_t attach( natus::io::monitor_res_t ) noexcept ;
             void_t detach( natus::io::monitor_res_t mon ) noexcept ;
 
         public:
             
-            bool_t lookup_extension( natus::std::string_cref_t loc, natus::std::string_out_t ) const noexcept ;
+            bool_t lookup_extension( natus::ntd::string_cref_t loc, natus::ntd::string_out_t ) const noexcept ;
 
         private:
 
             file_record_t create_file_record( natus::io::path_cref_t, natus::io::path_cref_t ) const noexcept;
-            bool_t lookup( natus::std::string_cref_t loc, file_record_out_t ) const noexcept ;
-            bool_t lookup( db const & db_, natus::std::string_cref_t loc, file_record_out_t ) const noexcept ;
+            bool_t lookup( natus::ntd::string_cref_t loc, file_record_out_t ) const noexcept ;
+            bool_t lookup( db const & db_, natus::ntd::string_cref_t loc, file_record_out_t ) const noexcept ;
             void_t file_change_stamp( this_t::file_record_cref_t ) noexcept ;
             void_t file_remove( this_t::file_record_cref_t ) noexcept ;
             

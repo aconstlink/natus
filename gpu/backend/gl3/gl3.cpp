@@ -11,8 +11,8 @@
 #include <natus/ogl/gl/error.hpp>
 #include <natus/memory/global.h>
 #include <natus/memory/guards/malloc_guard.hpp>
-#include <natus/std/vector.hpp>
-#include <natus/std/string/split.hpp>
+#include <natus/ntd/vector.hpp>
+#include <natus/ntd/string/split.hpp>
 
 using namespace natus::gpu ;
 using namespace natus::ogl ;
@@ -21,7 +21,7 @@ namespace this_file
 {
     struct geo_config
     {
-        natus::std::string_t name ;
+        natus::ntd::string_t name ;
 
         GLuint vb_id = GLuint( -1 ) ;
         GLuint ib_id = GLuint( -1 ) ;
@@ -48,7 +48,7 @@ namespace this_file
                     natus::gpu::size_of( type_struct ) ) ;
             }
         };
-        natus::std::vector< layout_element > elements ;
+        natus::ntd::vector< layout_element > elements ;
 
         // per vertex sib
         GLuint stride = 0 ;
@@ -60,7 +60,7 @@ namespace this_file
 
     struct shader_config
     {
-        natus::std::string_t name ;
+        natus::ntd::string_t name ;
 
         GLuint vs_id = GLuint( -1 ) ;
         GLuint gs_id = GLuint( -1 ) ;
@@ -70,11 +70,11 @@ namespace this_file
         struct vertex_input_binding
         {
             natus::gpu::vertex_attribute va ;
-            natus::std::string_t name ;
+            natus::ntd::string_t name ;
         };
-        natus::std::vector< vertex_input_binding > vertex_inputs ;
+        natus::ntd::vector< vertex_input_binding > vertex_inputs ;
         
-        bool_t find_vertex_input_binding_by_name( natus::std::string_cref_t name_,
+        bool_t find_vertex_input_binding_by_name( natus::ntd::string_cref_t name_,
             natus::gpu::vertex_attribute & va ) const noexcept
         {
             auto iter = ::std::find_if( vertex_inputs.begin(), vertex_inputs.end(),
@@ -92,17 +92,17 @@ namespace this_file
         struct attribute_variable
         {
             natus::gpu::vertex_attribute va ;
-            natus::std::string_t name ;
+            natus::ntd::string_t name ;
             GLuint loc ;
             GLenum type ;
         };
         natus_typedef( attribute_variable ) ;
 
-        natus::std::vector< attribute_variable_t > attributes ;
+        natus::ntd::vector< attribute_variable_t > attributes ;
 
         struct uniform_variable
         {
-            natus::std::string_t name ;
+            natus::ntd::string_t name ;
             GLuint loc ;
             GLenum type ;
 
@@ -128,14 +128,14 @@ namespace this_file
         };
         natus_typedef( uniform_variable ) ;
 
-        natus::std::vector< uniform_variable > uniforms ;
+        natus::ntd::vector< uniform_variable > uniforms ;
 
         void_ptr_t uniform_mem = nullptr ;
     } ;
 
     struct render_config
     {
-        natus::std::string_t name ;
+        natus::ntd::string_t name ;
 
         geo_config* geo = nullptr ;
         shader_config* shaders_ptr = nullptr ;
@@ -149,9 +149,9 @@ namespace this_file
         };
 
         // user provided variable set
-        natus::std::vector< ::std::pair< 
+        natus::ntd::vector< ::std::pair< 
             natus::gpu::variable_set_res_t, 
-            natus::std::vector< uniform_variable_link > > > var_sets_data ;
+            natus::ntd::vector< uniform_variable_link > > > var_sets_data ;
         
         struct uniform_texture_link
         {
@@ -160,15 +160,15 @@ namespace this_file
             GLint tex_id ;
             size_t img_id ;
         };
-        natus::std::vector< ::std::pair<
+        natus::ntd::vector< ::std::pair<
             natus::gpu::variable_set_res_t,
-            natus::std::vector< uniform_texture_link > > > var_sets_texture ;
+            natus::ntd::vector< uniform_texture_link > > > var_sets_texture ;
         
     };
 
     struct image_config
     {
-        natus::std::string_t name ;
+        natus::ntd::string_t name ;
 
         GLuint tex_id = GLuint( -1 ) ;
         size_t sib = 0 ;
@@ -184,16 +184,16 @@ struct gl3_backend::pimpl
 {
     natus_this_typedefs( pimpl ) ;
 
-    typedef natus::std::vector< this_file::shader_config > shaders_t ;
+    typedef natus::ntd::vector< this_file::shader_config > shaders_t ;
     shaders_t shaders ;
 
-    typedef natus::std::vector< this_file::render_config > rconfigs_t ;
+    typedef natus::ntd::vector< this_file::render_config > rconfigs_t ;
     rconfigs_t rconfigs ;
 
-    typedef natus::std::vector< this_file::geo_config > geo_configs_t ;
+    typedef natus::ntd::vector< this_file::geo_config > geo_configs_t ;
     geo_configs_t geo_configs ;
 
-    typedef natus::std::vector< this_file::image_config > image_configs_t ;
+    typedef natus::ntd::vector< this_file::image_config > image_configs_t ;
     image_configs_t img_configs ;
 
     GLsizei vp_width = 0 ;
@@ -207,7 +207,7 @@ struct gl3_backend::pimpl
     pimpl( void_t ) 
     {}
 
-    size_t construct_shader_config( size_t oid, natus::std::string_cref_t name,
+    size_t construct_shader_config( size_t oid, natus::ntd::string_cref_t name,
         natus::gpu::shader_configuration_ref_t config )
     {
         //
@@ -423,7 +423,7 @@ struct gl3_backend::pimpl
     }
 
     //***********************
-    bool_t compile_shader( GLuint const id, natus::std::string_cref_t code )
+    bool_t compile_shader( GLuint const id, natus::ntd::string_cref_t code )
     {
         if( code.empty() ) return true ;
 
@@ -462,8 +462,8 @@ struct gl3_backend::pimpl
 
             glGetShaderInfoLog( id, length, 0, info_log ) ;
 
-            natus::std::vector< natus::std::string_t > tokens ;
-            natus::std::string_ops::split( natus::std::string_t( info_log ), '\n', tokens ) ;
+            natus::ntd::vector< natus::ntd::string_t > tokens ;
+            natus::ntd::string_ops::split( natus::ntd::string_t( info_log ), '\n', tokens ) ;
 
             for( auto const & msg : tokens )
             {
@@ -502,8 +502,8 @@ struct gl3_backend::pimpl
             std::string info_log_string = std::string( ( const char* ) info_log ) ;
 
             {
-                natus::std::vector< natus::std::string_t > tokens ;
-                natus::std::string_ops::split( natus::std::string_t( info_log ), '\n', tokens ) ;
+                natus::ntd::vector< natus::ntd::string_t > tokens ;
+                natus::ntd::string_ops::split( natus::ntd::string_t( info_log ), '\n', tokens ) ;
 
                 for( auto token : tokens )
                 {
@@ -551,7 +551,7 @@ struct gl3_backend::pimpl
             GLuint const location_id = glGetAttribLocation( program_id, buffer ) ;
             if( natus::ogl::error::check_and_log( "glGetAttribLocation failed. continue loop." ) ) continue ;
 
-            natus::std::string_t const variable_name = natus::std::string_t( ( const char* ) buffer ) ;
+            natus::ntd::string_t const variable_name = natus::ntd::string_t( ( const char* ) buffer ) ;
 
             this_file::shader_config::attribute_variable_t vd ;
             vd.name = ::std::move( variable_name ) ;
@@ -687,7 +687,7 @@ struct gl3_backend::pimpl
             if( natus::log::global_t::error( location_id == GLuint( -1 ), 
                 natus_log_fn( "invalid uniform location id." ) ) ) continue ;
 
-            natus::std::string const variable_name = natus::std::string( char_cptr_t( buffer ) ) ;
+            natus::ntd::string const variable_name = natus::ntd::string( char_cptr_t( buffer ) ) ;
 
             this_file::shader_config::uniform_variable_t vd ;
             vd.name = ::std::move( variable_name ) ;
@@ -740,7 +740,7 @@ struct gl3_backend::pimpl
     }
 
     //***********************
-    size_t construct_image_config( size_t /*oid*/, natus::std::string_cref_t name, 
+    size_t construct_image_config( size_t /*oid*/, natus::ntd::string_cref_t name, 
         natus::gpu::image_configuration_ref_t config )
     {
         // the name is unique
@@ -799,7 +799,7 @@ struct gl3_backend::pimpl
     }
 
     //***********************
-    size_t construct_render_config( size_t oid, natus::std::string_cref_t name,
+    size_t construct_render_config( size_t oid, natus::ntd::string_cref_t name,
         natus::gpu::render_configuration_ref_t /*config*/ )
     {
         // the name must be unique
@@ -856,7 +856,7 @@ struct gl3_backend::pimpl
 
         {
             sc.for_each_vertex_input_binding( [&]( 
-                natus::gpu::vertex_attribute const va, natus::std::string_cref_t name )
+                natus::gpu::vertex_attribute const va, natus::ntd::string_cref_t name )
             {
                 sconfig.vertex_inputs.emplace_back( this_file::shader_config::vertex_input_binding 
                     { va, name } ) ;
@@ -952,7 +952,7 @@ struct gl3_backend::pimpl
         return true ;
     }
 
-    size_t construct_geo( natus::std::string_cref_t name, natus::gpu::geometry_configuration_ref_t geo ) 
+    size_t construct_geo( natus::ntd::string_cref_t name, natus::gpu::geometry_configuration_ref_t geo ) 
     {
         // the name is unique
         {
@@ -1163,10 +1163,10 @@ struct gl3_backend::pimpl
     bool_t connect( this_file::render_config & config, natus::gpu::variable_set_res_t vs )
     {
         auto item_data = ::std::make_pair( vs,
-            natus::std::vector< this_file::render_config::uniform_variable_link >() ) ;
+            natus::ntd::vector< this_file::render_config::uniform_variable_link >() ) ;
 
         auto item_tex = ::std::make_pair( vs,
-            natus::std::vector< this_file::render_config::uniform_texture_link >() ) ;
+            natus::ntd::vector< this_file::render_config::uniform_texture_link >() ) ;
 
         this_file::shader_config & sconfig = *config.shaders_ptr ;
 

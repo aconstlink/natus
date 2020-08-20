@@ -53,7 +53,6 @@ target_link_libraries( ${cur_lib_name}
   PUBLIC natus_graphics_options 
   PUBLIC OpenGL::GL 
   PUBLIC gl_headers
-  PUBLIC natus::std
   PUBLIC natus::log
   PUBLIC natus::memory
 )

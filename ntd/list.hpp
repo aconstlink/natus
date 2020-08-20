@@ -1,18 +1,17 @@
 #pragma once
 
 #include <natus/memory/allocator.hpp>
-
-#include <vector>
+#include <list>
 
 namespace natus
 {
-    namespace std
+    namespace ntd
     {
         //template< typename T >
-        //using vector = ::std::vector< T, natus::memory::allocator<T> > ;
+        //using list = ::std::list< T, natus::memory::allocator<T> > ;
 
         // for now, we use the default allocator
         template< typename T >
-        using vector = ::std::vector< T > ;
+        using list = ::std::list< T > ;
     }
 }

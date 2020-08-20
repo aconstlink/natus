@@ -16,8 +16,8 @@ namespace natus
             imodule( void_t ) {}
             virtual ~imodule( void_t ) {}
 
-            virtual natus::std::vector< natus::std::string_t > const &  supported_formats( void_t ) const noexcept = 0 ;
-            virtual bool_t import( natus::std::string_cref_t loc, natus::io::database_res_t ) noexcept = 0 ;
+            virtual natus::ntd::vector< natus::ntd::string_t > const &  supported_formats( void_t ) const noexcept = 0 ;
+            virtual bool_t import( natus::ntd::string_cref_t loc, natus::io::database_res_t ) noexcept = 0 ;
         };
 
         class NATUS_IMEX_API imesh_module : public imodule
@@ -50,7 +50,7 @@ namespace natus
             iaudio_module( void_t ) {}
             virtual ~iaudio_module( void_t ) {}
 
-            virtual bool_t import_audio( natus::std::string_cref_t loc, natus::io::database_res_t ) noexcept = 0 ;
+            virtual bool_t import_audio( natus::ntd::string_cref_t loc, natus::io::database_res_t ) noexcept = 0 ;
         };
         natus_res_typedef( iaudio_module ) ;
 
@@ -62,7 +62,7 @@ namespace natus
             iimage_module( void_t ) {}
             virtual ~iimage_module( void_t ) {}
 
-            virtual bool_t import_image( natus::std::string_cref_t loc, natus::io::database_res_t ) noexcept = 0 ;
+            virtual bool_t import_image( natus::ntd::string_cref_t loc, natus::io::database_res_t ) noexcept = 0 ;
         };
         natus_res_typedef( iimage_module ) ;
 
@@ -74,7 +74,7 @@ namespace natus
             ifont_module( void_t ) {}
             virtual ~ifont_module( void_t ) {}
 
-            virtual bool_t import_font( natus::std::string_cref_t loc, natus::io::database_res_t ) noexcept = 0 ;
+            virtual bool_t import_font( natus::ntd::string_cref_t loc, natus::io::database_res_t ) noexcept = 0 ;
 
         };
         natus_res_typedef( iimage_module ) ;

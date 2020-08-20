@@ -77,7 +77,7 @@ void_t vdev_module::init_controller_1( natus::device::imodule_res_t mod )
 
     {
         natus::device::xbc_device_res_t xbc_dev ;
-        natus::std::string_t const name = "[system] : xbox" ;
+        natus::ntd::string_t const name = "[system] : xbox" ;
 
         bool_t have_xbox = false ;
         g.dev->search( [&] ( natus::device::imapping_res_t r )
@@ -138,7 +138,7 @@ void_t vdev_module::init_controller_1( natus::device::imodule_res_t mod )
 
     {
         natus::device::ascii_device_res_t ascii_dev ;
-        natus::std::string_t const name = "[system] : ascii" ;
+        natus::ntd::string_t const name = "[system] : ascii" ;
 
         bool_t have_ascii = false ;
         g.dev->search( [&] ( natus::device::imapping_res_t r )
@@ -210,7 +210,7 @@ void_t vdev_module::init_controller_1( natus::device::imodule_res_t mod )
     // mouse
     {
         natus::device::three_device_res_t three_dev ;
-        natus::std::string_t const name = "[system] : mouse" ;
+        natus::ntd::string_t const name = "[system] : mouse" ;
 
         bool_t have_mouse = false ;
         g.dev->search( [&] ( natus::device::imapping_res_t r )

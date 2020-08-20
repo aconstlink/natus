@@ -8,7 +8,7 @@
 
 #include "../backend/types.h"
 
-#include <natus/std/vector.hpp>
+#include <natus/ntd/vector.hpp>
 
 #include <algorithm>
 
@@ -27,7 +27,7 @@ namespace natus
                 natus_this_typedefs( vertex_input_binding ) ;
 
                 vertex_input_binding( void_t ) {}
-                vertex_input_binding( natus::std::string_cref_t name_,
+                vertex_input_binding( natus::ntd::string_cref_t name_,
                     natus::gpu::vertex_attribute const va_ ) : name( name_ ), va( va_ ) {}
                 vertex_input_binding( vertex_input_binding const& rhv )
                 {
@@ -51,25 +51,25 @@ namespace natus
                     return *this ;
                 }
 
-                natus::std::string name ;
+                natus::ntd::string name ;
                 natus::gpu::vertex_attribute va ;
             };
-            natus::std::vector< vertex_input_binding > _vertex_inputs ;
+            natus::ntd::vector< vertex_input_binding > _vertex_inputs ;
 
         private: // input bindings
 
             struct variable_binding
             {
-                natus::std::string_t name ;
+                natus::ntd::string_t name ;
                 natus::gpu::binding_point bp ;
             };
             natus_typedef( variable_binding ) ;
-            natus::std::vector< variable_binding_t > _bindings ;
+            natus::ntd::vector< variable_binding_t > _bindings ;
 
         public: 
 
             typedef ::std::function < void_t ( 
-                natus::gpu::vertex_attribute const va, natus::std::string_cref_t name ) > for_each_vab_funk_t ;
+                natus::gpu::vertex_attribute const va, natus::ntd::string_cref_t name ) > for_each_vab_funk_t ;
             void_t for_each_vertex_input_binding( for_each_vab_funk_t funk ) const
             {
                 for( auto const & vib : _vertex_inputs )
@@ -79,7 +79,7 @@ namespace natus
             }
 
             this_ref_t add_vertex_input_binding( natus::gpu::vertex_attribute const va,
-                natus::std::string_cref_t name )
+                natus::ntd::string_cref_t name )
             {
                 auto iter = ::std::find_if( _vertex_inputs.begin(), _vertex_inputs.end(),
                     [&] ( vertex_input_binding const& b )
@@ -105,7 +105,7 @@ namespace natus
                 return *this ;
             }
 
-            bool_t find_vertex_input_binding_by_name( natus::std::string_cref_t name,
+            bool_t find_vertex_input_binding_by_name( natus::ntd::string_cref_t name,
                 natus::gpu::vertex_attribute& va ) const noexcept
             {
                 auto iter = ::std::find_if( _vertex_inputs.begin(), _vertex_inputs.end(),
@@ -121,7 +121,7 @@ namespace natus
             }
 
             bool_t find_vertex_input_binding_by_attribute( natus::gpu::vertex_attribute const va,
-                natus::std::string_out_t name ) const noexcept
+                natus::ntd::string_out_t name ) const noexcept
             {
                 auto iter = ::std::find_if( _vertex_inputs.begin(), _vertex_inputs.end(),
                     [&] ( vertex_input_binding const& b )
@@ -136,7 +136,7 @@ namespace natus
             }
 
             this_ref_t add_input_binding( natus::gpu::binding_point const bp,
-                natus::std::string_cref_t name )
+                natus::ntd::string_cref_t name )
             {
                 variable_binding vb ;
                 vb.name = name ;
@@ -150,17 +150,17 @@ namespace natus
         private:
 
             typedef ::std::pair< natus::gpu::backend_type, natus::gpu::shader_set > ss_item_t ;
-            typedef natus::std::vector< ss_item_t > shader_sets_t ;
+            typedef natus::ntd::vector< ss_item_t > shader_sets_t ;
 
             shader_sets_t _shader_sets ;
 
-            natus::std::string_t _name ;
+            natus::ntd::string_t _name ;
 
         public:
             
             shader_configuration( void_t ) {}
 
-            shader_configuration( natus::std::string_cref_t name ) 
+            shader_configuration( natus::ntd::string_cref_t name ) 
                 : _name( name ) {}
 
             shader_configuration( this_cref_t rhv ) : object( rhv )
@@ -244,7 +244,7 @@ namespace natus
 
             
 
-            natus::std::string_cref_t name( void_t ) const noexcept
+            natus::ntd::string_cref_t name( void_t ) const noexcept
             {
                 return _name ;
             }

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../../typedefs.h"
-#include <natus/std/map.hpp>
+#include <natus/ntd/map.hpp>
 
 namespace natus
 {
@@ -18,7 +18,7 @@ namespace natus
                 natus_typedefs( K, key ) ;
                 natus_typedefs( I, item ) ;
 
-                typedef natus::std::map< key_t, item_t > __map_t ;
+                typedef natus::ntd::map< key_t, item_t > __map_t ;
                 natus_typedefs( __map_t, map ) ;
 
             private:

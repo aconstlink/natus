@@ -4,7 +4,7 @@
 
 #include <natus/concurrent/typedefs.h>
 #include <natus/concurrent/mutex.hpp>
-#include <natus/std/stack.hpp>
+#include <natus/ntd/stack.hpp>
 
 #include <natus/core/macros/move.h>
 
@@ -56,9 +56,9 @@ namespace natus
             };
             natus_typedef( load_item ) ;
 
-            typedef natus::std::stack< load_item_ptr_t, 20 > __load_stack_t ;
+            typedef natus::ntd::stack< load_item_ptr_t, 20 > __load_stack_t ;
             natus_typedefs( __load_stack_t, load_stack ) ;
-            natus_typedefs( natus::std::vector< load_item_ptr_t >, load_items ) ;
+            natus_typedefs( natus::ntd::vector< load_item_ptr_t >, load_items ) ;
 
             struct store_item
             {
@@ -95,9 +95,9 @@ namespace natus
             };
             natus_typedef( store_item ) ;
 
-            typedef natus::std::stack< store_item_ptr_t, 20 > __store_stack_t ;
+            typedef natus::ntd::stack< store_item_ptr_t, 20 > __store_stack_t ;
             natus_typedefs( __store_stack_t, store_stack ) ;
-            natus_typedefs( natus::std::vector< store_item_ptr_t >, store_items ) ;
+            natus_typedefs( natus::ntd::vector< store_item_ptr_t >, store_items ) ;
 
 
         private:

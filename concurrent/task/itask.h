@@ -19,7 +19,7 @@ namespace natus
 
         public:
 
-            natus_typedefs( natus::std::vector<itask_ptr_t>, tasks ) ;
+            natus_typedefs( natus::ntd::vector<itask_ptr_t>, tasks ) ;
             natus_typedefs( natus::concurrent::vector<itask_ptr_t>, locked_tasks ) ;
 
         protected:

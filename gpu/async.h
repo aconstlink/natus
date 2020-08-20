@@ -5,7 +5,7 @@
 #include "backend/backend.h"
 
 #include <natus/concurrent/typedefs.h>
-#include <natus/std/vector.hpp>
+#include <natus/ntd/vector.hpp>
 
 namespace natus
 {
@@ -29,7 +29,7 @@ namespace natus
                 natus::gpu::result_res_t res ;
                 natus::gpu::image_configuration_res_t config ;
             };
-            typedef natus::std::vector< image_config_data > image_configs_t ;
+            typedef natus::ntd::vector< image_config_data > image_configs_t ;
             image_configs_t _image_configs ;
             natus::concurrent::mutex_t _image_configs_mtx ;
 
@@ -38,7 +38,7 @@ namespace natus
                 natus::gpu::result_res_t res ;
                 natus::gpu::shader_configuration_res_t config ;
             };
-            typedef natus::std::vector< shader_config_data > shader_configs_t ;
+            typedef natus::ntd::vector< shader_config_data > shader_configs_t ;
             shader_configs_t _shader_configs ;
             natus::concurrent::mutex_t _shader_configs_mtx ;
 
@@ -47,7 +47,7 @@ namespace natus
                 natus::gpu::result_res_t res ;
                 natus::gpu::render_configuration_res_t config ;
             };
-            typedef natus::std::vector< rconfig_data > rconfigs_t ;
+            typedef natus::ntd::vector< rconfig_data > rconfigs_t ;
             rconfigs_t _rconfigs ;
             natus::concurrent::mutex_t _rconfigs_mtx ;
 
@@ -57,7 +57,7 @@ namespace natus
                 natus::gpu::variable_set_res_t vs ;
                 natus::gpu::render_configuration_res_t config ;
             };
-            typedef natus::std::vector< connect_data > connects_t ;
+            typedef natus::ntd::vector< connect_data > connects_t ;
             connects_t _connects ;
             natus::concurrent::mutex_t _connects_mtx ;
 
@@ -66,7 +66,7 @@ namespace natus
                 natus::gpu::result_res_t res ;
                 natus::gpu::geometry_configuration_res_t config ;
             };
-            typedef natus::std::vector< gconfig_data > gconfigs_t ;
+            typedef natus::ntd::vector< gconfig_data > gconfigs_t ;
             gconfigs_t _gconfigs ;
 
             natus::concurrent::mutex_t _gconfigs_mtx ;
@@ -76,7 +76,7 @@ namespace natus
                 natus::gpu::result_res_t res ;
                 natus::gpu::geometry_configuration_res_t config ;
             };
-            typedef natus::std::vector< gupdate_data > gupdates_t ;
+            typedef natus::ntd::vector< gupdate_data > gupdates_t ;
             gupdates_t _gupdates ;
 
             natus::concurrent::mutex_t _gupdates_mtx ;
@@ -87,7 +87,7 @@ namespace natus
                 natus::gpu::render_configuration_res_t config ;
                 natus::gpu::backend::render_detail_t detail ;
             };
-            typedef natus::std::vector< render_data > renders_t ;
+            typedef natus::ntd::vector< render_data > renders_t ;
             renders_t _renders ;
             natus::concurrent::mutex_t _renders_mtx ;
 

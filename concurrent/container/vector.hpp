@@ -13,7 +13,7 @@ namespace natus
             natus_this_typedefs( vector<T> ) ;
 
             natus_typedefs( T, type ) ;
-            natus_typedefs( natus::std::vector<T>, container ) ;
+            natus_typedefs( natus::ntd::vector<T>, container ) ;
 
         private:
 

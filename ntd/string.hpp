@@ -7,7 +7,7 @@
 
 namespace natus
 {
-    namespace std
+    namespace ntd
     {
         //template< typename T >
         //using string = ::std::vector< T, natus::memory::allocator<T> > ;
