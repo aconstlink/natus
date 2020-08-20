@@ -24,11 +24,14 @@ natus_vs_src_dir( sources )
 add_library( ${cur_lib_name} ${NATUS_LIBRARY_BUILD_TYPE} ${sources} )
 add_library( ${cur_alias_name} ALIAS ${cur_lib_name} )
 
+
 target_link_libraries( ${cur_lib_name}
         PUBLIC natus::concurrent
         PUBLIC natus::log
         PUBLIC natus::memory
         PUBLIC natus::ntd
+        INTERFACE ghc_filesystem
+        
     )
 
 

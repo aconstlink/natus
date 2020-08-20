@@ -23,8 +23,7 @@ add_library( ${cur_alias_name} ALIAS ${cur_lib_name} )
 
 target_link_libraries( ${cur_lib_name}
         PUBLIC natus::memory
-        PUBLIC ghc_filesystem_natus
-#        PUBLIC stdc++fs
+        PUBLIC ghc_filesystem
 )
 
 ###########################################################
