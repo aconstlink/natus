@@ -4,6 +4,7 @@
 #include <natus/core/macros/move.h>
 
 #include <cstdlib>
+#include <cstring>
 
 namespace natus
 {
@@ -47,7 +48,7 @@ namespace natus
                 _mem_ptr = natus::memory::global::alloc_raw<type_t>( sib ) ;
                 _num_elements = num_elements ;
 
-                ::std::memcpy( _mem_ptr, src_ptr, sib ) ;
+                std::memcpy( _mem_ptr, src_ptr, sib ) ;
             }
 
             malloc_guard( this_rref_t rhv )

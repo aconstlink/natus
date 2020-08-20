@@ -11,6 +11,7 @@
 #include <streambuf>
 #include <iomanip>
 #include <array>
+#include <fstream>
 
 using namespace natus::io ;
 
@@ -278,7 +279,7 @@ bool_t database::pack( this_t::encryption const )
     
     // write file
     {
-        ::std::ofstream outfile ( db_new, ::std::ios::binary ) ;
+        std::ofstream outfile ( db_new, std::ios::binary ) ;
 
         // header info
         {
@@ -343,7 +344,7 @@ bool_t database::pack( this_t::encryption const )
 //***
 void_t database::load_db_file( this_t::db_ref_t db_, natus::io::path_cref_t p ) 
 {
-    ::std::ifstream ifs( p, ::std::ios::binary ) ;
+    ::std::ifstream ifs( p, std::ios::binary ) ;
 
     size_t num_records = 0 ;
 

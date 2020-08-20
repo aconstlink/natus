@@ -10,16 +10,16 @@ natus::ntd::vector< natus::ntd::string_t > const natus::imex::stb_module_t::__fo
 { "png", ".png", "jpg", ".jpg", "jpeg", ".jpeg", "gif", ".gif" } ;
 natus::ntd::vector< stb_module::import_funk_t > const natus::imex::stb_module_t::__imports = 
 { 
-    [=]( stb_module* ptr, natus::ntd::string_cref_t l, natus::io::database_res_t db ) { return ptr->import_image( l, db ) ; },
-    [=]( stb_module* ptr, natus::ntd::string_cref_t l, natus::io::database_res_t db ) { return ptr->import_image( l, db ) ; },
-    [=] ( stb_module* ptr, natus::ntd::string_cref_t l, natus::io::database_res_t db ) { return ptr->import_image( l, db ) ; },
-    [=] ( stb_module* ptr, natus::ntd::string_cref_t l, natus::io::database_res_t db ) { return ptr->import_image( l, db ) ; },
-    [=] ( stb_module* ptr, natus::ntd::string_cref_t l, natus::io::database_res_t db ) { return ptr->import_image( l, db ) ; },
-    [=] ( stb_module* ptr, natus::ntd::string_cref_t l, natus::io::database_res_t db ) { return ptr->import_image( l, db ) ; },
-    [=] ( stb_module* ptr, natus::ntd::string_cref_t l, natus::io::database_res_t db ) { return ptr->import_image( l, db ) ; },
-    [=] ( stb_module* ptr, natus::ntd::string_cref_t l, natus::io::database_res_t db ) { return ptr->import_image( l, db ) ; },
+    []( stb_module* ptr, natus::ntd::string_cref_t l, natus::io::database_res_t db ) { return ptr->import_image( l, db ) ; },
+    []( stb_module* ptr, natus::ntd::string_cref_t l, natus::io::database_res_t db ) { return ptr->import_image( l, db ) ; },
+    [] ( stb_module* ptr, natus::ntd::string_cref_t l, natus::io::database_res_t db ) { return ptr->import_image( l, db ) ; },
+    [] ( stb_module* ptr, natus::ntd::string_cref_t l, natus::io::database_res_t db ) { return ptr->import_image( l, db ) ; },
+    [] ( stb_module* ptr, natus::ntd::string_cref_t l, natus::io::database_res_t db ) { return ptr->import_image( l, db ) ; },
+    [] ( stb_module* ptr, natus::ntd::string_cref_t l, natus::io::database_res_t db ) { return ptr->import_image( l, db ) ; },
+    [] ( stb_module* ptr, natus::ntd::string_cref_t l, natus::io::database_res_t db ) { return ptr->import_image( l, db ) ; },
+    [] ( stb_module* ptr, natus::ntd::string_cref_t l, natus::io::database_res_t db ) { return ptr->import_image( l, db ) ; },
 
-    [=] ( stb_module*, natus::ntd::string_cref_t, natus::io::database_res_t ) { return false ; }
+    [] ( stb_module*, natus::ntd::string_cref_t, natus::io::database_res_t ) { return false ; }
 } ;
 
 // ***

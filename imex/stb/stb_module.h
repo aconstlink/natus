@@ -36,7 +36,7 @@ namespace natus
 
         private:
 
-            stb_module::import_funk_t stb_module::funk_for_extension( natus::ntd::string_cref_t ext ) noexcept ;
+            import_funk_t funk_for_extension( natus::ntd::string_cref_t ext ) noexcept ;
         };
         natus_res_typedef( stb_module ) ;
     }
