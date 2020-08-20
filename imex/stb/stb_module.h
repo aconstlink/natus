@@ -1,0 +1,43 @@
+#pragma once
+
+#include "../imodule.h"
+
+namespace natus
+{
+    namespace imex
+    {
+        // stb module can import audio, images and fonts
+        class NATUS_IMEX_API stb_module : public iimage_module, ifont_module, iaudio_module
+        {
+            natus_this_typedefs( stb_module ) ;
+
+        private:
+
+            static const natus::std::vector< natus::std::string_t > __formats ;
+
+            typedef ::std::function< bool_t ( this_ptr_t, natus::std::string_cref_t loc, natus::io::database_res_t ) > import_funk_t ;
+            static const natus::std::vector< import_funk_t > __imports ;
+
+        public:
+
+            stb_module( void_t ) ;
+            stb_module( this_cref_t ) ;
+            stb_module( this_rref_t ) ;
+            virtual ~stb_module( void_t ) ;
+
+        public:
+
+            virtual natus::std::vector< natus::std::string_t > const & supported_formats( void_t ) const noexcept ;
+            virtual bool_t is_format_supported( natus::std::string_cref_t ) const noexcept ;
+            virtual bool_t import( natus::std::string_cref_t loc, natus::io::database_res_t ) noexcept ;
+            virtual bool_t import_audio( natus::std::string_cref_t loc, natus::io::database_res_t ) noexcept ;
+            virtual bool_t import_image( natus::std::string_cref_t loc, natus::io::database_res_t ) noexcept ;
+            virtual bool_t import_font( natus::std::string_cref_t loc, natus::io::database_res_t ) noexcept ;
+
+        private:
+
+            stb_module::import_funk_t stb_module::funk_for_extension( natus::std::string_cref_t ext ) noexcept ;
+        };
+        natus_res_typedef( stb_module ) ;
+    }
+}

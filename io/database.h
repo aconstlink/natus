@@ -89,6 +89,8 @@ namespace natus
             };
             natus_typedef( file_record ) ;
 
+        private:
+
             struct file_header
             {
                 // encryption method
@@ -192,6 +194,10 @@ namespace natus
             
             void_t attach( natus::io::monitor_res_t ) noexcept ;
             void_t detach( natus::io::monitor_res_t mon ) noexcept ;
+
+        public:
+            
+            bool_t lookup_extension( natus::std::string_cref_t loc, natus::std::string_out_t ) const noexcept ;
 
         private:
 

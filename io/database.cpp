@@ -555,6 +555,17 @@ void_t database::detach( natus::io::monitor_res_t moni ) noexcept
 }
 
 //***
+bool_t database::lookup_extension( natus::std::string_cref_t loc, natus::std::string_out_t ext ) const noexcept 
+{
+    this_t::file_record_t fr ;
+    if( !this_t::lookup( loc, fr ) ) return false ;
+
+    ext = fr.extension ;
+
+    return true;
+}
+
+//***
 database::file_record_t database::create_file_record( natus::io::path_cref_t base, natus::io::path_cref_t path ) const noexcept
 {
     this_t::file_record_t fr ;

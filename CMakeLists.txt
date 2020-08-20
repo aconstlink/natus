@@ -115,6 +115,7 @@ list( APPEND subdirs
     "gpu"
     "gfx"
     "device"
+    "imex"
     ${subdirs_header_only}
     )
 
