@@ -17,7 +17,7 @@ using namespace natus::io ;
 
 static const natus::ntd::string_t header_desc = "natus db file format 0.1" ;
 
-namespace this_file
+namespace this_file_db
 {
     using namespace natus::core::types ;
 
@@ -254,7 +254,7 @@ bool_t database::pack( this_t::encryption const )
     
     // base offset to the first data written
     // (number of records + header ) * length
-    uint64_t const offset = (_db.records.size() + 1) * this_file::length_validator::fixed_length() ;
+    uint64_t const offset = (_db.records.size() + 1) * this_file_db::length_validator::fixed_length() ;
 
     {
         uint64_t lo = offset ;
@@ -284,10 +284,10 @@ bool_t database::pack( this_t::encryption const )
         // header info
         {
             natus::ntd::string_t so ;
-            natus::ntd::string_t const si = this_file::obfuscator_t( 
+            natus::ntd::string_t const si = this_file_db::obfuscator_t( 
                 header_desc + ":" + ::std::to_string( _db.records.size() ) + ": " ).encode() ;
 
-            auto const res = this_file::length_validator::make_string( si, so ) ;
+            auto const res = this_file_db::length_validator::make_string( si, so ) ;
             if( res ) outfile << so ;
             natus::log::global_t::error( !res, "[db] : header does not fit into fixed length." ) ;
             
@@ -299,9 +299,9 @@ bool_t database::pack( this_t::encryption const )
 
             for( auto& fr : records )
             {
-                natus::ntd::string_t const si = this_file::obfuscator_t( fr.to_string() ).encode() ;
+                natus::ntd::string_t const si = this_file_db::obfuscator_t( fr.to_string() ).encode() ;
 
-                auto const res = this_file::length_validator::make_string( si, so ) ;
+                auto const res = this_file_db::length_validator::make_string( si, so ) ;
                 if( res ) outfile << so ;
                 natus::log::global_t::warning( !res, "[db] : file record entry too long. Please reduce name length." ) ;
             }
@@ -318,7 +318,7 @@ bool_t database::pack( this_t::encryption const )
                 {
                     if( res != natus::io::result::ok ) return ;
 
-                    natus::ntd::string_t const wdata = this_file::obfuscator_t( data, sib ).encode() ;
+                    natus::ntd::string_t const wdata = this_file_db::obfuscator_t( data, sib ).encode() ;
 
                     outfile.seekp( fr.offset ) ;
                     outfile.write( wdata.c_str(), sib ) ;
@@ -348,13 +348,13 @@ void_t database::load_db_file( this_t::db_ref_t db_, natus::io::path_cref_t p )
 
     size_t num_records = 0 ;
 
-    natus::memory::malloc_guard< char_t > data( this_file::length_validator::fixed_length() ) ;
+    natus::memory::malloc_guard< char_t > data( this_file_db::length_validator::fixed_length() ) ;
 
     // check file header description
     {
-        ifs.read( data, this_file::length_validator::fixed_length() ) ;
+        ifs.read( data, this_file_db::length_validator::fixed_length() ) ;
 
-        natus::ntd::string_t const buffer = this_file::obfuscator_t( natus::ntd::string_t( data.get(), this_file::length_validator::fixed_length() ) ).decode() ;
+        natus::ntd::string_t const buffer = this_file_db::obfuscator_t( natus::ntd::string_t( data.get(), this_file_db::length_validator::fixed_length() ) ).decode() ;
         
         natus::ntd::vector< natus::ntd::string_t > token ;
         size_t const num_elems = natus::ntd::string_ops::split( buffer, ':', token ) ;
@@ -383,8 +383,8 @@ void_t database::load_db_file( this_t::db_ref_t db_, natus::io::path_cref_t p )
     {
         for( size_t i = 0; i < num_records; ++i )
         {
-            ifs.read( data, this_file::length_validator::fixed_length() ) ;
-            natus::ntd::string_t const buffer = this_file::obfuscator_t( natus::ntd::string_t( data.get(), this_file::length_validator::fixed_length() ) ).decode() ;
+            ifs.read( data, this_file_db::length_validator::fixed_length() ) ;
+            natus::ntd::string_t const buffer = this_file_db::obfuscator_t( natus::ntd::string_t( data.get(), this_file_db::length_validator::fixed_length() ) ).decode() ;
 
             natus::ntd::vector< natus::ntd::string_t > token ;
             size_t const num_elems = natus::ntd::string_ops::split( buffer, ':', token ) ;

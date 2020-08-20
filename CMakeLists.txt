@@ -163,7 +163,8 @@ foreach( _subdir ${subdirs} )
 
     set_target_properties( ${cur_lib_name} PROPERTIES LINKER_LANGUAGE CXX )
     set_target_properties( ${cur_lib_name} PROPERTIES OUTPUT_NAME ${cur_file_name} )
-    set_target_properties( ${cur_lib_name} PROPERTIES CXX_STANDARD ${NATUS_CXX_STANDARD} )
+    set_target_properties( ${cur_lib_name} PROPERTIES CXX_STANDARD 17 ) #${NATUS_CXX_STANDARD} )
+    set_property( TARGET ${cur_lib_name} PROPERTY CXX_STANDARD 17 )
 
     if( NATUS_LIBRARY_BUILD_SHARED )
       target_compile_options( ${cur_lib_name} 

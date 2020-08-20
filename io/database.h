@@ -8,6 +8,7 @@
 #include <natus/concurrent/isleep.hpp>
 #include <natus/concurrent/mrsw.hpp>
 #include <natus/ntd/vector.hpp>
+#include <natus/ntd/filesystem.hpp>
 
 namespace natus
 {
