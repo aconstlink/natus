@@ -8,7 +8,7 @@ set( INCLUDES
   "stb/stb_vorbis.h" )
 
 add_library( stb INTERFACE )
-target_include_directories( stb INTERFACE "./stb" )
+target_include_directories( stb INTERFACE$<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/stb> )
 
 if( NATUS_COMPILER_MSC )
   target_compile_options( stb INTERFACE /wd4267 /wd4996 )
