@@ -11,7 +11,7 @@ install( DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/filesystem/include/ghc" DESTINATIO
 
 #export( TARGETS ghc_filesystem APPEND FILE ${PROJECT_NAME}-targets.cmake)
 
-#add_library( ghc_filesystem INTERFACE )
-#target_include_directories( ghc_filesystem INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/filesystem/include> )
-#target_include_directories( ghc_filesystem INTERFACE $<INSTALL_INTERFACE:include/natus/externals/filesystem/include> )
-install_library( ghc_filesystem ${PROJECT_NAME}-targets )
+add_library( ghc_filesystem_natus INTERFACE )
+target_include_directories( ghc_filesystem_natus INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/filesystem/include> )
+target_include_directories( ghc_filesystem_natus INTERFACE $<INSTALL_INTERFACE:include/natus/externals/filesystem/include> )
+install_library( ghc_filesystem_natus ${PROJECT_NAME}-targets )
