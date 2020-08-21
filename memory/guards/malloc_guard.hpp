@@ -55,8 +55,6 @@ namespace natus
             // takes over the non cost ptr as memory and will delete it during destruction.
             malloc_guard( type_ptr_t src_ptr, size_t const num_elements )
             {
-                size_t const sib = sizeof( type_t ) * num_elements ;
-
                 _mem_ptr = src_ptr ;
                 _num_elements = num_elements ;
             }
