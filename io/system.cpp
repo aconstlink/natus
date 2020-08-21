@@ -56,8 +56,14 @@ system::system( this_rref_t rhv )
 }
 
 //************************************************************************************
-natus::io::load_handle_t system::load( natus::io::path_cref_t file_path, natus::io::obfuscator_rref_t obf,
-    size_t const offset, size_t const sib )
+natus::io::load_handle_t system::load( natus::io::path_cref_t file_path, natus::io::obfuscator_rref_t obf) 
+{
+    return this_t::load( file_path, size_t( 0 ), size_t( -1 ), std::move( obf ) );
+}
+
+//************************************************************************************
+natus::io::load_handle_t system::load( natus::io::path_cref_t file_path,
+    size_t const offset, size_t const sib, natus::io::obfuscator_rref_t obf  )
 {
     this_t::load_item_ptr_t li = this_t::get_load_item() ;
 
@@ -110,7 +116,8 @@ natus::io::load_handle_t system::load( natus::io::path_cref_t file_path, natus::
 }
 
 //************************************************************************************
-natus::io::store_handle_t system::store( natus::io::path_cref_t file_path, char_cptr_t data_ptr, size_t const sib )
+natus::io::store_handle_t system::store( natus::io::path_cref_t file_path, 
+    char_cptr_t data_ptr, size_t const sib, natus::io::obfuscator_rref_t obf )
 {
     this_t::store_item_ptr_t si = this_t::get_store_item() ;
 
@@ -142,7 +149,8 @@ natus::io::store_handle_t system::store( natus::io::path_cref_t file_path, char_
 
         if( os.is_open() )
         {
-            os.write( data_ptr, sib ) ;
+            auto res = natus::io::obfuscator_t( std::move(obf) ).encode( data_ptr, sib ) ;
+            os.write( res.ptr(), res.sib() ) ;
 
             // signal shared data
             {

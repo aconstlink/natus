@@ -156,7 +156,7 @@ namespace natus
             }
 
             // null endecode
-            static this_t variant_0( this_rref_t other ) noexcept
+            static this_t variant_0( this_rref_t other = this_t() ) noexcept
             {
                 return this_t::as_user_funk( std::move( other ),
                     [] ( natus::memory::malloc_guard< char_t >&& mem ) { return std::move( mem ); },

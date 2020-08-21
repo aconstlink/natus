@@ -125,10 +125,15 @@ namespace natus
 
         public:
 
-            natus::io::load_handle_t load( natus::io::path_cref_t, natus::io::obfuscator_rref_t obf,
-                size_t const offset = size_t( 0 ), size_t const sib = size_t( -1 ) ) ;            
+            natus::io::load_handle_t load( natus::io::path_cref_t,
+                natus::io::obfuscator_rref_t = natus::io::obfuscator_t() ) ;
 
-            natus::io::store_handle_t store( natus::io::path_cref_t, char_cptr_t, size_t const ) ;
+            natus::io::load_handle_t load( natus::io::path_cref_t,
+                size_t const offset = size_t( 0 ), size_t const sib = size_t( -1 ),
+                natus::io::obfuscator_rref_t = natus::io::obfuscator_t() ) ;
+
+            natus::io::store_handle_t store( natus::io::path_cref_t, char_cptr_t, size_t const,
+                natus::io::obfuscator_rref_t = natus::io::obfuscator_t()) ;
 
         private:
 

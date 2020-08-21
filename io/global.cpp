@@ -90,14 +90,20 @@ natus::io::load_handle_t global::load( natus::io::path_cref_t file_path, natus::
 }
 
 //***********************************************************************
-natus::io::load_handle_t global::load( natus::io::path_cref_t file_path, natus::io::obfuscator_rref_t obf,
-    size_t const offset, size_t const sib ) 
+natus::io::load_handle_t global::load( natus::io::path_cref_t file_path,
+    size_t const offset, size_t const sib, natus::io::obfuscator_rref_t obf ) 
 {
-    return this_t::io_system()->load( file_path, std::move( obf ), offset, sib ) ;
+    return this_t::io_system()->load( file_path, offset, sib, std::move( obf ) ) ;
 }
 
 //***********************************************************************
-natus::io::store_handle_t global::store( natus::io::path_cref_t file_path, char_cptr_t data, size_t sib )
+natus::io::store_handle_t global::store( natus::io::path_cref_t file_path, char_cptr_t data, size_t const sib ) 
 {
     return this_t::io_system()->store( file_path, data, sib ) ;
+}
+
+//***********************************************************************
+natus::io::store_handle_t global::store( natus::io::path_cref_t file_path, char_cptr_t data, size_t const sib, natus::io::obfuscator_rref_t obf )
+{
+    return this_t::io_system()->store( file_path, data, sib, std::move( obf ) ) ;
 }

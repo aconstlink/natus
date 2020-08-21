@@ -378,7 +378,7 @@ natus::io::load_handle_t database::load( natus::ntd::string_cref_t loc ) const
     {
         size_t const offset = fr.offset + _db.offset ;
         auto const p = _db.base / natus::io::path_t( _db.name ).replace_extension( natus::io::path_t( ".ndb" ) ) ;
-        lh = natus::io::global_t::load( p, this_t::obfuscator(), offset, fr.sib ) ;
+        lh = natus::io::global_t::load( p, offset, fr.sib, this_t::obfuscator() ) ;
     }
 
     return ::std::move( lh ) ;

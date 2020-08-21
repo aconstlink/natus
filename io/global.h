@@ -45,9 +45,11 @@ namespace natus
             static this_ptr_t get( void_t ) ;
             static system_ptr_t io_system( void_t ) ;
 
-            static natus::io::load_handle_t load( natus::io::path_cref_t, natus::io::obfuscator_rref_t ) ;
-            static natus::io::load_handle_t load( natus::io::path_cref_t, natus::io::obfuscator_rref_t, size_t const offset, size_t const sib ) ;
-            static natus::io::store_handle_t store( natus::io::path_cref_t, char_cptr_t, size_t ) ;
+            static natus::io::load_handle_t load( natus::io::path_cref_t, natus::io::obfuscator_rref_t = natus::io::obfuscator_t() ) ;
+            static natus::io::load_handle_t load( natus::io::path_cref_t, size_t const offset, size_t const sib, natus::io::obfuscator_rref_t = natus::io::obfuscator_t() ) ;
+
+            static natus::io::store_handle_t store( natus::io::path_cref_t, char_cptr_t, size_t const ) ;
+            static natus::io::store_handle_t store( natus::io::path_cref_t, char_cptr_t, size_t const, natus::io::obfuscator_rref_t ) ;
         };
         natus_typedef( global ) ;
     }
