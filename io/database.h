@@ -4,6 +4,7 @@
 #include "typedefs.h"
 #include "handle.h"
 #include "monitor.hpp"
+#include "obfuscator.hpp"
 
 #include <natus/concurrent/isleep.hpp>
 #include <natus/concurrent/mrsw.hpp>
@@ -141,6 +142,12 @@ namespace natus
 
             db_t _db ;
             mutable natus::concurrent::mrsw_t _ac ;
+
+            
+            static natus::io::obfuscator_t obfuscator( void_t ) noexcept
+            {
+                return natus::io::obfuscator_t::variant_1() ;
+            }
 
         public:
 

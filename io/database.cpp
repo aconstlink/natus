@@ -1,5 +1,6 @@
 #include "database.h"
 #include "global.h"
+#include "obfuscator.hpp"
 
 #include <natus/ntd/filesystem.hpp>
 #include <natus/ntd/string.hpp>
@@ -21,74 +22,9 @@ namespace this_file_db
 {
     using namespace natus::core::types ;
 
-    class obfuscator 
-    {
-        natus_this_typedefs( obfuscator ) ;
-
-    private:
-        
-        natus::memory::malloc_guard< char_t > _mem ;
-
-    public:
-
-        obfuscator( char_cptr_t ptr, size_t const sib ) 
-        { 
-            _mem = natus::memory::malloc_guard< char_t >( ptr, sib ) ;
-        }
-
-        obfuscator( natus::ntd::string_cref_t s ) 
-        {
-            _mem = natus::memory::malloc_guard< char_t >( s.c_str(), s.size() ) ;
-        }
-
-        obfuscator( this_cref_t rhv ) = delete ;
-        obfuscator( this_rref_t rhv ) 
-        {
-            _mem = ::std::move( rhv._mem ) ;
-        }
-        ~obfuscator( void_t ) {}
-
-    public: 
-
-        this_ref_t encode( void_t ) noexcept
-        {
-            static const char_t lut[ 8 ] = { 'a', 'f', 'c', 'd', '5', 'c', '\n', '5' } ;
-
-            for( size_t i=0; i<_mem.size(); ++i )
-            {
-                _mem[ i ] = _mem[ i ] ^ lut[i%8] ;
-            }
-            return *this ;
-        }
-
-        this_ref_t decode( void_t ) noexcept
-        {
-            static const char_t lut[ 8 ] = { 'a', 'f', 'c', 'd', '5', 'c', '\n', '5' } ;
-
-            for( size_t i = 0; i < _mem.size(); ++i )
-            {
-                _mem[ i ] = _mem[ i ] ^ lut[i%8] ;
-            }
-            return *this ;
-        }
-
-        char_cptr_t get( void_t ) const noexcept { return _mem.get() ; }
-        natus::ntd::string_t to_string( void_t ) const noexcept 
-        {
-            return natus::ntd::string_t( _mem.get(), _mem.size() ) ;
-        }
-
-        operator natus::ntd::string_t( void_t ) const noexcept
-        {
-            return this_t::to_string() ;
-        }
-    };
-    natus_typedef( obfuscator ) ;
-
     struct length_validator
     {
-
-        static bool_t make_string( natus::ntd::string_cref_t si, natus::ntd::string_out_t so ) noexcept
+        static bool_t make_ending_string( natus::ntd::string_cref_t si, natus::ntd::string_out_t so ) noexcept
         {
             ::std::srand( uint_t(si.size()) ) ;
 
@@ -208,7 +144,7 @@ bool_t database::init( natus::io::path_cref_t base, natus::io::path_cref_t worki
     }
     else
     {
-        natus::log::global_t::warning( "Path does not exist : " + base.string() ) ;
+        natus::log::global_t::warning( "Path does not exist : " + natus::io::path_t( base / working.string() ).string() ) ;
     }
 
     // spawn monitor thread for file system changes
@@ -284,10 +220,10 @@ bool_t database::pack( this_t::encryption const )
         // header info
         {
             natus::ntd::string_t so ;
-            natus::ntd::string_t const si = this_file_db::obfuscator_t( 
-                header_desc + ":" + ::std::to_string( _db.records.size() ) + ": " ).encode() ;
+            natus::ntd::string_t const si = this_t::obfuscator().
+                encode( header_desc + ":" + ::std::to_string( _db.records.size() ) + ": " ) ;
 
-            auto const res = this_file_db::length_validator::make_string( si, so ) ;
+            auto const res = this_file_db::length_validator::make_ending_string( si, so ) ;
             if( res ) outfile << so ;
             natus::log::global_t::error( !res, "[db] : header does not fit into fixed length." ) ;
             
@@ -299,9 +235,9 @@ bool_t database::pack( this_t::encryption const )
 
             for( auto& fr : records )
             {
-                natus::ntd::string_t const si = this_file_db::obfuscator_t( fr.to_string() ).encode() ;
+                natus::ntd::string_t const si = this_t::obfuscator().encode( fr.to_string() ) ;
 
-                auto const res = this_file_db::length_validator::make_string( si, so ) ;
+                auto const res = this_file_db::length_validator::make_ending_string( si, so ) ;
                 if( res ) outfile << so ;
                 natus::log::global_t::warning( !res, "[db] : file record entry too long. Please reduce name length." ) ;
             }
@@ -318,7 +254,7 @@ bool_t database::pack( this_t::encryption const )
                 {
                     if( res != natus::io::result::ok ) return ;
 
-                    natus::ntd::string_t const wdata = this_file_db::obfuscator_t( data, sib ).encode() ;
+                    natus::ntd::string_t const wdata = this_t::obfuscator().encode( data, sib ) ;
 
                     outfile.seekp( fr.offset ) ;
                     outfile.write( wdata.c_str(), sib ) ;
@@ -354,7 +290,8 @@ void_t database::load_db_file( this_t::db_ref_t db_, natus::io::path_cref_t p )
     {
         ifs.read( data, this_file_db::length_validator::fixed_length() ) ;
 
-        natus::ntd::string_t const buffer = this_file_db::obfuscator_t( natus::ntd::string_t( data.get(), this_file_db::length_validator::fixed_length() ) ).decode() ;
+        natus::ntd::string_t const buffer = this_t::obfuscator().
+            decode( natus::ntd::string_t( data.get(), this_file_db::length_validator::fixed_length() ) ) ;
         
         natus::ntd::vector< natus::ntd::string_t > token ;
         size_t const num_elems = natus::ntd::string_ops::split( buffer, ':', token ) ;
@@ -384,7 +321,8 @@ void_t database::load_db_file( this_t::db_ref_t db_, natus::io::path_cref_t p )
         for( size_t i = 0; i < num_records; ++i )
         {
             ifs.read( data, this_file_db::length_validator::fixed_length() ) ;
-            natus::ntd::string_t const buffer = this_file_db::obfuscator_t( natus::ntd::string_t( data.get(), this_file_db::length_validator::fixed_length() ) ).decode() ;
+            natus::ntd::string_t const buffer = this_t::obfuscator().
+                decode( natus::ntd::string_t( data.get(), this_file_db::length_validator::fixed_length() ) ) ;
 
             natus::ntd::vector< natus::ntd::string_t > token ;
             size_t const num_elems = natus::ntd::string_ops::split( buffer, ':', token ) ;
@@ -434,13 +372,13 @@ natus::io::load_handle_t database::load( natus::ntd::string_cref_t loc ) const
     natus::io::load_handle_t lh ;
     if( fr.offset == uint64_t(-2) )
     {
-        lh = natus::io::global_t::load( _db.working / fr.rel ) ;
+        lh = natus::io::global_t::load( _db.working / fr.rel, natus::io::obfuscator_t() ) ;
     }
     else if( fr.offset != uint64_t(-1) )
     {
         size_t const offset = fr.offset + _db.offset ;
         auto const p = _db.base / natus::io::path_t( _db.name ).replace_extension( natus::io::path_t( ".ndb" ) ) ;
-        lh = natus::io::global_t::load( p, offset, fr.sib ) ;
+        lh = natus::io::global_t::load( p, this_t::obfuscator(), offset, fr.sib ) ;
     }
 
     return ::std::move( lh ) ;
@@ -760,7 +698,7 @@ void_t database::spawn_monitor( void_t ) noexcept
 
                 if( !any_external )
                 {
-                    natus::log::global_t::status( "[db] : no external files to track. exiting early." ) ;
+                    natus::log::global_t::status( "[db][Monitor] : no external files to track. exiting early." ) ;
                     break ;
                 }
             }

@@ -8,6 +8,7 @@ set( sources
     "global.h"
     "global.cpp"
     "monitor.hpp"
+    "obfuscator.hpp"
 
     "handle.h"
     "handle.cpp"

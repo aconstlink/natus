@@ -84,16 +84,16 @@ natus::io::system_ptr_t global::io_system( void_t )
 }
 
 //***********************************************************************
-natus::io::load_handle_t global::load( natus::io::path_cref_t file_path )
+natus::io::load_handle_t global::load( natus::io::path_cref_t file_path, natus::io::obfuscator_rref_t obf )
 {
-    return this_t::io_system()->load( file_path ) ;
+    return this_t::io_system()->load( file_path, std::move( obf ) ) ;
 }
 
 //***********************************************************************
-natus::io::load_handle_t global::load( natus::io::path_cref_t file_path,
+natus::io::load_handle_t global::load( natus::io::path_cref_t file_path, natus::io::obfuscator_rref_t obf,
     size_t const offset, size_t const sib ) 
 {
-    return this_t::io_system()->load( file_path, offset, sib ) ;
+    return this_t::io_system()->load( file_path, std::move( obf ), offset, sib ) ;
 }
 
 //***********************************************************************

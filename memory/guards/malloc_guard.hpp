@@ -41,6 +41,7 @@ namespace natus
                 _num_elements = num_elements ;
             }
 
+            // creates new memory and copies the const source data to the new memory.
             malloc_guard( type_cptr_t src_ptr, size_t const num_elements )
             {
                 size_t const sib = sizeof( type_t ) * num_elements ;
@@ -49,6 +50,15 @@ namespace natus
                 _num_elements = num_elements ;
 
                 std::memcpy( _mem_ptr, src_ptr, sib ) ;
+            }
+
+            // takes over the non cost ptr as memory and will delete it during destruction.
+            malloc_guard( type_ptr_t src_ptr, size_t const num_elements )
+            {
+                size_t const sib = sizeof( type_t ) * num_elements ;
+
+                _mem_ptr = src_ptr ;
+                _num_elements = num_elements ;
             }
 
             malloc_guard( this_rref_t rhv )
@@ -96,8 +106,16 @@ namespace natus
 
         public:
 
-            type_ptr_t get( void_t ) { return _mem_ptr ; }
-            type_cptr_t get( void_t ) const { return _mem_ptr ; }
+            type_ptr_t move_ptr( void_t ) noexcept
+            {
+                _num_elements = 0 ;
+                auto ptr = _mem_ptr ;
+                _mem_ptr = nullptr ;
+                return ptr ;
+            }
+
+            type_ptr_t get( void_t ) noexcept { return _mem_ptr ; }
+            type_cptr_t get( void_t ) const noexcept { return _mem_ptr ; }
 
             operator type_ptr_t( void_t ) { return _mem_ptr ; }
             operator type_cptr_t( void_t ) const { return _mem_ptr ; }

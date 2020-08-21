@@ -56,7 +56,7 @@ system::system( this_rref_t rhv )
 }
 
 //************************************************************************************
-natus::io::load_handle_t system::load( natus::io::path_cref_t file_path,
+natus::io::load_handle_t system::load( natus::io::path_cref_t file_path, natus::io::obfuscator_rref_t obf,
     size_t const offset, size_t const sib )
 {
     this_t::load_item_ptr_t li = this_t::get_load_item() ;
@@ -79,6 +79,11 @@ natus::io::load_handle_t system::load( natus::io::path_cref_t file_path,
                 
                 li->sib = is.gcount() ;
                 li->data = data ;
+
+                auto res = natus::io::obfuscator_t( std::move(obf) ).decode( li->data, li->sib ) ;
+
+                li->sib = res.sib() ;
+                li->data = res.move_ptr() ;
             }
 
             // signal shared data
