@@ -12,7 +12,7 @@
 
 namespace natus
 {
-    namespace imex
+    namespace format
     {
         using namespace natus::core ;
         using namespace natus::core::types ;

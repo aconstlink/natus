@@ -7,9 +7,9 @@
 
 namespace natus
 {
-    namespace imex
+    namespace format
     {
-        class NATUS_IMEX_API imodule
+        class NATUS_FORMAT_API imodule
         {
         public:
 
@@ -20,7 +20,7 @@ namespace natus
             virtual bool_t import( natus::ntd::string_cref_t loc, natus::io::database_res_t ) noexcept = 0 ;
         };
 
-        class NATUS_IMEX_API imesh_module : public imodule
+        class NATUS_FORMAT_API imesh_module : public imodule
         {
 
         public:
@@ -31,7 +31,7 @@ namespace natus
         };
         natus_res_typedef( imesh_module ) ;
 
-        class NATUS_IMEX_API iscene_module : public imodule
+        class NATUS_FORMAT_API iscene_module : public imodule
         {
 
         public:
@@ -42,7 +42,7 @@ namespace natus
         };
         natus_res_typedef( iscene_module ) ;
 
-        class NATUS_IMEX_API iaudio_module : public imodule
+        class NATUS_FORMAT_API iaudio_module : public imodule
         {
 
         public:
@@ -54,7 +54,7 @@ namespace natus
         };
         natus_res_typedef( iaudio_module ) ;
 
-        class NATUS_IMEX_API iimage_module : public imodule
+        class NATUS_FORMAT_API iimage_module : public imodule
         {
 
         public:
@@ -66,7 +66,7 @@ namespace natus
         };
         natus_res_typedef( iimage_module ) ;
 
-        class NATUS_IMEX_API ifont_module : public imodule
+        class NATUS_FORMAT_API ifont_module : public imodule
         {
 
         public:

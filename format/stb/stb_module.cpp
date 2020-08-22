@@ -4,11 +4,11 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
-using namespace natus::imex ;
+using namespace natus::format ;
 
-natus::ntd::vector< natus::ntd::string_t > const natus::imex::stb_module_t::__formats = 
+natus::ntd::vector< natus::ntd::string_t > const natus::format::stb_module_t::__formats = 
 { "png", ".png", "jpg", ".jpg", "jpeg", ".jpeg", "gif", ".gif" } ;
-natus::ntd::vector< stb_module::import_funk_t > const natus::imex::stb_module_t::__imports = 
+natus::ntd::vector< stb_module::import_funk_t > const natus::format::stb_module_t::__imports = 
 { 
     []( stb_module* ptr, natus::ntd::string_cref_t l, natus::io::database_res_t db ) { return ptr->import_image( l, db ) ; },
     []( stb_module* ptr, natus::ntd::string_cref_t l, natus::io::database_res_t db ) { return ptr->import_image( l, db ) ; },

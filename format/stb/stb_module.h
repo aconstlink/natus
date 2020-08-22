@@ -4,10 +4,10 @@
 
 namespace natus
 {
-    namespace imex
+    namespace format
     {
         // stb module can import audio, images and fonts
-        class NATUS_IMEX_API stb_module : public iimage_module, ifont_module, iaudio_module
+        class NATUS_FORMAT_API stb_module : public iimage_module, ifont_module, iaudio_module
         {
             natus_this_typedefs( stb_module ) ;
 
