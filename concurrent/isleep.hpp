@@ -67,6 +67,12 @@ namespace natus
                 _cv.notify_one() ;
             }
 
+            // wakeup from nap
+            void_t wakeup( void_t ) noexcept
+            {
+                _cv.notify_one() ;
+            }
+
             void_t reset( void_t ) noexcept 
             {
                 natus::concurrent::lock_guard_t lk( _mtx ) ;
@@ -74,5 +80,6 @@ namespace natus
             }
         };
         natus_typedef( interruptable_sleep ) ;
+        natus_typedefs( interruptable_sleep, isleep ) ;
     }
 }
