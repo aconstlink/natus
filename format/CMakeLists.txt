@@ -4,9 +4,7 @@ set( sources
     "typedefs.h"
 
     "imodule.h"
-    "selector.h"
-    "selector.cpp"
-
+    
     "obj/obj_module.cpp"
     "obj/obj_module.h"
 

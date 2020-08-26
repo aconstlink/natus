@@ -7,7 +7,7 @@ namespace natus
     namespace format
     {
         // stb module can import audio, images and fonts
-        class NATUS_FORMAT_API stb_module : public iimage_module, ifont_module, iaudio_module
+        class NATUS_FORMAT_API stb_module : public imodule
         {
             natus_this_typedefs( stb_module ) ;
 
@@ -30,9 +30,12 @@ namespace natus
             virtual natus::ntd::vector< natus::ntd::string_t > const & supported_formats( void_t ) const noexcept ;
             virtual bool_t is_format_supported( natus::ntd::string_cref_t ) const noexcept ;
             virtual bool_t import( natus::ntd::string_cref_t loc, natus::io::database_res_t ) noexcept ;
-            virtual bool_t import_audio( natus::ntd::string_cref_t loc, natus::io::database_res_t ) noexcept ;
-            virtual bool_t import_image( natus::ntd::string_cref_t loc, natus::io::database_res_t ) noexcept ;
-            virtual bool_t import_font( natus::ntd::string_cref_t loc, natus::io::database_res_t ) noexcept ;
+
+        private:
+
+            bool_t import_audio( natus::ntd::string_cref_t loc, natus::io::database_res_t ) noexcept ;
+            bool_t import_image( natus::ntd::string_cref_t loc, natus::io::database_res_t ) noexcept ;
+            bool_t import_font( natus::ntd::string_cref_t loc, natus::io::database_res_t ) noexcept ;
 
         private:
 

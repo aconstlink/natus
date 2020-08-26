@@ -59,8 +59,9 @@ database::database( natus::io::path_cref_t base, natus::io::path_cref_t name,
 //***
 database::database( this_rref_t rhv )
 {
-    this_t::spawn_monitor() ;
+    this_t::join_monitor() ;
     _db = ::std::move( rhv._db ) ;
+    this_t::spawn_monitor() ;
 }
 
 //***
