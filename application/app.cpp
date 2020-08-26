@@ -6,23 +6,23 @@
 #if defined( NATUS_GRAPHICS_WGL )
 #include "platform/wgl/wgl_context.h"
 #include "platform/wgl/wgl_window.h"
-#include <natus/gpu/backend/gl3/gl3.h>
+#include <natus/graphics/backend/gl3/gl3.h>
 #endif
 #if defined( NATUS_GRAPHICS_GLX )
 #include "platform/glx/glx_context.h"
 #include "platform/glx/glx_window.h"
-#include <natus/gpu/backend/gl3/gl3.h>
+#include <natus/graphics/backend/gl3/gl3.h>
 #endif
 #if defined( NATUS_GRAPHICS_EGL )
 #include "platform/egl/egl_context.h"
 #include "platform/egl/egl_window.h"
 #if defined( NATUS_GRAPHICS_OPENGLES )
-#include <natus/gpu/backend/es3/es3.h>
+#include <natus/graphics/backend/es3/es3.h>
 #endif
 #endif
 
-#include <natus/gpu/async.h>
-#include <natus/gpu/backend/null/null.h>
+#include <natus/graphics/async.h>
+#include <natus/graphics/backend/null/null.h>
 
 using namespace natus::application ;
 
@@ -56,8 +56,8 @@ app::window_async_t app::create_window(
     natus::ntd::string_cref_t name, this_t::window_info_in_t wi )
 {
     this_t::per_window_info_t pwi ;
-    natus::gpu::backend_res_t backend = natus::gpu::null_backend_res_t(
-        natus::gpu::null_backend_t() ) ;
+    natus::graphics::backend_res_t backend = natus::graphics::null_backend_res_t(
+        natus::graphics::null_backend_t() ) ;
     natus::application::gfx_context_res_t ctx ;
 
     auto rnd_msg_recv = natus::application::window_message_receiver_res_t(
@@ -98,8 +98,8 @@ app::window_async_t app::create_window(
             glctx->get_gl_version( glv ) ;
             if( glv.major >= 3 )
             {
-                backend = natus::gpu::gl3_backend_res_t(
-                    natus::gpu::gl3_backend_t() ) ;
+                backend = natus::graphics::gl3_backend_res_t(
+                    natus::graphics::gl3_backend_t() ) ;
             }
         }
 
@@ -158,8 +158,8 @@ app::window_async_t app::create_window(
             glctx->get_es_version( glv ) ;
             if( glv.major >= 3 )
             {
-                backend = natus::gpu::es3_backend_res_t(
-                    natus::gpu::es3_backend_t() ) ;
+                backend = natus::graphics::es3_backend_res_t(
+                    natus::graphics::es3_backend_t() ) ;
             }
         }
 
@@ -219,8 +219,8 @@ app::window_async_t app::create_window(
             glctx->get_gl_version( glv ) ;
             if( glv.major >= 3 )
             {
-                backend = natus::gpu::gl3_backend_res_t(
-                    natus::gpu::gl3_backend_t() ) ;
+                backend = natus::graphics::gl3_backend_res_t(
+                    natus::graphics::gl3_backend_t() ) ;
             }
         }
 
@@ -250,11 +250,11 @@ app::window_async_t app::create_window(
         glxw->get_window()->show_window( wii ) ;
 #endif
 
-        pwi.async = natus::gpu::async_res_t( 
-            natus::gpu::async_t( backend ) ) ;
+        pwi.async = natus::graphics::async_res_t( 
+            natus::graphics::async_t( backend ) ) ;
     }
     
-    natus::gpu::async_res_t async = pwi.async ;
+    natus::graphics::async_res_t async = pwi.async ;
 
     bool_ptr_t run = natus::memory::global_t::alloc<bool_t>(
         natus_log_fn( "bool for render thread while") ) ;
@@ -277,7 +277,7 @@ app::window_async_t app::create_window(
                 if( recv->swap_and_reset( sv ) )
                 {
 
-                    natus::gpu::backend_t::window_info_t wi ;
+                    natus::graphics::backend_t::window_info_t wi ;
                     if( sv.resize_changed )
                     {
                         wi.width = sv.resize_msg.w ;
@@ -319,7 +319,7 @@ app::window_async_t app::create_window(
     
 
     return ::std::make_pair( this_t::window_view_t( _windows.size()-1, msg_send, gfx_msg_send ), 
-        natus::gpu::async_view_t( ::std::move( async ), _access ) ) ;
+        natus::graphics::async_view_t( ::std::move( async ), _access ) ) ;
 }
 
 //***
@@ -350,7 +350,7 @@ bool_t app::before_update( void_t )
             if( pwi.msg_recv->swap_and_reset( sv ) )
             {
 
-                natus::gpu::backend_t::window_info_t wi ;
+                natus::graphics::backend_t::window_info_t wi ;
                 if( sv.resize_changed )
                 {
                     wi.width = sv.resize_msg.w ;

@@ -3,10 +3,10 @@
 #include "../api.h"
 #include "../typedefs.h"
 
-#include <natus/gpu/async.h>
-#include <natus/gpu/variable/variable_set.hpp>
-#include <natus/gpu/configuration/render_configuration.h>
-#include <natus/gpu/configuration/geometry_configuration.h>
+#include <natus/graphics/async.h>
+#include <natus/graphics/variable/variable_set.hpp>
+#include <natus/graphics/configuration/render_configuration.h>
+#include <natus/graphics/configuration/geometry_configuration.h>
 
 #include <natus/device/layouts/three_mouse.hpp>
 #include <natus/device/layouts/ascii_keyboard.hpp>
@@ -33,13 +33,13 @@ namespace natus
                 natus::math::vec4f_t color ; 
             } ;
 
-            natus::gpu::render_configuration_res_t _rc ;
-            natus::gpu::shader_configuration_res_t _sc ;
-            natus::gpu::geometry_configuration_res_t _gc ;
-            natus::gpu::image_configuration_res_t _ic ;
+            natus::graphics::render_configuration_res_t _rc ;
+            natus::graphics::shader_configuration_res_t _sc ;
+            natus::graphics::geometry_configuration_res_t _gc ;
+            natus::graphics::image_configuration_res_t _ic ;
 
-            natus::ntd::vector< natus::gpu::variable_set_res_t > _vars ;
-            natus::ntd::vector< natus::gpu::render_state_sets_res_t > _render_states ;
+            natus::ntd::vector< natus::graphics::variable_set_res_t > _vars ;
+            natus::ntd::vector< natus::graphics::render_state_sets_res_t > _render_states ;
 
             uint_t _width = 0 ;
             uint_t _height = 0 ;
@@ -56,9 +56,9 @@ namespace natus
             imgui( this_rref_t ) ;
             ~imgui( void_t ) ;
 
-            void_t init( natus::gpu::async_view_ref_t ) ;
+            void_t init( natus::graphics::async_view_ref_t ) ;
             void_t begin( void_t ) ;
-            void_t render( natus::gpu::async_view_ref_t ) ;
+            void_t render( natus::graphics::async_view_ref_t ) ;
 
             typedef ::std::function< void_t ( ImGuiContext* ) > exec_funk_t ;
             void_t execute( exec_funk_t ) ;

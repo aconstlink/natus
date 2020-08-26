@@ -8,7 +8,7 @@ using namespace natus::gfx ;
 //***
 imgui::imgui( void_t ) 
 {
-    _vars.emplace_back( natus::gpu::variable_set_t() ) ;
+    _vars.emplace_back( natus::graphics::variable_set_t() ) ;
 }
 
 //***
@@ -40,30 +40,30 @@ void_t imgui::execute( exec_funk_t funk )
 }
 
 //***
-void_t imgui::init( natus::gpu::async_view_ref_t async ) 
+void_t imgui::init( natus::graphics::async_view_ref_t async ) 
 {    
     _ctx = ImGui::CreateContext() ;
 
     // geometry
     {
         // @see struct vertex in the header
-        auto vb = natus::gpu::vertex_buffer_t()
-            .add_layout_element( natus::gpu::vertex_attribute::position, 
-                natus::gpu::type::tfloat, natus::gpu::type_struct::vec2 )
+        auto vb = natus::graphics::vertex_buffer_t()
+            .add_layout_element( natus::graphics::vertex_attribute::position, 
+                natus::graphics::type::tfloat, natus::graphics::type_struct::vec2 )
 
-            .add_layout_element( natus::gpu::vertex_attribute::texcoord0, 
-                natus::gpu::type::tfloat, natus::gpu::type_struct::vec2 )
+            .add_layout_element( natus::graphics::vertex_attribute::texcoord0, 
+                natus::graphics::type::tfloat, natus::graphics::type_struct::vec2 )
 
-            .add_layout_element( natus::gpu::vertex_attribute::color0, 
-                natus::gpu::type::tfloat, natus::gpu::type_struct::vec4 )
+            .add_layout_element( natus::graphics::vertex_attribute::color0, 
+                natus::graphics::type::tfloat, natus::graphics::type_struct::vec4 )
 
             .resize( 100 ) ;
 
-        auto ib = natus::gpu::index_buffer_t().
-            set_layout_element( natus::gpu::type::tuint ).resize( 6*100 ) ;
+        auto ib = natus::graphics::index_buffer_t().
+            set_layout_element( natus::graphics::type::tuint ).resize( 6*100 ) ;
 
-        _gc = natus::gpu::geometry_configuration_t( "natus.gfx.imgui",
-            natus::gpu::primitive_type::triangles,
+        _gc = natus::graphics::geometry_configuration_t( "natus.gfx.imgui",
+            natus::graphics::primitive_type::triangles,
             ::std::move( vb ), ::std::move( ib ) ) ;
 
         async.configure( _gc ) ;
@@ -71,13 +71,13 @@ void_t imgui::init( natus::gpu::async_view_ref_t async )
 
     // shader config
     {
-        natus::gpu::shader_configuration_t sc( "natus.gfx.imgui" ) ;
+        natus::graphics::shader_configuration_t sc( "natus.gfx.imgui" ) ;
 
         // shaders : ogl 3.0
         {
-            sc.insert( natus::gpu::backend_type::gl3, natus::gpu::shader_set_t().
+            sc.insert( natus::graphics::backend_type::gl3, natus::graphics::shader_set_t().
 
-                set_vertex_shader( natus::gpu::shader_t( R"(
+                set_vertex_shader( natus::graphics::shader_t( R"(
                     #version 140
 
                     in vec2 in_pos ;
@@ -97,7 +97,7 @@ void_t imgui::init( natus::gpu::async_view_ref_t async )
                         gl_Position = u_proj * vec4( in_pos, 0.0, 1.0 ) ;
                     } )" ) ).
 
-                set_pixel_shader( natus::gpu::shader_t( R"(
+                set_pixel_shader( natus::graphics::shader_t( R"(
                     #version 140
 
                     out vec4 out_color ;
@@ -115,9 +115,9 @@ void_t imgui::init( natus::gpu::async_view_ref_t async )
 
         // shaders : es 3.0
         {
-            sc.insert( natus::gpu::backend_type::es3, natus::gpu::shader_set_t().
+            sc.insert( natus::graphics::backend_type::es3, natus::graphics::shader_set_t().
 
-                set_vertex_shader( natus::gpu::shader_t( R"(
+                set_vertex_shader( natus::graphics::shader_t( R"(
                     #version 300 es
                     precision mediump float ;
                     layout( location = 0 ) in vec2 in_pos ;
@@ -137,7 +137,7 @@ void_t imgui::init( natus::gpu::async_view_ref_t async )
                         gl_Position = u_proj * u_view * vec4( in_pos, 0.0, 1.0 ) ;
                     } )" ) ).
 
-                set_pixel_shader( natus::gpu::shader_t( R"(
+                set_pixel_shader( natus::graphics::shader_t( R"(
                     #version 300 es
                     precision mediump float ;
                     layout( location = 0 ) out vec4 out_color ;
@@ -157,11 +157,11 @@ void_t imgui::init( natus::gpu::async_view_ref_t async )
         // configure more details
         {
             sc
-                .add_vertex_input_binding( natus::gpu::vertex_attribute::position, "in_pos" )
-                .add_vertex_input_binding( natus::gpu::vertex_attribute::texcoord0, "in_uv" )
-                .add_vertex_input_binding( natus::gpu::vertex_attribute::color0, "in_color" )
-                .add_input_binding( natus::gpu::binding_point::view_matrix, "u_view" )
-                .add_input_binding( natus::gpu::binding_point::projection_matrix, "u_proj" ) ;
+                .add_vertex_input_binding( natus::graphics::vertex_attribute::position, "in_pos" )
+                .add_vertex_input_binding( natus::graphics::vertex_attribute::texcoord0, "in_uv" )
+                .add_vertex_input_binding( natus::graphics::vertex_attribute::color0, "in_color" )
+                .add_input_binding( natus::graphics::binding_point::view_matrix, "u_view" )
+                .add_input_binding( natus::graphics::binding_point::projection_matrix, "u_proj" ) ;
         }
 
         async.configure( sc ) ;
@@ -175,24 +175,24 @@ void_t imgui::init( natus::gpu::async_view_ref_t async )
         int width, height;
         io.Fonts->GetTexDataAsRGBA32( &pixels, &width, &height ) ;
         io.Fonts->TexID = (ImTextureID) 0 ;
-        natus::gpu::image_t img = natus::gpu::image_t( natus::gpu::image_t::dims_t( width, height, 1 ) )
-            .update( [&] ( natus::gpu::image_ptr_t, natus::gpu::image_t::dims_in_t /*dims*/, void_ptr_t data_in )
+        natus::graphics::image_t img = natus::graphics::image_t( natus::graphics::image_t::dims_t( width, height, 1 ) )
+            .update( [&] ( natus::graphics::image_ptr_t, natus::graphics::image_t::dims_in_t /*dims*/, void_ptr_t data_in )
         {
             ::std::memcpy( data_in, ( void_cptr_t ) pixels, size_t( width * height * 4 ) ) ;
         } ) ;
 
-        _ic = natus::gpu::image_configuration_t( "system.imgui.font", ::std::move( img ) )
-            .set_wrap( natus::gpu::texture_wrap_mode::wrap_s, natus::gpu::texture_wrap_type::clamp )
-            .set_wrap( natus::gpu::texture_wrap_mode::wrap_t, natus::gpu::texture_wrap_type::clamp )
-            .set_filter( natus::gpu::texture_filter_mode::min_filter, natus::gpu::texture_filter_type::linear )
-            .set_filter( natus::gpu::texture_filter_mode::mag_filter, natus::gpu::texture_filter_type::linear );
+        _ic = natus::graphics::image_configuration_t( "system.imgui.font", ::std::move( img ) )
+            .set_wrap( natus::graphics::texture_wrap_mode::wrap_s, natus::graphics::texture_wrap_type::clamp )
+            .set_wrap( natus::graphics::texture_wrap_mode::wrap_t, natus::graphics::texture_wrap_type::clamp )
+            .set_filter( natus::graphics::texture_filter_mode::min_filter, natus::graphics::texture_filter_type::linear )
+            .set_filter( natus::graphics::texture_filter_mode::mag_filter, natus::graphics::texture_filter_type::linear );
 
         async.configure( _ic ) ;
     }
 
     // render configuration
     {
-        natus::gpu::render_configuration_t rc( "natus.gfx.imgui" ) ;
+        natus::graphics::render_configuration_t rc( "natus.gfx.imgui" ) ;
 
         rc.link_geometry( "natus.gfx.imgui" ) ;
         rc.link_shader( "natus.gfx.imgui" ) ;
@@ -228,7 +228,7 @@ void_t imgui::begin( void_t )
 }
 
 //***
-void_t imgui::render( natus::gpu::async_view_ref_t async ) 
+void_t imgui::render( natus::graphics::async_view_ref_t async ) 
 {
     natus::gfx::pinhole_camera_t camera ;
     camera.orthographic( float_t( _width ), float_t(_height), 1.0f, 1000.0f ) ;
@@ -266,7 +266,7 @@ void_t imgui::render( natus::gpu::async_view_ref_t async )
         _render_states.resize( size ) ;
         for( auto& rs : _render_states )
         {
-            rs = natus::gpu::render_state_sets_t() ;
+            rs = natus::graphics::render_state_sets_t() ;
         }
     }
 
@@ -337,22 +337,22 @@ void_t imgui::render( natus::gpu::async_view_ref_t async )
             if( clip_rect.x < fb_width && clip_rect.y < fb_height && clip_rect.z >= 0.0f && clip_rect.w >= 0.0f )
             {
                 {
-                    natus::gpu::scissor_state_set ss ;
+                    natus::graphics::scissor_state_set ss ;
                     ss.do_scissor_test = true ;
                     ss.rect = natus::math::vec4ui_t( ( uint_t ) clip_rect.x, ( uint_t ) ( fb_height - clip_rect.w ), ( uint_t ) ( clip_rect.z - clip_rect.x ), ( uint_t ) ( clip_rect.w - clip_rect.y ) ) ;
                     _render_states[ rs_id ]->scissor_s = ss ;
                 }
 
                 {
-                    natus::gpu::blend_state_set bs ;
+                    natus::graphics::blend_state_set bs ;
                     bs.do_blend = true ;
-                    bs.src_blend_factor = natus::gpu::blend_factor::src_alpha ;
-                    bs.dst_blend_factor = natus::gpu::blend_factor::one_minus_src_alpha ;
+                    bs.src_blend_factor = natus::graphics::blend_factor::src_alpha ;
+                    bs.dst_blend_factor = natus::graphics::blend_factor::one_minus_src_alpha ;
                     _render_states[ rs_id ]->blend_s = bs ;
                 }
 
                 
-                natus::gpu::backend_t::render_detail_t rd ;
+                natus::graphics::backend_t::render_detail_t rd ;
                 rd.num_elems = pcmd->ElemCount ;
                 rd.start = offset ;
                 
@@ -583,7 +583,7 @@ ImTextureID imgui::texture( natus::ntd::string_in_t name ) noexcept
     // except the data variable that are changed anyway.
     if( i == _vars.size() )
     {
-        _vars.emplace_back( natus::gpu::variable_set_t() ) ;
+        _vars.emplace_back( natus::graphics::variable_set_t() ) ;
         _rc->add_variable_set( _vars[ i ] ) ;
         auto * var = _vars[ i ]->texture_variable( "u_tex" ) ;
         var->set( name ) ;

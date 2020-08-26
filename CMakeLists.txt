@@ -112,7 +112,7 @@ list( APPEND subdirs
     "concurrent"
     "io"
     "system"
-    "gpu"
+    "graphics"
     "gfx"
     "device"
     "format"

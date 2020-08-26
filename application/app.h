@@ -7,7 +7,7 @@
 #include "protos.h"
 #include "platform/platform_window.h"
 
-#include <natus/gpu/async.h>
+#include <natus/graphics/async.h>
 #include <natus/concurrent/typedefs.h>
 
 namespace natus
@@ -94,7 +94,7 @@ namespace natus
                 natus::application::window_message_receiver_res_t msg_recv ;
                 natus::application::window_message_receiver_res_t msg_send ;
                 natus::application::window_message_receiver_res_t gfx_send ;
-                natus::gpu::async_res_t async ;
+                natus::graphics::async_res_t async ;
                 window_info_t wi ;
                 bool_ptr_t run ;
                 per_window_info( void_t ) {}
@@ -142,7 +142,7 @@ namespace natus
 
         protected:
 
-            typedef ::std::pair< this_t::window_view_t, natus::gpu::async_view_t > window_async_t ;
+            typedef ::std::pair< this_t::window_view_t, natus::graphics::async_view_t > window_async_t ;
 
             this_t::window_async_t create_window( 
                 natus::ntd::string_cref_t name, this_t::window_info_in_t ) ;
