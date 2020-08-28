@@ -30,45 +30,14 @@ namespace natus
 
         private:
             
-            struct record_cache 
-            {
-                natus_this_typedefs( record_cache ) ;
-                natus_res_typedef( record_cache ) ;
-
-                natus::concurrent::mrsw_t ac ;
-
-                natus::io::load_handle_t _lh ;
-
-                char_ptr_t _data = nullptr ;
-                size_t _sib = 0 ;
-
-                database * owner = nullptr ;
-                size_t _idx = size_t( -1 ) ;
-
-                record_cache( void_t ) ;
-                record_cache( database * owner_new, size_t const idx ) ;
-                record_cache( this_rref_t rhv ) ;
-                ~record_cache( void_t ) ;
-                this_ref_t operator = ( this_rref_t rhv ) ;
-
-                record_cache( this_cref_t ) = delete ;
-                this_ref_t operator = ( this_cref_t ) = delete  ;
-
-                bool_t can_wait( void_t ) const noexcept ;
-                bool_t has_data( void_t ) const noexcept ;
-
-                void_t take_load_handle( natus::io::load_handle_rref_t hnd ) ;
-
-                void_t wait_for_operation( natus::io::database::load_completion_funk_t funk ) ;
-
-                void_t change_database( natus::io::database * owner_new ) ;
-
-                record_cache_res_t load(
-                    natus::ntd::string_cref_t loc, bool_t const reload ) noexcept ;
-
-                record_cache_res_t load( bool_t const reload ) noexcept ;
-            };
-            typedef natus::memory::res< record_cache > record_cache_res_t ;
+            // this is the cache of a file record.
+            // it holds :
+            // - the load/store handles of an operation
+            // - the cached data
+            // - the owner database
+            // - the index into the databases' file record
+            struct record_cache ;
+            natus_res_typedef( record_cache ) ;
             friend struct record_cache ;
 
             

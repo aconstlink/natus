@@ -43,100 +43,117 @@ namespace this_file_db
     };
 }
 
-database::record_cache::record_cache( void_t ) 
+struct database::record_cache
 {
-}
+    natus_this_typedefs( record_cache ) ;
+    natus_res_typedef( record_cache ) ;
 
-database::record_cache::record_cache( database * owner_new, size_t const idx ) 
-{
-    owner = owner_new ;
-    _idx = idx ;
-}
+    natus::concurrent::mrsw_t ac ;
 
-database::record_cache::record_cache( this_rref_t rhv ) 
-{
-    *this = std::move( rhv ) ;
-}
+    natus::io::load_handle_t _lh ;
 
-database::record_cache::~record_cache( void_t ) 
-{
-}
+    char_ptr_t _data = nullptr ;
+    size_t _sib = 0 ;
 
-database::record_cache::this_ref_t database::record_cache::operator = ( this_rref_t rhv ) 
-{
-    _idx = rhv._idx ;
-    rhv._idx = size_t( -1 ) ;
-    owner = rhv.owner ;
-    rhv.owner = nullptr ;
+    database* owner = nullptr ;
+    size_t _idx = size_t( -1 ) ;
+    
 
-    natus_move_member_ptr( _data, rhv ) ;
-    _sib = rhv._sib ;
-
-    _lh = std::move( rhv._lh ) ;
-
-    return *this ;
-}
-
-bool_t database::record_cache::can_wait( void_t ) const noexcept { return _lh.can_wait() ; }
-bool_t database::record_cache::has_data( void_t ) const noexcept { return natus::core::is_not_nullptr( _data ) ; }    
-
-void_t database::record_cache::take_load_handle( natus::io::load_handle_rref_t hnd ) 
-{
-    _lh = std::move( hnd ) ;
-}
-
-void_t database::record_cache::wait_for_operation( natus::io::database::load_completion_funk_t funk )
-{
-    if( _idx == size_t( -1 ) ) 
+    record_cache( void_t )
     {
-        natus::log::global_t::error( "[db cache] : invalid handle") ;
-        return ;
     }
 
-    auto const res = _lh.wait_for_operation( [&] ( char_cptr_t data, size_t const sib, natus::io::result const err )
+    record_cache( database* owner_new, size_t const idx )
     {
-        if( err != natus::io::result::ok )
+        owner = owner_new ;
+        _idx = idx ;
+    }
+
+    record_cache( this_rref_t rhv )
+    {
+        *this = std::move( rhv ) ;
+    }
+
+    ~record_cache( void_t )
+    {
+    }
+
+    record_cache::this_ref_t operator = ( this_rref_t rhv )
+    {
+        _idx = rhv._idx ;
+        rhv._idx = size_t( -1 ) ;
+        owner = rhv.owner ;
+        rhv.owner = nullptr ;
+
+        natus_move_member_ptr( _data, rhv ) ;
+        _sib = rhv._sib ;
+
+        _lh = std::move( rhv._lh ) ;
+
+        return *this ;
+    }
+
+    bool_t can_wait( void_t ) const noexcept { return _lh.can_wait() ; }
+    bool_t has_data( void_t ) const noexcept { return natus::core::is_not_nullptr( _data ) ; }
+
+    void_t take_load_handle( natus::io::load_handle_rref_t hnd )
+    {
+        _lh = std::move( hnd ) ;
+    }
+
+    void_t wait_for_operation( natus::io::database::load_completion_funk_t funk )
+    {
+        if( _idx == size_t( -1 ) )
         {
-            natus::log::global_t::error( "[db] : failed to load data loc " + natus::io::to_string( err ) ) ;
+            natus::log::global_t::error( "[db cache] : invalid handle" ) ;
             return ;
         }
 
-        // @todo cache data...
-        natus::memory::malloc_guard< char_t > const mg( data, sib ) ;
-
-        funk( mg.get(), mg.size() ) ;
-    } ) ;
-
-    // there was no load operation, so take data from cache
-    if( res == natus::io::result::invalid_handle )
-    {
-        if( _data == nullptr )
+        auto const res = _lh.wait_for_operation( [&] ( char_cptr_t data, size_t const sib, natus::io::result const err )
         {
-            natus::log::global_t::error( "[db] : no load pending and no data cached. "
-                "This function requires a db load call." ) ;
-            return ;
+            if( err != natus::io::result::ok )
+            {
+                natus::log::global_t::error( "[db] : failed to load data loc " + natus::io::to_string( err ) ) ;
+                return ;
+            }
+
+            // @todo cache data...
+            natus::memory::malloc_guard< char_t > const mg( data, sib ) ;
+
+            funk( mg.get(), mg.size() ) ;
+        } ) ;
+
+        // there was no load operation, so take data from cache
+        if( res == natus::io::result::invalid_handle )
+        {
+            if( _data == nullptr )
+            {
+                natus::log::global_t::error( "[db] : no load pending and no data cached. "
+                    "This function requires a db load call." ) ;
+                return ;
+            }
+
+            funk( _data, _sib ) ;
         }
-
-        funk( _data, _sib ) ;
     }
-}
 
-void_t database::record_cache::change_database( natus::io::database* owner_new )
-{
-    owner = owner_new ;
-}
+    void_t change_database( natus::io::database* owner_new )
+    {
+        owner = owner_new ;
+    }
 
-natus::io::database::record_cache::record_cache_res_t database::record_cache::load(
-    natus::ntd::string_cref_t loc, bool_t const reload ) noexcept
-{
-    return owner->load( loc, reload )._res ;
-}
+    natus::io::database::record_cache::record_cache_res_t load(
+        natus::ntd::string_cref_t loc, bool_t const reload ) noexcept
+    {
+        return owner->load( loc, reload )._res ;
+    }
 
-natus::io::database::record_cache::record_cache_res_t database::record_cache::load( bool_t const reload ) noexcept
-{
-    natus::ntd::string_t loc = owner->location_for_index( _idx ) ;
-    return owner->load( loc, reload )._res ;
-}
+    natus::io::database::record_cache::record_cache_res_t load( bool_t const reload ) noexcept
+    {
+        natus::ntd::string_t loc = owner->location_for_index( _idx ) ;
+        return owner->load( loc, reload )._res ;
+    }
+};
 
 void_t database::cache_access::wait_for_operation( natus::io::database::load_completion_funk_t funk ) 
 {
@@ -362,9 +379,7 @@ bool_t database::pack( this_t::encryption const )
                 natus::log::global_t::warning( !res, "[db] : file record entry too long. Please reduce name length." ) ;
             }
         }
-
-        // for testing purposes, do not write content
-        //#if 0
+       
         // file content 
         {
             for( auto & fr : records )
@@ -381,7 +396,6 @@ bool_t database::pack( this_t::encryption const )
             outfile.flush() ;
         }
         
-        //#endif
         outfile.flush() ;
         outfile.close() ;
     }
@@ -498,10 +512,13 @@ database::cache_access_t database::load( natus::ntd::string_cref_t loc, bool_t c
     if( !fr.cache->has_data() || reload )
     {
         natus::io::load_handle_t lh ;
+        
+        // load from filesystem
         if( fr.offset == uint64_t( -2 ) )
         {
             lh = natus::io::global_t::load( _db.working / fr.rel, natus::io::obfuscator_t() ) ;
         }
+        // load from .ndb file
         else if( fr.offset != uint64_t( -1 ) )
         {
             size_t const offset = fr.offset + _db.offset ;
