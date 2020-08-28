@@ -21,11 +21,57 @@ namespace natus
 
         private: // monitoring stuff
 
-            natus::concurrent::thread_t _monitor_thread ;
+            natus::concurrent::thread_t _update_thread ;
             natus::concurrent::interruptable_sleep_t _isleep ;
 
-        private:
+        public:
 
+            typedef std::function< void_t ( char_cptr_t, size_t const ) > load_completion_funk_t ;
+
+        private:
+            
+            struct record_cache 
+            {
+                natus_this_typedefs( record_cache ) ;
+                natus_res_typedef( record_cache ) ;
+
+                natus::concurrent::mrsw_t ac ;
+
+                natus::io::load_handle_t _lh ;
+
+                char_ptr_t _data = nullptr ;
+                size_t _sib = 0 ;
+
+                database * owner = nullptr ;
+                size_t _idx = size_t( -1 ) ;
+
+                record_cache( void_t ) ;
+                record_cache( database * owner_new, size_t const idx ) ;
+                record_cache( this_rref_t rhv ) ;
+                ~record_cache( void_t ) ;
+                this_ref_t operator = ( this_rref_t rhv ) ;
+
+                record_cache( this_cref_t ) = delete ;
+                this_ref_t operator = ( this_cref_t ) = delete  ;
+
+                bool_t can_wait( void_t ) const noexcept ;
+                bool_t has_data( void_t ) const noexcept ;
+
+                void_t take_load_handle( natus::io::load_handle_rref_t hnd ) ;
+
+                void_t wait_for_operation( natus::io::database::load_completion_funk_t funk ) ;
+
+                void_t change_database( natus::io::database * owner_new ) ;
+
+                record_cache_res_t load(
+                    natus::ntd::string_cref_t loc, bool_t const reload ) noexcept ;
+
+                record_cache_res_t load( bool_t const reload ) noexcept ;
+            };
+            typedef natus::memory::res< record_cache > record_cache_res_t ;
+            friend struct record_cache ;
+
+            
             struct file_record
             {
                 natus::ntd::string_t location ;
@@ -41,6 +87,9 @@ namespace natus
 
                 natus::ntd::vector< natus::io::monitor_res_t > monitors ;
 
+                // the handle prototype/origin which is copied to the user
+                record_cache_res_t cache ;
+
                 file_record( void_t ) {}
                 file_record( file_record const & rhv ) 
                 {
@@ -51,6 +100,7 @@ namespace natus
                     rel = rhv.rel ;
                     stamp = rhv.stamp ;
                     monitors = rhv.monitors ;
+                    cache = rhv.cache ;
                 }
 
                 file_record( file_record && rhv )
@@ -62,6 +112,7 @@ namespace natus
                     rel = ::std::move( rhv.rel ) ;
                     stamp = ::std::move( rhv.stamp ) ;
                     monitors = ::std::move( rhv.monitors ) ;
+                    cache = std::move( rhv.cache ) ;
                 }
                 ~file_record( void_t ) {}
 
@@ -74,6 +125,7 @@ namespace natus
                     rel = rhv.rel ;
                     stamp = rhv.stamp ;
                     monitors = rhv.monitors ;
+                    cache = rhv.cache;
                     return *this ;
                 }
 
@@ -86,6 +138,7 @@ namespace natus
                     rel = ::std::move( rhv.rel ) ;
                     stamp = ::std::move( rhv.stamp ) ;
                     monitors = ::std::move( rhv.monitors ) ;
+                    cache = std::move( rhv.cache ) ;
                     return *this ;
                 }
             };
@@ -155,6 +208,39 @@ namespace natus
             {
                 none
             };
+            
+            // user access for file record 
+            class NATUS_IO_API cache_access
+            {
+                natus_this_typedefs( cache_access ) ;
+
+                friend class database ;
+
+            private:
+
+                record_cache_res_t _res ;
+                cache_access( record_cache_res_t res ) : _res( std::move( res ) ) {}
+
+            public:
+
+                cache_access( this_cref_t rhv ) noexcept : _res( rhv._res ) {}
+                cache_access( this_rref_t rhv ) noexcept : _res( std::move( rhv._res ) ) {}
+                ~cache_access( void_t ) noexcept {}
+                this_ref_t operator = ( this_cref_t rhv ) noexcept { _res = rhv._res ; return *this ; }
+                this_ref_t operator = ( this_rref_t rhv ) noexcept { _res = std::move(rhv._res) ; return *this ; }
+
+                // wait for io operation to be finished or taken from data cache
+                // if cache exists, it will be preferred. Data cache should be updated
+                // automatically on file change which will be notified by the monitor.
+                void_t wait_for_operation( natus::io::database::load_completion_funk_t funk ) ;
+
+                // load the same location.
+                this_t load( bool_t const reload = false ) noexcept ;
+
+                // changes the location of this record cache access.
+                this_t load( natus::ntd::string_cref_t loc, bool_t const reload = false ) noexcept ;
+            };
+            natus_res_typedef( cache_access ) ;
 
         public:
 
@@ -189,9 +275,11 @@ namespace natus
 
             // store from memory
             natus::io::store_handle_t store( natus::ntd::string_cref_t location , char_cptr_t, size_t const ) ;
-
+            
             // load to memory
-            natus::io::load_handle_t load( natus::ntd::string_cref_t loc ) const ;
+            // @param loc the file location
+            // @param reload force reload from database( filesystem/ndb file )
+            this_t::cache_access_t load( natus::ntd::string_cref_t loc, bool_t const reload = false ) ;
 
             void_t dump_to_std( void_t ) const noexcept ;
 
@@ -209,7 +297,7 @@ namespace natus
 
         private:
 
-            file_record_t create_file_record( natus::io::path_cref_t, natus::io::path_cref_t ) const noexcept;
+            file_record_t create_file_record( this_t::db_ref_t, natus::io::path_cref_t ) const noexcept;
             bool_t lookup( natus::ntd::string_cref_t loc, file_record_out_t ) const noexcept ;
             bool_t lookup( db const & db_, natus::ntd::string_cref_t loc, file_record_out_t ) const noexcept ;
             void_t file_change_stamp( this_t::file_record_cref_t ) noexcept ;
@@ -218,14 +306,16 @@ namespace natus
             void_t file_change_external( this_t::file_record_cref_t ) noexcept ;
             static void_t file_change_external( db & db_, this_t::file_record_cref_t ) noexcept ;
 
+            natus::ntd::string_t location_for_index( size_t const ) const ;
+
         private: // monitor
             
-            void_t spawn_monitor( void_t ) noexcept ;
-            void_t join_monitor( void_t ) noexcept ;
+            void_t spawn_update( void_t ) noexcept ;
+            void_t join_update( void_t ) noexcept ;
 
         private:
 
-            static void_t load_db_file( db & db_, natus::io::path_cref_t ) ;
+            void_t load_db_file( db & db_, natus::io::path_cref_t ) ;
 
         };
         natus_res_typedef( database ) ;

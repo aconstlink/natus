@@ -16,6 +16,7 @@ namespace natus
             invalid,
             invalid_argument,
             unknown,
+            invalid_handle ,
             num_results
         };
 
@@ -26,7 +27,7 @@ namespace natus
         {
             static natus::ntd::string_t const __result_strings[] = {
                 "ok", "failed", "processing", "state_change_failed",
-                "file_does_not_exist", "invalid", "invalid_argument", "unknown"
+                "file_does_not_exist", "invalid", "invalid_argument", "unknown", "invalid_handle"
             } ;
         }
 

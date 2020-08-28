@@ -43,6 +43,118 @@ namespace this_file_db
     };
 }
 
+database::record_cache::record_cache( void_t ) 
+{
+}
+
+database::record_cache::record_cache( database * owner_new, size_t const idx ) 
+{
+    owner = owner_new ;
+    _idx = idx ;
+}
+
+database::record_cache::record_cache( this_rref_t rhv ) 
+{
+    *this = std::move( rhv ) ;
+}
+
+database::record_cache::~record_cache( void_t ) 
+{
+}
+
+database::record_cache::this_ref_t database::record_cache::operator = ( this_rref_t rhv ) 
+{
+    _idx = rhv._idx ;
+    rhv._idx = size_t( -1 ) ;
+    owner = rhv.owner ;
+    rhv.owner = nullptr ;
+
+    natus_move_member_ptr( _data, rhv ) ;
+    _sib = rhv._sib ;
+
+    _lh = std::move( rhv._lh ) ;
+
+    return *this ;
+}
+
+bool_t database::record_cache::can_wait( void_t ) const noexcept { return _lh.can_wait() ; }
+bool_t database::record_cache::has_data( void_t ) const noexcept { return natus::core::is_not_nullptr( _data ) ; }    
+
+void_t database::record_cache::take_load_handle( natus::io::load_handle_rref_t hnd ) 
+{
+    _lh = std::move( hnd ) ;
+}
+
+void_t database::record_cache::wait_for_operation( natus::io::database::load_completion_funk_t funk )
+{
+    if( _idx == size_t( -1 ) ) 
+    {
+        natus::log::global_t::error( "[db cache] : invalid handle") ;
+        return ;
+    }
+
+    auto const res = _lh.wait_for_operation( [&] ( char_cptr_t data, size_t const sib, natus::io::result const err )
+    {
+        if( err != natus::io::result::ok )
+        {
+            natus::log::global_t::error( "[db] : failed to load data loc " + natus::io::to_string( err ) ) ;
+            return ;
+        }
+
+        // @todo cache data...
+        natus::memory::malloc_guard< char_t > const mg( data, sib ) ;
+
+        funk( mg.get(), mg.size() ) ;
+    } ) ;
+
+    // there was no load operation, so take data from cache
+    if( res == natus::io::result::invalid_handle )
+    {
+        if( _data == nullptr )
+        {
+            natus::log::global_t::error( "[db] : no load pending and no data cached. "
+                "This function requires a db load call." ) ;
+            return ;
+        }
+
+        funk( _data, _sib ) ;
+    }
+}
+
+void_t database::record_cache::change_database( natus::io::database* owner_new )
+{
+    owner = owner_new ;
+}
+
+natus::io::database::record_cache::record_cache_res_t database::record_cache::load(
+    natus::ntd::string_cref_t loc, bool_t const reload ) noexcept
+{
+    return owner->load( loc, reload )._res ;
+}
+
+natus::io::database::record_cache::record_cache_res_t database::record_cache::load( bool_t const reload ) noexcept
+{
+    natus::ntd::string_t loc = owner->location_for_index( _idx ) ;
+    return owner->load( loc, reload )._res ;
+}
+
+void_t database::cache_access::wait_for_operation( natus::io::database::load_completion_funk_t funk ) 
+{
+    return _res->wait_for_operation( funk ) ;
+}
+
+natus::io::database::cache_access_t::this_t database::cache_access::load( 
+    natus::ntd::string_cref_t loc, bool_t const reload ) noexcept
+{
+    this->_res = _res->load( loc, reload ) ;
+    return std::move( *this ) ;
+}
+
+natus::io::database::cache_access_t::this_t database::cache_access::load( bool_t const reload ) noexcept
+{
+    return this_t( _res->load( reload ) ) ;
+}
+
 //***
 database::database( void_t ) 
 {
@@ -53,21 +165,28 @@ database::database( natus::io::path_cref_t base, natus::io::path_cref_t name,
     natus::io::path_cref_t working_rel )
 {
     this_t::init( base, name, working_rel ) ;
-    this_t::spawn_monitor() ;
+    this_t::spawn_update() ;
 }
 
 //***
 database::database( this_rref_t rhv )
 {
-    this_t::join_monitor() ;
+    this_t::join_update() ;
     _db = ::std::move( rhv._db ) ;
-    this_t::spawn_monitor() ;
+
+    natus::concurrent::mrsw_t::writer_lock_t lk( _ac ) ;
+    for( auto & rec : _db.records )
+    {
+        rec.cache->change_database( this ) ;
+    }
+
+    this_t::spawn_update() ;
 }
 
 //***
 database::~database( void_t )
 {
-    this_t::join_monitor() ;
+    this_t::join_update() ;
 }
 
 //***
@@ -110,7 +229,7 @@ bool_t database::init( natus::io::path_cref_t base, natus::io::path_cref_t worki
                 // do not track self
                 if( i.path().stem() == name && i.path().extension() == ".ndb" ) continue ;
 
-                auto const fr = this_t::create_file_record( db.working, i.path() ) ;
+                auto fr = this_t::create_file_record( db, i.path() ) ;
                 
                 // check other files' existence
                 {
@@ -138,7 +257,7 @@ bool_t database::init( natus::io::path_cref_t base, natus::io::path_cref_t worki
                         continue ;
                     }
                 }
-
+                
                 db.records.emplace_back( fr ) ;
             }
         }
@@ -150,7 +269,7 @@ bool_t database::init( natus::io::path_cref_t base, natus::io::path_cref_t worki
 
     // spawn monitor thread for file system changes
     {
-        _monitor_thread = natus::concurrent::thread_t([=](){}) ;
+        _update_thread = natus::concurrent::thread_t([=](){}) ;
     }
 
     {
@@ -250,11 +369,8 @@ bool_t database::pack( this_t::encryption const )
         {
             for( auto & fr : records )
             {
-                this_t::load( fr.location ).wait_for_operation(
-                    [&] ( char_cptr_t data, size_t const sib, natus::io::result const res )
+                this_t::load( fr.location ).wait_for_operation( [&] ( char_cptr_t data, size_t const sib )
                 {
-                    if( res != natus::io::result::ok ) return ;
-
                     natus::ntd::string_t const wdata = this_t::obfuscator().encode( data, sib ) ;
 
                     outfile.seekp( fr.offset ) ;
@@ -339,6 +455,7 @@ void_t database::load_db_file( this_t::db_ref_t db_, natus::io::path_cref_t p )
             fr.extension = token[ 1 ] ;
             fr.offset = ::std::stol( token[ 2 ] ) ;
             fr.sib = ::std::stol( token[ 3 ] ) ;
+            fr.cache = this_t::record_cache( const_cast< this_ptr_t >( this ), db_.records.size() ) ;
 
             db_.records.emplace_back( fr ) ;
         }
@@ -361,28 +478,41 @@ natus::io::store_handle_t database::store( natus::ntd::string_cref_t /*location*
 }
 
 //***
-natus::io::load_handle_t database::load( natus::ntd::string_cref_t loc ) const
+database::cache_access_t database::load( natus::ntd::string_cref_t loc, bool_t const reload )
 {
     this_t::file_record_t fr ;
     if( natus::core::is_not( this_t::lookup( loc, fr ) ) )
     {
         natus::log::global_t::warning( "resource location not found : " + loc ) ;
-        return natus::io::load_handle_t() ;
+        return this_t::cache_access_t( this_t::record_cache_res_t() ) ;
     }
     
-    natus::io::load_handle_t lh ;
-    if( fr.offset == uint64_t(-2) )
+    this_t::cache_access_t ret = this_t::cache_access_t( fr.cache ) ;
+
+    // need write lock so no concurrent task is doing the load in parallel.
+    natus::concurrent::mrsw_t::writer_lock_t lk( fr.cache->ac ) ;
+
+    // is load going on?
+    if( fr.cache->can_wait() ) return std::move( ret ) ;
+
+    if( !fr.cache->has_data() || reload )
     {
-        lh = natus::io::global_t::load( _db.working / fr.rel, natus::io::obfuscator_t() ) ;
-    }
-    else if( fr.offset != uint64_t(-1) )
-    {
-        size_t const offset = fr.offset + _db.offset ;
-        auto const p = _db.base / natus::io::path_t( _db.name ).replace_extension( natus::io::path_t( ".ndb" ) ) ;
-        lh = natus::io::global_t::load( p, offset, fr.sib, this_t::obfuscator() ) ;
+        natus::io::load_handle_t lh ;
+        if( fr.offset == uint64_t( -2 ) )
+        {
+            lh = natus::io::global_t::load( _db.working / fr.rel, natus::io::obfuscator_t() ) ;
+        }
+        else if( fr.offset != uint64_t( -1 ) )
+        {
+            size_t const offset = fr.offset + _db.offset ;
+            auto const p = _db.base / natus::io::path_t( _db.name ).replace_extension( natus::io::path_t( ".ndb" ) ) ;
+            lh = natus::io::global_t::load( p, offset, fr.sib, this_t::obfuscator() ) ;
+        }
+
+        fr.cache->take_load_handle( std::move( lh ) ) ;
     }
 
-    return ::std::move( lh ) ;
+    return std::move( ret ) ;
 }
 
 //***
@@ -506,7 +636,7 @@ bool_t database::lookup_extension( natus::ntd::string_cref_t loc, natus::ntd::st
 }
 
 //***
-database::file_record_t database::create_file_record( natus::io::path_cref_t base, natus::io::path_cref_t path ) const noexcept
+database::file_record_t database::create_file_record( this_t::db_ref_t db, natus::io::path_cref_t path ) const noexcept
 {
     this_t::file_record_t fr ;
  
@@ -518,7 +648,7 @@ database::file_record_t database::create_file_record( natus::io::path_cref_t bas
     // determine file locator
     {
         // the relative path to the base path
-        auto const p = natus::ntd::filesystem::relative( path, base ) ;
+        auto const p = natus::ntd::filesystem::relative( path, db.working ) ;
 
         natus::ntd::string_t loc ;
         for( auto j : p.parent_path() )
@@ -549,6 +679,10 @@ database::file_record_t database::create_file_record( natus::io::path_cref_t bas
     // monitoring can  take palce.
     {
         fr.stamp = natus::ntd::filesystem::last_write_time( path ) ;
+    }
+
+    {
+        fr.cache = this_t::record_cache( const_cast< this_ptr_t >( this ), db.records.size() ) ;
     }
 
     return ::std::move( fr ) ;
@@ -609,6 +743,14 @@ void_t database::file_change_external( this_t::file_record_cref_t fr ) noexcept
 }
 
 //***
+natus::ntd::string_t database::location_for_index( size_t const idx ) const 
+{
+    natus::concurrent::mrsw_t::reader_lock_t lk( _ac ) ;
+    if( _db.records.size() <= idx ) return "" ;
+    return _db.records[ idx ].location ;
+}
+
+//***
 void_t database::file_change_external( this_t::db_t & db,  this_t::file_record_cref_t fri ) noexcept 
 {
     auto iter = ::std::find_if( db.records.begin(), db.records.end(), [&] ( this_t::file_record_cref_t fr )
@@ -624,17 +766,17 @@ void_t database::file_change_external( this_t::db_t & db,  this_t::file_record_c
 }
 
 //***
-void_t database::spawn_monitor( void_t ) noexcept
+void_t database::spawn_update( void_t ) noexcept
 {
-    this_t::join_monitor() ;
+    this_t::join_update() ;
 
-    _monitor_thread = natus::concurrent::thread_t( [&] ( void_t )
+    _update_thread = natus::concurrent::thread_t( [&] ( void_t )
     { 
         size_t const ms = 500 ;
 
-        natus::log::global_t::status("[db] : monitor thread going up @ " + ::std::to_string(ms) + " ms") ;
+        natus::log::global_t::status("[db] : update thread going up @ " + std::to_string(ms) + " ms") ;
 
-        while( !_isleep.sleep_for( ::std::chrono::milliseconds(ms) ) )
+        while( !_isleep.sleep_for( std::chrono::milliseconds(ms) ) )
         {
             this_t::db_t db ;
             {
@@ -684,38 +826,19 @@ void_t database::spawn_monitor( void_t ) noexcept
                     continue ;
                 }
             }
-            
-            // if no external is registered, change the update rate
-            {
-                bool_t any_external = false ;
-                for( auto& fr : db.records )
-                {
-                     if( fr.offset == uint64_t( -2 ) ) 
-                     {
-                         any_external = true ;
-                         break ;
-                     }
-                }
-
-                if( !any_external )
-                {
-                    natus::log::global_t::status( "[db][Monitor] : no external files to track. exiting early." ) ;
-                    break ;
-                }
-            }
         }
 
-        natus::log::global_t::status("[db] : monitor thread shutting down") ;
+        natus::log::global_t::status("[db] : update thread shutting down") ;
     } ) ;
 }
 
 //***
-void_t database::join_monitor( void_t ) noexcept 
+void_t database::join_update( void_t ) noexcept 
 {
-    if( _monitor_thread.joinable() ) 
+    if( _update_thread.joinable() ) 
     { 
         _isleep.interrupt() ; 
-        _monitor_thread.join() ; 
+        _update_thread.join() ; 
         _isleep.reset() ;
     }
 }

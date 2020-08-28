@@ -39,6 +39,7 @@ namespace natus
         public:
 
             natus::io::result wait_for_operation( natus::io::load_completion_funk_t ) ;
+            bool_t can_wait( void_t ) const noexcept ;
         };
         natus_typedef( load_handle ) ;
 

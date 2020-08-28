@@ -43,11 +43,13 @@ load_handle::this_ref_t load_handle::operator = ( this_rref_t rhv )
 natus::io::result load_handle::wait_for_operation( natus::io::load_completion_funk_t funk )
 {
     if( natus::core::is_nullptr( _ios ) ) 
-        return natus::io::result::invalid ;
+        return natus::io::result::invalid_handle ;
 
     auto * ios = _ios ;
     return ios->wait_for_operation( this_t( ::std::move( *this )), funk ) ;
 }
+
+bool_t load_handle::can_wait( void_t ) const noexcept { return _data_ptr != nullptr ; }
 
 //************************************************************************************
 store_handle::store_handle( natus::io::internal_item_ptr_t ptr, natus::io::system_ptr_t ios_ptr  )
@@ -85,7 +87,7 @@ store_handle::this_ref_t store_handle::operator = ( this_rref_t rhv )
 natus::io::result store_handle::wait_for_operation( void_t )
 {
     if( natus::core::is_nullptr( _ios ) )
-        return natus::io::result::invalid ;
+        return natus::io::result::invalid_handle ;
 
     auto * ios = _ios ;
     return ios->wait_for_operation( this_t( ::std::move( *this ) ), [=] ( natus::io::result ) { } ) ;
