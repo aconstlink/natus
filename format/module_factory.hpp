@@ -18,9 +18,15 @@ namespace natus
         natus_res_typedef( imodule_factory ) ;
 
         template< typename T >
-        class factory : public imodule_factory
+        class module_factory : public imodule_factory
         {
+        public:
 
+
+            virtual imodule_res_t create_module( natus::ntd::string_cref_t ext ) noexcept 
+            {
+                return natus::memory::res< T >( T() ) ;
+            }
         };
     }
 }

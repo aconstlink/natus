@@ -1,46 +1,42 @@
 #pragma once
 
 #include "../imodule.h"
+#include "../module_factory.hpp"
+#include "../module_registry.hpp"
 
 namespace natus
 {
     namespace format
     {
-        // stb module can import audio, images and fonts
-        class NATUS_FORMAT_API stb_module : public imodule
+        struct stb_module_register
         {
-            natus_this_typedefs( stb_module ) ;
-
-        private:
-
-            static const natus::ntd::vector< natus::ntd::string_t > __formats ;
-
-            typedef ::std::function< bool_t ( this_ptr_t, natus::ntd::string_cref_t loc, natus::io::database_res_t ) > import_funk_t ;
-            static const natus::ntd::vector< import_funk_t > __imports ;
-
-        public:
-
-            stb_module( void_t ) ;
-            stb_module( this_cref_t ) ;
-            stb_module( this_rref_t ) ;
-            virtual ~stb_module( void_t ) ;
-
-        public:
-
-            virtual natus::ntd::vector< natus::ntd::string_t > const & supported_formats( void_t ) const noexcept ;
-            virtual bool_t is_format_supported( natus::ntd::string_cref_t ) const noexcept ;
-            virtual bool_t import( natus::ntd::string_cref_t loc, natus::io::database_res_t ) noexcept ;
-
-        private:
-
-            bool_t import_audio( natus::ntd::string_cref_t loc, natus::io::database_res_t ) noexcept ;
-            bool_t import_image( natus::ntd::string_cref_t loc, natus::io::database_res_t ) noexcept ;
-            bool_t import_font( natus::ntd::string_cref_t loc, natus::io::database_res_t ) noexcept ;
-
-        private:
-
-            import_funk_t funk_for_extension( natus::ntd::string_cref_t ext ) noexcept ;
+            static void_t register_module( natus::format::module_registry_res_t reg ) ;
         };
-        natus_res_typedef( stb_module ) ;
+
+        class NATUS_FORMAT_API stb_image_module : public imodule
+        {
+        public:
+
+            virtual ~stb_image_module( void_t ) {}
+            virtual bool_t import_from( natus::ntd::string_cref_t loc, natus::io::database_res_t ) noexcept ;
+            
+        };
+        natus_typedef( stb_image_module ) ;
+        typedef natus::format::module_factory<stb_image_module> stb_image_factory_t ;
+        typedef natus::memory::res< stb_image_factory_t > stb_image_factory_res_t ;
+
+        class NATUS_FORMAT_API stb_audio_module // : public imodule
+        {
+        };
+        natus_typedef( stb_audio_module ) ;
+        typedef natus::format::module_factory<stb_audio_module_t> stb_audio_factory_t ;
+        typedef natus::memory::res< stb_audio_factory_t > stb_audio_factory_res_t ;
+
+        class NATUS_FORMAT_API stb_font_module //: public imodule
+        {
+        };
+        natus_typedef( stb_font_module ) ;
+        typedef natus::format::module_factory<stb_font_module_t> stb_font_factory_t ;
+        typedef natus::memory::res< stb_font_factory_t > stb_font_factory_res_t ;
     }
 }
