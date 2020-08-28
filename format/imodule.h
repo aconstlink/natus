@@ -19,5 +19,6 @@ namespace natus
             virtual natus::ntd::vector< natus::ntd::string_t > const &  supported_formats( void_t ) const noexcept = 0 ;
             virtual bool_t import( natus::ntd::string_cref_t loc, natus::io::database_res_t ) noexcept = 0 ;
         };
+        natus_res_typedef( imodule ) ;
     }
 }

@@ -3,6 +3,11 @@ set( sources
     "api.h"
     "typedefs.h"
 
+    "global.h"
+    "global.cpp"
+    "module_factory.hpp"
+    "module_registry.hpp"
+
     "imodule.h"
     
     "obj/obj_module.cpp"
