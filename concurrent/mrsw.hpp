@@ -65,12 +65,10 @@ namespace natus
             void_t writer_increment( void_t ) noexcept
             {
                 // ensure that only one writer is in critical section
-                _writer.wait( natus::concurrent::semaphore_static::is_zero_funk,
-                    natus::concurrent::semaphore_static::increment_funk ) ;
+                _writer.wait( 0, 1 ) ;
 
                 // ensure that no reader is in critical section
-                _reader.wait( natus::concurrent::semaphore_static::is_zero_funk,
-                    natus::concurrent::semaphore_static::no_op_funk ) ;
+                _reader.wait( 0, 0 ) ;
             }
 
             void_t writer_decrement( void_t )
@@ -117,8 +115,7 @@ namespace natus
                 _reader.increment() ;
 
                 // ensure that no writer is in critical section
-                _writer.wait( natus::concurrent::semaphore_static::is_zero_funk,
-                    natus::concurrent::semaphore_static::no_op_funk ) ;
+                _writer.wait( 0, 0 ) ;
             }
 
             void_t reader_decrement( void_t )
