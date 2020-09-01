@@ -2,9 +2,8 @@
 #pragma once
 
 #include "api.h"
-#include "protos.h"
 #include "typedefs.h"
-
+#include "protos.h"
 #include "mutex.hpp"
 
 namespace natus
@@ -18,7 +17,7 @@ namespace natus
         private:
 
             job_scheduler_ptr_t _job_scheduler_ptr = nullptr ;
-            itask_scheduler_ptr_t _task_scheduler_ptr = nullptr ;
+            //itask_scheduler_ptr_t _task_scheduler_ptr = nullptr ;
 
         private:
 
@@ -44,7 +43,7 @@ namespace natus
             static void_t update( void_t ) ;
             static this_ptr_t get( void_t ) ;
             static job_scheduler_ptr_t job_scheduler( void_t ) ;
-            static itask_scheduler_ptr_t task_scheduler( void_t ) ;
+            //static itask_scheduler_ptr_t task_scheduler( void_t ) ;
         };
         natus_typedef( global ) ;
     }

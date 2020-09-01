@@ -2,7 +2,7 @@
 #include "global.h"
 
 #include "job/job_scheduler.h"
-#include "task/task_scheduler.h"
+//#include "task/task_scheduler.h"
 
 #include <natus/log/global.h>
 
@@ -17,25 +17,25 @@ global::global( void_t )
     _job_scheduler_ptr = natus::concurrent::job_scheduler_t::create( 
         "[global::global] : job_scheduler" ) ;
 
-    _task_scheduler_ptr = natus::concurrent::task_scheduler_t::create( 
-        "[global::global] : task_scheduler" ) ;
+    //_task_scheduler_ptr = natus::concurrent::task_scheduler_t::create( 
+      //  "[global::global] : task_scheduler" ) ;
 }
 
 //***********************************************************************
 global::global( this_rref_t rhv )
 {
     natus_move_member_ptr( _job_scheduler_ptr, rhv ) ;
-    natus_move_member_ptr( _task_scheduler_ptr, rhv ) ;
+    //natus_move_member_ptr( _task_scheduler_ptr, rhv ) ;
 }
 
 //***********************************************************************
 global::~global( void_t )
 {
-    if( natus::core::is_not_nullptr( _task_scheduler_ptr ) )
+    /*if( natus::core::is_not_nullptr( _task_scheduler_ptr ) )
     {
         _task_scheduler_ptr->destroy() ;
         _task_scheduler_ptr = nullptr ;
-    }
+    }*/
 
     natus::concurrent::job_scheduler_t::destroy( _job_scheduler_ptr ) ;
 }
@@ -86,7 +86,7 @@ void_t global::deinit( void_t )
 //***********************************************************************
 void_t global::update( void_t )
 {
-    this_t::get()->_task_scheduler_ptr->update() ;
+    //this_t::get()->_task_scheduler_ptr->update() ;
 }
 
 //***********************************************************************
@@ -102,9 +102,9 @@ job_scheduler_ptr_t global::job_scheduler( void_t )
 }
 
 //***********************************************************************
-itask_scheduler_ptr_t global::task_scheduler( void_t )
+/*itask_scheduler_ptr_t global::task_scheduler( void_t )
 {
     return this_t::get()->_task_scheduler_ptr ;
-}
+}*/
 
 //***********************************************************************

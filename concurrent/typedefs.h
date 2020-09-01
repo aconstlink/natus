@@ -1,10 +1,10 @@
 #pragma once
 
-#include "protos.h"
 #include "mutex.hpp"
 
 #include <natus/memory/global.h>
 #include <natus/memory/allocator.hpp>
+#include <natus/memory/macros.h>
 
 #include <natus/ntd/string.hpp>
 #include <natus/ntd/map.hpp>
@@ -26,22 +26,22 @@ namespace natus
     {
         using namespace natus::core::types ;
 
-        natus_typedefs( ::std::thread, thread ) ;
-        natus_typedefs( ::std::mutex, mutex ) ;
-        natus_typedefs( ::std::unique_lock<mutex_t>, ulock ) ;
+        natus_typedefs( std::thread, thread ) ;
+        natus_typedefs( std::mutex, mutex ) ;
+        natus_typedefs( std::unique_lock<mutex_t>, ulock ) ;
 
         using memory = natus::memory::global ;
 
         template< typename T >
         using allocator = natus::memory::allocator<T, natus::concurrent::memory > ;
 
-        typedef ::std::function< void_t ( void_t ) > void_funk_t ;
+        typedef std::function< void_t ( void_t ) > void_funk_t ;
 
         namespace detail
         {
-            typedef natus::ntd::map< natus::ntd::string_t, itask_ptr_t > task_map_t ;
+            //typedef natus::ntd::map< natus::ntd::string_t, itask_ptr_t > task_map_t ;
         }
 
-        natus_typedefs( natus::concurrent::detail::task_map_t, task_map ) ;
+        //natus_typedefs( natus::concurrent::detail::task_map_t, task_map ) ;
     }
 }

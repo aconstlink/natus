@@ -10,7 +10,7 @@ namespace natus
 {
     namespace concurrent
     {
-        class NATUS_CONCURRENT_API semaphore
+        class semaphore
         {
             natus_this_typedefs( semaphore ) ;
 
