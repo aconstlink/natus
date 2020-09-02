@@ -15,9 +15,6 @@ set( sources
     "semaphore_guard.hpp"
     "mutex.hpp"
 
-    "task.hpp"
-    "task_executer.hpp"
-        
     "parallel_for.hpp"
     "range/range_1d.hpp"
     
