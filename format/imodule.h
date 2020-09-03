@@ -16,7 +16,7 @@ namespace natus
             //imodule( void_t ) {}
             virtual ~imodule( void_t ) {}
 
-            virtual bool_t import_from( natus::ntd::string_cref_t loc, natus::io::database_res_t ) noexcept = 0 ;
+            virtual natus::concurrent::future_t import_from( natus::ntd::string_cref_t loc, natus::io::database_res_t ) noexcept = 0 ;
         };
         natus_res_typedef( imodule ) ;
     }

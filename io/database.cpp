@@ -101,12 +101,12 @@ struct database::record_cache
         _lh = std::move( hnd ) ;
     }
 
-    void_t wait_for_operation( natus::io::database::load_completion_funk_t funk )
+    bool_t wait_for_operation( natus::io::database::load_completion_funk_t funk )
     {
         if( _idx == size_t( -1 ) )
         {
             natus::log::global_t::error( "[db cache] : invalid handle" ) ;
-            return ;
+            return false ;
         }
 
         auto const res = _lh.wait_for_operation( [&] ( char_cptr_t data, size_t const sib, natus::io::result const err )
@@ -130,11 +130,13 @@ struct database::record_cache
             {
                 natus::log::global_t::error( "[db] : no load pending and no data cached. "
                     "This function requires a db load call." ) ;
-                return ;
+                return false ;
             }
 
             funk( _data, _sib ) ;
+            return true ;
         }
+        return res == natus::io::result::ok ;
     }
 
     void_t change_database( natus::io::database* owner_new )
@@ -155,7 +157,7 @@ struct database::record_cache
     }
 };
 
-void_t database::cache_access::wait_for_operation( natus::io::database::load_completion_funk_t funk ) 
+bool_t database::cache_access::wait_for_operation( natus::io::database::load_completion_funk_t funk ) 
 {
     return _res->wait_for_operation( funk ) ;
 }

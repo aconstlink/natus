@@ -18,7 +18,7 @@ namespace natus
         public:
 
             virtual ~stb_image_module( void_t ) {}
-            virtual bool_t import_from( natus::ntd::string_cref_t loc, natus::io::database_res_t ) noexcept ;
+            virtual natus::concurrent::future_t import_from( natus::ntd::string_cref_t loc, natus::io::database_res_t ) noexcept ;
             
         };
         natus_typedef( stb_image_module ) ;

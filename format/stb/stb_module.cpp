@@ -1,6 +1,11 @@
 
 #include "stb_module.h"
 
+#include <natus/io/database.h>
+#include <natus/memory/guards/malloc_guard.hpp>
+#include <natus/graphics/texture/image.hpp>
+#include <natus/math/vector/vector4.hpp>
+
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
@@ -17,7 +22,108 @@ void_t stb_module_register::register_module( natus::format::module_registry_res_
 }
 
 // ***
-bool_t stb_image_module::import_from( natus::ntd::string_cref_t loc, natus::io::database_res_t ) noexcept 
+natus::concurrent::future_t stb_image_module::import_from( natus::ntd::string_cref_t loc, natus::io::database_res_t db ) noexcept 
 {
-    return false ;
+    return std::async( std::launch::async, [=] ( void_t ) 
+    { 
+        natus::memory::malloc_guard<char_t> data_buffer ;
+
+        natus::io::database_t::cache_access_t ca = db->load( loc ) ;
+        auto const res = ca.wait_for_operation( [&] ( char_cptr_t data, size_t const sib ) 
+        { 
+            data_buffer = natus::memory::malloc_guard<char_t>( data, sib ) ;
+        } ) ;
+
+        if( !res ) 
+        {
+            // funk not called
+        }
+
+        int width, height, comp ;
+
+        //
+        // loading the image in uchar format
+        // @todo float images
+        //
+        
+        uchar_ptr_t stb_data_ptr = stbi_load_from_memory( uchar_cptr_t( data_buffer.get() ),
+            int_t( data_buffer.size() ), &width, &height, &comp, 0 ) ;
+
+        if( natus::log::global::error( stb_data_ptr == nullptr,
+            "[so_imex::stb_module::import_image] : stbi_load_from_memory" ) )
+        {
+            char_cptr_t stbi_err_msg = stbi_failure_reason() ;
+            natus::log::global::error( "[so_imex::stb_module::import_image] : stb_image says : "
+                + std::string( stbi_err_msg ) ) ;
+
+            return ;
+        }
+
+        natus::graphics::image_format imf = natus::graphics::image_format::unknown ;
+        switch( comp )
+        {
+        case 1: imf = natus::graphics::image_format::intensity ; break ;
+        case 3: imf = natus::graphics::image_format::rgb ; break ;
+        case 5: imf = natus::graphics::image_format::rgba; break ;
+        default: break  ;
+        }
+
+        natus::graphics::image_t img( imf, natus::graphics::image_element_type::uint8,
+            natus::graphics::image_t::dims_t( size_t( width ), size_t( height ), 1 ) ) ;
+
+        img.update( [&] ( natus::graphics::image_ptr_t, natus::graphics::image_t::dims_in_t dims, void_ptr_t data_in )
+        {
+            typedef natus::math::vector4< uint8_t > rgba_t ;
+            auto* data = reinterpret_cast< rgba_t* >( data_in ) ;
+
+            size_t const w = 5 ;
+
+            size_t i = 0 ;
+            for( size_t y = 0; y < dims.y(); ++y )
+            {
+                bool_t const odd = ( y / w ) & 1 ;
+
+                for( size_t x = 0; x < dims.x(); ++x )
+                {
+                    rgba_t const pixel = *( ( rgba_t* ) ( &data_buffer[ y * width + x ] ) ) ;
+                    data[ i++ ] = pixel;
+                }
+            }
+        } ) ;
+
+        int index = 0 ;
+
+        /*
+        #if 1
+        for( int y = height - 1; y >= 0; --y )
+        {
+            for( int x = 0; x < width; ++x )
+            {
+                size_t const src_index = y * width + x ;
+
+                for( int c = 0; c < comp; ++c )
+                {
+                    dest_ptr[ index++ ] = stb_data_ptr[ src_index * comp + c ] ;
+                }
+            }
+        }
+        #else
+        for( int y = 0; y < height; ++y )
+        {
+            for( int x = 0; x < width; ++x )
+            {
+                size_t const src_index = y * width + x ;
+
+                for( int c = 0; c < comp; ++c )
+                {
+                    dest_ptr[ index++ ] = stb_data_ptr[ src_index * comp + c ] ;
+                }
+            }
+        }
+        #endif
+        */
+        stbi_image_free( stb_data_ptr ) ;
+
+        return ;
+    } ) ;
 }

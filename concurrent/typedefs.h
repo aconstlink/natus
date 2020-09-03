@@ -19,6 +19,7 @@
 #include <thread>
 #include <functional>
 #include <mutex>
+#include <future>
 
 namespace natus
 {
@@ -43,5 +44,7 @@ namespace natus
         }
 
         //natus_typedefs( natus::concurrent::detail::task_map_t, task_map ) ;
+
+        typedef std::future< void_t > future_t ;
     }
 }

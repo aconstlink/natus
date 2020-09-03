@@ -165,6 +165,7 @@ namespace natus
     {
         enum class image_format
         {
+            unknown,
             rgb,
             rgba,
             intensity,

@@ -201,7 +201,7 @@ namespace natus
                 // wait for io operation to be finished or taken from data cache
                 // if cache exists, it will be preferred. Data cache should be updated
                 // automatically on file change which will be notified by the monitor.
-                void_t wait_for_operation( natus::io::database::load_completion_funk_t funk ) ;
+                bool_t wait_for_operation( natus::io::database::load_completion_funk_t funk ) ;
 
                 // load the same location.
                 this_t load( bool_t const reload = false ) noexcept ;
