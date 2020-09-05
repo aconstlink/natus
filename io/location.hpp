@@ -25,15 +25,6 @@ namespace natus
                 _loc = loc ;
             }
 
-            location( natus::io::path_cref_t p ) noexcept
-            {
-                for( auto p_ : p.lexically_normal() )
-                {
-                    _loc += p_.string() + "." ;
-                }
-                _loc = _loc.substr( 0, _loc.size() - 1 ) ;
-            }
-
             location( this_cref_t rhv ) noexcept
             {
                 _loc = rhv._loc ;
@@ -97,6 +88,19 @@ namespace natus
             natus::ntd::string_t extension( void_t ) const noexcept
             {
                 return this_t::as_path().extension() ;
+            }
+
+            static this_t from_path( natus::io::path_cref_t p ) noexcept
+            {
+                natus::ntd::string_t loc ;
+
+                for( auto p_ : p.lexically_normal() )
+                {
+                    loc += p_.string() + "." ;
+                }
+                loc = loc.substr( 0, loc.size() - 1 ) ;
+
+                return this_t( loc ) ;
             }
         };
         natus_typedef( location ) ;
