@@ -5,6 +5,7 @@
 #include "handle.h"
 #include "monitor.hpp"
 #include "obfuscator.hpp"
+#include "location.hpp"
 
 #include <natus/concurrent/isleep.hpp>
 #include <natus/concurrent/mrsw.hpp>
@@ -43,8 +44,8 @@ namespace natus
             
             struct file_record
             {
-                natus::ntd::string_t location ;
-                natus::ntd::string_t extension ;
+                natus::io::location_t location ;
+
                 // -1 : invalid
                 // -2 : external
                 // otherwise : stored in .natus db file
@@ -63,7 +64,6 @@ namespace natus
                 file_record( file_record const & rhv ) 
                 {
                     location = rhv.location ;
-                    extension = rhv.extension ;
                     offset = rhv.offset ;
                     sib = rhv.sib ;
                     rel = rhv.rel ;
@@ -75,7 +75,6 @@ namespace natus
                 file_record( file_record && rhv )
                 {
                     location = ::std::move( rhv.location ) ;
-                    extension = ::std::move( rhv.extension ) ;
                     offset = rhv.offset ;
                     sib = rhv.sib ;
                     rel = ::std::move( rhv.rel ) ;
@@ -88,7 +87,6 @@ namespace natus
                 file_record & operator = ( file_record const& rhv ) noexcept
                 {
                     location = rhv.location ;
-                    extension = rhv.extension ;
                     offset = rhv.offset ;
                     sib = rhv.sib ;
                     rel = rhv.rel ;
@@ -101,7 +99,6 @@ namespace natus
                 file_record & operator = ( file_record&& rhv ) noexcept
                 {
                     location = ::std::move( rhv.location ) ;
-                    extension = ::std::move( rhv.extension ) ;
                     offset = rhv.offset ;
                     sib = rhv.sib ;
                     rel = ::std::move( rhv.rel ) ;
@@ -267,15 +264,15 @@ namespace natus
         private:
 
             file_record_t create_file_record( this_t::db_ref_t, natus::io::path_cref_t ) const noexcept;
-            bool_t lookup( natus::ntd::string_cref_t loc, file_record_out_t ) const noexcept ;
-            bool_t lookup( db const & db_, natus::ntd::string_cref_t loc, file_record_out_t ) const noexcept ;
+            bool_t lookup( natus::io::location_cref_t loc, file_record_out_t ) const noexcept ;
+            bool_t lookup( db const & db_, natus::io::location_cref_t loc, file_record_out_t ) const noexcept ;
             void_t file_change_stamp( this_t::file_record_cref_t ) noexcept ;
             void_t file_remove( this_t::file_record_cref_t ) noexcept ;
             
             void_t file_change_external( this_t::file_record_cref_t ) noexcept ;
             static void_t file_change_external( db & db_, this_t::file_record_cref_t ) noexcept ;
 
-            natus::ntd::string_t location_for_index( size_t const ) const ;
+            natus::io::location_t location_for_index( size_t const ) const ;
 
         private: // monitor
             

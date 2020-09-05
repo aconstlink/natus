@@ -261,9 +261,9 @@ bool_t database::init( natus::io::path_cref_t base, natus::io::path_cref_t worki
                             ::std::stringstream ss ;
                             ss
                                 << "[" << name << ".ndb] : "
-                                << "Only unique file names supported. See [" << fr.location << "] with extensions "
-                                << "[" << fr.extension << ", " << fr2.extension << "] "
-                                << "where [" << fr2.extension << "] already stored" ;
+                                << "Only unique file names supported. See [" << fr.location.as_string() << "] with extensions "
+                                << "[" << fr.location.extension() << ", " << fr2.location.extension() << "] "
+                                << "where [" << fr2.location.extension() << "] already stored" ;
 
                             natus::log::global_t::error( ss.str() ) ;
                         }
@@ -304,8 +304,7 @@ bool_t database::pack( this_t::encryption const )
 {
     struct __file_record
     {
-        natus::ntd::string_t location ;
-        natus::ntd::string_t extension ;
+        natus::io::location_t location ;
         uint64_t offset ;
         uint64_t sib ;
         natus::io::path_t path ;
@@ -314,7 +313,7 @@ bool_t database::pack( this_t::encryption const )
         natus::ntd::string_t to_string( void_t ) const 
         {
             ::std::stringstream ss ;
-            ss  << location << ":" << extension << ":"
+            ss  << location.as_string() << ":" << location.extension() << ":"
                 << ::std::to_string( offset ) << ":" << ::std::to_string( sib ) << ": " ;
             return ss.str() ;
         }
@@ -338,7 +337,6 @@ bool_t database::pack( this_t::encryption const )
         {
             __file_record fr__ ;
             fr__.location = fr.location ;
-            fr__.extension = fr.extension ;
             fr__.offset = lo ;
             fr__.sib = fr.sib ;
             fr__.path = _db.base / fr.rel ;
@@ -467,8 +465,7 @@ void_t database::load_db_file( this_t::db_ref_t db_, natus::io::path_cref_t p )
             }
 
             this_t::file_record_t fr ;
-            fr.location = token[ 0 ] ;
-            fr.extension = token[ 1 ] ;
+            fr.location = natus::io::location_t( token[ 0 ] ) ;
             fr.offset = ::std::stol( token[ 2 ] ) ;
             fr.sib = ::std::stol( token[ 3 ] ) ;
             fr.cache = this_t::record_cache( const_cast< this_ptr_t >( this ), db_.records.size() ) ;
@@ -558,7 +555,7 @@ void_t database::dump_to_std( void_t ) const noexcept
             ss << "[" << ::std::to_string(fr.sib) << " @ " 
                 << (fr.offset != uint64_t(-2) ? ::std::to_string(fr.offset) : "extern") 
                 << "] "
-                << fr.location + fr.extension ;
+                << fr.location.as_string() ;
 
             natus::log::global_t::status( ss.str() ) ;
         }
@@ -649,7 +646,7 @@ bool_t database::lookup_extension( natus::ntd::string_cref_t loc, natus::ntd::st
     this_t::file_record_t fr ;
     if( !this_t::lookup( loc, fr ) ) return false ;
 
-    ext = fr.extension ;
+    ext = fr.location.extension() ;
 
     return true;
 }
@@ -661,25 +658,14 @@ database::file_record_t database::create_file_record( this_t::db_ref_t db, natus
  
     // the files' extension
     {
-        fr.extension = path.extension() ;
+        //fr.extension = path.extension() ;
     }
 
     // determine file locator
     {
-        // the relative path to the base path
-        auto const p = natus::ntd::filesystem::relative( path, db.working ) ;
-
-        natus::ntd::string_t loc ;
-        for( auto j : p.parent_path() )
-        {
-            loc += j ;
-            loc += "." ;
-        }
-        loc += path.stem().string() ;
-        loc += path.extension().string() ;
-
-        fr.location = loc ;
-        fr.rel = p ;
+        // the relative path to the base path       
+        fr.rel = natus::ntd::filesystem::relative( path, db.working ) ;
+        fr.location = natus::io::location_t( fr.rel ) ;
     }
 
     {
@@ -695,7 +681,7 @@ database::file_record_t database::create_file_record( this_t::db_ref_t db, natus
     }
 
     // store the last write time so 
-    // monitoring can  take palce.
+    // monitoring can  take place.
     {
         fr.stamp = natus::ntd::filesystem::last_write_time( path ) ;
     }
@@ -708,14 +694,14 @@ database::file_record_t database::create_file_record( this_t::db_ref_t db, natus
 }
 
 //***
-bool_t database::lookup( natus::ntd::string_cref_t loc, this_t::file_record_out_t fro ) const noexcept
+bool_t database::lookup( natus::io::location_cref_t loc, this_t::file_record_out_t fro ) const noexcept
 {
     natus::concurrent::mrsw_t::reader_lock_t lk( _ac ) ;
     return this_t::lookup( _db, loc, fro ) ;
 }
 
 //***
-bool_t database::lookup( this_t::db const & db_, natus::ntd::string_cref_t loc, file_record_out_t fro ) const noexcept
+bool_t database::lookup( this_t::db const & db_, natus::io::location_cref_t loc, file_record_out_t fro ) const noexcept
 {
     for( auto& fr : db_.records )
     {
@@ -762,10 +748,10 @@ void_t database::file_change_external( this_t::file_record_cref_t fr ) noexcept
 }
 
 //***
-natus::ntd::string_t database::location_for_index( size_t const idx ) const 
+natus::io::location_t database::location_for_index( size_t const idx ) const 
 {
     natus::concurrent::mrsw_t::reader_lock_t lk( _ac ) ;
-    if( _db.records.size() <= idx ) return "" ;
+    if( _db.records.size() <= idx ) return natus::io::location_t( natus::ntd::string_t( "" ) ) ;
     return _db.records[ idx ].location ;
 }
 

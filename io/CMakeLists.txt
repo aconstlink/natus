@@ -9,6 +9,7 @@ set( sources
     "global.cpp"
     "monitor.hpp"
     "obfuscator.hpp"
+    "location.hpp"
 
     "handle.h"
     "handle.cpp"
