@@ -1,6 +1,7 @@
 #pragma once
 
 #include "typedefs.h"
+#include "location.hpp"
 
 #include <natus/ntd/vector.hpp>
 #include <natus/ntd/string.hpp>
@@ -36,7 +37,7 @@ namespace natus
             struct data
             {
                 notify n ;
-                natus::ntd::string_t loc ;
+                natus::io::location_t loc ;
             };
             natus_typedef( data ) ;
 
@@ -65,13 +66,13 @@ namespace natus
 
         public:
 
-            void_t trigger_changed( natus::ntd::string_cref_t loc, notify const n ) noexcept
+            void_t trigger_changed( natus::io::location_cref_t loc, notify const n ) noexcept
             {
                 natus::concurrent::lock_guard_t lk( _mtx ) ;
                 this_t::insert( { n, loc } ) ;
             }
 
-            typedef ::std::function< void_t ( natus::ntd::string_cref_t, this_t::notify const ) > foreach_funk_t ;
+            typedef ::std::function< void_t ( natus::io::location_cref_t, this_t::notify const ) > foreach_funk_t ;
             void_t for_each_and_swap( foreach_funk_t funk )
             {
                 natus::ntd::vector< this_t::data_t > tmp ;
@@ -88,7 +89,7 @@ namespace natus
 
         private:
 
-            bool_t has( natus::ntd::string_cref_t loc ) noexcept
+            bool_t has( natus::io::location_cref_t loc ) noexcept
             {
                 for( auto const & item : _changed )
                 {
