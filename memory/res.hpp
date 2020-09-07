@@ -55,7 +55,7 @@ namespace natus
             template< class B >
             res( res< B > const & rhv )
             {
-                _data = rhv.get_sptr() ;
+                _data = ::std::dynamic_pointer_cast<T>( rhv.get_sptr() ) ;
             }
 
             template< class B >
