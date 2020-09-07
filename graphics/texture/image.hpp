@@ -7,6 +7,7 @@
 #include "../types.h"
 
 #include <natus/math/vector/vector3.hpp>
+#include <cstring>
 
 namespace natus
 {
@@ -73,7 +74,7 @@ namespace natus
                 _depth = rhv._depth ;
                 
                 this_t::resize( _width, _height, _depth ) ;
-                ::std::memcpy( _data, rhv._data, this_t::sib() ) ;
+                std::memcpy( _data, rhv._data, this_t::sib() ) ;
 
                 return *this ;
             }
