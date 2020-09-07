@@ -204,7 +204,7 @@ namespace natus
                 this_t load( bool_t const reload = false ) noexcept ;
 
                 // changes the location of this record cache access.
-                this_t load( natus::ntd::string_cref_t loc, bool_t const reload = false ) noexcept ;
+                this_t load( natus::io::location_cref_t loc, bool_t const reload = false ) noexcept ;
             };
             natus_res_typedef( cache_access ) ;
 
@@ -245,7 +245,7 @@ namespace natus
             // load to memory
             // @param loc the file location
             // @param reload force reload from database( filesystem/ndb file )
-            this_t::cache_access_t load( natus::ntd::string_cref_t loc, bool_t const reload = false ) ;
+            this_t::cache_access_t load( natus::io::location_cref_t loc, bool_t const reload = false ) ;
 
             void_t dump_to_std( void_t ) const noexcept ;
 

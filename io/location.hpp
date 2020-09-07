@@ -85,9 +85,14 @@ namespace natus
                 return _loc ;
             }
 
-            natus::ntd::string_t extension( void_t ) const noexcept
+            natus::ntd::string_t extension( bool_t const dotted = true ) const noexcept
             {
-                return this_t::as_path().extension() ;
+                natus::ntd::string_t ext = this_t::as_path().extension() ;
+                if( !dotted )
+                {
+                    ext = ext.substr( 1, ext.size() - 1 ) ;
+                }
+                return ext ;
             }
 
             static this_t from_path( natus::io::path_cref_t p ) noexcept

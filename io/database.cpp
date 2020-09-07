@@ -145,7 +145,7 @@ struct database::record_cache
     }
 
     natus::io::database::record_cache::record_cache_res_t load(
-        natus::ntd::string_cref_t loc, bool_t const reload ) noexcept
+        natus::io::location_cref_t loc, bool_t const reload ) noexcept
     {
         return owner->load( loc, reload )._res ;
     }
@@ -163,7 +163,7 @@ bool_t database::cache_access::wait_for_operation( natus::io::database::load_com
 }
 
 natus::io::database::cache_access_t::this_t database::cache_access::load( 
-    natus::ntd::string_cref_t loc, bool_t const reload ) noexcept
+    natus::io::location_cref_t loc, bool_t const reload ) noexcept
 {
     this->_res = _res->load( loc, reload ) ;
     return std::move( *this ) ;
@@ -491,12 +491,12 @@ natus::io::store_handle_t database::store( natus::ntd::string_cref_t /*location*
 }
 
 //***
-database::cache_access_t database::load( natus::ntd::string_cref_t loc, bool_t const reload )
+database::cache_access_t database::load( natus::io::location_cref_t loc, bool_t const reload )
 {
     this_t::file_record_t fr ;
     if( natus::core::is_not( this_t::lookup( loc, fr ) ) )
     {
-        natus::log::global_t::warning( "resource location not found : " + loc ) ;
+        natus::log::global_t::warning( "resource location not found : " + loc.as_string() ) ;
         return this_t::cache_access_t( this_t::record_cache_res_t() ) ;
     }
     

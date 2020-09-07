@@ -3,6 +3,7 @@ set( sources
     "api.h"
     "typedefs.h"
 
+    "item.hpp"
     "global.h"
     "global.cpp"
     "module_factory.hpp"

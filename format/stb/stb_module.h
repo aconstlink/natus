@@ -8,7 +8,7 @@ namespace natus
 {
     namespace format
     {
-        struct stb_module_register
+        struct NATUS_FORMAT_API stb_module_register
         {
             static void_t register_module( natus::format::module_registry_res_t reg ) ;
         };
@@ -18,7 +18,7 @@ namespace natus
         public:
 
             virtual ~stb_image_module( void_t ) {}
-            virtual natus::concurrent::future_t import_from( natus::ntd::string_cref_t loc, natus::io::database_res_t ) noexcept ;
+            virtual natus::format::future_item_t import_from( natus::io::location_cref_t loc, natus::io::database_res_t ) noexcept ;
             
         };
         natus_typedef( stb_image_module ) ;

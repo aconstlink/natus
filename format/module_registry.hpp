@@ -96,6 +96,39 @@ namespace natus
 
                 return true ;
             }
+
+        public:
+
+            natus::format::future_item_t import_from( natus::io::location_cref_t loc, natus::io::database_res_t db ) noexcept
+            {
+                natus::concurrent::mrsw_t::reader_lock_t lk( _ac ) ;
+
+                auto fac = this_t::get_import_factory( loc ) ;
+                if( !fac.is_valid() )
+                {
+                    return std::async( std::launch::deferred, [&] ( void_t )
+                    {
+                        natus::log::global_t::warning( "Can not create factory for extension : " + loc.extension() ) ;
+                        return natus::format::item_res_t( natus::format::error_item_t( "Can not create factory for extension : " + loc.extension() ) ) ;
+                    } ) ;
+                }
+                
+                return fac->create_module( loc.extension() )->import_from( loc, db ) ;
+            }
+
+        private:
+
+            natus::format::imodule_factory_res_t get_import_factory( natus::io::location_cref_t loc ) const noexcept
+            {
+                auto iter = std::find_if( _imports.begin(), _imports.end(), [&] ( this_t::data_cref_t d ) 
+                { 
+                    return d.ext == loc.extension(false) ;
+                } ) ;
+                if( iter == _imports.end() )
+                    return natus::format::imodule_factory_res_t() ;
+
+                return iter->fac ;
+            }
         };
         natus_res_typedef( module_registry ) ;
     }
