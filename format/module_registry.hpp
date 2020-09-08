@@ -62,15 +62,12 @@ namespace natus
                 for( auto const & ext : exts )
                 {
                     natus::concurrent::mrsw_t::writer_lock_t lk( _ac ) ;
-                    auto iter = std::find_if( _imports.begin(), _imports.end(), [&] ( this_t::data_cref_t d )
-                    {
-                        return d.ext == ext ;
-                    } ) ;
 
                     this_t::data_t d ;
                     d.ext = ext ;
                     d.fac = fac ;
 
+                    // add to the front so newer modules will be preferred.
                     _imports.insert( _imports.begin(), std::move( d ) ) ;
                 }
 
@@ -82,15 +79,12 @@ namespace natus
                 for( auto const& ext : exts )
                 {
                     natus::concurrent::mrsw_t::writer_lock_t lk( _ac ) ;
-                    auto iter = std::find_if( _exports.begin(), _exports.end(), [&] ( this_t::data_cref_t d )
-                    {
-                        return d.ext == ext ;
-                    } ) ;
-
+                    
                     this_t::data_t d ;
                     d.ext = ext ;
                     d.fac = fac ;
 
+                    // add to the front so newer modules will be preferred.
                     _exports.insert( _exports.begin(), std::move( d ) ) ;
                 }
 

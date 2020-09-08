@@ -13,7 +13,7 @@ namespace natus
         {
         public:
 
-            virtual imodule_res_t create_module( natus::ntd::string_cref_t ext ) noexcept = 0 ;
+            virtual imodule_res_t create_module( natus::ntd::string_cref_t ) noexcept = 0 ;
         };
         natus_res_typedef( imodule_factory ) ;
 
@@ -23,7 +23,7 @@ namespace natus
         public:
 
 
-            virtual imodule_res_t create_module( natus::ntd::string_cref_t ext ) noexcept 
+            virtual imodule_res_t create_module( natus::ntd::string_cref_t ) noexcept 
             {
                 return natus::memory::res< T >( T() ) ;
             }
