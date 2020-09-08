@@ -671,7 +671,7 @@ database::file_record_t database::create_file_record( this_t::db_ref_t db, natus
     {
         // the relative path to the base path       
         fr.rel = natus::ntd::filesystem::relative( path, db.working ) ;
-        fr.location = natus::io::location_t( fr.rel ) ;
+        fr.location = natus::io::location_t::from_path( fr.rel ) ;
     }
 
     {
