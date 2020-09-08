@@ -53,7 +53,10 @@ if( TARGET OpenAL )
 endif()
 
 if( TARGET openal-info )
-set_target_properties( openal-info PROPERTIES FOLDER "natus/externals/openal-soft" )
+  set_target_properties( openal-info PROPERTIES FOLDER "natus/externals/openal-soft" )
+  if( NATUS_COMPILER_GNU )
+    target_compile_options( openal-info PRIVATE -Wno-pedantic )
+  endif()
 endif()
 
 #

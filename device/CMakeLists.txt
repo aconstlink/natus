@@ -89,9 +89,10 @@ target_link_libraries( ${cur_lib_name}
   PUBLIC rtmidi )
 endif()
 
-if( NATUS_COMPILER_GCC )
+if( NATUS_COMPILER_GNU )
   target_compile_options( ${cur_lib_name} PRIVATE -Wno-deprecated-declarations )
 endif()
+
 ###########################################################
 # SECTION: Build Tree
 ###########################################################
