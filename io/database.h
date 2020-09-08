@@ -218,6 +218,8 @@ namespace natus
             database( this_rref_t rhv ) ;
             ~database( void_t ) ;
 
+            this_ref_t operator = ( this_rref_t rhv ) noexcept ;
+
         public:
 
             // gives access to some file system structure

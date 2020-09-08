@@ -190,22 +190,28 @@ database::database( natus::io::path_cref_t base, natus::io::path_cref_t name,
 //***
 database::database( this_rref_t rhv )
 {
-    this_t::join_update() ;
-    _db = ::std::move( rhv._db ) ;
-
-    natus::concurrent::mrsw_t::writer_lock_t lk( _ac ) ;
-    for( auto & rec : _db.records )
-    {
-        rec.cache->change_database( this ) ;
-    }
-
-    this_t::spawn_update() ;
+    *this = std::move( rhv ) ;
 }
 
 //***
 database::~database( void_t )
 {
     this_t::join_update() ;
+}
+
+database::this_ref_t database::operator = ( this_rref_t rhv ) noexcept 
+{
+    this_t::join_update() ;
+    _db = ::std::move( rhv._db ) ;
+
+    natus::concurrent::mrsw_t::writer_lock_t lk( _ac ) ;
+    for( auto& rec : _db.records )
+    {
+        rec.cache->change_database( this ) ;
+    }
+
+    this_t::spawn_update() ;
+    return *this ;
 }
 
 //***
