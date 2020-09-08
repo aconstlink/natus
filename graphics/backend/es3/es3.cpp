@@ -1065,6 +1065,20 @@ struct es3_backend::pimpl
         GLenum const type = natus::graphics::es3::convert_to_gl_pixel_type( confin.image().get_image_element_type() ) ;
         void_cptr_t data = confin.image().get_image_ptr() ;
 
+        // determine how to unpack the data
+        // ideally, should be divideable by 4
+        {
+            GLint unpack = 0 ;
+
+            if( width % 4 == 0 ) unpack = 4 ;
+            else if( width % 3 == 0 ) unpack = 3 ;
+            else if( width % 3 == 0 ) unpack = 2 ;
+            else unpack = 1 ;
+
+            glPixelStorei( GL_UNPACK_ALIGNMENT, unpack ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glPixelStorei" ) ) ;
+        }
+
         if( sib == 0 || config.sib < sib )
         {
             GLint const border = 0 ;
