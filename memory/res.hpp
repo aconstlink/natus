@@ -61,7 +61,7 @@ namespace natus
             template< class B >
             res( res< B > && rhv )
             {
-                _data = ::std::move( rhv.move_out_sptr() ) ;
+                _data = std::dynamic_pointer_cast<T>( std::move( rhv.move_out_sptr() ) ) ;
             }
             
             res( value_cref_t v )
