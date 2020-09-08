@@ -50,20 +50,20 @@ natus::format::future_item_t stb_image_module::import_from( natus::io::location_
             int_t( data_buffer.size() ), &width, &height, &comp, 0 ) ;
 
         if( natus::log::global::error( stb_data_ptr == nullptr,
-            "[so_imex::stb_module::import_image] : stbi_load_from_memory" ) )
+            natus_log_fn( "stbi_load_from_memory" ) ) )
         {
             char_cptr_t stbi_err_msg = stbi_failure_reason() ;
-            natus::log::global::error( "[so_imex::stb_module::import_image] : stb_image says : "
+            natus::log::global::error( natus_log_fn( "stb_image" )
                 + std::string( stbi_err_msg ) ) ;
 
-            return natus::format::item_res_t( natus::format::error_item_t("Can not load from memory.") ) ;
+            return natus::format::item_res_t( natus::format::status_item_t("Can not load from memory.") ) ;
         }
 
         natus::graphics::image_format imf = natus::graphics::image_format::unknown ;
         switch( comp )
         {
         case 1: imf = natus::graphics::image_format::intensity ; break ;
-        case 3: imf = natus::graphics::image_format::rgb ; break ;
+        case 3: imf = natus::graphics::image_format::rgba ; break ;
         case 4: imf = natus::graphics::image_format::rgba; break ;
         default: break  ;
         }
@@ -76,16 +76,16 @@ natus::format::future_item_t stb_image_module::import_from( natus::io::location_
             img.update( [&] ( natus::graphics::image_ptr_t, natus::graphics::image_t::dims_in_t dims, void_ptr_t data_in )
             {
                 typedef natus::math::vector3< uint8_t > rgb_t ;
-                auto* data = reinterpret_cast< rgb_t* >( data_in ) ;
+                typedef natus::math::vector4< uint8_t > rgba_t ;
+                auto* dst = reinterpret_cast< rgba_t* >( data_in ) ;
+                auto* src = reinterpret_cast< rgb_t* >( stb_data_ptr ) ;
 
-                size_t i = 0 ;
-                for( size_t y = 0; y < dims.y(); ++y )
+                size_t const ne = dims.x() * dims.y() * dims.z() ;
+                for( size_t i=0; i<ne; ++i ) 
                 {
-                    for( size_t x = 0; x < dims.x(); ++x )
-                    {
-                        rgb_t const pixel = *( ( rgb_t* ) ( &stb_data_ptr[ y * width + x ] ) ) ;
-                        data[ i++ ] = pixel;
-                    }
+                    // mirror y
+                    size_t const start = ne - width * ( ( i / width ) + 1 ) ;
+                    dst[ i ] = rgba_t( src[ start + i % width ], 255 );
                 }
             } ) ;
         }
@@ -94,51 +94,19 @@ natus::format::future_item_t stb_image_module::import_from( natus::io::location_
             img.update( [&] ( natus::graphics::image_ptr_t, natus::graphics::image_t::dims_in_t dims, void_ptr_t data_in )
             {
                 typedef natus::math::vector4< uint8_t > rgba_t ;
-                auto* data = reinterpret_cast< rgba_t* >( data_in ) ;
+                auto* dst = reinterpret_cast< rgba_t* >( data_in ) ;
+                auto* src = reinterpret_cast< rgba_t* >( stb_data_ptr ) ;
 
-                size_t i = 0 ;
-                for( size_t y = 0; y < dims.y(); ++y )
+                size_t const ne = dims.x() * dims.y() * dims.z() ;
+                for( size_t i = 0; i < ne; ++i )
                 {
-                    for( size_t x = 0; x < dims.x(); ++x )
-                    {
-                        rgba_t const pixel = *( ( rgba_t* ) ( &stb_data_ptr[ y * width + x ] ) ) ;
-                        data[ i++ ] = pixel;
-                    }
+                    // mirror y
+                    size_t const start = ne - width * ( ( i / width ) + 1 ) ;
+                    dst[ i ] = rgba_t( src[ start + i % width ] );
                 }
+
             } ) ;
         }
-
-        /*
-        int index = 0 ;
-
-        #if 1
-        for( int y = height - 1; y >= 0; --y )
-        {
-            for( int x = 0; x < width; ++x )
-            {
-                size_t const src_index = y * width + x ;
-
-                for( int c = 0; c < comp; ++c )
-                {
-                    dest_ptr[ index++ ] = stb_data_ptr[ src_index * comp + c ] ;
-                }
-            }
-        }
-        #else
-        for( int y = 0; y < height; ++y )
-        {
-            for( int x = 0; x < width; ++x )
-            {
-                size_t const src_index = y * width + x ;
-
-                for( int c = 0; c < comp; ++c )
-                {
-                    dest_ptr[ index++ ] = stb_data_ptr[ src_index * comp + c ] ;
-                }
-            }
-        }
-        #endif
-        */
         stbi_image_free( stb_data_ptr ) ;
 
          ;

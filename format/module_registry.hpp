@@ -109,7 +109,7 @@ namespace natus
                     return std::async( std::launch::deferred, [&] ( void_t )
                     {
                         natus::log::global_t::warning( "Can not create factory for extension : " + loc.extension() ) ;
-                        return natus::format::item_res_t( natus::format::error_item_t( "Can not create factory for extension : " + loc.extension() ) ) ;
+                        return natus::format::item_res_t( natus::format::status_item_t( "Can not create factory for extension : " + loc.extension() ) ) ;
                     } ) ;
                 }
                 
