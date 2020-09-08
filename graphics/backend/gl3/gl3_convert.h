@@ -136,7 +136,7 @@ namespace natus
                 case image_format::rgb:
                     switch( t )
                     {
-                    case natus::graphics::image_element_type::uint8: return GL_RGB ;
+                    case natus::graphics::image_element_type::uint8: return GL_RGB8 ;
                     case natus::graphics::image_element_type::int16: return GL_RGB16I ;
                     case natus::graphics::image_element_type::int32: return GL_RGB32I ;
                     case natus::graphics::image_element_type::uint16: return GL_RGB16UI ;
@@ -150,7 +150,7 @@ namespace natus
                 case image_format::rgba:
                     switch( t )
                     {
-                    case natus::graphics::image_element_type::uint8: return GL_RGBA ;
+                    case natus::graphics::image_element_type::uint8: return GL_RGBA8 ;
                     case natus::graphics::image_element_type::int16: return GL_RGBA16I ;
                     case natus::graphics::image_element_type::int32: return GL_RGBA32I ;
                     case natus::graphics::image_element_type::uint16: return GL_RGBA16UI ;
