@@ -1076,7 +1076,7 @@ struct es3_backend::pimpl
             else unpack = 1 ;
 
             glPixelStorei( GL_UNPACK_ALIGNMENT, unpack ) ;
-            natus::ogl::error::check_and_log( natus_log_fn( "glPixelStorei" ) ) ;
+            natus::es::error::check_and_log( natus_log_fn( "glPixelStorei" ) ) ;
         }
 
         if( sib == 0 || config.sib < sib )

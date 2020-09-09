@@ -43,7 +43,10 @@ target_link_libraries( ${cur_lib_name}
         PUBLIC natus::log
         PUBLIC natus::memory
     )
-
+if( NATUS_TARGET_OS_LIN )
+  target_link_libraries( ${cur_lib_name}
+    PUBLIC pthread )
+endif()
 ###########################################################
 # SECTION: Build Tree
 ###########################################################
