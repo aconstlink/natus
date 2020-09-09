@@ -1,0 +1,73 @@
+
+version 0.1
+
+// comment line
+
+library mylib
+{
+    library inner
+    {
+        version gl3, es3
+        {
+            vec3 xyz( vec3 )
+            {
+            }
+        }
+    }
+
+    version gl3, es3
+    {
+        vec3 xyz( vec3 )
+        {
+        }
+    }
+}
+
+shader_config name
+{
+    vertex_shader
+    {
+        mat4 proj : projection ;
+        mat4 view : view ;
+
+        float some_var ;
+
+        tex2d some_texture : noise ;
+
+        in vec3 pos : position ;
+        in vec2 tx : texcoord0 ;
+
+        out vec4 pos : position ;
+
+        version gl3 es3
+        {
+            void main()
+            {
+                // build in function
+                vec3 pos = nsl.math.xyz( in.pos ) ;
+
+                // user library function
+                pos = mylib.xyz( in.pos ) ;
+
+                out.pos = proj * view * vec4( pos, 1.0 ) ;
+            }
+        }
+
+        version hlsl9 hlsl10 hlsl11
+        {}
+    }
+
+    pixel_shader
+    {
+        in vec3 frag_coord : frag_coord ;
+        out vec4 color : color ;
+
+        version gl3 es3
+        {
+            void main()
+            {
+                out.color = vec4(1) ;
+            }
+        }
+    }
+}
