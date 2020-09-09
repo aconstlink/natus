@@ -116,6 +116,7 @@ list( APPEND subdirs
     "gfx"
     "device"
     "format"
+    "nsl"
     ${subdirs_header_only}
     )
 
