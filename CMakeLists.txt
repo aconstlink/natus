@@ -97,6 +97,7 @@ set( subdirs_header_only
     "core"
     "ntd"
     "math"
+    "nsl"
     )
 
 set( subdirs  )
@@ -116,7 +117,6 @@ list( APPEND subdirs
     "gfx"
     "device"
     "format"
-    "nsl"
     ${subdirs_header_only}
     )
 

@@ -3,6 +3,25 @@
 set( sources 
     "api.h"
     "typedefs.h"
+    "header_only.cpp"
+
+    "database.hpp"
+    "monitor.hpp"
+    "parser.hpp"
+    "ast.hpp"
+    "typedefs.h"
+
+    "ast/node.hpp"
+    "ast/visitor.hpp"
+    "ast/nodes/function.hpp"
+    "ast/nodes/group.hpp"
+    "ast/nodes/leaf.hpp"
+    "ast/nodes/library.hpp"
+    "ast/nodes/version.hpp"
+    "ast/nodes/function.hpp"
+    "ast/visitors/gl3_generator.hpp"
+    "ast/visitors/es3_generator.hpp"
+    "ast/visitors/version_generator.hpp"
     )
 
 natus_vs_src_dir( sources )
