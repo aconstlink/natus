@@ -92,7 +92,6 @@ namespace natus
                                 ooff = cpos + 1 ;
                             }
                         }
-                        
                     }
                 }
 
@@ -113,6 +112,8 @@ namespace natus
 
             natus::ntd::string_t clear_line( natus::ntd::string_rref_t s ) const noexcept
             {
+                s = this_t::remove_comment_lines( std::move( s ) ) ;
+
                 for( size_t i=0; i<s.size(); ++i )
                 {
                     if( s[ i ] == '\r' ) s[ i ] = ' ' ;
@@ -144,6 +145,17 @@ namespace natus
                 return std::move( s ) ;
             }
 
+            natus::ntd::string_t remove_comment_lines( natus::ntd::string_rref_t s ) const noexcept
+            {
+                size_t const pos0 = s.find_first_of( "//" ) ;
+                if( pos0 != std::string::npos )
+                {
+                    size_t const pos1 = s.find_first_of( '\n', pos0 ) ;
+                    s = s.substr( pos1 ) ;
+                }
+
+                return std::move( s ) ;
+            }
             
         };
         natus_res_typedef( parser ) ;
