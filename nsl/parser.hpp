@@ -72,25 +72,6 @@ namespace natus
 
                     statements.push_back( line ) ;
                     statements.push_back( "<open>" ) ;
-                    
-                    if( line.find( "version" ) == 0 )
-                    {
-                        ooff = opos + 1 ;
-
-                        // take everything in until the next nsl closing } as content/statement
-                        // this need to be searched for because the code inside will have brackets too.
-                        {
-                            size_t count = 0 ;
-                            do {
-                                char_t const c = file[ opos++ ] ;
-                                count += ( c == '{' ? 1 : ( c == '}' ? -1 : 0 ) ) ;
-                            } while( count != 0 ) ;
-                        }
-                        size_t const dif = ( --opos ) - ooff ;
-                        natus::ntd::string_t insert = dif != 0 ? file.substr( ooff, dif ) : " " ;
-                        if( dif > 0 ) statements.push_back( this_t::clear_line( std::move( insert ) ) ) ;
-                        statements.push_back( "<close>" ) ;
-                    }
 
                     ooff = opos + 1;
                     opos = file.find_first_of( '{', ooff ) ; // scope
