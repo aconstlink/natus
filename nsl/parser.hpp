@@ -46,9 +46,11 @@ namespace natus
 
         private: // scan file
 
-            // 1. scans the file content and return a list of all statements in the file.
+            // 1. scans the file content and returns a list of all statements in the file.
             // 2. shader content is put into in whole because this is not a GLSL/HLSL/etc parser.
             // 2.1 some shader content will be replaced later on.
+            // 2.2 contents in shaders are removed though
+            // 2.3 all line breaks are removed from shaders -> no preprocessor possible
             // 3. scopes {} are replaced by <open><close> tags.
             // 4. removes all comments, line breaks, multi spaces
             // 5. checked if all opened curlies are closed
@@ -118,7 +120,7 @@ namespace natus
                 return std::move( statements ) ;
             }
 
-        private: // helper
+        private: // scan helper
 
             bool_t check_curlies( natus::ntd::string_cref_t file ) const noexcept
             {
