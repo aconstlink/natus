@@ -106,17 +106,11 @@ namespace natus
                     // check if closed is before next open - just drag the offset along
                     {
                         size_t cpos = file.find_first_of( '}', ooff ) ;
-                        //if( cpos < opos ) 
+                        while( cpos < opos )
                         {
-                            //statements.push_back( "<close>" ) ;
-                            //ooff = cpos + 1 ;
-                            //cpos = file.find_first_of( '}', ooff ) ;
-                            while( cpos < opos )
-                            {
-                                statements.push_back( "<close>" ) ;
-                                ooff = cpos + 1 ;
-                                cpos = file.find_first_of( '}', ooff ) ;
-                            }
+                            statements.push_back( "<close>" ) ;
+                            ooff = cpos + 1 ;
+                            cpos = file.find_first_of( '}', ooff ) ;
                         }
                     }
                 }
