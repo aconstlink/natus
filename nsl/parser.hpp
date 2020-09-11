@@ -51,6 +51,7 @@ namespace natus
             // 2.1 some shader content will be replaced later on.
             // 3. scopes {} are replaced by <open><close> tags.
             // 4. removes all comments, line breaks, multi spaces
+            // 5. checked if all opened curlies are closed
             statements_t scan( natus::ntd::string_cref_t file ) noexcept
             {
                 statements_t statements ;
