@@ -40,6 +40,10 @@ namespace natus
                 natus::nsl::ast_t ast ;
 
                 auto statements = this_t::scan( file ) ;
+                // sanity checks here possible
+                // tokenize
+                // create tree
+                // do dependencie checks
 
                 return std::move( ast ) ;
             }
@@ -47,10 +51,9 @@ namespace natus
         private: // scan file
 
             // 1. scans the file content and returns a list of all statements in the file.
-            // 2. shader content is put into in whole because this is not a GLSL/HLSL/etc parser.
+            // 2. shader content is parsed too but must be similar to nsl like GLSL/HLSL/etc.
             // 2.1 some shader content will be replaced later on.
-            // 2.2 contents in shaders are removed though
-            // 2.3 all line breaks are removed from shaders -> no preprocessor possible
+            // 2.2 comments in shaders are removed though
             // 3. scopes {} are replaced by <open><close> tags.
             // 4. removes all comments, line breaks, multi spaces
             // 5. checked if all opened curlies are closed
