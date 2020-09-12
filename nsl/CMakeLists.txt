@@ -10,6 +10,7 @@ set( sources
     "parser.hpp"
     "ast.hpp"
     "typedefs.h"
+    "symbol_table.hpp"
 
     "ast/node.hpp"
     "ast/visitor.hpp"

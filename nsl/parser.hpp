@@ -5,6 +5,7 @@
 #include "typedefs.h"
 
 #include "ast.hpp"
+#include "symbol_table.hpp"
 
 #include <natus/log/global.h>
 #include <natus/ntd/vector.hpp>
@@ -40,12 +41,211 @@ namespace natus
                 natus::nsl::ast_t ast ;
 
                 auto statements = this_t::scan( file ) ;
-                // sanity checks here possible
-                // tokenize
-                // create tree
-                // do dependencie checks
+                
+                // with the statements we can do:
+                // 1. sanity checks here possible
+                // 2. create symbol table
+                // 3. create dependency symbols
+                // 4. create ast
+                
+                auto symbols = this_t::tokenize_symbols( statements ) ;
+              
 
                 return std::move( ast ) ;
+            }
+
+        private: // 
+
+            natus::nsl::symbol_table_t tokenize_symbols( this_t::statements_cref_t ss ) const noexcept
+            {
+                auto s1 = tokenize_library( ss ) ;
+                auto s2 = tokenize_configs( ss ) ;
+
+                return natus::nsl::symbol_table_t() ;
+            }
+
+            natus::nsl::symbol_table_t tokenize_configs( this_t::statements_cref_t ss ) const noexcept
+            {
+                natus::nsl::symbol_table_t st ;
+
+                this_t::statements_t ssl ;
+
+                // 1. filter out everything else than "config" related
+                // so the next stage does not need to deal with anything else at level 0
+                {
+                    size_t level = 0 ;
+                    for( auto const& s : ss )
+                    {
+                        auto const token = this_t::tokenize( s ) ;
+
+                        if( token[ 0 ] == "config" )
+                        {
+                            ssl.emplace_back( s ) ;
+                        }
+                        else if( token[ 0 ] == "<open>" )
+                        {
+                            ++level ;
+                            ssl.emplace_back( s ) ;
+                        }
+                        else if( token[ 0 ] == "<close>" )
+                        {
+                            --level ;
+                            ssl.emplace_back( s ) ;
+                        }
+                        else if( level == 0 ) break ;
+                        else ssl.emplace_back( s ) ;
+                    }
+                }
+
+                return std::move( st ) ;
+            }
+
+            natus::nsl::symbol_table_t tokenize_library( this_t::statements_cref_t ss ) const noexcept
+            {
+                natus::nsl::symbol_table_t st ;
+
+                this_t::statements_t ssl ;
+
+                // 1. filter out everything else than "library" related
+                // so the next stage does not need to deal with anything else at level 0
+                {
+                    size_t level = 0 ;
+                    for( auto const& s : ss )
+                    {
+                        auto const token = this_t::tokenize( s ) ;
+
+                        if( token[ 0 ] == "library" )
+                        {
+                            ssl.emplace_back( s ) ;
+                        }
+                        else if( token[ 0 ] == "<open>" )
+                        {
+                            ++level ;
+                            ssl.emplace_back( s ) ;
+                        }
+                        else if( token[ 0 ] == "<close>" )
+                        {
+                            --level ;
+                            ssl.emplace_back( s ) ;
+                        }
+                        else if( level == 0 ) break ;
+                        else ssl.emplace_back( s ) ;
+                    }
+                }
+
+                struct shader
+                {
+                    natus::ntd::vector< natus::ntd::string_t > library ;
+                    natus::ntd::vector< natus::ntd::string_t > versions ;
+                    natus::ntd::vector< natus::ntd::string_t > fragments ;
+                };
+
+                struct context
+                {
+                    size_t level = size_t(-1) ;
+                    natus::ntd::string_t opcode ;
+                    natus::ntd::string_t name ;
+                };
+                natus::ntd::vector< context > context_stack ;
+                
+                size_t level = 0 ;
+
+                context c ;
+                
+                for( size_t i=0; i<ssl.size(); ++i )
+                {
+                    auto const token = this_t::tokenize( ssl[i] ) ;
+                    
+                    if( token[0] == "library" )
+                    {
+                        c = context( { level, token[ 0 ], token[ 1 ] } ) ;
+                    }
+                    else if( token[0] == "version" )
+                    {
+                        natus::ntd::vector< natus::ntd::string_t > library ;
+                        for( auto const & c : context_stack )
+                        {
+                            if( c.level != size_t( -1 ) )
+                            {
+                                library.emplace_back( c.name ) ;
+                            }
+                        }
+                        natus::ntd::vector< natus::ntd::string_t > versions ;
+                        for( size_t t = 1; t < token.size(); ++t ) versions.emplace_back( token[ t ] ) ;
+
+                        size_t j = ++i ;
+                        size_t shader_level = size_t( 1 ) ;
+                        natus::ntd::vector< natus::ntd::string_t > fragments ;
+                        while( true )
+                        {
+                            auto const token = this_t::tokenize( ssl[++j] ) ;
+                             
+                            natus::ntd::string_t add ;
+                            
+                            if( token[ 0 ] == "<open>" ) {
+                                shader_level++ ;
+                                add = "{" ;
+                            }
+                            else if( token[ 0 ] == "<close>" ) {
+                                shader_level-- ;
+                                add = "}" ;
+                            }
+                            else add = ssl[ j ] ;
+
+                            if( shader_level == 0 ) break ;
+
+                            fragments.emplace_back( add ) ;
+                        }
+                        i = j ;
+                    }
+                    else if( token[0] == "<open>" )
+                    {
+                        ++level ;
+                        context_stack.emplace_back( c ) ;
+                        c.level = size_t( -1 ) ;
+                    }
+                    else if( token[0] == "<close>" )
+                    {
+                        --level ;
+                        c = context_stack.back() ;
+                        context_stack.pop_back() ;
+                    }
+                    else
+                    {
+                        
+                        if( token[0] == "float" )
+                        {
+                            natus::ntd::string_t ns ;
+                            for( auto const & c : context_stack )
+                            {
+                                
+                            }
+                            //natus::nsl::symbol_table_t::symbol_t s( ) ;
+                        }
+                    }
+
+                    int bp = 0 ;
+                }
+
+                return std::move( st ) ;
+            }
+
+            natus::ntd::vector< natus::ntd::string_t > tokenize( natus::ntd::string_cref_t s ) const noexcept
+            {
+                natus::ntd::vector< natus::ntd::string_t > tokens ;
+
+                size_t off = 0 ;
+                size_t pos = s.find_first_of( ' ' ) ;
+                while( pos != std::string::npos )
+                {
+                    tokens.emplace_back( s.substr(off, pos - off ) ) ;
+
+                    off = pos + 1 ;
+                    pos = s.find_first_of( ' ', off ) ;
+                }
+                tokens.emplace_back( s.substr( off ) ) ;
+
+                return std::move( tokens ) ;
             }
 
         private: // scan file
@@ -57,7 +257,7 @@ namespace natus
             // 3. scopes {} are replaced by <open><close> tags.
             // 4. removes all comments, line breaks, multi spaces
             // 5. checked if all opened curlies are closed
-            statements_t scan( natus::ntd::string_cref_t file ) noexcept
+            statements_t scan( natus::ntd::string_cref_t file ) const noexcept
             {
                 statements_t statements ;
 
