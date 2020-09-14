@@ -47,7 +47,7 @@ namespace natus
                 }
 
                 auto statements = this_t::replace_open_close( 
-                    this_t::scan( natus::ntd::string_t( file ) ) ) ;
+                    this_t::scan( this_t::remove_comment_lines( natus::ntd::string_t( file ) ) ) ) ;
                 
                 // with the statements we can do:
                 // 1. sanity checks here possible
@@ -92,6 +92,14 @@ namespace natus
                     natus::ntd::vector< natus::ntd::string_t > versions ;
                     natus::ntd::vector< natus::ntd::string_t > fragments ;
                 };
+                natus::ntd::vector< shader > shaders ;
+
+                struct variable
+                {
+                    natus::ntd::vector< natus::ntd::string_t > library ;
+                    natus::ntd::string_t line ;
+                };
+                natus::ntd::vector< variable > variables ;
 
                 struct context
                 {
@@ -114,39 +122,29 @@ namespace natus
                     }
                     else if( token[0] == "open" && token[1] == "shader" )
                     {
-                        natus::ntd::vector< natus::ntd::string_t > library ;
-                        for( auto const & c : context_stack )
-                        {
-                            library.emplace_back( c.name ) ;
-                        }
-                        natus::ntd::vector< natus::ntd::string_t > versions ;
-                        for( size_t t = 2; t < token.size(); ++t ) versions.emplace_back( token[ t ] ) ;
+                        shader shd ;
 
-                        natus::ntd::vector< natus::ntd::string_t > fragments ;
+                        for( auto const & c : context_stack ) shd.library.emplace_back( c.name ) ;
+                        for( size_t t = 2; t < token.size(); ++t ) shd.versions.emplace_back( token[ t ] ) ;
+
                         while( true )
                         {
                             if( this_t::tokenize( ss[++i] )[ 0 ] == "close" ) break ;
-                            fragments.emplace_back( ss[ i ] ) ;
+                            shd.fragments.emplace_back( ss[ i ] ) ;
                         }
                         --i ;
+
+                        shaders.emplace_back( std::move( shd ) ) ;
                     }
                     else if( token[0] == "close" && token[1] == "shader" )
                     {}
                     else
                     {
-                        
-                        if( token[0] == "float" )
-                        {
-                            natus::ntd::string_t ns ;
-                            for( auto const & c : context_stack )
-                            {
-                                
-                            }
-                            //natus::nsl::symbol_table_t::symbol_t s( ) ;
-                        }
+                        variable v ;
+                        for( auto const & c : context_stack ) v.library.emplace_back( c.name ) ;
+                        v.line = ss[ i ] ;
+                        variables.emplace_back( std::move( v ) ) ;
                     }
-
-                    int bp = 0 ;
                 }
 
                 return std::move( st ) ;
@@ -298,25 +296,36 @@ namespace natus
             {
                 statements_t statements ;
 
-                file = this_t::remove_comment_lines( std::move( file ) ) ;
-
                 size_t ooff = 0 ;
                 size_t opos = file.find_first_of( '{' ) ; // scope
                 while( opos != std::string::npos ) 
                 {
                     natus::ntd::string_t line = this_t::clear_line( file.substr( ooff, opos-ooff ) ) ;
+                    if( !line.empty() ) statements.push_back( line ) ;
 
-                    statements.push_back( line ) ;
-                    statements.push_back( "<open>" ) ;
+                    statements.emplace_back( "<open>" ) ;
 
                     ooff = opos + 1;
                     opos = file.find_first_of( '{', ooff ) ; // scope
                     
+                    // check } first for empty sections
+                    {
+                        size_t cpos = file.find_first_of( '}', ooff ) ;
+                        size_t const spos = file.find_first_of( ';', ooff ) ;
+
+                        while( opos > cpos && spos > cpos )
+                        {
+                            statements.emplace_back( "<close>" ) ;
+                            ooff = cpos + 1 ;
+                            cpos = file.find_first_of( '}', ooff ) ;
+                        }
+                    }
+
                     {
                         size_t spos = file.find_first_of( ';', ooff ) ;
                         while( spos < opos )
                         {
-                            statements.push_back( this_t::clear_line( file.substr( ooff, ( spos + 1 ) - ooff ) ) ) ;
+                            statements.emplace_back( this_t::clear_line( file.substr( ooff, ( spos + 1 ) - ooff ) ) ) ;
                             ooff = spos + 1 ;
                             spos = file.find_first_of( ';', ooff ) ;
                         }
@@ -327,7 +336,7 @@ namespace natus
                         size_t cpos = file.find_first_of( '}', ooff ) ;
                         while( cpos < opos )
                         {
-                            statements.push_back( "<close>" ) ;
+                            statements.emplace_back( "<close>" ) ;
                             ooff = cpos + 1 ;
                             cpos = file.find_first_of( '}', ooff ) ;
                         }
@@ -360,6 +369,7 @@ namespace natus
                     size_t const p1 = s.find_last_not_of( ' ' ) ;
                     size_t const dif = p1 - p0 ;
                     if( dif != 0 ) s = s.substr( p0, dif + 1 ) ;
+                    if( dif == 0 ) return "" ;
                 }
 
                 // clear multi spaces
