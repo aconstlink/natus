@@ -41,7 +41,13 @@ namespace natus
             {
                 natus::nsl::ast_t ast ;
 
-                auto statements = this_t::replace_open_close( this_t::scan( natus::ntd::string_t( file ) ) ) ;
+                if( !this_t::some_first_checks(file ) ) 
+                {
+                    return std::move( ast ) ;
+                }
+
+                auto statements = this_t::replace_open_close( 
+                    this_t::scan( natus::ntd::string_t( file ) ) ) ;
                 
                 // with the statements we can do:
                 // 1. sanity checks here possible
@@ -227,6 +233,58 @@ namespace natus
                 return std::move( ss ) ;
             }
 
+        private: //
+
+            bool_t some_first_checks( natus::ntd::string_cref_t file ) const noexcept 
+            {
+                if( !this_t::check_curlies( file ) )
+                {
+                    natus::log::global_t::error( "[parser] : curly braces not ok for [" + _name + "]" ) ;
+                    return false;
+                }
+
+                if( !this_t::check_comments( file ) )
+                {
+                    natus::log::global_t::error( "[parser] : comments not ok [" + _name + "]" ) ;
+                    return false;
+                }
+                return true ;
+            }
+
+            bool_t check_curlies( natus::ntd::string_cref_t file ) const noexcept
+            {
+                size_t off = 0 ;
+                size_t p0 = file.find( "{" ) ;
+                while( p0 != std::string::npos )
+                {
+                    size_t const p1 = file.find( "}", off ) ;
+
+                    if( p1 < p0 ) return false ; 
+                    else if( p1 == std::string::npos ) return false ;
+
+                    p0 = file.find( "{", p1 ) ;
+                    off = p0 ;
+                }
+                return true ;
+            }
+
+            bool_t check_comments( natus::ntd::string_cref_t file ) const noexcept
+            {
+                size_t off = 0 ;
+                size_t p0 = file.find( "/*" ) ;
+                while( p0 != std::string::npos )
+                {
+                    size_t const p1 = file.find( "*/", off ) ;
+
+                    if( p1 < p0 ) return false ; 
+                    else if( p1 == std::string::npos ) return false ;
+
+                    p0 = file.find( "/*", p1 ) ;
+                    off = p0 ;
+                }
+                return true ;
+            }
+
         private: // scan file
 
             // 1. scans the file content and returns a list of all statements in the file.
@@ -239,12 +297,6 @@ namespace natus
             statements_t scan( natus::ntd::string_rref_t file ) const noexcept
             {
                 statements_t statements ;
-
-                if( !this_t::check_curlies( file ) )
-                {
-                    natus::log::global_t::error("[parser] : curly braces not ok for [" + _name + "]" ) ;
-                    return statements_t() ;
-                }
 
                 file = this_t::remove_comment_lines( std::move( file ) ) ;
 
@@ -287,15 +339,7 @@ namespace natus
 
         private: // helper
 
-            bool_t check_curlies( natus::ntd::string_cref_t file ) const noexcept
-            {
-                size_t count = 0 ;
-                for( auto const c : file )
-                {
-                    count = count + ( c == '{' ? 1 : (c == '}' ? -1 : 0 )  ) ;
-                }
-                return count == 0 ;
-            }
+            
 
             natus::ntd::string_t clear_line( natus::ntd::string_rref_t s ) const noexcept
             {
