@@ -22,6 +22,13 @@ library mylib
     float x = 324 ;
     vec3 some_vec = vec3(1.0) ;
 
+    /*
+        this
+        is 
+        a 
+        longer 
+        comment
+    */
     library inner
     {
         version gl3 es3
