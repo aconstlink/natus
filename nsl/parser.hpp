@@ -71,6 +71,129 @@ namespace natus
 
                 ss = filter_for_group( "config", std::move( ss ) ) ;
 
+                struct render_states
+                {
+                    natus::ntd::vector< natus::ntd::string_t > lines ;
+                };
+
+                struct code
+                {
+                    natus::ntd::vector< natus::ntd::string_t > versions ;
+                    natus::ntd::vector< natus::ntd::string_t > lines ;
+                };
+
+                struct shader
+                {
+                    natus::ntd::string_t type ;
+                    natus::ntd::vector< natus::ntd::string_t > variables ;
+                    natus::ntd::vector< code > codes ;
+                };
+
+                struct config
+                {
+                    natus::ntd::string_t name ;
+                    render_states rs ;
+                    natus::ntd::vector< shader > shaders ;
+                };
+                natus::ntd::vector< config > configs ;
+
+                config c ;
+
+                size_t level = 0 ;
+
+                for( auto iter = ss.begin(); iter != ss.end(); ++iter )
+                {
+                    auto token = this_t::tokenize( *iter ) ;
+
+                    if( token[0] == "open" && token[1] == "config" && level == 0 )
+                    {
+                        c.name = token[ 2 ] ;
+                        ++level ;
+                        continue ;
+                    }
+
+                    else if( token[ 0 ] == "close" && token[ 1 ] == "config" )
+                    {
+                        configs.emplace_back( c ) ;
+                        --level ;
+                        continue ;
+                    }
+
+                    // do not check what is not in the config
+                    if( level == 0 ) continue ;
+
+                    if( token[ 0 ] == "open" && token[ 1 ] == "render_states" )
+                    {
+                        level++ ;
+
+                        render_states rs = std::move( c.rs ) ;
+                        while( true )
+                        {
+                            token = this_t::tokenize( *++iter ) ;
+
+                            if( token[ 0 ] == "close" && token[ 1 ] == "render_states" )
+                                break ;
+
+                            rs.lines.emplace_back( *iter ) ;
+                        }
+                        c.rs = std::move( rs ) ;
+                        --level ;
+                        continue ;
+                    }
+
+                    if( token[ 0 ] == "open" && ( token[ 1 ] == "vertex_shader" || token[ 1 ] == "pixel_shader" ) )
+                    {
+                        ++level ;
+                        shader s ;
+                        s.type = token[ 1 ] ;
+
+                        code cod ;
+                        bool_t in_shader = false ;
+                        while( true )
+                        {
+                            token = this_t::tokenize( *++iter ) ;
+
+                            if( token.back() == ";" && !in_shader )
+                            {
+                                // variable
+                                s.variables.emplace_back( *iter ) ; 
+                                continue ;
+                            }
+
+                            else if( token[0] == "open" && token[1] == "shader" )
+                            {
+                                in_shader = true ;
+                                cod.lines.clear() ;
+                                
+
+                                for( size_t i = 2; i < token.size(); ++i )
+                                    cod.versions.emplace_back( token[ i ] ) ;
+                            }
+
+                            else if( token[ 0 ] == "close" && token[ 1 ] == "shader" )
+                            {
+                                in_shader = false ;
+                                s.codes.emplace_back( std::move( cod ) ) ;
+                            }
+
+                            else if( in_shader )
+                            {
+                                cod.lines.emplace_back( *iter ) ;
+                            }
+
+                            if( token[ 0 ] == "close" && token[ 1 ] == s.type )
+                                break ;
+                            
+                            // do analysis
+                        }
+
+                        c.shaders.emplace_back( s ) ;
+
+                        --level ;
+                    }
+
+                    
+                }
 
 
                 return std::move( st ) ;
