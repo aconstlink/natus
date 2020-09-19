@@ -6,6 +6,7 @@
 
 #include "ast.hpp"
 #include "symbol_table.hpp"
+#include "parser/document.hpp"
 
 #include <natus/log/global.h>
 #include <natus/ntd/vector.hpp>
@@ -199,12 +200,11 @@ namespace natus
                 return std::move( st ) ;
             }
 
-            natus::nsl::symbol_table_t analyse_library_statements( this_t::statements_rref_t ss ) const noexcept
+            natus::nsl::parse::libraries_t analyse_library_statements( this_t::statements_rref_t ss ) const noexcept
             {
-                natus::nsl::symbol_table_t st ;
-
                 ss = filter_for_group( "library", std::move( ss ) ) ;
 
+                #if 0
                 struct shader
                 {
                     natus::ntd::vector< natus::ntd::string_t > library ;
@@ -228,14 +228,14 @@ namespace natus
                     natus::ntd::string_t sym_short ;
                 };
                 natus::ntd::vector< variable > variables ;
-
-                struct context
-                {
-                    natus::ntd::string_t opcode ;
-                    natus::ntd::string_t name ;
-                };
-                natus::ntd::vector< context > context_stack ;
+                #endif
                 
+                natus::ntd::vector< natus::ntd::string_t > names ;
+                natus::nsl::parse::libraries_t libs ;
+
+                // current library
+                natus::nsl::parse::library_t lib ;
+
                 // 1. coarsely find and differentiate shaders and variables 
                 for( size_t i=0; i<ss.size(); ++i )
                 {
@@ -243,17 +243,19 @@ namespace natus
                     
                     if( token[0] == "open" && token[1] == "library" )
                     {
-                        context_stack.emplace_back( context( { token[ 1 ], token[ 2 ] } ) ) ;
+                        names.emplace_back( token[ 2 ] ) ;
+                        lib.names = names ;
                     }
                     else if( token[0] == "close" && token[1] == "library" )
                     {
-                        context_stack.pop_back() ;
+                        names.pop_back() ;
+                        libs.emplace_back( std::move( lib ) ) ;
+                        lib.names = names ;
                     }
                     else if( token[0] == "open" && token[1] == "shader" )
                     {
-                        shader shd ;
-
-                        for( auto const & c : context_stack ) shd.library.emplace_back( c.name ) ;
+                        natus::nsl::parse::library_t::shader shd ;
+                        
                         for( size_t t = 2; t < token.size(); ++t ) shd.versions.emplace_back( token[ t ] ) ;
 
                         while( true )
@@ -266,7 +268,7 @@ namespace natus
                         // split shader with multiple symbols in multiple shaders
                         {
                             size_t level = 0 ;
-                            shader shd2 = shd ;
+                            natus::nsl::parse::library_t::shader shd2 = shd ;
                             shd2.fragments.clear() ;
 
                             for( auto iter = shd.fragments.begin(); iter != shd.fragments.end(); ++iter )
@@ -278,8 +280,7 @@ namespace natus
 
                                 if( *iter == "}" && --level == 0 )
                                 {
-                                    shaders.emplace_back( std::move( shd2 ) ) ;
-                                    shd2.library = shd.library ;
+                                    lib.shaders.emplace_back( std::move( shd2 ) ) ;
                                     shd2.versions = shd.versions ;
                                     shd2.fragments.clear() ;
                                 }
@@ -290,13 +291,11 @@ namespace natus
                     {}
                     else
                     {
-                        variable v ;
-                        for( auto const & c : context_stack ) v.library.emplace_back( c.name ) ;
-                        v.line = ss[ i ] ;
-                        variables.emplace_back( std::move( v ) ) ;
+                        lib.variables.emplace_back( ss[ i ] ) ;
                     }
                 }
 
+                #if 0
                 // 2. dissect variables for referenceable symbols
                 {
                     for( auto & v : variables )
@@ -379,8 +378,8 @@ namespace natus
                         }
                     }
                 }
-
-                return std::move( st ) ;
+                #endif
+                return std::move( libs ) ;
             }
 
             statements_t filter_for_group( natus::ntd::string_cref_t what, statements_rref_t ss ) const noexcept
@@ -537,9 +536,10 @@ namespace natus
                 statements_t statements ;
 
                 size_t ooff = 0 ;
-                size_t opos = file.find_first_of( '{' ) ; // scope
+                size_t opos = file.find_first_of( '{' ) ; 
                 while( opos != std::string::npos ) 
                 {
+
                     natus::ntd::string_t line = this_t::clear_line( 
                         file.substr( ooff, opos-ooff ) ) ;
                     if( !line.empty() ) statements.push_back( line ) ;
@@ -547,41 +547,31 @@ namespace natus
                     statements.emplace_back( "<open>" ) ;
 
                     ooff = opos + 1;
-                    opos = file.find_first_of( '{', ooff ) ; // scope
+                    opos = file.find_first_of( '{', ooff ) ;
+
                     
-                    // check } first for empty sections
+                    size_t cpos = file.find_first_of( '}', ooff ) ;
+                    while( true )
                     {
-                        size_t cpos = file.find_first_of( '}', ooff ) ;
-                        size_t const spos = file.find_first_of( ';', ooff ) ;
+                        {
+                            size_t spos = file.find_first_of( ';', ooff ) ;
+                            while( spos < opos && spos < cpos )
+                            {
+                                statements.emplace_back( this_t::clear_line( file.substr( ooff, ( spos + 1 ) - ooff ) ) ) ;
+                                ooff = spos + 1 ;
+                                spos = file.find_first_of( ';', ooff ) ;
+                            }
+                        }
+                            
+                        if( cpos >= opos ) break ;
 
-                        while( opos > cpos && spos > cpos )
                         {
                             statements.emplace_back( "<close>" ) ;
                             ooff = cpos + 1 ;
                             cpos = file.find_first_of( '}', ooff ) ;
                         }
                     }
-
-                    {
-                        size_t spos = file.find_first_of( ';', ooff ) ;
-                        while( spos < opos )
-                        {
-                            statements.emplace_back( this_t::clear_line( file.substr( ooff, ( spos + 1 ) - ooff ) ) ) ;
-                            ooff = spos + 1 ;
-                            spos = file.find_first_of( ';', ooff ) ;
-                        }
-                    }
-
-                    // check if closed is before next open - just drag the offset along
-                    {
-                        size_t cpos = file.find_first_of( '}', ooff ) ;
-                        while( cpos < opos )
-                        {
-                            statements.emplace_back( "<close>" ) ;
-                            ooff = cpos + 1 ;
-                            cpos = file.find_first_of( '}', ooff ) ;
-                        }
-                    }
+                    
                 }
 
                 return std::move( statements ) ;

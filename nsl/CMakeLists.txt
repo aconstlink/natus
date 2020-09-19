@@ -11,7 +11,8 @@ set( sources
     "ast.hpp"
     "typedefs.h"
     "symbol_table.hpp"
-
+    
+    "parser/document.hpp"
     "ast/nodes.hpp"
     "ast/interfaces.hpp"
     "ast/components.hpp"
