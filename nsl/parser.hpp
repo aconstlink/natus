@@ -539,9 +539,9 @@ namespace natus
                 size_t opos = file.find_first_of( '{' ) ; 
                 while( opos != std::string::npos ) 
                 {
-
                     natus::ntd::string_t line = this_t::clear_line( 
                         file.substr( ooff, opos-ooff ) ) ;
+
                     if( !line.empty() ) statements.push_back( line ) ;
 
                     statements.emplace_back( "<open>" ) ;
@@ -549,29 +549,37 @@ namespace natus
                     ooff = opos + 1;
                     opos = file.find_first_of( '{', ooff ) ;
 
-                    
-                    size_t cpos = file.find_first_of( '}', ooff ) ;
-                    while( true )
+                    // this section adds the close tags and statements.
+                    // it can do 
+                    // - statements in front/after {} <- was tricky
+                    // - handle empty scopes
                     {
+                        size_t cpos = file.find_first_of( '}', ooff ) ;
+                        while( true )
                         {
-                            size_t spos = file.find_first_of( ';', ooff ) ;
-                            while( spos < opos && spos < cpos )
                             {
-                                statements.emplace_back( this_t::clear_line( file.substr( ooff, ( spos + 1 ) - ooff ) ) ) ;
-                                ooff = spos + 1 ;
-                                spos = file.find_first_of( ';', ooff ) ;
+                                size_t spos = file.find_first_of( ';', ooff ) ;
+                                while( spos < opos && spos < cpos )
+                                {
+                                    statements.emplace_back( this_t::clear_line( file.substr( ooff, ( spos + 1 ) - ooff ) ) ) ;
+                                    ooff = spos + 1 ;
+                                    spos = file.find_first_of( ';', ooff ) ;
+                                }
+                            }
+
+                            // this is required for the statements search. Just do one more loop 
+                            // over the statements if any exist, so those are collected even if the 
+                            // next { is before the next }. This was tricky. 
+                            // The = sign check if { and } are npos.
+                            if( cpos >= opos ) break ;
+
+                            {
+                                statements.emplace_back( "<close>" ) ;
+                                ooff = cpos + 1 ;
+                                cpos = file.find_first_of( '}', ooff ) ;
                             }
                         }
-                            
-                        if( cpos >= opos ) break ;
-
-                        {
-                            statements.emplace_back( "<close>" ) ;
-                            ooff = cpos + 1 ;
-                            cpos = file.find_first_of( '}', ooff ) ;
-                        }
                     }
-                    
                 }
 
                 return std::move( statements ) ;
