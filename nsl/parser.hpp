@@ -6,7 +6,8 @@
 
 #include "ast.hpp"
 #include "symbol_table.hpp"
-#include "parser/document.hpp"
+#include "parser_structs.hpp"
+#include "api/glsl.hpp"
 
 #include <natus/log/global.h>
 #include <natus/ntd/vector.hpp>
@@ -57,8 +58,14 @@ namespace natus
                 // 3. create dependency symbols
                 // 4. create ast
                 
-                auto s1 = analyse_library_statements( statements_t( statements ) ) ;
-                auto s2 = analyse_config_statements( statements_t( statements ) ) ;
+                {
+                    auto s1 = filter_library_statements( statements_t( statements ) ) ;
+                    /*auto s2 =*/ analyse_libraries( std::move( s1 ) ) ;
+                }
+                {
+                    auto s1 = filter_config_statements( statements_t( statements ) ) ;
+                    // /*auto s2 =*/ analyse_configs( std::move( s1 ) ) ;
+                }
               
 
                 return std::move( ast ) ;
@@ -66,39 +73,14 @@ namespace natus
 
         private: // 
 
-            natus::nsl::symbol_table_t analyse_config_statements( this_t::statements_rref_t ss ) const noexcept
+            natus::nsl::parse::configs_t filter_config_statements( this_t::statements_rref_t ss ) const noexcept
             {
                 natus::nsl::symbol_table_t st ;
 
                 ss = filter_for_group( "config", std::move( ss ) ) ;
 
-                struct render_states
-                {
-                    natus::ntd::vector< natus::ntd::string_t > lines ;
-                };
-
-                struct code
-                {
-                    natus::ntd::vector< natus::ntd::string_t > versions ;
-                    natus::ntd::vector< natus::ntd::string_t > lines ;
-                };
-
-                struct shader
-                {
-                    natus::ntd::string_t type ;
-                    natus::ntd::vector< natus::ntd::string_t > variables ;
-                    natus::ntd::vector< code > codes ;
-                };
-
-                struct config
-                {
-                    natus::ntd::string_t name ;
-                    render_states rs ;
-                    natus::ntd::vector< shader > shaders ;
-                };
-                natus::ntd::vector< config > configs ;
-
-                config c ;
+                natus::nsl::parse::configs_t configs ;
+                natus::nsl::parse::config_t c ;
 
                 size_t level = 0 ;
 
@@ -115,7 +97,7 @@ namespace natus
 
                     else if( token[ 0 ] == "close" && token[ 1 ] == "config" )
                     {
-                        configs.emplace_back( c ) ;
+                        configs.emplace_back( std::move( c ) ) ;
                         --level ;
                         continue ;
                     }
@@ -127,7 +109,7 @@ namespace natus
                     {
                         level++ ;
 
-                        render_states rs = std::move( c.rs ) ;
+                        natus::nsl::parse::config_t::render_states rs ;
                         while( true )
                         {
                             token = this_t::tokenize( *++iter ) ;
@@ -137,7 +119,7 @@ namespace natus
 
                             rs.lines.emplace_back( *iter ) ;
                         }
-                        c.rs = std::move( rs ) ;
+                        c.rstates.emplace_back( std::move( rs ) ) ;
                         --level ;
                         continue ;
                     }
@@ -145,10 +127,10 @@ namespace natus
                     if( token[ 0 ] == "open" && ( token[ 1 ] == "vertex_shader" || token[ 1 ] == "pixel_shader" ) )
                     {
                         ++level ;
-                        shader s ;
+                        natus::nsl::parse::config_t::shader s ;
                         s.type = token[ 1 ] ;
 
-                        code cod ;
+                        natus::nsl::parse::config_t::code cod ;
                         bool_t in_shader = false ;
                         while( true )
                         {
@@ -156,8 +138,23 @@ namespace natus
 
                             if( token.back() == ";" && !in_shader )
                             {
-                                // variable
-                                s.variables.emplace_back( *iter ) ; 
+                                natus::nsl::parse::config_t::variable v ;
+                                v.line = *iter ;
+                                size_t base = 0 ;
+
+                                if( token[ 0 ] == "in" || token[ 0 ] == "out" )
+                                {
+                                    v.flow_qualifier = token[ 0 ] ;
+                                    base = 1 ;
+                                }
+                                v.type = token[ base + 0 ] ;
+                                v.name = token[ base + 1 ] ;
+                                if( token.size() > 3 )
+                                {
+                                    v.binding = token[ base + 3 ] ;
+                                }
+                                s.variables.emplace_back( std::move( v ) ) ;
+                                
                                 continue ;
                             }
 
@@ -192,44 +189,19 @@ namespace natus
 
                         --level ;
                     }
-
-                    
                 }
 
-
-                return std::move( st ) ;
+                return std::move( configs ) ;
+            }
+            
+            void_t analyse_configs( natus::nsl::parse::configs_rref_t libs ) const noexcept
+            {
             }
 
-            natus::nsl::parse::libraries_t analyse_library_statements( this_t::statements_rref_t ss ) const noexcept
+            natus::nsl::parse::libraries_t filter_library_statements( this_t::statements_rref_t ss ) const noexcept
             {
                 ss = filter_for_group( "library", std::move( ss ) ) ;
 
-                #if 0
-                struct shader
-                {
-                    natus::ntd::vector< natus::ntd::string_t > library ;
-                    natus::ntd::vector< natus::ntd::string_t > versions ;
-                    natus::ntd::vector< natus::ntd::string_t > fragments ;
-
-                    natus::ntd::string_t sym_long ;
-                    natus::ntd::string_t sym_short ;
-                    natus::ntd::vector< natus::ntd::string_t > deps ;
-                };
-                natus::ntd::vector< shader > shaders ;
-
-                struct variable
-                {
-                    natus::ntd::vector< natus::ntd::string_t > library ;
-                    natus::ntd::string_t line ;
-                    
-                    // filled in later on
-                    natus::ntd::string_t val ;
-                    natus::ntd::string_t sym_long ;
-                    natus::ntd::string_t sym_short ;
-                };
-                natus::ntd::vector< variable > variables ;
-                #endif
-                
                 natus::ntd::vector< natus::ntd::string_t > names ;
                 natus::nsl::parse::libraries_t libs ;
 
@@ -289,81 +261,83 @@ namespace natus
                     }
                     else if( token[0] == "close" && token[1] == "shader" )
                     {}
-                    else
+                    else if( token.size() > 4 )
                     {
-                        lib.variables.emplace_back( ss[ i ] ) ;
+                        natus::nsl::parse::library_t::variable v ;
+
+                        v.type = token[ 0 ] ;
+                        v.name = token[ 1 ] ;
+                        v.line = ss[i] ;
+
+                        auto iter = std::find( token.begin(), token.end(), "=" ) ;
+                        while( ++iter != token.end() && *iter != ";" )
+                        {
+                            v.value += *(iter) + " " ;
+                        }
+                        if( v.value.size() > 0 ) v.value = v.value.substr( 0, v.value.size() - 1 ) ;
+
+                        lib.variables.emplace_back( std::move( v ) ) ;
                     }
                 }
+                
+                return std::move( libs ) ;
+            }
 
-                #if 0
-                // 2. dissect variables for referenceable symbols
+            void_t analyse_libraries( natus::nsl::parse::libraries_rref_t libs ) const noexcept
+            {
+                struct shader
                 {
-                    for( auto & v : variables )
-                    {
-                        auto const token = this_t::tokenize( v.line ) ;
-                        
-                        v.sym_long = "nsl." ;
-                        {
-                            natus::ntd::string_t lib ;
-                            for( auto const& s : v.library ) lib += s + "." ;
-                            v.sym_long += lib ;
-                        }
+                    natus::ntd::vector< natus::ntd::string_t > library ;
+                    natus::ntd::vector< natus::ntd::string_t > versions ;
+                    natus::ntd::vector< natus::ntd::string_t > fragments ;
 
-                        {
-                            for( auto iter = token.begin(); iter != token.end(); ++iter )
-                            {
-                                if( *iter == "=" )
-                                {
-                                    v.sym_short = *--iter ;
-                                    ++iter ;
-                                }
-
-                                if( *iter == ";" )
-                                {
-                                    v.val = *--iter ;
-                                    ++iter ;
-                                }
-                            }
-
-                            v.sym_long += v.sym_short ;
-                        }
-                    }
-                }
-
-                // 3. dissect shaders
-                // - for referenceable symbols like functions
-                // - for dependable symbols like function or variables
+                    natus::ntd::string_t sym_long ;
+                    natus::ntd::string_t sym_short ;
+                    natus::ntd::vector< natus::ntd::string_t > deps ;
+                };
+                natus::ntd::vector< shader > shaders ;
+                
+                struct variable
                 {
-                    for( auto & s : shaders )
+                    natus::ntd::vector< natus::ntd::string_t > library ;
+                    natus::ntd::string_t line ;
+                    
+                    natus::ntd::string_t val ;
+                    natus::ntd::string_t sym_long ;
+                    natus::ntd::string_t sym_short ;
+                };
+                natus::ntd::vector< variable > variables ;
+
+                for( auto& lib : libs )
+                {
+                    // dissect shaders
+                    // - for referenceable symbols like functions
+                    // - for dependable symbols like function or variables
+                    for( auto& shd : lib.shaders )
                     {
+                        shader s ;
+
                         s.sym_long = "nsl." ;
                         {
-                            natus::ntd::string_t lib ;
-                            for( auto const& s : s.library ) lib += s + "." ;
-                            s.sym_long += lib ;
+                            natus::ntd::string_t lib_name ;
+                            for( auto const& s : lib.names ) lib_name += s + "." ;
+                            s.sym_long += lib_name ;
                         }
 
                         // symbol/function name
                         {
-                            auto const token = this_t::tokenize( s.fragments[0] ) ;
+                            auto const token = this_t::tokenize( shd.fragments[ 0 ] ) ;
 
-                            for( auto iter = token.begin(); iter != token.end(); ++iter )
-                            {
-                                if( *iter == "(" )
-                                {
-                                    s.sym_short = *--iter ;
-                                    break ;
-                                }
-                            }
-                            s.sym_long += s.sym_short ;
+                            auto sig = natus::nsl::glsl::function_signature_analyser( token ).process() ;
+                            int bp = 0 ;
                         }
 
                         // this symbol depending on
                         {
-                            for( auto const & f : s.fragments )
+                            for( auto const& f : shd.fragments )
                             {
                                 size_t p0 = 0 ;
-                                while( true ) 
+                                while( true )
                                 {
                                     p0 = f.find( "nsl.", p0 ) ;
                                     if( p0 == std::string::npos ) break ;
@@ -376,10 +350,34 @@ namespace natus
                                 }
                             }
                         }
+                        s.fragments = std::move( shd.fragments ) ;
+                        s.versions = std::move( shd.versions ) ;
+                        s.library = lib.names ;
+                        shaders.emplace_back( std::move( s ) ) ;
+                    }
+
+                    // process variable symbols
+                    {
+                        for( auto& var : lib.variables )
+                        {
+                            variable v ;
+                            v.sym_long = "nsl." ;
+                            {
+                                natus::ntd::string_t lib_name ;
+                                for( auto const& s : lib.names ) lib_name += s + "." ;
+                                v.sym_long += lib_name ;
+                            }
+
+                            v.sym_long += var.name ;
+                            v.sym_short = var.name ;
+                            v.library = lib.names ;
+                            v.line = var.line ;
+                            variables.emplace_back( v ) ;
+                        }
                     }
                 }
-                #endif
-                return std::move( libs ) ;
+
+                return ;
             }
 
             statements_t filter_for_group( natus::ntd::string_cref_t what, statements_rref_t ss ) const noexcept
@@ -530,7 +528,6 @@ namespace natus
             // 2.2 comments in shaders are removed though
             // 3. scopes {} are replaced by <open><close> tags.
             // 4. removes all comments, line breaks, multi spaces
-            // 5. checked if all opened curlies are closed
             statements_t scan( natus::ntd::string_rref_t file ) const noexcept
             {
                 statements_t statements ;
@@ -593,8 +590,9 @@ namespace natus
             {
                 for( auto iter = s.begin(); iter != s.end(); ++iter )
                 {
-                    if( *iter == '(' || *iter == ')' || *iter == ';' || *iter == '*' 
-                        || *iter == '+' || *iter == '-' || *iter == '/' )
+                    if( *iter == '(' || *iter == ')' || *iter == ';'  || *iter == ','
+                        || *iter == '*' || *iter == '+' || *iter == '-' || *iter == '/' 
+                        || *iter == '=' )
                     {
                         // in front
                         iter = ++s.insert( iter, ' ' ) ;

@@ -4,6 +4,7 @@ set( sources
     "api.h"
     "typedefs.h"
     "header_only.cpp"
+    "enums.hpp"
 
     "database.hpp"
     "monitor.hpp"
@@ -12,7 +13,9 @@ set( sources
     "typedefs.h"
     "symbol_table.hpp"
     
-    "parser/document.hpp"
+    "api/glsl.hpp"
+
+    "parser_structs.hpp"
     "ast/nodes.hpp"
     "ast/interfaces.hpp"
     "ast/components.hpp"
