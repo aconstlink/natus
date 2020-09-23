@@ -39,36 +39,37 @@ namespace natus
         public:
 
             // produces a statement list of all statements in the file
-            natus::nsl::ast_t process( natus::ntd::string_rref_t file ) noexcept
+            natus::nsl::pregen::document_t process( natus::ntd::string_rref_t file ) noexcept
             {
-                natus::nsl::ast_t ast ;
+                natus::nsl::pregen::document_t doc ;
 
                 if( !this_t::some_first_checks(file ) ) 
                 {
-                    return std::move( ast ) ;
+                    return std::move( doc ) ;
                 }
 
                 file = this_t::remove_comment_lines( std::move( file ) ) ;
                 file = this_t::insert_spaces( std::move( file ) ) ;
                 auto statements = this_t::replace_open_close( this_t::scan( std::move( file ) ) ) ;
                 
+                statements = this_t::repackage( std::move( statements ) ) ;
+
                 // with the statements we can do:
                 // 1. sanity checks here possible
                 // 2. create symbol table
                 // 3. create dependency symbols
                 // 4. create ast
-                
+
                 {
                     auto s1 = filter_library_statements( statements_t( statements ) ) ;
-                    /*auto s2 =*/ analyse_libraries( std::move( s1 ) ) ;
+                    doc.libraries = analyse_libraries( std::move( s1 ) ) ;
                 }
                 {
                     auto s1 = filter_config_statements( statements_t( statements ) ) ;
-                    // /*auto s2 =*/ analyse_configs( std::move( s1 ) ) ;
+                    doc.configs = analyse_configs( std::move( s1 ) ) ;
                 }
-              
 
-                return std::move( ast ) ;
+                return std::move( doc ) ;
             }
 
         private: // 
@@ -194,8 +195,69 @@ namespace natus
                 return std::move( configs ) ;
             }
             
-            void_t analyse_configs( natus::nsl::parse::configs_rref_t libs ) const noexcept
+            natus::nsl::pregen::configs_t analyse_configs( natus::nsl::parse::configs_rref_t configs ) const noexcept
             {
+                natus::nsl::pregen::configs_t conf_ret ;
+                
+                using config = natus::nsl::pregen::config_t ;
+                using shader = natus::nsl::pregen::config_t::shader_t ;
+                using variable = natus::nsl::pregen::config_t::shader_t::variable_t ;
+                using code = shader::code_t ;
+
+                for( auto const & cnf : configs )
+                {
+                    config c ;
+                    c.name = cnf.name ;
+
+                    for( auto const & shd : cnf.shaders )
+                    {
+                        shader s ;
+                        s.type = shd.type ;
+
+                        for( auto const & cd : shd.codes ) 
+                        {
+                            code c_ ;
+                            c_.lines = cd.lines ;
+                            c_.versions = cd.versions ;
+
+                            // this symbol depending on
+                            {
+                                for( auto const& f : cd.lines )
+                                {
+                                    size_t p0 = 0 ;
+                                    while( true )
+                                    {
+                                        p0 = f.find( "nsl.", p0 ) ;
+                                        if( p0 == std::string::npos ) break ;
+
+                                        size_t const p1 = f.find_first_of( ' ', p0 ) ;
+                                        if( p1 == std::string::npos ) break ;
+
+                                        s.deps.emplace_back( f.substr( p0, p1 - p0 ) ) ;
+                                        p0 = p1 ;
+                                    }
+                                }
+                            }
+
+                            s.codes.emplace_back( std::move( c_ ) ) ;
+                        }
+
+                        for( auto const & var : shd.variables )
+                        {
+                            variable v ;
+                            v.binding = var.binding ;
+                            v.flow_qualifier = var.flow_qualifier ;
+                            v.line = var.line ;
+                            v.name = var.name ;
+                            v.type = var.type ;
+                            s.variables.emplace_back( std::move( v ) ) ;
+                        }
+                        c.shaders.emplace_back( std::move( s ) ) ;
+                    }
+                    conf_ret.emplace_back( std::move( c ) ) ;
+                }
+
+                return std::move( conf_ret ) ;
             }
 
             natus::nsl::parse::libraries_t filter_library_statements( this_t::statements_rref_t ss ) const noexcept
@@ -207,6 +269,8 @@ namespace natus
 
                 // current library
                 natus::nsl::parse::library_t lib ;
+
+                bool_t in_shader = false ;
 
                 // 1. coarsely find and differentiate shaders and variables 
                 for( size_t i=0; i<ss.size(); ++i )
@@ -226,9 +290,14 @@ namespace natus
                     }
                     else if( token[0] == "open" && token[1] == "shader" )
                     {
+                        in_shader = true ;
+
                         natus::nsl::parse::library_t::shader shd ;
                         
                         for( size_t t = 2; t < token.size(); ++t ) shd.versions.emplace_back( token[ t ] ) ;
+
+                        if( shd.versions.empty() )
+                            shd.versions.emplace_back( "version_missing" ) ;
 
                         while( true )
                         {
@@ -260,8 +329,10 @@ namespace natus
                         }
                     }
                     else if( token[0] == "close" && token[1] == "shader" )
-                    {}
-                    else if( token.size() > 4 )
+                    {
+                        in_shader = false ;
+                    }
+                    else if( token.size() > 4 && !in_shader )
                     {
                         natus::nsl::parse::library_t::variable v ;
 
@@ -283,33 +354,18 @@ namespace natus
                 return std::move( libs ) ;
             }
 
-            void_t analyse_libraries( natus::nsl::parse::libraries_rref_t libs ) const noexcept
+            natus::nsl::pregen::libraries_t analyse_libraries( natus::nsl::parse::libraries_rref_t libs ) const noexcept
             {
-                struct shader
-                {
-                    natus::ntd::vector< natus::ntd::string_t > library ;
-                    natus::ntd::vector< natus::ntd::string_t > versions ;
-                    natus::ntd::vector< natus::ntd::string_t > fragments ;
+                natus::nsl::pregen::libraries_t lib_ret ;
 
-                    natus::ntd::string_t sym_long ;
-                    natus::ntd::string_t sym_short ;
-                    natus::ntd::vector< natus::ntd::string_t > deps ;
-                };
-                natus::ntd::vector< shader > shaders ;
-                
-                struct variable
-                {
-                    natus::ntd::vector< natus::ntd::string_t > library ;
-                    natus::ntd::string_t line ;
-                    
-                    natus::ntd::string_t val ;
-                    natus::ntd::string_t sym_long ;
-                    natus::ntd::string_t sym_short ;
-                };
-                natus::ntd::vector< variable > variables ;
+                using library = natus::nsl::pregen::library_t ;
+                using shader = natus::nsl::pregen::library_t::shader_t ;
+                using variable = natus::nsl::pregen::library_t::variable_t ;
 
                 for( auto& lib : libs )
                 {
+                    library cur_lib ;
+
                     // dissect shaders
                     // - for referenceable symbols like functions
                     // - for dependable symbols like function or variables
@@ -324,12 +380,20 @@ namespace natus
                             s.sym_long += lib_name ;
                         }
 
-                        // symbol/function name
+                        // symbol/function name/signature
                         {
-                            auto const token = this_t::tokenize( shd.fragments[ 0 ] ) ;
-
-                            auto sig = natus::nsl::glsl::function_signature_analyser( token ).process() ;
-                            int bp = 0 ;
+                            auto iter = std::find( shd.versions.begin(), shd.versions.end(), "glsl" ) ;
+                            if( iter != shd.versions.end() )
+                            {
+                                auto const token = this_t::tokenize( shd.fragments[ 0 ] ) ;
+                                s.sig = natus::nsl::glsl::function_signature_analyser( token ).process() ;
+                                s.sym_long += s.sig.name ;
+                            }
+                            else
+                            {
+                                natus::log::global_t::warning("[nsl:parser] : Only GLSL supported but found [" + *iter + "]" ) ;
+                                continue ;
+                            }
                         }
 
                         // this symbol depending on
@@ -352,8 +416,8 @@ namespace natus
                         }
                         s.fragments = std::move( shd.fragments ) ;
                         s.versions = std::move( shd.versions ) ;
-                        s.library = lib.names ;
-                        shaders.emplace_back( std::move( s ) ) ;
+                        s.lib_names = lib.names ;
+                        cur_lib.shaders.emplace_back( std::move( s ) ) ;
                     }
 
                     // process variable symbols
@@ -369,15 +433,20 @@ namespace natus
                             }
 
                             v.sym_long += var.name ;
-                            v.sym_short = var.name ;
-                            v.library = lib.names ;
+                            v.name = var.name ;
+                            v.lib_names = lib.names ;
                             v.line = var.line ;
-                            variables.emplace_back( v ) ;
+                            v.type = var.type ;
+                            v.value = var.value ;
+                            cur_lib.variables.emplace_back( v ) ;
                         }
                     }
+
+                    cur_lib.names = lib.names ;
+                    lib_ret.emplace_back( std::move( cur_lib ) ) ;
                 }
 
-                return ;
+                return std::move( lib_ret ) ;
             }
 
             statements_t filter_for_group( natus::ntd::string_cref_t what, statements_rref_t ss ) const noexcept
@@ -411,43 +480,33 @@ namespace natus
             // later processing much easier/less code.
             statements_t replace_open_close( statements_rref_t ss ) const noexcept
             {
-                // 1. replace open/close tags in shaders
-                // - replace shader code open/close by {/}
-                {
-                    size_t level = size_t(-1) ;
-                    for( size_t i=0; i<ss.size(); ++i )
-                    {
-                        auto const token = this_t::tokenize( ss[i] ) ;
-
-                        if( token[0] == "shader" )
-                        {
-                            ++i ; // jump over the shaders' open tag
-                            level = 0 ;
-                        }
-                        else if( token[0] == "<open>" && level != size_t(-1) )
-                        {
-                            ss[i] = "{" ;
-                            ++level ;
-                        }
-                        else if( token[0] == "<close>" && level != size_t(-1) )
-                        {
-                            if( --level != size_t( -1 ) )
-                                ss[ i ] = "}" ;
-                        }
-                    }
-                }
-
-                // 2. remove/replace open/close tags
+                // 1. remove/replace open/close tags
                 {
                     natus::ntd::stack< natus::ntd::string_t, 10 > stack ;
+
+                    size_t level = 0 ;
 
                     for( auto iter = ss.begin(); iter != ss.end(); ++iter )
                     {
                         auto const token = this_t::tokenize( *iter ) ;
 
-                        if( token[0] == "<open>" )
+                        if( token[0] == "{" )
                         {
                             auto inner_token = this_t::tokenize( *( --iter ) ) ;
+                            
+
+                            if( inner_token[ 0 ] != "library" &&
+                                inner_token[ 0 ] != "config" && 
+                                inner_token[ 0 ] != "shader" && 
+                                inner_token[ 0 ] != "render_states" &&
+                                inner_token[ 0 ] != "vertex_shader" && 
+                                inner_token[ 0 ] != "pixel_shader" ) 
+                            {
+                                ++level ;
+                                ++iter ;
+                                continue ;
+                            }
+
                             stack.push( inner_token[0] ) ;
 
                             // transform <open> to open command
@@ -457,64 +516,92 @@ namespace natus
                             // remove the open tag
                             iter = --ss.erase( ++iter ) ;
                         }
-                        else if( token[0] == "<close>" )
+                        else if( token[0] == "}" )
                         {
-                            *iter = "close " + stack.pop() ;
+                            if( level == 0 )
+                                *iter = "close " + stack.pop() ;
+                            else --level ;
                         }
                     }
                 }
                 
                 return std::move( ss ) ;
             }
-            
+
+
+            statements_t repackage( statements_rref_t ss ) const noexcept
+            {
+                // 1. reunite ()
+                {
+                    for( auto iter = ss.begin(); iter != ss.end(); ++iter )
+                    {
+                        if( *iter == "(" )
+                        {
+                            auto iter2 = --iter + 1 ;
+                            while( *iter2 != ")" )
+                            {
+                                *iter += " " + *iter2 ;
+                                iter2 = ss.erase( iter2 ) ;
+                            }
+                            *iter += " )" ;
+                            iter2 = ss.erase( iter2 ) ;
+
+                            iter = iter2 ;
+                        }
+                    }
+                }
+
+                // 2. ; to last line
+                {
+                    for( auto iter = ss.begin(); iter != ss.end(); ++iter )
+                    {
+                        if( *iter == ";" )
+                        {
+                            iter = --ss.erase( iter ) ;
+                            *iter += " ;" ;
+                        }
+                    }
+                }
+
+                return std::move( ss ) ;
+            }
 
         private: //
 
             bool_t some_first_checks( natus::ntd::string_cref_t file ) const noexcept 
             {
-                if( !this_t::check_curlies( file ) )
+                if( !this_t::check_open_close( "{", "}", file ) )
                 {
                     natus::log::global_t::error( "[parser] : curly braces not ok for [" + _name + "]" ) ;
                     return false;
                 }
 
-                if( !this_t::check_comments( file ) )
+                if( !this_t::check_open_close( "/*", "*/", file ) )
                 {
                     natus::log::global_t::error( "[parser] : comments not ok [" + _name + "]" ) ;
+                    return false;
+                }
+
+                if( !this_t::check_open_close( "(", ")", file ) )
+                {
+                    natus::log::global_t::error( "[parser] : brakets not ok [" + _name + "]" ) ;
                     return false;
                 }
                 return true ;
             }
 
-            bool_t check_curlies( natus::ntd::string_cref_t file ) const noexcept
+            bool_t check_open_close( natus::ntd::string_cref_t open, natus::ntd::string_cref_t close, natus::ntd::string_cref_t file ) const noexcept
             {
                 size_t off = 0 ;
-                size_t p0 = file.find( "{" ) ;
+                size_t p0 = file.find( open ) ;
                 while( p0 != std::string::npos )
                 {
-                    size_t const p1 = file.find( "}", off ) ;
+                    size_t const p1 = file.find( close, off ) ;
 
-                    if( p1 < p0 ) return false ; 
+                    if( p1 < p0 ) return false ;
                     else if( p1 == std::string::npos ) return false ;
 
-                    p0 = file.find( "{", p1 ) ;
-                    off = p0 ;
-                }
-                return true ;
-            }
-
-            bool_t check_comments( natus::ntd::string_cref_t file ) const noexcept
-            {
-                size_t off = 0 ;
-                size_t p0 = file.find( "/*" ) ;
-                while( p0 != std::string::npos )
-                {
-                    size_t const p1 = file.find( "*/", off ) ;
-
-                    if( p1 < p0 ) return false ; 
-                    else if( p1 == std::string::npos ) return false ;
-
-                    p0 = file.find( "/*", p1 ) ;
+                    p0 = file.find( open, p1 ) ;
                     off = p0 ;
                 }
                 return true ;
@@ -522,59 +609,76 @@ namespace natus
 
         private: // scan file
 
-            // 1. scans the file content and returns a list of all statements in the file.
-            // 2. shader content is parsed too but must be similar to nsl like GLSL/HLSL/etc.
-            // 2.1 some shader content will be replaced later on.
-            // 2.2 comments in shaders are removed though
-            // 3. scopes {} are replaced by <open><close> tags.
-            // 4. removes all comments, line breaks, multi spaces
             statements_t scan( natus::ntd::string_rref_t file ) const noexcept
             {
                 statements_t statements ;
 
-                size_t ooff = 0 ;
-                size_t opos = file.find_first_of( '{' ) ; 
-                while( opos != std::string::npos ) 
+                // 1. seed statements with the whole file as a single line
+                statements.emplace_back( this_t::clear_line( std::move(file) ) ) ;
+
+                // 2. disect for various characters
                 {
-                    natus::ntd::string_t line = this_t::clear_line( 
-                        file.substr( ooff, opos-ooff ) ) ;
-
-                    if( !line.empty() ) statements.push_back( line ) ;
-
-                    statements.emplace_back( "<open>" ) ;
-
-                    ooff = opos + 1;
-                    opos = file.find_first_of( '{', ooff ) ;
-
-                    // this section adds the close tags and statements.
-                    // it can do 
-                    // - statements in front/after {} <- was tricky
-                    // - handle empty scopes
-                    {
-                        size_t cpos = file.find_first_of( '}', ooff ) ;
-                        while( true )
+                    std::function< statements_t ( statements_rref_t, char_t const ) > disect = 
+                        [&] ( statements_rref_t statements, char_t const c ) 
+                    { 
+                        for( auto iter = statements.begin(); iter != statements.end(); ++iter )
                         {
+                            size_t pos = ( *iter ).find_first_of( c ) ;
+                            while( pos != std::string::npos )
                             {
-                                size_t spos = file.find_first_of( ';', ooff ) ;
-                                while( spos < opos && spos < cpos )
-                                {
-                                    statements.emplace_back( this_t::clear_line( file.substr( ooff, ( spos + 1 ) - ooff ) ) ) ;
-                                    ooff = spos + 1 ;
-                                    spos = file.find_first_of( ';', ooff ) ;
-                                }
-                            }
+                                natus::ntd::string_t line = this_t::clear_line(
+                                    ( *iter ).substr( 0, pos ) ) ;
 
-                            // this is required for the statements search. Just do one more loop 
-                            // over the statements if any exist, so those are collected even if the 
-                            // next { is before the next }. This was tricky. 
-                            // The = sign check if { and } are npos.
-                            if( cpos >= opos ) break ;
+                                iter = ++statements.insert( iter, line ) ;
+                                iter = ++statements.insert( iter, natus::ntd::string_t( 1, c) ) ;
+                                *iter = ( *iter ).substr( pos + 1 ) ; 
 
-                            {
-                                statements.emplace_back( "<close>" ) ;
-                                ooff = cpos + 1 ;
-                                cpos = file.find_first_of( '}', ooff ) ;
+                                pos = ( *iter ).find_first_of( c ) ;
                             }
+                        }
+
+                        return std::move( statements ) ;
+                    } ;
+                
+                    statements = disect( std::move( statements ), '{' ) ;
+                    statements = disect( std::move( statements ), '}' ) ;
+                    statements = disect( std::move( statements ), '(' ) ;
+                    statements = disect( std::move( statements ), ')' ) ;
+                    statements = disect( std::move( statements ), ';' ) ;
+                }
+
+                // 3. post process statements for empty lines
+                {
+                    auto end = std::remove_if( statements.begin(), statements.end(), [&] ( natus::ntd::string_cref_t s )
+                    { return s.empty() ; } ) ;
+
+                    statements.erase( end, statements.end() ) ;
+                }
+
+                // 4. remove white spaces
+                {
+                    for( auto & s : statements )
+                    {
+                        if( s[ 0 ] == ' ' ) s = s.substr( 1 ) ;
+                    }
+                }
+
+                // 5. remove empty scopes
+                {
+                    for( auto iter = statements.begin(); iter != statements.end(); ++iter )
+                    {
+                        auto iter_next = iter + 1 ;
+                        if( *iter == ")" && *iter_next == "{" ) 
+                        {
+                            ++iter ;
+                            continue ;
+                        }
+
+                        if( *iter == "{" && *iter_next == "}" )
+                        {
+                            iter = statements.erase( iter ) ;
+                            iter = statements.erase( iter ) ;
+                            if( *( --iter ) == "{" ) --iter ;
                         }
                     }
                 }
@@ -590,12 +694,27 @@ namespace natus
             {
                 for( auto iter = s.begin(); iter != s.end(); ++iter )
                 {
+                    if( *iter == '+' || *iter == '-' || *iter == '<' || *iter == '>' )
+                    {
+                        auto iter_next = iter + 1 ;
+                        auto iter_last = iter - 1 ;
+
+                        if( iter_next == iter_last ) continue ;
+
+                        // in front
+                        if( *iter != *iter_last ) iter = ++s.insert( iter, ' ' ) ;
+
+                        iter_next = iter + 1 ;
+
+                        // behind
+                        if( *iter != *iter_next ) iter = s.insert( ++iter, ' ' ) ;
+                    }
+
                     if( *iter == '(' || *iter == ')' || *iter == ';'  || *iter == ','
-                        || *iter == '*' || *iter == '+' || *iter == '-' || *iter == '/' 
-                        || *iter == '=' )
+                        || *iter == '*' || *iter == '/' || *iter == '='  )
                     {
                         // in front
-                        iter = ++s.insert( iter, ' ' ) ;
+                         iter = ++s.insert( iter, ' ' ) ;
                         // behind
                         iter = s.insert( ++iter, ' ' ) ;
                     }

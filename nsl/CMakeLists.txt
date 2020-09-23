@@ -12,7 +12,9 @@ set( sources
     "ast.hpp"
     "typedefs.h"
     "symbol_table.hpp"
-    
+    "generator.hpp"
+    "symbol.hpp"
+
     "api/glsl.hpp"
 
     "parser_structs.hpp"

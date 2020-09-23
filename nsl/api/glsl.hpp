@@ -2,6 +2,7 @@
 
 #include "../typedefs.h"
 #include "../parser_structs.hpp"
+#include "../generator.hpp"
 
 #include <natus/ntd/vector.hpp>
 
@@ -117,6 +118,23 @@ namespace natus
                     return std::move( s ) ;
                 }
             };
+
+            class glsl_generator
+            {
+                natus_this_typedefs( glsl_generator ) ;
+
+            public:
+
+                natus::nsl::generated_code_t generate( natus::nsl::pregen::document_cref_t doc ) noexcept
+                {
+                    natus::nsl::generated_code_t ret ;
+
+
+
+                    return std::move( ret ) ;
+                }
+            };
+            natus_typedef( glsl_generator ) ;
         }
     }
 }
