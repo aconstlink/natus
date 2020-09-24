@@ -39,9 +39,9 @@ namespace natus
         public:
 
             // produces a statement list of all statements in the file
-            natus::nsl::pregen::document_t process( natus::ntd::string_rref_t file ) noexcept
+            natus::nsl::post_parse::document_t process( natus::ntd::string_rref_t file ) noexcept
             {
-                natus::nsl::pregen::document_t doc ;
+                natus::nsl::post_parse::document_t doc ;
 
                 if( !this_t::some_first_checks(file ) ) 
                 {
@@ -195,13 +195,13 @@ namespace natus
                 return std::move( configs ) ;
             }
             
-            natus::nsl::pregen::configs_t analyse_configs( natus::nsl::parse::configs_rref_t configs ) const noexcept
+            natus::nsl::post_parse::configs_t analyse_configs( natus::nsl::parse::configs_rref_t configs ) const noexcept
             {
-                natus::nsl::pregen::configs_t conf_ret ;
+                natus::nsl::post_parse::configs_t conf_ret ;
                 
-                using config = natus::nsl::pregen::config_t ;
-                using shader = natus::nsl::pregen::config_t::shader_t ;
-                using variable = natus::nsl::pregen::config_t::shader_t::variable_t ;
+                using config = natus::nsl::post_parse::config_t ;
+                using shader = natus::nsl::post_parse::config_t::shader_t ;
+                using variable = natus::nsl::post_parse::config_t::shader_t::variable_t ;
                 using code = shader::code_t ;
 
                 for( auto const & cnf : configs )
@@ -224,18 +224,8 @@ namespace natus
                             {
                                 for( auto const& f : cd.lines )
                                 {
-                                    size_t p0 = 0 ;
-                                    while( true )
-                                    {
-                                        p0 = f.find( "nsl.", p0 ) ;
-                                        if( p0 == std::string::npos ) break ;
-
-                                        size_t const p1 = f.find_first_of( ' ', p0 ) ;
-                                        if( p1 == std::string::npos ) break ;
-
-                                        s.deps.emplace_back( f.substr( p0, p1 - p0 ) ) ;
-                                        p0 = p1 ;
-                                    }
+                                    s.deps = natus::nsl::symbol_t::merge(
+                                        std::move( s.deps ), natus::nsl::symbol_t::find_all_symbols( "nsl.", f ) ) ;
                                 }
                             }
 
@@ -354,13 +344,13 @@ namespace natus
                 return std::move( libs ) ;
             }
 
-            natus::nsl::pregen::libraries_t analyse_libraries( natus::nsl::parse::libraries_rref_t libs ) const noexcept
+            natus::nsl::post_parse::libraries_t analyse_libraries( natus::nsl::parse::libraries_rref_t libs ) const noexcept
             {
-                natus::nsl::pregen::libraries_t lib_ret ;
+                natus::nsl::post_parse::libraries_t lib_ret ;
 
-                using library = natus::nsl::pregen::library_t ;
-                using shader = natus::nsl::pregen::library_t::shader_t ;
-                using variable = natus::nsl::pregen::library_t::variable_t ;
+                using library = natus::nsl::post_parse::library_t ;
+                using fragment = natus::nsl::post_parse::library_t::fragment_t ;
+                using variable = natus::nsl::post_parse::library_t::variable_t ;
 
                 for( auto& lib : libs )
                 {
@@ -371,13 +361,11 @@ namespace natus
                     // - for dependable symbols like function or variables
                     for( auto& shd : lib.shaders )
                     {
-                        shader s ;
-
-                        s.sym_long = "nsl." ;
+                        fragment s ;
+                        
                         {
-                            natus::ntd::string_t lib_name ;
-                            for( auto const& s : lib.names ) lib_name += s + "." ;
-                            s.sym_long += lib_name ;
+                            s.sym_long = "nsl" ;
+                            for( auto const& n : lib.names ) s.sym_long += n  ;
                         }
 
                         // symbol/function name/signature
@@ -400,24 +388,14 @@ namespace natus
                         {
                             for( auto const& f : shd.fragments )
                             {
-                                size_t p0 = 0 ;
-                                while( true )
-                                {
-                                    p0 = f.find( "nsl.", p0 ) ;
-                                    if( p0 == std::string::npos ) break ;
-
-                                    size_t const p1 = f.find_first_of( ' ', p0 ) ;
-                                    if( p1 == std::string::npos ) break ;
-
-                                    s.deps.emplace_back( f.substr( p0, p1 - p0 ) ) ;
-                                    p0 = p1 ;
-                                }
+                                s.deps = natus::nsl::symbol_t::merge( 
+                                    std::move(s.deps), natus::nsl::symbol_t::find_all_symbols( "nsl.", f ) ) ;
                             }
                         }
                         s.fragments = std::move( shd.fragments ) ;
                         s.versions = std::move( shd.versions ) ;
                         s.lib_names = lib.names ;
-                        cur_lib.shaders.emplace_back( std::move( s ) ) ;
+                        cur_lib.fragments.emplace_back( std::move( s ) ) ;
                     }
 
                     // process variable symbols
@@ -425,11 +403,9 @@ namespace natus
                         for( auto& var : lib.variables )
                         {
                             variable v ;
-                            v.sym_long = "nsl." ;
                             {
-                                natus::ntd::string_t lib_name ;
-                                for( auto const& s : lib.names ) lib_name += s + "." ;
-                                v.sym_long += lib_name ;
+                                v.sym_long = "nsl" ;
+                                for( auto const& s : lib.names ) v.sym_long += s ;
                             }
 
                             v.sym_long += var.name ;
@@ -442,7 +418,6 @@ namespace natus
                         }
                     }
 
-                    cur_lib.names = lib.names ;
                     lib_ret.emplace_back( std::move( cur_lib ) ) ;
                 }
 
@@ -711,7 +686,7 @@ namespace natus
                     }
 
                     if( *iter == '(' || *iter == ')' || *iter == ';'  || *iter == ','
-                        || *iter == '*' || *iter == '/' || *iter == '='  )
+                        || *iter == ':' || *iter == '*' || *iter == '/' || *iter == '='  )
                     {
                         // in front
                          iter = ++s.insert( iter, ' ' ) ;

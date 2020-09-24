@@ -55,9 +55,9 @@ namespace natus
                     _tokens = tokens ;
                 }
 
-                natus::nsl::pregen::library_t::shader_t::signature_t process( void_t ) noexcept
+                natus::nsl::post_parse::library_t::fragment_t::signature_t process( void_t ) noexcept
                 {
-                    natus::nsl::pregen::library_t::shader_t::signature_t s ;
+                    natus::nsl::post_parse::library_t::fragment_t::signature_t s ;
 
                     auto iter_open = std::find( _tokens.begin(), _tokens.end(), "(" ) ;
                     auto iter_close = std::find( _tokens.begin(), _tokens.end(), ")" ) ;
@@ -125,14 +125,14 @@ namespace natus
 
             public:
 
-                natus::nsl::generated_code_t generate( natus::nsl::pregen::document_cref_t doc ) noexcept
+                /*natus::nsl::generated_code_t generate( natus::nsl::pregen::document_cref_t doc ) noexcept
                 {
                     natus::nsl::generated_code_t ret ;
 
 
 
                     return std::move( ret ) ;
-                }
+                }*/
             };
             natus_typedef( glsl_generator ) ;
         }

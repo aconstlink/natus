@@ -72,7 +72,7 @@ namespace natus
             natus_typedefs( natus::ntd::vector< library_t >, libraries ) ;
         }
 
-        namespace pregen
+        namespace post_parse
         {
             struct config
             {
@@ -97,7 +97,7 @@ namespace natus
                     natus_typedef( code ) ;
                     natus::ntd::vector< code > codes ;
 
-                    natus::ntd::vector< natus::ntd::string_t > deps ;
+                    symbols_t deps ;
 
                     natus::ntd::string_t type ;
                 };
@@ -111,7 +111,7 @@ namespace natus
 
             struct library
             {
-                struct shader
+                struct fragment
                 {
                     natus::ntd::vector< natus::ntd::string_t > lib_names ;
                     natus::ntd::vector< natus::ntd::string_t > versions ;
@@ -126,17 +126,18 @@ namespace natus
                     natus_typedef( signature ) ;
                     signature_t sig ;
 
-                    natus::ntd::vector< natus::ntd::string_t > deps ;
+                    symbols_t deps ;
 
-                    natus::ntd::string_t sym_long ;
+                    natus::nsl::symbol_t sym_long ;
                 };
-                natus_typedef( shader ) ;
-                natus::ntd::vector< shader > shaders ;
+                natus_typedef( fragment ) ;
+                natus_typedefs( natus::ntd::vector< fragment >, fragments ) ;
+                fragments_t fragments ;
 
                 struct variable
                 {
                     natus::ntd::vector< natus::ntd::string_t > lib_names ;
-                    natus::ntd::string_t sym_long ;
+                    natus::nsl::symbol_t sym_long ;
 
                     natus::ntd::string_t type ;
                     natus::ntd::string_t name ;
@@ -144,9 +145,12 @@ namespace natus
                     natus::ntd::string_t line ;
                 };
                 natus_typedef( variable ) ;
+                natus_typedefs( natus::ntd::vector< variable >, variables ) ;
 
-                natus::ntd::vector< variable > variables ;
-                natus::ntd::vector< natus::ntd::string_t > names ;
+                variables_t variables ;
+
+                // @todo not required
+                //natus::ntd::vector< natus::ntd::string_t > names ;
             };
             natus_typedef( library ) ;
             natus_typedefs( natus::ntd::vector< library_t >, libraries ) ;
@@ -162,7 +166,7 @@ namespace natus
 
                     for( auto const & l : libraries )
                     {
-                        for( auto const & s : l.shaders )
+                        for( auto const & s : l.fragments )
                         {
                             if( sym == s.sym_long )
                             {

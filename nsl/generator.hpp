@@ -22,5 +22,13 @@ namespace natus
             natus::ntd::vector< code > codes ;
         };
         natus_typedef( generated_code ) ;
+
+        struct generateable
+        {
+            // variables
+            // shaders
+            // config
+        };
+        natus_typedef( generateable ) ;
     }
 }
