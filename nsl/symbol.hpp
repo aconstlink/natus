@@ -58,6 +58,11 @@ namespace natus
                 return rhv._sym == _sym ;
             }
 
+            bool_t operator != ( this_cref_t rhv ) const noexcept
+            {
+                return rhv._sym != _sym ;
+            }
+
             bool_t operator == ( natus::ntd::string_cref_t rhv ) const noexcept
             {
                 return rhv == _sym ;

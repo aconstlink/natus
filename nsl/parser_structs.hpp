@@ -113,7 +113,6 @@ namespace natus
             {
                 struct fragment
                 {
-                    natus::ntd::vector< natus::ntd::string_t > lib_names ;
                     natus::ntd::vector< natus::ntd::string_t > versions ;
                     natus::ntd::vector< natus::ntd::string_t > fragments ;
 
@@ -122,6 +121,24 @@ namespace natus
                         natus::ntd::string_t return_type ;
                         natus::ntd::string_t name ;
                         natus::ntd::vector< natus::ntd::string_t > args ;
+
+                        bool_t operator == ( signature const & rhv ) const 
+                        {
+                            return !( *this != rhv ) ;
+                        }
+
+                        bool_t operator != ( signature const& rhv ) const
+                        {
+                            if( return_type != rhv.return_type ) return true ;
+                            if( name != rhv.name ) return true ;
+                            if( args.size() != rhv.args.size() ) return true ;
+
+                            for( size_t i = 0; i < args.size(); ++i )
+                            {
+                                if( args[ i ] != rhv.args[ i ] ) return true ;
+                            }
+                            return false ;
+                        }
                     };
                     natus_typedef( signature ) ;
                     signature_t sig ;
@@ -129,6 +146,13 @@ namespace natus
                     symbols_t deps ;
 
                     natus::nsl::symbol_t sym_long ;
+
+                    bool_t operator == ( fragment const & other ) const 
+                    {
+                        if( sym_long != other.sym_long ) return false ;
+                        if( versions[ 0 ] != other.versions[ 0 ] ) return false ;
+                        return sig == other.sig ;
+                    }
                 };
                 natus_typedef( fragment ) ;
                 natus_typedefs( natus::ntd::vector< fragment >, fragments ) ;
@@ -136,13 +160,23 @@ namespace natus
 
                 struct variable
                 {
-                    natus::ntd::vector< natus::ntd::string_t > lib_names ;
                     natus::nsl::symbol_t sym_long ;
 
                     natus::ntd::string_t type ;
                     natus::ntd::string_t name ;
                     natus::ntd::string_t value ;
                     natus::ntd::string_t line ;
+
+                    bool_t operator == ( variable const & rhv ) const
+                    {
+                        return sym_long == rhv.sym_long ;
+                    }
+
+                    bool_t operator != ( variable const& rhv ) const
+                    {
+                        return sym_long != rhv.sym_long ;
+                    }
+
                 };
                 natus_typedef( variable ) ;
                 natus_typedefs( natus::ntd::vector< variable >, variables ) ;

@@ -394,7 +394,6 @@ namespace natus
                         }
                         s.fragments = std::move( shd.fragments ) ;
                         s.versions = std::move( shd.versions ) ;
-                        s.lib_names = lib.names ;
                         cur_lib.fragments.emplace_back( std::move( s ) ) ;
                     }
 
@@ -410,7 +409,6 @@ namespace natus
 
                             v.sym_long += var.name ;
                             v.name = var.name ;
-                            v.lib_names = lib.names ;
                             v.line = var.line ;
                             v.type = var.type ;
                             v.value = var.value ;
