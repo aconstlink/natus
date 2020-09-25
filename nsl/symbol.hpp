@@ -97,9 +97,17 @@ namespace natus
 
         public:
 
-            natus::ntd::string_t sym_long( void_t ) const noexcept
+            natus::ntd::string_t expand( void_t ) const noexcept
             {
                 return _sym ;
+            }
+
+            natus::ntd::string_t expand( natus::ntd::string_cref_t sep ) const noexcept
+            {
+                natus::ntd::string_t ret ;
+                for( auto const& s : _spaces ) ret += s + sep ;
+                ret = ret.substr( 0, ret.size() - sep.size() ) ;
+                return ret ;
             }
             
         private:

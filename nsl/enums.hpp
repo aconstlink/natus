@@ -4,10 +4,16 @@ namespace natus
 {
     namespace nsl
     {
-        enum class shader_type
+        enum class api_type
         {
             gl3,
             es3
+        };
+
+        enum class shader_type
+        {
+            vertex_shader,
+            pixel_shader
         };
 
         enum class type

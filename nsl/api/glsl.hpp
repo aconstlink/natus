@@ -3,8 +3,11 @@
 #include "../typedefs.h"
 #include "../parser_structs.hpp"
 #include "../generator.hpp"
+#include "../dependency_resolver.hpp"
 
 #include <natus/ntd/vector.hpp>
+
+#include <sstream>
 
 namespace natus
 {
@@ -119,22 +122,144 @@ namespace natus
                 }
             };
 
-            class glsl_generator
+            enum class glsl_type
             {
-                natus_this_typedefs( glsl_generator ) ;
+                gl3,
+                es3
+            };
+
+            class generator
+            {
+                natus_this_typedefs( generator ) ;
 
             public:
 
-                /*natus::nsl::generated_code_t generate( natus::nsl::pregen::document_cref_t doc ) noexcept
+                natus::nsl::generated_code_t generate( natus::nsl::generateable_rref_t dep ) noexcept
                 {
                     natus::nsl::generated_code_t ret ;
 
+                    for( auto const& s : dep.config.shaders )
+                    {
+                        natus::nsl::generated_code_t::code code ;
 
+                        std::stringstream text ;
 
+                        // 1. glsl stuff at the front
+                        {
+                            text << "#version 130" << std::endl << std::endl ;
+                        }
+
+                        // 2. make prototypes declarations from function signatures
+                        // the prototype help with not having to sort funk definitions
+                        {
+                            for( auto const & f : dep.frags )
+                            {
+                                text << f.sig.return_type << " " ;
+                                text << f.sym_long.expand( "_" ) << " ( " ;
+                                for( auto const& a : f.sig.args ) text << a + ", " ;
+                                text.seekp( -2, std::ios_base::end ) ;
+                                text << " ) ; " << std::endl ;
+                            }
+                            text << std::endl ;
+                        }
+
+                        // 3. make all functions with replaced symbols
+                        {
+                            for( auto const & f : dep.frags )
+                            {
+                                // start by replacing the function names' symbol itself
+                                {
+                                    auto const & frag = f.fragments[ 0 ] ;
+
+                                    auto const p0 = frag.find( f.sig.name ) ;
+                                    if( p0 == std::string::npos ) continue ;
+                                    auto const p1 = frag.find_first_of( ' ', p0 ) ;
+                                    text << frag.substr( 0, p0 ) + f.sym_long.expand( "_" ) + frag.substr( p1 ) ;
+                                }
+
+                                // then lets go over every symbol in the code
+                                for( size_t i=1; i<f.fragments.size(); ++i )
+                                {
+                                    text << f.fragments[i] ;
+                                }
+                                text << std::endl ;
+                            }
+                            text << std::endl ;
+                        }
+
+                        // 4. make all glsl uniforms from shader variables
+                        {}
+
+                        // 5. insert main/shader from config
+                        {
+                            for( auto const & c : s.codes )
+                            {
+                                if( c.versions[ 0 ] != "glsl" ) continue ;
+                                
+                                for( auto const & l : c.lines )
+                                {
+                                    text << l << std::endl ;
+                                }
+                            }
+                        }
+
+                        // 6. post over the code and replace all dependencies
+                        {
+                            auto shd = text.str() ;
+
+                            // variable dependencies
+                            {
+                                for( auto const& v : dep.vars )
+                                {
+                                    size_t const p0 = shd.find( v.sym_long.expand() ) ;
+                                    if( p0 == std::string::npos ) continue ;
+                                    size_t const p1 = shd.find_first_of( " ", p0 ) ;
+
+                                    shd = shd.substr( 0, p0 ) + v.value + shd.substr( p1 ) ;
+                                }
+                            }
+
+                            // fragment dependencies
+                            {
+                                for( auto const& f : dep.frags )
+                                {
+                                    for( auto const& d : f.deps )
+                                    {
+                                        size_t const p0 = shd.find( d.expand() ) ;
+                                        if( p0 == std::string::npos ) continue ;
+                                        size_t const p1 = shd.find_first_of( " ", p0 ) ;
+
+                                        shd = shd.substr( 0, p0 ) + d.expand( "_" ) + shd.substr( p1 ) ;
+                                    }
+                                }
+                            }
+
+                            // shader dependencies
+                            {
+                                for( auto const& d : s.deps )
+                                {
+                                    size_t const p0 = shd.find( d.expand() ) ;
+                                    if( p0 == std::string::npos ) continue ;
+                                    size_t const p1 = shd.find_first_of( " ", p0 ) ;
+
+                                    shd = shd.substr( 0, p0 ) + d.expand( "_" ) + shd.substr( p1 ) ;
+                                }
+                            }
+                            code.shader = shd ;
+                        }
+
+                        code.api = natus::nsl::api_type::gl3 ;
+                        code.type = natus::nsl::shader_type::vertex_shader ;
+                        
+
+                        ret.codes.emplace_back( std::move( code ) ) ;
+                    }
+
+                    ret.rres = std::move( dep ) ;
                     return std::move( ret ) ;
-                }*/
+                }
             };
-            natus_typedef( glsl_generator ) ;
+            natus_typedef( generator ) ;
         }
     }
 }

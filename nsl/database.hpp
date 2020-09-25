@@ -1,7 +1,6 @@
 #pragma once
 
 #include "typedefs.h"
-#include "parser_structs.hpp"
 
 #include <natus/concurrent/mrsw.hpp>
 
@@ -123,93 +122,5 @@ namespace natus
 
         };
         natus_res_typedef( database ) ;
-
-        class dependency_resolver
-        {
-            natus_this_typedefs( dependency_resolver ) ;
-
-            natus::nsl::database_res_t _db ;
-
-        public:
-
-            dependency_resolver( database_res_t db ) : _db( db ) {}
-
-        public:
-
-            struct resolver_result
-            {
-                natus::nsl::post_parse::library_t::variables_t vars ;
-                natus::nsl::post_parse::library_t::fragments_t frags ;
-                natus::nsl::post_parse::config_t config ;
-            };
-
-        public:
-
-            resolver_result resolve( natus::nsl::symbol_cref_t sym ) noexcept
-            {
-                resolver_result res ;
-                natus::nsl::symbols_t syms( { sym } ) ;
-                
-                {
-                    natus::nsl::symbols_t tmp = std::move( syms ) ;
-
-                    for( auto const& s : tmp )
-                    {
-                        natus::nsl::post_parse::config_t c ;
-                        if( _db->find_config( s, c ) )
-                        {
-                            res.config = c ;
-                            for( auto const s : c.shaders )
-                            {
-                                for( auto const& d : s.deps )
-                                {
-                                    syms.emplace_back( d ) ;
-                                }
-                            }
-                        }
-                    }
-                }
-
-                while( syms.size() != 0 )
-                {
-                    natus::nsl::symbols_t tmp = std::move( syms ) ;
-
-                    for( auto const& s : tmp )
-                    {
-                        // check variable first
-                        {
-                            natus::nsl::post_parse::library_t::variable_t var ;
-                            if( _db->find_variable( s, var ) )
-                            {
-                                auto const iter = std::find( res.vars.begin(), res.vars.end(), var ) ;
-                                if( iter == res.vars.end() ) res.vars.emplace_back( var ) ;
-                                continue ;
-                            }
-                        }
-
-                        {
-                            natus::nsl::post_parse::library_t::fragments_t frgs ;
-                            if( !_db->find_fragments( s, frgs ) ) continue ;
-
-                            for( auto const& frg : frgs )
-                            {
-                                auto iter = std::find( res.frags.begin(), res.frags.end(), frg ) ;
-                                if( iter != res.frags.end() ) continue ;
-
-                                res.frags.emplace_back( frg ) ;
-
-                                for( auto const& s : frg.deps )
-                                {
-                                    syms.emplace_back( s ) ;
-                                }
-                            }
-                        }
-                    }
-                }
-
-                return std::move( res ) ;
-            }
-        };
-        natus_typedef( dependency_resolver ) ;
     }
 }

@@ -14,6 +14,7 @@ set( sources
     "symbol_table.hpp"
     "generator.hpp"
     "symbol.hpp"
+    "dependency_resolver.hpp"
 
     "api/glsl.hpp"
 
