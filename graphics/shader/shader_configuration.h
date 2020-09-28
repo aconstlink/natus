@@ -147,6 +147,15 @@ namespace natus
                 return *this ;
             }
 
+            bool_t has_input_binding( natus::graphics::binding_point const bp ) const 
+            {
+                for( auto const & b : _bindings )
+                {
+                    if( b.bp == bp ) return true ;
+                }
+                return false ;
+            }
+
         private:
 
             typedef ::std::pair< natus::graphics::backend_type, natus::graphics::shader_set > ss_item_t ;

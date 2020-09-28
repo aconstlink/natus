@@ -150,7 +150,7 @@ namespace natus
                                 }
                                 v.type = token[ base + 0 ] ;
                                 v.name = token[ base + 1 ] ;
-                                if( token.size() > 3 )
+                                if( (token.size() >= 4 + base) && token[ base + 2] == ":" )
                                 {
                                     v.binding = token[ base + 3 ] ;
                                 }

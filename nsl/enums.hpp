@@ -12,6 +12,7 @@ namespace natus
 
         enum class shader_type
         {
+            unknown,
             vertex_shader,
             pixel_shader
         };
