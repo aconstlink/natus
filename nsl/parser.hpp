@@ -711,10 +711,12 @@ namespace natus
                 // clear spaces before and after statement
                 {
                     size_t const p0 = s.find_first_not_of( ' ' ) ;
+                    if( p0 != std::string::npos ) s = s.substr( p0 ) ;
+
                     size_t const p1 = s.find_last_not_of( ' ' ) ;
-                    size_t const dif = p1 - p0 ;
-                    if( dif != 0 ) s = s.substr( p0, dif + 1 ) ;
-                    if( dif == 0 ) return "" ;
+                    if( p1 != std::string::npos ) s = s.substr( 0, p1+1 ) ;
+
+                    if( s.empty() ) return "" ;
                 }
 
                 // clear multi spaces
