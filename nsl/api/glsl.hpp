@@ -82,11 +82,11 @@ namespace natus
                             {
                                 size_t const n = arg_types.size() ;
 
-                                for( auto const & s : arg_ )
+                                for( auto const & str : arg_ )
                                 {
-                                    if( detail::is_type( s ) )
+                                    if( detail::is_type( str ) )
                                     {
-                                        arg_types.emplace_back( s ) ;
+                                        arg_types.emplace_back( str ) ;
                                         break ;
                                     }
                                 }
@@ -263,16 +263,16 @@ namespace natus
 
                             natus::ntd::string_t const flow = v.flow_qualifier.empty() ? "uniform" : v.flow_qualifier ;
                             natus::ntd::string_t name = v.name ;
-                            natus::ntd::string_t type = v.type ;
+                            natus::ntd::string_t type_ = v.type ;
 
                             if( flow == "in" || flow == "out" ) name = flow + "_" + name ;
 
                             // do some regex replacements
                             {
-                                type = std::regex_replace( type, std::regex( "tex([1-3]+)d" ), "sampler$1D" ) ;
+                                type_ = std::regex_replace( type_, std::regex( "tex([1-3]+)d" ), "sampler$1D" ) ;
                             }
 
-                            text << flow << " " << type << " " << name << " ; " << std::endl ;
+                            text << flow << " " << type_ << " " << name << " ; " << std::endl ;
                         }
                         text << std::endl ;
                     }

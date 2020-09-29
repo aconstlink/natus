@@ -8,7 +8,7 @@
 
 namespace natus
 {
-    namespace graphcis
+    namespace graphics
     {
         // generates a shader configuration from generated code
         class nsl_bridge

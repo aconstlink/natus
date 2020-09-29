@@ -31,9 +31,9 @@ namespace natus
                         if( db->find_config( s, c ) )
                         {
                             res.config = c ;
-                            for( auto const s : c.shaders )
+                            for( auto const & shd : c.shaders )
                             {
-                                for( auto const& d : s.deps )
+                                for( auto const& d : shd.deps )
                                 {
                                     syms.emplace_back( d ) ;
                                 }
@@ -75,9 +75,9 @@ namespace natus
 
                                 res.frags.emplace_back( frg ) ;
 
-                                for( auto const& s : frg.deps )
+                                for( auto const& dep : frg.deps )
                                 {
-                                    syms.emplace_back( s ) ;
+                                    syms.emplace_back( dep ) ;
                                 }
                             }
                         }

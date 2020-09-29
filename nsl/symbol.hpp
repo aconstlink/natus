@@ -73,7 +73,7 @@ namespace natus
                 return ( *this = this_t::construct( this_t::tokenize( s ) ) ) ;
             }
 
-            this_ref_t operator + ( this_cref_t rhv ) const noexcept
+            this_t operator + ( this_cref_t rhv ) const noexcept
             {
                 return this_t( *this ).construct( this_t::tokenize( _sym + "." + rhv._sym ) ) ;
             }
