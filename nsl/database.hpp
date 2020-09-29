@@ -46,12 +46,22 @@ namespace natus
 
             database( this_cref_t ) = delete ;
 
-            database( this_rref_t ) noexcept
+            database( this_rref_t rhv ) noexcept
             {
+                *this = std::move( rhv ) ;
             }
 
             ~database( void_t ) noexcept
             {
+            }
+
+            this_ref_t operator = ( this_cref_t ) = delete ;
+            this_ref_t operator = ( this_rref_t rhv ) noexcept
+            {
+                _vars = std::move( rhv._vars ) ;
+                _fragments = std::move( rhv._fragments ) ;
+                _configs = std::move( rhv._configs ) ;
+                return *this ;
             }
 
         public:

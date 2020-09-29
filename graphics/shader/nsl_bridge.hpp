@@ -21,8 +21,6 @@ namespace natus
             {
                 natus::graphics::shader_configuration_t ret ;
 
-                
-
                 // variable bindings
                 {
                     for( auto const& s : code.shaders )
@@ -103,8 +101,6 @@ namespace natus
                                 {
                                     ret.add_vertex_input_binding( natus::graphics::vertex_attribute::tangent, v.name ) ;
                                 }
-
-                                
                             }
                         }
 

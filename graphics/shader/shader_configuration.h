@@ -212,6 +212,12 @@ namespace natus
                 return *this ;
             }
 
+            this_ref_t set_name( natus::ntd::string_cref_t n ) noexcept 
+            {
+                _name = n ;
+                return *this ;
+            }
+
         public:
            
             this_ref_t insert( natus::graphics::backend_type const bt, natus::graphics::shader_set_in_t ss )
