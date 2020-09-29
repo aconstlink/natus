@@ -6,6 +6,7 @@
 #include "../dependency_resolver.hpp"
 
 #include <natus/ntd/vector.hpp>
+#include <natus/ntd/map.hpp>
 
 #include <sstream>
 #include <regex>
@@ -132,6 +133,10 @@ namespace natus
 
                 natus::nsl::generateable_t _genable ;
 
+                // not vertex attributes, only varyings
+                natus::ntd::map< natus::ntd::string_t, natus::ntd::string_t > _ins ;
+                natus::ntd::map< natus::ntd::string_t, natus::ntd::string_t > _outs ;
+
             public:
 
                 generator( void_t ) noexcept {}
@@ -171,15 +176,30 @@ namespace natus
 
                             for( auto const & v : s.variables )
                             {
-                                if( v.binding.empty() || v.flow_qualifier == "out" ) continue ;
-
                                 natus::nsl::generated_code_t::variable_t var ;
 
-                                natus::ntd::string_t const flow = v.flow_qualifier.empty() ? "uniform" : v.flow_qualifier ;
+                                {
+                                    natus::ntd::string_t const flow = v.flow_qualifier.empty() ? "uniform" : v.flow_qualifier ;
 
-                                var.name = ( flow == "in" || flow == "out" ) ? flow + "_" + v.name : v.name ;
-                                var.binding = v.binding ;
+                                    if( s_type == natus::nsl::shader_type::vertex_shader && v.flow_qualifier == "out" )
+                                    {
+                                        var.name = "var_" + v.name ;
+                                        _outs[ v.name ] = var.name ;
+                                    }
+                                    else if( s_type == natus::nsl::shader_type::pixel_shader && v.flow_qualifier == "in" )
+                                    {
+                                        var.name = "var_" + v.name  ;
+                                        _ins[ v.name ] = var.name ;
+                                    }
+                                    else
+                                    {
+                                        var.name = ( flow == "in" || flow == "out" ) ? flow + "_" + v.name : v.name ;
+                                    }
+                                }
                                 
+                                if( v.binding.empty() || v.flow_qualifier == "out" ) continue ;
+
+                                var.binding = v.binding ;
                                 shd.variables.emplace_back( std::move( var ) ) ;
                             }
 
@@ -189,6 +209,9 @@ namespace natus
                             ret.shaders.emplace_back( std::move( shd ) ) ;
                         }
                     }
+                    _ins.clear() ;
+                    _outs.clear() ;
+
                     return std::move( ret ) ;
                 }
 
@@ -197,7 +220,7 @@ namespace natus
                     natus::nsl::generated_code_t::code code ;
 
                     std::stringstream text ;
-
+                    
                     // 1. glsl stuff at the front
                     {
                         switch( type )
@@ -206,7 +229,8 @@ namespace natus
                             text << "#version 130" << std::endl << std::endl ;
                             break ;
                         case natus::nsl::api_type::es3:
-                            text << "#version 300 es" << std::endl << std::endl ;
+                            text << "#version 300 es" << std::endl ;
+                            text << "precision mediump float ;" << std::endl << std::endl ;
                             break ;
                         default:
                             text << "#version " << "glsl_type case missing" << std::endl << std::endl ;
@@ -265,7 +289,14 @@ namespace natus
                             natus::ntd::string_t name = v.name ;
                             natus::ntd::string_t type_ = v.type ;
 
-                            if( flow == "in" || flow == "out" ) name = flow + "_" + name ;
+                            if( flow == "in" || flow == "out" )
+                                name = flow + "_" + name ;
+
+                            if( flow == "in" && s.type == "pixel_shader" )
+                                name = _ins[ v.name ] ;
+                            else if( flow == "out" && s.type == "vertex_shader" )
+                                name = _outs[ v.name ] ;
+                            
 
                             // do some regex replacements
                             {
@@ -338,18 +369,22 @@ namespace natus
                         // repace in/out
                         {
                             {
+                                natus::ntd::string_t const repl = s.type != "pixel_shader" ? "in_" : "var_" ;
+
                                 size_t p0 = shd.find( "in." ) ;
                                 while( p0 != std::string::npos )
                                 {
-                                    shd.replace( p0, 3, "in_" ) ;
+                                    shd.replace( p0, 3, repl ) ;
                                     p0 = shd.find( "in.", p0 + 3 ) ;
                                 }
                             }
                             {
+                                natus::ntd::string_t const repl = s.type != "vertex_shader" ? "out_" : "var_" ;
+
                                 size_t p0 = shd.find( "out." ) ;
                                 while( p0 != std::string::npos )
                                 {
-                                    shd.replace( p0, 4, "out_" ) ;
+                                    shd.replace( p0, 4, repl ) ;
                                     p0 = shd.find( "out.", p0 + 4 ) ;
                                 }
                             }
