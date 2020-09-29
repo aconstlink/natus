@@ -20,6 +20,8 @@ set( sources
     "wav/wav_module.cpp"
     "wav/wav_module.h"
 
+    "nsl/nsl_module.h"
+    "nsl/nsl_module.cpp"
     )
 
 natus_vs_src_dir( sources )

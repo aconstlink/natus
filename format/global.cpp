@@ -1,6 +1,7 @@
 
 #include "global.h"
 #include "stb/stb_module.h"
+#include "nsl/nsl_module.h"
 
 #include <natus/memory/global.h>
 
@@ -42,4 +43,5 @@ natus::format::module_registry_res_t global::registry( void_t ) noexcept
 void_t global::register_default_registries( void_t ) 
 {
     natus::format::stb_module_register::register_module( _mr ) ;
+    natus::format::nsl_module_register::register_module( _mr ) ;
 }
