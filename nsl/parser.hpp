@@ -42,13 +42,14 @@ namespace natus
             natus::nsl::post_parse::document_t process( natus::ntd::string_rref_t file ) noexcept
             {
                 natus::nsl::post_parse::document_t doc ;
+                
+                file = this_t::remove_comment_lines( std::move( file ) ) ;
 
                 if( !this_t::some_first_checks(file ) ) 
                 {
                     return std::move( doc ) ;
                 }
-
-                file = this_t::remove_comment_lines( std::move( file ) ) ;
+                
                 file = this_t::insert_spaces( std::move( file ) ) ;
                 auto statements = this_t::replace_open_close( this_t::scan( std::move( file ) ) ) ;
                 
@@ -667,7 +668,7 @@ namespace natus
             {
                 for( auto iter = s.begin(); iter != s.end(); ++iter )
                 {
-                    if( *iter == '+' || *iter == '-' || *iter == '<' || *iter == '>' )
+                    if( *iter == '+' || *iter == '-' || *iter == '<' || *iter == '>' || *iter == '/' )
                     {
                         auto iter_next = iter + 1 ;
                         auto iter_last = iter - 1 ;
