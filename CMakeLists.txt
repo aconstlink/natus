@@ -97,6 +97,7 @@ set( subdirs_header_only
     "core"
     "ntd"
     "math"
+    "nsl"
     )
 
 set( subdirs  )

@@ -1,0 +1,180 @@
+
+#pragma once
+
+#include "../typedefs.h"
+#include "shader_configuration.h"
+
+#include <natus/nsl/generator.hpp>
+
+namespace natus
+{
+    namespace graphcis
+    {
+        // generates a shader configuration from generated code
+        class nsl_bridge
+        {
+            natus_this_typedefs( nsl_bridge ) ;
+
+        public:
+
+            natus::graphics::shader_configuration_t create( natus::nsl::generated_code_cref_t code ) const noexcept
+            {
+                natus::graphics::shader_configuration_t ret ;
+
+                
+
+                // variable bindings
+                {
+                    for( auto const& s : code.shaders )
+                    {
+                        // vertex attributes
+                        {
+                            for( auto const& v : s.variables )
+                            {
+                                if( s.type != natus::nsl::shader_type::vertex_shader ) continue ;
+
+                                // check texcoord
+                                {
+                                    auto const p0 = v.binding.find( "texcoord" ) ;
+
+                                    if( p0 != std::string::npos )
+                                    {
+                                        auto const res = v.binding.substr( p0 + natus::ntd::string_t("texcoord").size() ) ;
+                                        if( res.size() == 1 )
+                                        {
+                                            natus::graphics::vertex_attribute va
+                                                = natus::graphics::vertex_attribute::undefined ;
+
+                                            switch( std::stol( res ) )
+                                            {
+                                            case 0: va = natus::graphics::vertex_attribute::texcoord0 ; break ;
+                                            case 1: va = natus::graphics::vertex_attribute::texcoord1 ; break ;
+                                            case 2: va = natus::graphics::vertex_attribute::texcoord2 ; break ;
+                                            case 3: va = natus::graphics::vertex_attribute::texcoord3 ; break ;
+                                            case 4: va = natus::graphics::vertex_attribute::texcoord4 ; break ;
+                                            case 5: va = natus::graphics::vertex_attribute::texcoord5 ; break ;
+                                            case 6: va = natus::graphics::vertex_attribute::texcoord6 ; break ;
+                                            case 7: va = natus::graphics::vertex_attribute::texcoord7 ; break ;
+                                            default: break;
+                                            }
+                                            ret.add_vertex_input_binding( va, v.name ) ;
+                                        }
+                                        continue ;
+                                    }
+                                }
+
+                                // check color
+                                {
+                                    auto const p0 = v.binding.find( "color" ) ;
+
+                                    if( p0 != std::string::npos )
+                                    {
+                                        auto const res = v.binding.substr( p0 ) ;
+                                        if( res.size() == 1 )
+                                        {
+                                            natus::graphics::vertex_attribute va
+                                                = natus::graphics::vertex_attribute::undefined ;
+
+                                            switch( std::stol( res ) )
+                                            {
+                                            case 0: va = natus::graphics::vertex_attribute::color0 ; break ;
+                                            case 1: va = natus::graphics::vertex_attribute::color1 ; break ;
+                                            case 2: va = natus::graphics::vertex_attribute::color2 ; break ;
+                                            case 3: va = natus::graphics::vertex_attribute::color3 ; break ;
+                                            case 4: va = natus::graphics::vertex_attribute::color4 ; break ;
+                                            case 5: va = natus::graphics::vertex_attribute::color5 ; break ;
+                                            default: break;
+                                            }
+                                            ret.add_vertex_input_binding( va, v.name ) ;
+                                        }
+                                        continue ;
+                                    }
+                                }
+
+                                if( v.binding == "position" )
+                                {
+                                    ret.add_vertex_input_binding( natus::graphics::vertex_attribute::position, v.name ) ;
+                                }
+                                else if( v.binding == "normal" )
+                                {
+                                    ret.add_vertex_input_binding( natus::graphics::vertex_attribute::normal, v.name ) ;
+                                }
+                                else if( v.binding == "tangent" )
+                                {
+                                    ret.add_vertex_input_binding( natus::graphics::vertex_attribute::tangent, v.name ) ;
+                                }
+
+                                
+                            }
+                        }
+
+
+                        {
+                            for( auto const& v : s.variables )
+                            {
+                                natus::graphics::binding_point bp = natus::graphics::binding_point::undefined ;
+                                
+                                if( v.binding == "view" )
+                                {
+                                    bp = natus::graphics::binding_point::view_matrix ;
+                                }
+                                else if( v.binding == "projection" )
+                                {
+                                    bp = natus::graphics::binding_point::projection_matrix ;
+                                }
+
+                                if( !ret.has_input_binding( bp ) && bp != natus::graphics::binding_point::undefined ) 
+                                    ret.add_input_binding( bp, v.name ) ;
+                            }
+                        }
+                    }
+                }
+                
+                // code
+                {
+                    natus::ntd::vector< natus::nsl::api_type > const types = {
+                        natus::nsl::api_type::es3, natus::nsl::api_type::gl3 } ;
+
+                    for( auto const & t : types )
+                    {
+                        natus::graphics::shader_set_t ss ;
+
+                        natus::graphics::backend_type bt = natus::graphics::backend_type::unknown ;
+                        switch( t )
+                        {
+                        case natus::nsl::api_type::gl3:
+                            bt = natus::graphics::backend_type::gl3 ;
+                            break ;
+                        case natus::nsl::api_type::es3:
+                            bt = natus::graphics::backend_type::es3 ;
+                            break ;
+                        default:
+                            break;
+                        }
+
+                        if( bt == natus::graphics::backend_type::unknown )
+                        {
+                            natus::log::global_t::warning( "[nsl_bridge] : unknown/unmappable api type" ) ;
+                            continue ;
+                        }
+
+                        code.sorted_by_api_type( t, [&] ( natus::nsl::shader_type st, natus::nsl::generated_code_t::code_cref_t c )
+                        {
+                            if( st == natus::nsl::shader_type::vertex_shader )
+                                ss.set_vertex_shader( c.shader ) ;
+                            else if( st == natus::nsl::shader_type::pixel_shader )
+                                ss.set_pixel_shader( c.shader ) ;
+                        } ) ;
+
+                        ret.insert( bt, std::move( ss ) ) ;
+                    }
+                }
+
+
+                return std::move( ret ) ;
+            }
+
+        };
+        natus_typedef( nsl_bridge ) ;
+    }
+}
