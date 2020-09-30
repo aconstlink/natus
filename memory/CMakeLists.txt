@@ -12,9 +12,6 @@ set( sources
     "macros.h"
 
     "macros/handle.h"
-    
-    "utility/uint8_split_merge.h"
-    "utility/uint8_msb_stream.h"
 
     "manager/imanager.h"
     "manager/manager.h"

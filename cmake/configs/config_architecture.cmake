@@ -5,6 +5,7 @@
 #
 # the values here can be initialized using a toolchain file
 
+message( STATUS ">>> [natus config architecture] >>>" )
 set( NATUS_ARCH_CONFIGURED FALSE )
 
 set( NATUS_HOST_ARCH "Unknown" )
@@ -22,5 +23,16 @@ set( NATUS_TARGET_ARCH_MIPS OFF )
 set( NATUS_TARGET_ARCH_BIT_32 OFF )
 set( NATUS_TARGET_ARCH_BIT_64 ON ) #default
 
+include( TestBigEndian )
+TEST_BIG_ENDIAN( BIGENDIAN ) 
+if( ${BIGENDIAN} )
+  message( "[Endianness] : Big endian" )
+else()
+  message("[Endianness] : Little endian") 
+endif()
+set( NATUS_TARGET_ARCH_BIG_ENDIAN ${BIGENDIAN} )
+unset( BIGENDIAN )
+
 set( NATUS_ARCH_CONFIGURED TRUE )
 
+message( STATUS "<<< [natus config architecture] <<<" )
