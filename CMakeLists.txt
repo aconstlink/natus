@@ -117,6 +117,7 @@ list( APPEND subdirs
     "gfx"
     "device"
     "format"
+    "audio"
     ${subdirs_header_only}
     )
 
