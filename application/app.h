@@ -135,6 +135,7 @@ namespace natus
             virtual natus::application::result on_init( void_t ) = 0 ;
             virtual natus::application::result on_update( void_t ) = 0 ;
             virtual natus::application::result on_render( void_t ) = 0 ;
+            virtual natus::application::result on_audio( void_t ) { return natus::application::result::ok ; }
             virtual natus::application::result on_shutdown( void_t ) = 0 ;
 
             virtual natus::application::result on_event( window_id_t const, this_t::window_event_info_in_t ) 
@@ -155,10 +156,16 @@ namespace natus
 
         private: // platform application interface
 
+            bool_t platform_update( void_t ) ;
+
+        private: // system specific update code
+
             bool_t before_update( void_t ) ;
             bool_t after_update( void_t ) ;
             bool_t before_render( void_t ) ;
             bool_t after_render( void_t ) ;
+            bool_t before_audio( void_t ) ;
+            bool_t after_audio( void_t ) ;
 
         };
         natus_res_typedef( app ) ;

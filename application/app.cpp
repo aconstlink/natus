@@ -337,6 +337,30 @@ natus::application::result app::request_change( this_t::window_info_in_t )
 }
 
 //***
+bool_t app::platform_update( void_t ) 
+{
+    if( this_t::before_update() )
+    {
+        this->on_update() ;
+        this_t::after_update() ;
+    }
+
+    if( this_t::before_audio() )
+    {
+        this->on_audio() ;
+        this_t::after_audio() ;
+    }
+    
+    if( this_t::before_render() )
+    {
+        this->on_render() ;
+        this_t::after_render() ;
+    }
+
+    return true ;
+}
+
+//***
 bool_t app::before_update( void_t ) 
 {
     *_access = false ;
@@ -405,6 +429,18 @@ bool_t app::after_render( void_t )
     {
         pwi.async->leave_frame() ;
     }
+    return true ;
+}
+
+//***
+bool_t app::before_audio( void_t ) 
+{
+    return true ;
+}
+
+//***
+bool_t app::after_audio( void_t ) 
+{
     return true ;
 }
 
