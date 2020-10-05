@@ -38,7 +38,7 @@ namespace natus
             natus_typedef( window_info ) ;
 
             struct window_event_info
-            {                
+            {
                 uint_t w = 400 ;
                 uint_t h = 400 ;
             };
@@ -58,7 +58,7 @@ namespace natus
                 natus::application::window_message_receiver_res_t _msg_wnd ;
                 natus::application::window_message_receiver_res_t _msg_gfx ;
 
-            public: 
+            public:
 
                 window_view( void_t ) ;
                 window_view( this_rref_t ) ;
@@ -99,7 +99,7 @@ namespace natus
                 bool_ptr_t run ;
                 per_window_info( void_t ) {}
                 per_window_info( this_cref_t ) = delete ;
-                per_window_info( this_rref_t rhv ) 
+                per_window_info( this_rref_t rhv )
                 {
                     rnd_thread = ::std::move( rhv.rnd_thread ) ;
                     wnd = ::std::move( rhv.wnd ) ;
@@ -132,10 +132,20 @@ namespace natus
 
         public:
 
+            struct update_data {};
+            struct render_data {};
+            struct audio_data {} ;
+
+            natus_typedef( update_data ) ;
+            natus_typedef( render_data ) ;
+            natus_typedef( audio_data ) ;
+
+        public:
+
             virtual natus::application::result on_init( void_t ) = 0 ;
-            virtual natus::application::result on_update( void_t ) = 0 ;
-            virtual natus::application::result on_render( void_t ) = 0 ;
-            virtual natus::application::result on_audio( void_t ) { return natus::application::result::ok ; }
+            virtual natus::application::result on_update( update_data_in_t ) = 0 ;
+            virtual natus::application::result on_render( render_data_in_t ) = 0 ;
+            virtual natus::application::result on_audio( audio_data_in_t ) { return natus::application::result::ok ; }
             virtual natus::application::result on_shutdown( void_t ) = 0 ;
 
             virtual natus::application::result on_event( window_id_t const, this_t::window_event_info_in_t ) 

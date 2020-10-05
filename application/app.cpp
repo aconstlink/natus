@@ -341,19 +341,22 @@ bool_t app::platform_update( void_t )
 {
     if( this_t::before_update() )
     {
-        this->on_update() ;
+        this_t::update_data_t dat ;
+        this->on_update( dat ) ;
         this_t::after_update() ;
     }
 
     if( this_t::before_audio() )
     {
-        this->on_audio() ;
+        this_t::audio_data_t dat ;
+        this->on_audio( dat ) ;
         this_t::after_audio() ;
     }
     
     if( this_t::before_render() )
     {
-        this->on_render() ;
+        this_t::render_data_t dat ;
+        this->on_render( dat ) ;
         this_t::after_render() ;
     }
 
