@@ -6,6 +6,24 @@ set( sources
     
     "global.h"
     "global.cpp"
+
+    "async.h"
+    "async.cpp"
+    "id.hpp"
+    "object.hpp"
+
+    "buffer/ibuffer.hpp"
+    "buffer/pcm_buffer.hpp"
+
+    "configuration/capture_configuration.h"
+    "configuration/play_configuration.h"
+    "configuration/synth_configuration.h"
+
+    "backend/backend.h"
+    "backend/backend.cpp"
+    "backend/types.h"
+    "backend/oal/oal.h"
+    "backend/oal/oal.cpp"
     
     )
 
