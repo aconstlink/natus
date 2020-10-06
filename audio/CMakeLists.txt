@@ -2,7 +2,7 @@
 set( sources 
     "api.h"
     "typedefs.h"
-
+    "result.h"
     
     "global.h"
     "global.cpp"
@@ -15,9 +15,9 @@ set( sources
     "buffer/ibuffer.hpp"
     "buffer/pcm_buffer.hpp"
 
-    "configuration/capture_configuration.h"
-    "configuration/play_configuration.h"
-    "configuration/synth_configuration.h"
+    "object/capture_object.h"
+    "object/play_object.h"
+    "object/synth_object.h"
 
     "backend/backend.h"
     "backend/backend.cpp"

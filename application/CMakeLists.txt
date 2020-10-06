@@ -81,6 +81,7 @@ target_compile_options( ${cur_lib_name} PUBLIC ${NATUS_WINDOW_SYSTEM_DEFINES} )
 
 target_link_libraries( ${cur_lib_name}
     PUBLIC natus_graphics_options 
+    PUBLIC natus::audio
     PUBLIC natus::system
     PUBLIC natus::graphics
     PUBLIC natus::concurrent

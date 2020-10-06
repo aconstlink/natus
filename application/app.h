@@ -7,6 +7,7 @@
 #include "protos.h"
 #include "platform/platform_window.h"
 
+#include <natus/audio/async.h>
 #include <natus/graphics/async.h>
 #include <natus/concurrent/typedefs.h>
 
@@ -116,12 +117,38 @@ namespace natus
             natus::concurrent::mutex_t _wmtx ;
             windows_t _windows ;
 
+        private: // audio engine
+
+            struct per_audio_info
+            {
+                natus_this_typedefs( per_audio_info ) ;
+
+                natus::concurrent::mutex_t mtx ;
+                natus::concurrent::thread_t rnd_thread ;
+                natus::audio::async_res_t async ;
+                bool_ptr_t run ;
+                per_audio_info( void_t ) {}
+                per_audio_info( this_cref_t ) = delete ;
+                per_audio_info( this_rref_t rhv )
+                {
+                    rnd_thread = ::std::move( rhv.rnd_thread ) ;
+                    async = ::std::move( rhv.async ) ;
+                    natus_move_member_ptr( run, rhv ) ;
+                }
+                ~per_audio_info( void_t ) {}
+            };
+            natus_typedef( per_audio_info ) ;
+            typedef natus::ntd::vector< per_audio_info_t > audios_t ;
+            natus::concurrent::mutex_t _amtx ;
+            audios_t _audios ;
+
         private:
 
             // async view access
             bool_ptr_t _access = nullptr ;
             size_t _update_count = 0 ;
             size_t _render_count = 0 ;
+            size_t _audio_count = 0 ;
 
         public:
 
@@ -160,9 +187,13 @@ namespace natus
 
             natus::application::result request_change( this_t::window_info_in_t ) ;
 
+
+            natus::audio::async_view_t create_audio_engine( void_t ) noexcept ;
+
         private:
 
             void_t destroy_window( this_t::per_window_info_ref_t ) ;
+            void_t destroy_audio( this_t::per_audio_info_ref_t ) ;
 
         private: // platform application interface
 

@@ -24,6 +24,8 @@
 #include <natus/graphics/async.h>
 #include <natus/graphics/backend/null/null.h>
 
+#include <natus/audio/backend/oal/oal.h>
+
 using namespace natus::application ;
 
 //***
@@ -37,6 +39,7 @@ app::app( void_t )
 app::app( this_rref_t rhv )
 {
     _windows = ::std::move( rhv._windows ) ;
+    _audios = std::move( rhv._audios ) ;
     natus_move_member_ptr( _access, rhv ) ;
 }
 
@@ -47,8 +50,50 @@ app::~app( void_t )
     {
         this_t::destroy_window( pwi ) ;
     }
+
+    for( auto& pwi : _audios )
+    {
+        this_t::destroy_audio( pwi ) ;
+    }
     
     natus::memory::global_t::dealloc( _access ) ;
+}
+
+//***
+natus::audio::async_view_t app::create_audio_engine( void_t )  noexcept
+{
+    this_t::per_audio_info_t pai ;
+    natus::audio::backend_res_t backend = natus::audio::oal_backend_res_t(
+        natus::audio::oal_backend_t() ) ;
+
+    pai.async = natus::audio::async_res_t(
+        natus::audio::async_t( backend ) ) ;
+
+    natus::audio::async_res_t async = pai.async ;
+
+    bool_ptr_t run = natus::memory::global_t::alloc<bool_t>(
+        natus_log_fn( "bool for render thread while" ) ) ;
+    *run = true ;
+    pai.run = run ;
+
+    pai.rnd_thread = natus::concurrent::thread_t( [=] ( void_t )
+    {
+        auto async_ = async ;
+        auto run_ = run ;
+
+        while( *run_ )
+        {
+            async_->wait_for_frame() ;
+            async_->system_update() ;
+        }
+        natus::log::global_t::status( "[natus::app] : audio thread end" ) ;
+    } ) ;
+    pai.async = async ;
+    
+    natus::concurrent::lock_guard_t lk( _amtx ) ;
+    _audios.emplace_back( ::std::move( pai ) ) ;
+
+    return natus::audio::async_view_t( std::move( async ), _access ) ;
 }
 
 //***
@@ -331,6 +376,14 @@ void_t app::destroy_window( this_t::per_window_info_ref_t pwi )
 }
 
 //***
+void_t app::destroy_audio( this_t::per_audio_info_ref_t nfo ) 
+{
+    *( nfo.run ) = false ;
+    nfo.rnd_thread.join() ;
+    natus::memory::global_t::dealloc( nfo.run ) ;
+}
+
+//***
 natus::application::result app::request_change( this_t::window_info_in_t )
 {
     return natus::application::result::ok ;
@@ -438,12 +491,26 @@ bool_t app::after_render( void_t )
 //***
 bool_t app::before_audio( void_t ) 
 {
-    return true ;
+    size_t audio = _audios.size() ;
+
+    // check if async system is ready
+    for( auto& pwi : _audios )
+    {
+        if( pwi.async->enter_frame() )
+            --audio ;
+    }
+
+    return audio == 0 ;
 }
 
 //***
 bool_t app::after_audio( void_t ) 
 {
+    ++_audio_count ;
+    for( auto& pwi : _audios )
+    {
+        pwi.async->leave_frame() ;
+    }
     return true ;
 }
 
