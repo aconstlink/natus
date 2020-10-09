@@ -3,7 +3,8 @@ set( sources
     "api.h"
     "typedefs.h"
     "result.h"
-    
+    "enums.h"
+
     "global.h"
     "global.cpp"
 
@@ -33,7 +34,7 @@ add_library( ${cur_lib_name} ${NATUS_LIBRARY_BUILD_TYPE} ${sources} )
 add_library( ${cur_alias_name} ALIAS ${cur_lib_name} ) 
 
 target_link_libraries( ${cur_lib_name}
-  PUBLIC OpenAL
+  PRIVATE OpenAL
   PUBLIC natus::math
   PUBLIC natus::memory
   PUBLIC natus::log
@@ -41,6 +42,10 @@ target_link_libraries( ${cur_lib_name}
 
 if( NATUS_COMPILER_GNU )
   target_compile_options( ${cur_lib_name} PUBLIC -Wno-pessimizing-move )
+endif()
+
+if( NATUS_TARGET_ARCH_BIG_ENDIAN )
+  target_compile_options( ${cur_lib_name} PRIVATE -DNATUS_BIG_ENDIAN )
 endif()
 
 ###########################################################

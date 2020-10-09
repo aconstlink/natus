@@ -9,13 +9,13 @@ namespace natus
         enum class backend_type
         {
             unknown,
-            oal,
+            openal,
         };
 
         namespace detail
         {
             natus::ntd::string_t const __backend_type_names[] = {
-                "unknown", "oal" } ;
+                "unknown", "openal" } ;
         }
 
         static natus::ntd::string_cref_t to_string( natus::audio::backend_type const bt )
@@ -23,6 +23,7 @@ namespace natus
             return detail::__backend_type_names[ size_t( bt ) ] ;
         }
 
-        static size_t const max_backends = 1 ;
+        /// including unknown
+        static size_t const max_backends = 2 ;
     }
 }
