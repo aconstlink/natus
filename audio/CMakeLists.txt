@@ -13,9 +13,6 @@ set( sources
     "id.hpp"
     "object.hpp"
 
-    "buffer/ibuffer.hpp"
-    "buffer/pcm_buffer.hpp"
-
     "object/capture_object.h"
     "object/play_object.h"
     "object/synth_object.h"
