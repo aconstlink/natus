@@ -149,6 +149,7 @@ struct natus::audio::oal_backend::pimpl
 
         natus::ntd::vector< ALbyte >& buffer = co.buffer ;
         buffer.resize( size_t( count ) * co.frame_size ) ;
+        cap.resize( size_t( count ) * co.frame_size ) ;
 
         alcCaptureSamples( dev, buffer.data(), count ) ;
         if( alcGetError( dev ) != AL_NO_ERROR )
@@ -170,6 +171,8 @@ struct natus::audio::oal_backend::pimpl
                 int_t const ivalue = int_t( buffer[ idx + 0 ] << 8 ) & int_t( buffer[ idx + 1 ] << 0 );
                 #endif
                 float_t const value = float_t( double_t( ivalue ) / double_t( uint_t( ( 1 << 15 ) - 1 ) ) ) ;
+
+                cap[ idx ] = value ;
             }
         }
     }

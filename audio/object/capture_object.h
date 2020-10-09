@@ -119,7 +119,7 @@ namespace natus
             typedef std::function< void_t ( size_t const, float_ref_t ) > for_each_sample_write_t ;
             void_t for_each( for_each_sample_write_t funk ) noexcept
             {
-                for( size_t i = 0; i < _samples.size() - 1; ++i )
+                for( size_t i = 0; i < _samples.size(); ++i )
                 {
                     funk( i, _samples[ i ] ) ;
                 }
