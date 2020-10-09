@@ -33,12 +33,6 @@ namespace natus
 
         public:
 
-            this_ref_t add( natus::ntd::string_cref_t v ) noexcept
-            {
-                _versions.emplace_back( v ) ;
-                return *this ;
-            }
-
             this_ref_t add( versions_cref_t versions ) noexcept
             {
                 for( auto const & v : versions )
