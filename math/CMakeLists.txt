@@ -75,6 +75,8 @@ set( non_arch_sources
     camera/3d/perspective_camera.hpp
     camera/3d/orthographic_camera.hpp
 
+    "dsp/fft.hpp"
+
     "header_only.cpp"
 )
 
