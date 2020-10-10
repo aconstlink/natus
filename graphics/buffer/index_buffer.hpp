@@ -61,6 +61,7 @@ namespace natus
             {
                 _num_elems = ne ;
                 size_t const sib = this_t::get_sib() ;
+                natus::memory::global_t::dealloc( _data ) ;
                 _data = natus::memory::global_t::alloc( sib, "index buffer" ) ;
                 return *this ;
             }
