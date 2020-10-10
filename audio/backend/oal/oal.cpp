@@ -4,12 +4,14 @@
 #include "../../id.hpp"
 #include "../../enums.h"
 
+#include <natus/math/vector/vector2.hpp>
 #include <natus/ntd/vector.hpp>
 
 #include <AL/alc.h>
 #include <AL/al.h>
 #include <AL/alext.h>
 
+#include <limits>
 
 using namespace natus::audio ;
 
@@ -27,6 +29,7 @@ namespace this_file
         // here we reuse the buffer for later usage so
         // be do not have to reallocate memory.
         natus::ntd::vector< ALbyte > buffer ;
+        natus::ntd::vector< float_t > fbuffer ;
     };
     natus_typedef( capture_obj ) ;
 }
@@ -41,9 +44,9 @@ struct natus::audio::oal_backend::pimpl
     pimpl( void_t ) {}
     ~pimpl( void_t )
     {
-        for( auto & c : captures )
+        for( auto& c : captures )
         {
-            if( c.dev != nullptr ) 
+            if( c.dev != nullptr )
             {
                 alcCaptureCloseDevice( c.dev ) ;
             }
@@ -145,11 +148,11 @@ struct natus::audio::oal_backend::pimpl
         ALCint count = 0 ;
         alcGetIntegerv( dev, ALC_CAPTURE_SAMPLES, 1, &count ) ;
 
-        if( count == 0 ) return ;
-
         natus::ntd::vector< ALbyte >& buffer = co.buffer ;
+        auto& fbuffer = co.fbuffer ;
+
         buffer.resize( size_t( count ) * co.frame_size ) ;
-        cap.resize( size_t( count ) * co.frame_size ) ;
+        fbuffer.resize( size_t( count ) * co.frame_size ) ;
 
         alcCaptureSamples( dev, buffer.data(), count ) ;
         if( alcGetError( dev ) != AL_NO_ERROR )
@@ -158,23 +161,28 @@ struct natus::audio::oal_backend::pimpl
             return ;
         }
 
+
+
         for( size_t i = 0; i < count; ++i )
         {
             for( size_t j = 0; j < co.num_channels ; ++j )
             {
                 // the index into the buffer
                 size_t const idx = i * co.frame_size + j ;
+
                 // reconstruct the 16 bit value
                 #if !NATUS_BIG_ENDIAN
-                int_t const ivalue = int_t( buffer[ idx + 1 ] << 8 ) & int_t( buffer[ idx + 0 ] << 0 );
+                int_t const ivalue = int_t( buffer[ idx + 1 ] << 8 ) | int_t( buffer[ idx + 0 ] << 0 );
                 #else
-                int_t const ivalue = int_t( buffer[ idx + 0 ] << 8 ) & int_t( buffer[ idx + 1 ] << 0 );
+                int_t const ivalue = int_t( buffer[ idx + 0 ] << 8 ) | int_t( buffer[ idx + 1 ] << 0 );
                 #endif
-                float_t const value = float_t( double_t( ivalue ) / double_t( uint_t( ( 1 << 15 ) - 1 ) ) ) ;
 
-                cap[ idx ] = value ;
+                size_t const index = i * natus::audio::to_number( cap.get_channels() ) + j ;
+                fbuffer[ index ] = float_t( double_t( ivalue ) / double_t( uint_t( ( 1 << 15 ) - 1 ) ) ) ;
             }
         }
+
+        cap.shift_and_copy_from( size_t( count ) * natus::audio::to_number( cap.get_channels() ), fbuffer.data() ) ;
     }
 
 
@@ -200,6 +208,12 @@ oal_backend::oal_backend( this_rref_t rhv ) noexcept : backend( std::move( rhv )
 oal_backend::~oal_backend( void_t ) noexcept
 {
     natus::memory::global_t::dealloc( _pimpl ) ;
+}
+
+oal_backend::this_ref_t oal_backend::operator = ( this_rref_t rhv ) noexcept
+{
+    natus_move_member_ptr( _pimpl, rhv ) ;
+    return *this ;
 }
 
 natus::audio::result oal_backend::configure( natus::audio::capture_object_res_t cap ) noexcept

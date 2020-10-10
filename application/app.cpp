@@ -85,6 +85,7 @@ natus::audio::async_view_t app::create_audio_engine( void_t )  noexcept
         {
             async_->wait_for_frame() ;
             async_->system_update() ;
+            std::this_thread::sleep_for( std::chrono::milliseconds( 10 ) ) ;
         }
         natus::log::global_t::status( "[natus::app] : audio thread end" ) ;
     } ) ;

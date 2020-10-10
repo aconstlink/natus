@@ -23,6 +23,8 @@ namespace natus
             oal_backend( this_rref_t ) noexcept ;
             virtual ~oal_backend( void_t ) ;
 
+            this_ref_t operator = ( this_rref_t ) noexcept ;
+
         public:
 
             virtual natus::audio::result configure( natus::audio::capture_object_res_t ) noexcept ;
