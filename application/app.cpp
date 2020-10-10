@@ -371,7 +371,8 @@ app::window_async_t app::create_window(
 void_t app::destroy_window( this_t::per_window_info_ref_t pwi ) 
 {
     *( pwi.run ) = false ;
-    std::this_thread::sleep_for( std::chrono::milliseconds(10) ) ;
+    pwi.async->enter_frame() ;
+    pwi.async->leave_frame() ;
     if( pwi.rnd_thread.joinable() ) pwi.rnd_thread.join() ;
     natus::memory::global_t::dealloc( pwi.run ) ;
 }
