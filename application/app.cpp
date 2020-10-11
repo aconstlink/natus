@@ -85,7 +85,7 @@ natus::audio::async_view_t app::create_audio_engine( void_t )  noexcept
         {
             async_->wait_for_frame() ;
             async_->system_update() ;
-            std::this_thread::sleep_for( std::chrono::milliseconds( 10 ) ) ;
+            std::this_thread::sleep_for( std::chrono::milliseconds( 1000 ) ) ;
         }
         natus::log::global_t::status( "[natus::app] : audio thread end" ) ;
     } ) ;
@@ -382,7 +382,9 @@ void_t app::destroy_window( this_t::per_window_info_ref_t pwi )
 void_t app::destroy_audio( this_t::per_audio_info_ref_t nfo ) 
 {
     *( nfo.run ) = false ;
-    nfo.rnd_thread.join() ;
+    nfo.async->enter_frame() ;
+    nfo.async->leave_frame() ;
+    if( nfo.rnd_thread.joinable() )nfo.rnd_thread.join() ;
     natus::memory::global_t::dealloc( nfo.run ) ;
 }
 

@@ -7,6 +7,8 @@
 
 #include <natus/ntd/vector.hpp>
 #include <natus/math/vector/vector2.hpp>
+#include <natus/math/dsp/fft.hpp>
+#include <natus/math/interpolation/interpolate.hpp>
 
 #include <algorithm>
 #include <limits>
@@ -35,6 +37,10 @@ namespace natus
             natus_typedefs( natus::ntd::vector< float_t >, samples ) ;
             float_t* _samples = nullptr ;
 
+            typedef natus::math::dsp::fft<float_t> fft_t ;
+            fft_t::complexes_t _comps ;
+            float_t* _frequencies = nullptr ;
+
             size_t _size = 0 ;
 
             natus::math::vec2f_t _mm = natus::math::vec2f_t(
@@ -53,8 +59,11 @@ namespace natus
                 _ch = ch ;
                 _freq = f ;
 
-                _size = 1 << 14 ;
+                _size = 1 << 12 ;
                 _samples = natus::memory::global_t::alloc_raw<float_t>( _size ) ;
+                _frequencies = natus::memory::global_t::alloc_raw<float_t>( _size >> 1 ) ;
+                std::memset( _frequencies, 0, sizeof( float_t ) * _size >> 1 ) ;
+                _comps.resize( _size ) ;
             }
 
             capture_object( this_cref_t ) = delete ;
@@ -64,12 +73,15 @@ namespace natus
                 _ch = rhv._ch ;
                 _freq = rhv._freq ;
                 natus_move_member_ptr( _samples, rhv ) ;
+                natus_move_member_ptr( _frequencies, rhv ) ;
+                _comps = std::move( rhv._comps ) ;
                 _size = rhv._size ;
             }
 
             virtual ~capture_object( void_t )
             {
                 natus::memory::global_t::dealloc_raw( _samples ) ;
+                natus::memory::global_t::dealloc_raw( _frequencies ) ;
             }
 
         public:
@@ -106,16 +118,25 @@ namespace natus
                 return _size ;
             }
 
+        private:
+
             void_t resize( size_t const n ) noexcept
             {
                 if( _samples != nullptr ) natus::memory::global_t::dealloc_raw( _samples ) ;
                 _samples = natus::memory::global_t::alloc_raw<float_t>( n ) ;
+
+                if( _frequencies != nullptr ) natus::memory::global_t::dealloc_raw( _frequencies ) ;
+                _frequencies = natus::memory::global_t::alloc_raw<float_t>( n ) ;
+
+                _comps.resize( _size ) ;
             }
 
             void_t resize_by( size_t const n ) noexcept
             {
                 this_t::resize( _size + n ) ;
             }
+
+        public:
 
             float_t operator[] ( size_t const i ) const noexcept
             {
@@ -149,7 +170,7 @@ namespace natus
             // - does a lot of copying
             // - computes the new min/max values
             // - computes the new frequencies via the fft
-            this_ref_t shift_and_copy_from( size_t const n, float_cptr_t values ) noexcept
+            this_ref_t shift_and_copy_from( size_t const n, float_cptr_t values, size_t const sampling_rate ) noexcept
             {
                 if( n == 0 ) return *this ;
 
@@ -182,15 +203,60 @@ namespace natus
 
                 // compute the frequencies
                 {
+                    for( size_t i = 0; i < _comps.size(); ++i )
+                    {
+                        _comps[ i ] = fft_t::complex_t( _samples[ i ], 0.0f ) ; 
+                    }
+                    fft_t::compute( _comps ) ;
+
+                    float_t const div = 2.0f / float_t( _comps.size() ) ;
+
+                    for( size_t i = 0; i < _comps.size() >> 1; ++i )
+                    {
+                        float_t const a = std::abs( _comps[ i ] ) ;
+
+                        _frequencies[ i ] = a * div ;
+                        _frequencies[ i ] *= _frequencies[ i ] ;
+                        //_frequencies[ i ] = 10.0f * std::log10( _frequencies[ i ] ) ;
+
+                        //_frequencies[ i ] = _frequencies[ i ] < 3.0f ? 0.0f : _frequencies[ i ] ;
+                    }
+                    _frequencies[ 0 ] /= 2.0f ;
+
+                    /*float_t const mult = float_t( sampling_rate ) / float_t( _size ) ;
+                    size_t const max_size = size_t( std::floor( float_t( _comps.size() ) / mult ) ) ;
+                    for( size_t i = 0; i < max_size; ++i )
+                    {
+                        size_t const j = size_t( std::ceil( float_t( i ) * mult ) ) ;
+                        _frequencies[ j ] = std::abs( _comps[ i ] ) ;
+                    }
+
+                    for( size_t i = 0; i < max_size-1; ++i )
+                    {
+                        size_t i0 = size_t( std::ceil( float_t( i + 0 ) * mult ) ) ;
+                        size_t i1 = size_t( std::ceil( float_t( i + 1 ) * mult ) ) ; 
+                        for( size_t j=i0+1; j<i1; ++j )
+                        {
+                            _frequencies[j] = natus::math::interpolation<float_t>::linear(
+                                _frequencies[ i0 ], _frequencies[ i1 ], float_t( j-i0 ) / float_t( i1 - i0 ) ) ;
+                        }
+                    }*/
                 }
 
                 return  *this ;
             }
 
-            void_t copy_samples_to( natus::ntd::vector< float_t > & smps ) const noexcept
+            void_t copy_samples_to( natus::ntd::vector< float_t >& smps ) const noexcept
             {
                 smps.resize( _size ) ;
                 std::memcpy( smps.data(), _samples, _size * sizeof( float_t ) ) ;
+            }
+
+            void_t copy_frequencies_to( natus::ntd::vector< float_t >& smps ) const noexcept
+            {
+                size_t const s = _size >> 1 ;
+                smps.resize( s ) ;
+                std::memcpy( smps.data(), _frequencies, s * sizeof( float_t ) ) ;
             }
         };
         natus_res_typedef( capture_object ) ;

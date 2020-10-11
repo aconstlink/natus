@@ -111,7 +111,7 @@ struct natus::audio::oal_backend::pimpl
             }
 
             captures[ idx ].dev = alcCaptureOpenDevice( whatuhear.c_str(),
-                ALCuint( natus::audio::to_number( natus::audio::frequency::freq_96k ) ), fmt, ALCuint( 1 << 15 ) ) ;
+                ALCuint( natus::audio::to_number( natus::audio::frequency::freq_48k ) ), fmt, ALCuint( 1 << 15 ) ) ;
 
             if( captures[ idx ].dev == nullptr )
             {
@@ -161,6 +161,7 @@ struct natus::audio::oal_backend::pimpl
             return ;
         }
 
+        double_t dfrequency = float_t( natus::audio::to_number( natus::audio::frequency::freq_48k ) ) ;
 
 
         for( size_t i = 0; i < count; ++i )
@@ -168,7 +169,7 @@ struct natus::audio::oal_backend::pimpl
             for( size_t j = 0; j < co.num_channels ; ++j )
             {
                 // the index into the buffer
-                size_t const idx = i * co.frame_size + j ;
+                size_t const idx = i * co.frame_size + j  ;
 
                 // reconstruct the 16 bit value
                 #if !NATUS_BIG_ENDIAN
@@ -178,11 +179,13 @@ struct natus::audio::oal_backend::pimpl
                 #endif
 
                 size_t const index = i * natus::audio::to_number( cap.get_channels() ) + j ;
-                fbuffer[ index ] = float_t( double_t( ivalue ) / double_t( uint_t( ( 1 << 15 ) - 1 ) ) ) ;
+                fbuffer[ index ] = float_t( double_t( ivalue ) / dfrequency ) ;
             }
         }
 
-        cap.shift_and_copy_from( size_t( count ) * natus::audio::to_number( cap.get_channels() ), fbuffer.data() ) ;
+        cap.shift_and_copy_from( size_t( count ) * natus::audio::to_number( cap.get_channels() ), fbuffer.data(),
+            natus::audio::to_number( natus::audio::frequency::freq_48k ) ) ;
+        //natus::log::global_t::status("Count : " + std::to_string(count) ) ;
     }
 
 
