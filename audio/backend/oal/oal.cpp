@@ -84,7 +84,7 @@ struct natus::audio::oal_backend::pimpl
         }
 
         {
-            natus::audio::frequency const frequency = natus::audio::frequency::freq_48k ;
+            natus::audio::frequency const frequency = natus::audio::frequency::freq_96k ;
             natus::audio::channels const channels = natus::audio::channels::mono ;
 
             {
@@ -202,32 +202,62 @@ struct natus::audio::oal_backend::pimpl
             }
         }
 
-        // test sin wave
+        // test sine wave
         #if 0
         {
             static bool_t swap = true ;
-            count = swap ? 2000 : 500 ;
+            count = swap ? 100 : 50;
             //swap = !swap ;
 
             static float_t t0 = 0.0f ;
             t0 += 0.001f ;
             t0 = t0 >= 1.0f ? 0.0f : t0 ;
 
+            //natus::log::global_t::status( "t0 : " + std::to_string( t0 ) ) ;
+
             float_t const t1 = 1.0f - std::abs( t0 * 2.0f - 1.0f ) ;
 
-            float_t freq0 = natus::math::interpolation<float_t>::linear( 30.0f, 20.0f, t1 ) ;
+            static float_t freqz = 0.0f ;
+            float_t freq0 = natus::math::interpolation<float_t>::linear( 1.0f, 100.0f, t1 ) ;
             fbuffer.resize( size_t( count ) ) ;
-
-            for( size_t i = 0; i < fbuffer.size(); ++i )
+                
+            #if 0 
             {
-                float_t const s = float_t( i ) / float_t( count - 1 ) ;
-                fbuffer[ i ] = 20.0f * std::sin( freq0 * s * 2.0f * natus::math::constants<float_t>::pi() )
-                    ;// +10.0f * std::sin( 150.0f * s * 2.0f * natus::math::constants<float_t>::pi() );
+                for( size_t i = 0; i < fbuffer.size(); ++i )
+                {
+                    float_t const s = float_t( i ) / float_t( count - 1 ) ;
+                    fbuffer[ i ] = 20.0f * std::sin( freq0 * s * 2.0f * natus::math::constants<float_t>::pi() )
+                        ;// +10.0f * std::sin( 150.0f * s * 2.0f * natus::math::constants<float_t>::pi() );
 
-                // saw-tooth
-                //float_t const ss = 1.0f - std::abs( natus::math::fn<float_t>::mod( s*freq0, 1.0f ) * 2.0f - 1.0f ) ;
-                //fbuffer[ i ] = 10.0f * ss ;
+                    // saw-tooth
+                    //float_t const ss = 1.0f - std::abs( natus::math::fn<float_t>::mod( s*freq0, 1.0f ) * 2.0f - 1.0f ) ;
+                    //fbuffer[ i ] = 10.0f * ss ;
+                }
             }
+            #endif
+            #if 1
+            {
+                static size_t j = 0 ;
+                static size_t num_samples = 10100 ;
+
+                freq0 = 780.0f ;
+                for( size_t i = 0; i < count; ++i )
+                {
+                    float_t freq = natus::math::interpolation<float_t>::linear( freqz, freq0, float_t( i ) / float_t( count-1 ) ) ;
+                    size_t const idx = (j + i) % num_samples ;
+                    float_t const s = float_t( idx ) / float_t( num_samples - 1 ) ;
+                    fbuffer[ i ] = 20.0f * std::sin( freq * s * 2.0f * natus::math::constants<float_t>::pi() )
+                        ;// +10.0f * std::sin( 150.0f * s * 2.0f * natus::math::constants<float_t>::pi() );
+
+                    // saw-tooth
+                    //float_t const ss = 1.0f - std::abs( natus::math::fn<float_t>::mod( s*freq0, 1.0f ) * 2.0f - 1.0f ) ;
+                    //fbuffer[ i ] = 10.0f * ss ;
+                }
+                j = ( j + count ) % num_samples ;
+            }
+            #endif
+
+            freqz = freq0 ;
         }
         #endif
 
