@@ -84,7 +84,7 @@ struct natus::audio::oal_backend::pimpl
         }
 
         {
-            natus::audio::frequency const frequency = natus::audio::frequency::freq_96k ;
+            natus::audio::frequency const frequency = natus::audio::frequency::freq_48k ;
             natus::audio::channels const channels = natus::audio::channels::mono ;
 
             {
