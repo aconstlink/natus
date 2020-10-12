@@ -25,11 +25,11 @@ async::~async( void_t )
 {
 }
 
-async::this_ref_t async::configure( natus::audio::capture_object_res_t config, natus::audio::result_res_t res ) noexcept
+async::this_ref_t async::configure( natus::audio::capture_type const ct, natus::audio::capture_object_res_t config, natus::audio::result_res_t res ) noexcept
 {
     {
         natus::concurrent::lock_guard_t lk( _capture_configs_mtx ) ;
-        _capture_configs.push_back( this_t::capture_config_data( { res, config } ) ) ;
+        _capture_configs.push_back( this_t::capture_config_data( { res, ct, config } ) ) ;
     }
     return *this ;
 }
@@ -48,7 +48,7 @@ void_t async::system_update( void_t ) noexcept
         }
         for( auto& prc : preps )
         {
-            auto const res = _backend->configure( ::std::move( prc.config ) ) ;
+            auto const res = _backend->configure( prc.ct, ::std::move( prc.config ) ) ;
             if( prc.res.is_valid() ) prc.res = res ;
         }
     }

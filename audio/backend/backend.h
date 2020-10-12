@@ -28,7 +28,8 @@ namespace natus
 
         public:
 
-            virtual natus::audio::result configure( natus::audio::capture_object_res_t ) noexcept = 0 ;
+            virtual natus::audio::result configure( natus::audio::capture_type const, 
+                natus::audio::capture_object_res_t ) noexcept = 0 ;
             virtual natus::audio::result capture( natus::audio::capture_object_res_t, bool_t const b = true ) noexcept = 0 ;
             virtual void_t begin( void_t ) noexcept = 0 ;
             virtual void_t end( void_t ) noexcept = 0 ;

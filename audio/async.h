@@ -25,6 +25,7 @@ namespace natus
             struct capture_config_data
             {
                 natus::audio::result_res_t res ;
+                natus::audio::capture_type ct ;
                 natus::audio::capture_object_res_t config ;
             };
             typedef natus::ntd::vector< capture_config_data > capture_configs_t ;
@@ -57,7 +58,8 @@ namespace natus
 
         public:
 
-            this_ref_t configure( natus::audio::capture_object_res_t, natus::audio::result_res_t = natus::audio::result_res_t() ) noexcept ;
+            this_ref_t configure( natus::audio::capture_type const, natus::audio::capture_object_res_t, 
+                natus::audio::result_res_t = natus::audio::result_res_t() ) noexcept ;
 
             this_ref_t capture( natus::audio::capture_object_res_t, bool_t const do_capture,
                 natus::audio::result_res_t = natus::audio::result_res_t() ) noexcept ;
@@ -121,10 +123,10 @@ namespace natus
             /// during rendering type.
             bool_t is_accessable( void_t ) const noexcept { return *_access ; }
 
-            this_ref_t configure( natus::audio::capture_object_res_t config,
+            this_ref_t configure( natus::audio::capture_type const ct, natus::audio::capture_object_res_t config,
                 natus::audio::result_res_t res = natus::audio::result_res_t() ) noexcept
             {
-                _async->configure( config, res ) ;
+                _async->configure( ct, config, res ) ;
                 return *this ;
             }
 

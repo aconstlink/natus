@@ -16,6 +16,8 @@ namespace natus
             struct pimpl ;
             pimpl* _pimpl ;
 
+            size_t _what_u_hear_count = 0 ;
+
         public:
 
             oal_backend( void_t ) noexcept ;
@@ -27,7 +29,8 @@ namespace natus
 
         public:
 
-            virtual natus::audio::result configure( natus::audio::capture_object_res_t ) noexcept ;
+            virtual natus::audio::result configure( natus::audio::capture_type const, 
+                natus::audio::capture_object_res_t ) noexcept ;
 
             virtual natus::audio::result capture( natus::audio::capture_object_res_t, bool_t const b = true ) noexcept ;
 
