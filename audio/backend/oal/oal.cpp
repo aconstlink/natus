@@ -190,9 +190,9 @@ struct natus::audio::oal_backend::pimpl
 
             // reconstruct the 16 bit value
             #if !NATUS_BIG_ENDIAN
-            uint_t const p1 = uint_t( ( uint_t( buffer[ idx + 1 ] ) & 255 ) << 8 )  ;
-            uint_t const p0 = uint_t( ( uint_t( buffer[ idx + 0 ] ) & 255 ) << 0 )  ;
-            int_t const ivalue = ( p0 | p1 ) ;// &( ( 1 << 16 ) - 1 ) ;
+            ushort_t const p1 = ushort_t( ( ushort_t( buffer[ idx + 1 ] ) & 255 ) << 8 )  ;
+            ushort_t const p0 = ushort_t( ( ushort_t( buffer[ idx + 0 ] ) & 255 ) << 0 )  ;
+            short_t const ivalue = short_t( p0 | p1 ) ;// &( ( 1 << 16 ) - 1 ) ;
             #else
             int_t const ivalue = int_t( buffer[ idx + 0 ] << 8 ) | int_t( buffer[ idx + 1 ] << 0 );
             #endif
