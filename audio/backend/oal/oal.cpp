@@ -196,7 +196,7 @@ struct natus::audio::oal_backend::pimpl
                 #endif
 
                 size_t const index = i * _gc->num_channels + j ;
-                fbuffer[ index ] =  float_t( double_t( ivalue ) / dfrequency ) ;
+                fbuffer[ index ] = float_t( double_t( ivalue ) / dfrequency ) ;
 
                 fbuffer[ index ] = natus::math::fn<float_t>::smooth_step( fbuffer[ index ] * 0.5f + 0.5f ) * 2.0f - 1.0f ;
             }
@@ -220,7 +220,7 @@ struct natus::audio::oal_backend::pimpl
             static float_t freqz = 0.0f ;
             float_t freq0 = natus::math::interpolation<float_t>::linear( 1.0f, 100.0f, t1 ) ;
             fbuffer.resize( size_t( count ) ) ;
-                
+
             #if 0 
             {
                 for( size_t i = 0; i < fbuffer.size(); ++i )
@@ -243,8 +243,8 @@ struct natus::audio::oal_backend::pimpl
                 freq0 = 780.0f ;
                 for( size_t i = 0; i < count; ++i )
                 {
-                    float_t freq = natus::math::interpolation<float_t>::linear( freqz, freq0, float_t( i ) / float_t( count-1 ) ) ;
-                    size_t const idx = (j + i) % num_samples ;
+                    float_t freq = natus::math::interpolation<float_t>::linear( freqz, freq0, float_t( i ) / float_t( count - 1 ) ) ;
+                    size_t const idx = ( j + i ) % num_samples ;
                     float_t const s = float_t( idx ) / float_t( num_samples - 1 ) ;
                     fbuffer[ i ] = 20.0f * std::sin( freq * s * 2.0f * natus::math::constants<float_t>::pi() )
                         ;// +10.0f * std::sin( 150.0f * s * 2.0f * natus::math::constants<float_t>::pi() );
