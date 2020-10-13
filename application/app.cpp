@@ -414,7 +414,7 @@ bool_t app::platform_update( void_t )
     if( this_t::before_render() )
     {
         this_t::render_data_t dat ;
-        this->on_render( dat ) ;
+        this->on_graphics( dat ) ;
         this_t::after_render() ;
     }
 

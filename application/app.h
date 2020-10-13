@@ -171,7 +171,7 @@ namespace natus
 
             virtual natus::application::result on_init( void_t ) = 0 ;
             virtual natus::application::result on_update( update_data_in_t ) = 0 ;
-            virtual natus::application::result on_render( render_data_in_t ) = 0 ;
+            virtual natus::application::result on_graphics( render_data_in_t ) = 0 ;
             virtual natus::application::result on_audio( audio_data_in_t ) { return natus::application::result::ok ; }
             virtual natus::application::result on_shutdown( void_t ) = 0 ;
 
