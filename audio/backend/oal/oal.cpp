@@ -199,13 +199,7 @@ struct natus::audio::oal_backend::pimpl
 
             size_t const index = i ;
             fbuffer[ index ] = float_t( double_t( ivalue ) / dfrequency ) ;
-
-            
-            {
-                
-
-                //fbuffer[ index ] = natus::math::fn<float_t>::smooth_step( fbuffer[ index ] * 0.5f + 0.5f ) * 2.0f - 1.0f ;
-            }
+            //fbuffer[ index ] = natus::math::fn<float_t>::smooth_step( fbuffer[ index ] * 0.5f + 0.5f ) * 2.0f - 1.0f ;
         }
 
         // test sine wave
