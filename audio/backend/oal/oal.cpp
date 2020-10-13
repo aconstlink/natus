@@ -162,6 +162,8 @@ struct natus::audio::oal_backend::pimpl
         ALCint count = 0 ;
         alcGetIntegerv( dev, ALC_CAPTURE_SAMPLES, 1, &count ) ;
 
+        if( count == 0 ) return ;
+
         natus::ntd::vector< ALbyte >& buffer = _gc->raw_bytes ;
         natus::ntd::vector< float_t >& fbuffer = _gc->raw_samples ;
 
@@ -177,28 +179,32 @@ struct natus::audio::oal_backend::pimpl
 
         //natus::log::global_t::status( "Count : " + std::to_string( count ) ) ;
 
-        if( count == 0 ) return ;
+
 
         double_t const dfrequency = double_t( natus::audio::to_number( _gc->frequency ) ) ;
 
         for( size_t i = 0; i < count; ++i )
         {
-            for( size_t j = 0; j < _gc->num_channels ; ++j )
+            // the index into the buffer
+            size_t const idx = i * _gc->frame_size ;
+
+            // reconstruct the 16 bit value
+            #if !NATUS_BIG_ENDIAN
+            uint_t const p1 = uint_t( ( uint_t( buffer[ idx + 1 ] ) & 255 ) << 8 )  ;
+            uint_t const p0 = uint_t( ( uint_t( buffer[ idx + 0 ] ) & 255 ) << 0 )  ;
+            int_t const ivalue = ( p0 | p1 ) ;// &( ( 1 << 16 ) - 1 ) ;
+            #else
+            int_t const ivalue = int_t( buffer[ idx + 0 ] << 8 ) | int_t( buffer[ idx + 1 ] << 0 );
+            #endif
+
+            size_t const index = i ;
+            fbuffer[ index ] = float_t( double_t( ivalue ) / dfrequency ) ;
+
+            
             {
-                // the index into the buffer
-                size_t const idx = i * _gc->frame_size + j  ;
+                
 
-                // reconstruct the 16 bit value
-                #if !NATUS_BIG_ENDIAN
-                int_t const ivalue = int_t( buffer[ idx + 1 ] << 8 ) | int_t( buffer[ idx + 0 ] << 0 );
-                #else
-                int_t const ivalue = int_t( buffer[ idx + 0 ] << 8 ) | int_t( buffer[ idx + 1 ] << 0 );
-                #endif
-
-                size_t const index = i * _gc->num_channels + j ;
-                fbuffer[ index ] = float_t( double_t( ivalue ) / dfrequency ) ;
-
-                fbuffer[ index ] = natus::math::fn<float_t>::smooth_step( fbuffer[ index ] * 0.5f + 0.5f ) * 2.0f - 1.0f ;
+                //fbuffer[ index ] = natus::math::fn<float_t>::smooth_step( fbuffer[ index ] * 0.5f + 0.5f ) * 2.0f - 1.0f ;
             }
         }
 
