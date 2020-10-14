@@ -28,16 +28,16 @@ set( sources
     "shader/shader_set.hpp"
     "shader/shader.hpp"
     "shader/variable_binding.h"
-    "shader/shader_configuration.h"
     "shader/nsl_bridge.hpp"
 
     "buffer/vertex_attribute.h"
     "buffer/vertex_buffer.hpp"
     "buffer/index_buffer.hpp"
 
-    "configuration/render_configuration.h"
-    "configuration/geometry_configuration.h"
-    "configuration/image_configuration.h"
+    "object/render_object.h"
+    "object/geometry_object.h"
+    "object/image_object.h"
+    "object/shader_object.h"
 
     "variable/variables.hpp"
     "variable/variable_set.hpp"

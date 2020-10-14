@@ -27,7 +27,7 @@ namespace natus
             struct image_config_data
             {
                 natus::graphics::result_res_t res ;
-                natus::graphics::image_configuration_res_t config ;
+                natus::graphics::image_object_res_t config ;
             };
             typedef natus::ntd::vector< image_config_data > image_configs_t ;
             image_configs_t _image_configs ;
@@ -36,7 +36,7 @@ namespace natus
             struct shader_config_data
             {
                 natus::graphics::result_res_t res ;
-                natus::graphics::shader_configuration_res_t config ;
+                natus::graphics::shader_object_res_t config ;
             };
             typedef natus::ntd::vector< shader_config_data > shader_configs_t ;
             shader_configs_t _shader_configs ;
@@ -45,7 +45,7 @@ namespace natus
             struct rconfig_data
             {
                 natus::graphics::result_res_t res ;
-                natus::graphics::render_configuration_res_t config ;
+                natus::graphics::render_object_res_t config ;
             };
             typedef natus::ntd::vector< rconfig_data > rconfigs_t ;
             rconfigs_t _rconfigs ;
@@ -55,7 +55,7 @@ namespace natus
             {
                 natus::graphics::result_res_t res ;
                 natus::graphics::variable_set_res_t vs ;
-                natus::graphics::render_configuration_res_t config ;
+                natus::graphics::render_object_res_t config ;
             };
             typedef natus::ntd::vector< connect_data > connects_t ;
             connects_t _connects ;
@@ -64,7 +64,7 @@ namespace natus
             struct gconfig_data
             {
                 natus::graphics::result_res_t res ;
-                natus::graphics::geometry_configuration_res_t config ;
+                natus::graphics::geometry_object_res_t config ;
             };
             typedef natus::ntd::vector< gconfig_data > gconfigs_t ;
             gconfigs_t _gconfigs ;
@@ -74,7 +74,7 @@ namespace natus
             struct gupdate_data
             {
                 natus::graphics::result_res_t res ;
-                natus::graphics::geometry_configuration_res_t config ;
+                natus::graphics::geometry_object_res_t config ;
             };
             typedef natus::ntd::vector< gupdate_data > gupdates_t ;
             gupdates_t _gupdates ;
@@ -84,7 +84,7 @@ namespace natus
             struct render_data
             {
                 natus::graphics::result_res_t res ;
-                natus::graphics::render_configuration_res_t config ;
+                natus::graphics::render_object_res_t config ;
                 natus::graphics::backend::render_detail_t detail ;
             };
             typedef natus::ntd::vector< render_data > renders_t ;
@@ -110,18 +110,18 @@ namespace natus
 
             natus::graphics::result set_window_info( natus::graphics::backend_t::window_info_cref_t ) noexcept ;
 
-            this_ref_t configure( natus::graphics::geometry_configuration_res_t, natus::graphics::result_res_t = natus::graphics::result_res_t() ) noexcept ;
+            this_ref_t configure( natus::graphics::geometry_object_res_t, natus::graphics::result_res_t = natus::graphics::result_res_t() ) noexcept ;
 
-            this_ref_t configure( natus::graphics::render_configuration_res_t, natus::graphics::result_res_t = natus::graphics::result_res_t() ) noexcept ;
+            this_ref_t configure( natus::graphics::render_object_res_t, natus::graphics::result_res_t = natus::graphics::result_res_t() ) noexcept ;
 
-            this_ref_t configure( natus::graphics::shader_configuration_res_t, natus::graphics::result_res_t = natus::graphics::result_res_t() ) noexcept ;
+            this_ref_t configure( natus::graphics::shader_object_res_t, natus::graphics::result_res_t = natus::graphics::result_res_t() ) noexcept ;
 
-            this_ref_t configure( natus::graphics::image_configuration_res_t, natus::graphics::result_res_t = natus::graphics::result_res_t() ) noexcept ;
+            this_ref_t configure( natus::graphics::image_object_res_t, natus::graphics::result_res_t = natus::graphics::result_res_t() ) noexcept ;
 
-            this_ref_t connect( natus::graphics::render_configuration_res_t, natus::graphics::variable_set_res_t, natus::graphics::result_res_t = natus::graphics::result_res_t() ) noexcept ;
-            this_ref_t update( natus::graphics::geometry_configuration_res_t, natus::graphics::result_res_t = natus::graphics::result_res_t() ) noexcept ;
+            this_ref_t connect( natus::graphics::render_object_res_t, natus::graphics::variable_set_res_t, natus::graphics::result_res_t = natus::graphics::result_res_t() ) noexcept ;
+            this_ref_t update( natus::graphics::geometry_object_res_t, natus::graphics::result_res_t = natus::graphics::result_res_t() ) noexcept ;
 
-            this_ref_t render( natus::graphics::render_configuration_res_t, natus::graphics::backend::render_detail_cref_t, 
+            this_ref_t render( natus::graphics::render_object_res_t, natus::graphics::backend::render_detail_cref_t, 
                 natus::graphics::result_res_t = natus::graphics::result_res_t() ) noexcept ;
 
         public:
@@ -183,35 +183,35 @@ namespace natus
             /// during rendering type.
             bool_t is_accessable( void_t ) const noexcept { return *_access ; }
 
-            this_ref_t configure( natus::graphics::geometry_configuration_res_t config,
+            this_ref_t configure( natus::graphics::geometry_object_res_t config,
                 natus::graphics::result_res_t res = natus::graphics::result_res_t() ) noexcept
             {
                 _async->configure( config, res ) ;
                 return *this ;
             }
 
-            this_ref_t configure( natus::graphics::render_configuration_res_t config, 
+            this_ref_t configure( natus::graphics::render_object_res_t config, 
                 natus::graphics::result_res_t res = natus::graphics::result_res_t() ) noexcept
             {
                 _async->configure( config, res ) ;
                 return *this ;
             }
 
-            this_ref_t configure( natus::graphics::shader_configuration_res_t config,
+            this_ref_t configure( natus::graphics::shader_object_res_t config,
                 natus::graphics::result_res_t res = natus::graphics::result_res_t() ) noexcept
             {
                 _async->configure( config, res ) ;
                 return *this ;
             }
 
-            this_ref_t configure( natus::graphics::image_configuration_res_t config,
+            this_ref_t configure( natus::graphics::image_object_res_t config,
                 natus::graphics::result_res_t res = natus::graphics::result_res_t() ) noexcept
             {
                 _async->configure( config, res ) ;
                 return *this ;
             }
 
-            this_ref_t connect( natus::graphics::render_configuration_res_t config,
+            this_ref_t connect( natus::graphics::render_object_res_t config,
                 natus::graphics::variable_set_res_t vs,
                 natus::graphics::result_res_t res = natus::graphics::result_res_t() ) noexcept
             {
@@ -219,14 +219,14 @@ namespace natus
                 return *this ;
             }
 
-            this_ref_t update( natus::graphics::geometry_configuration_res_t gs,
+            this_ref_t update( natus::graphics::geometry_object_res_t gs,
                 natus::graphics::result_res_t res = natus::graphics::result_res_t() ) noexcept
             {
                 _async->update( gs, res ) ;
                 return *this ;
             }
 
-            this_ref_t render( natus::graphics::render_configuration_res_t config, 
+            this_ref_t render( natus::graphics::render_object_res_t config, 
                 natus::graphics::result_res_t res = natus::graphics::result_res_t() ) noexcept
             {
                 natus::graphics::backend_t::render_detail_t detail ;
@@ -234,7 +234,7 @@ namespace natus
                 return *this ;
             }
 
-            this_ref_t render( natus::graphics::render_configuration_res_t config, natus::graphics::backend::render_detail_cref_t detail, 
+            this_ref_t render( natus::graphics::render_object_res_t config, natus::graphics::backend::render_detail_cref_t detail, 
                 natus::graphics::result_res_t res = natus::graphics::result_res_t() ) noexcept
             {
                 _async->render( config, detail, res ) ;

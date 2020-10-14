@@ -12,9 +12,9 @@ namespace natus
 {
     namespace graphics
     {
-        class image_configuration : public object
+        class image_object : public object
         {
-            natus_this_typedefs( image_configuration ) ;
+            natus_this_typedefs( image_object ) ;
 
         private:
 
@@ -26,7 +26,7 @@ namespace natus
 
         public:
 
-            image_configuration( void_t ) 
+            image_object( void_t ) 
             {
                 for( size_t i=0; i<(size_t)natus::graphics::texture_wrap_mode::size; ++i )
                 {
@@ -38,7 +38,7 @@ namespace natus
                     _filter_types[ i ] = natus::graphics::texture_filter_type::nearest ;
                 }
             }
-            image_configuration( natus::ntd::string_in_t name ) : _name( name )
+            image_object( natus::ntd::string_in_t name ) : _name( name )
             {
                 for( size_t i = 0; i < ( size_t ) natus::graphics::texture_wrap_mode::size; ++i )
                 {
@@ -50,13 +50,13 @@ namespace natus
                     _filter_types[ i ] = natus::graphics::texture_filter_type::nearest ;
                 }
             }
-            image_configuration( natus::ntd::string_in_t name, natus::graphics::image_rref_t img) :
-                image_configuration( name )
+            image_object( natus::ntd::string_in_t name, natus::graphics::image_rref_t img) :
+                image_object( name )
             {
                 _img = ::std::move( img ) ;
             }
 
-            image_configuration( this_cref_t rhv ) : object( rhv )
+            image_object( this_cref_t rhv ) : object( rhv )
             {
                 _name = rhv._name ;
                 _img = rhv._img ;
@@ -65,7 +65,7 @@ namespace natus
                 memcpy( ( void_ptr_t ) _filter_types, ( void_cptr_t )rhv._filter_types, sizeof(_filter_types) ) ;
             }
 
-            image_configuration( this_rref_t rhv ) : object( ::std::move( rhv ) )
+            image_object( this_rref_t rhv ) : object( ::std::move( rhv ) )
             {
                 _name = ::std::move( rhv._name ) ;
                 _img = ::std::move( rhv._img ) ;
@@ -74,7 +74,7 @@ namespace natus
                 memcpy( ( void_ptr_t ) _filter_types, ( void_cptr_t ) rhv._filter_types, sizeof( _filter_types ) ) ;
             }
 
-            virtual ~image_configuration( void_t ){}
+            virtual ~image_object( void_t ){}
 
             this_ref_t operator = ( this_cref_t rhv )
             {
@@ -135,6 +135,6 @@ namespace natus
             }
 
         };
-        natus_res_typedef( image_configuration ) ;
+        natus_res_typedef( image_object ) ;
     }
 }

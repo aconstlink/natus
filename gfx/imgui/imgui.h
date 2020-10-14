@@ -5,8 +5,8 @@
 
 #include <natus/graphics/async.h>
 #include <natus/graphics/variable/variable_set.hpp>
-#include <natus/graphics/configuration/render_configuration.h>
-#include <natus/graphics/configuration/geometry_configuration.h>
+#include <natus/graphics/object/render_object.h>
+#include <natus/graphics/object/geometry_object.h>
 
 #include <natus/device/layouts/three_mouse.hpp>
 #include <natus/device/layouts/ascii_keyboard.hpp>
@@ -33,10 +33,10 @@ namespace natus
                 natus::math::vec4f_t color ; 
             } ;
 
-            natus::graphics::render_configuration_res_t _rc ;
-            natus::graphics::shader_configuration_res_t _sc ;
-            natus::graphics::geometry_configuration_res_t _gc ;
-            natus::graphics::image_configuration_res_t _ic ;
+            natus::graphics::render_object_res_t _rc ;
+            natus::graphics::shader_object_res_t _sc ;
+            natus::graphics::geometry_object_res_t _gc ;
+            natus::graphics::image_object_res_t _ic ;
 
             natus::ntd::vector< natus::graphics::variable_set_res_t > _vars ;
             natus::ntd::vector< natus::graphics::render_state_sets_res_t > _render_states ;
@@ -77,7 +77,7 @@ namespace natus
             void_t update( natus::device::ascii_device_res_t ) ;
 
             // Returns an id that can be used to render the passed image.
-            // the image needs to be registered before via an image_configuration.
+            // the image needs to be registered before via an image_object.
             ImTextureID texture( natus::ntd::string_in_t ) noexcept ;
 
         private:

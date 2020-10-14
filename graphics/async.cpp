@@ -35,7 +35,7 @@ natus::graphics::result async::set_window_info( natus::graphics::backend_t::wind
 }
 
 //****
-async::this_ref_t async::configure( natus::graphics::geometry_configuration_res_t gconfig, 
+async::this_ref_t async::configure( natus::graphics::geometry_object_res_t gconfig, 
     natus::graphics::result_res_t res ) noexcept
 {
     //auto const res = aid->swap( natus::graphics::async_result::in_transit ) ;
@@ -48,7 +48,7 @@ async::this_ref_t async::configure( natus::graphics::geometry_configuration_res_
 }
 
 //****
-async::this_ref_t async::configure( natus::graphics::render_configuration_res_t rc, 
+async::this_ref_t async::configure( natus::graphics::render_object_res_t rc, 
     natus::graphics::result_res_t res ) noexcept 
 {
     //auto const res = aid->swap( natus::graphics::async_result::in_transit ) ;
@@ -62,7 +62,7 @@ async::this_ref_t async::configure( natus::graphics::render_configuration_res_t 
 }
 
 //****
-async::this_ref_t async::configure( natus::graphics::shader_configuration_res_t sc,
+async::this_ref_t async::configure( natus::graphics::shader_object_res_t sc,
     natus::graphics::result_res_t res ) noexcept 
 {
     {
@@ -74,7 +74,7 @@ async::this_ref_t async::configure( natus::graphics::shader_configuration_res_t 
 }
 
 //****
-async::this_ref_t async::configure( natus::graphics::image_configuration_res_t sc,
+async::this_ref_t async::configure( natus::graphics::image_object_res_t sc,
     natus::graphics::result_res_t res ) noexcept 
 {
     {
@@ -86,7 +86,7 @@ async::this_ref_t async::configure( natus::graphics::image_configuration_res_t s
 }
 
 //****
-async::this_ref_t async::connect( natus::graphics::render_configuration_res_t config, 
+async::this_ref_t async::connect( natus::graphics::render_object_res_t config, 
     natus::graphics::variable_set_res_t vs, natus::graphics::result_res_t res ) noexcept 
 {
     {
@@ -96,7 +96,7 @@ async::this_ref_t async::connect( natus::graphics::render_configuration_res_t co
     return *this ;
 }
 
-async::this_ref_t async::update( natus::graphics::geometry_configuration_res_t gs, 
+async::this_ref_t async::update( natus::graphics::geometry_object_res_t gs, 
     natus::graphics::result_res_t res ) noexcept 
 {
     {
@@ -107,7 +107,7 @@ async::this_ref_t async::update( natus::graphics::geometry_configuration_res_t g
 }
 
 //****
-async::this_ref_t async::render( natus::graphics::render_configuration_res_t config, natus::graphics::backend::render_detail_cref_t detail,
+async::this_ref_t async::render( natus::graphics::render_object_res_t config, natus::graphics::backend::render_detail_cref_t detail,
     natus::graphics::result_res_t res ) noexcept
 {
     //auto const res = aid->swap( natus::graphics::async_result::in_transit ) ;

@@ -2,7 +2,7 @@
 #pragma once
 
 #include "../typedefs.h"
-#include "shader_configuration.h"
+#include "../object/shader_object.h"
 
 #include <natus/nsl/generator.hpp>
 
@@ -17,9 +17,9 @@ namespace natus
 
         public:
 
-            natus::graphics::shader_configuration_t create( natus::nsl::generated_code_cref_t code ) const noexcept
+            natus::graphics::shader_object_t create( natus::nsl::generated_code_cref_t code ) const noexcept
             {
-                natus::graphics::shader_configuration_t ret ;
+                natus::graphics::shader_object_t ret ;
 
                 // variable bindings
                 {

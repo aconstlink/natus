@@ -3,7 +3,7 @@
 
 #include "../object.hpp"
 
-#include "../shader/shader_configuration.h"
+#include "../object/shader_object.h"
 #include "../buffer/vertex_attribute.h"
 #include "../variable/variable_set.hpp"
 
@@ -15,9 +15,9 @@ namespace natus
 {
     namespace graphics
     {
-        class NATUS_GRAPHICS_API render_configuration : public object
+        class NATUS_GRAPHICS_API render_object : public object
         {
-            natus_this_typedefs( render_configuration ) ;
+            natus_this_typedefs( render_object ) ;
 
         private:
 
@@ -29,11 +29,11 @@ namespace natus
 
         public:
             
-            render_configuration( void_t ) {}
-            render_configuration( natus::ntd::string_cref_t name ) 
+            render_object( void_t ) {}
+            render_object( natus::ntd::string_cref_t name ) 
                 : _name( name ) {}
 
-            render_configuration( this_cref_t rhv ) : object( rhv )
+            render_object( this_cref_t rhv ) : object( rhv )
             {
                 _name = rhv._name ;
                 _geo = rhv._geo;
@@ -41,7 +41,7 @@ namespace natus
                 _vars = rhv._vars ;
             }
 
-            render_configuration( this_rref_t rhv ) : object( ::std::move( rhv ) )
+            render_object( this_rref_t rhv ) : object( ::std::move( rhv ) )
             {
                 _name = ::std::move( rhv._name ) ;
                 _geo = ::std::move( rhv._geo ) ;
@@ -124,6 +124,6 @@ namespace natus
                 return _name ;
             }
         };
-        natus_res_typedef( render_configuration ) ;
+        natus_res_typedef( render_object ) ;
     }
 }

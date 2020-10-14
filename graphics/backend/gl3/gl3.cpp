@@ -208,7 +208,7 @@ struct gl3_backend::pimpl
     {}
 
     size_t construct_shader_config( size_t oid, natus::ntd::string_cref_t name,
-        natus::graphics::shader_configuration_ref_t config )
+        natus::graphics::shader_object_ref_t config )
     {
         //
         // Array Management
@@ -741,7 +741,7 @@ struct gl3_backend::pimpl
 
     //***********************
     size_t construct_image_config( size_t /*oid*/, natus::ntd::string_cref_t name, 
-        natus::graphics::image_configuration_ref_t config )
+        natus::graphics::image_object_ref_t config )
     {
         // the name is unique
         {
@@ -800,7 +800,7 @@ struct gl3_backend::pimpl
 
     //***********************
     size_t construct_render_config( size_t oid, natus::ntd::string_cref_t name,
-        natus::graphics::render_configuration_ref_t /*config*/ )
+        natus::graphics::render_object_ref_t /*config*/ )
     {
         // the name must be unique
         {
@@ -850,7 +850,7 @@ struct gl3_backend::pimpl
         return oid ;
     }
 
-    bool_t update( size_t const id, natus::graphics::shader_configuration_cref_t sc )
+    bool_t update( size_t const id, natus::graphics::shader_object_cref_t sc )
     {
         auto& sconfig = shaders[ id ] ;
 
@@ -886,7 +886,7 @@ struct gl3_backend::pimpl
         return true ;
     }
 
-    bool_t update( size_t const id, natus::graphics::render_configuration_ref_t rc )
+    bool_t update( size_t const id, natus::graphics::render_object_ref_t rc )
     {
         auto& config = rconfigs[ id ] ;
         config.geo = nullptr ;
@@ -952,7 +952,7 @@ struct gl3_backend::pimpl
         return true ;
     }
 
-    size_t construct_geo( natus::ntd::string_cref_t name, natus::graphics::geometry_configuration_ref_t geo ) 
+    size_t construct_geo( natus::ntd::string_cref_t name, natus::graphics::geometry_object_ref_t geo ) 
     {
         // the name is unique
         {
@@ -1033,7 +1033,7 @@ struct gl3_backend::pimpl
         return i ;
     }
 
-    bool_t update( size_t const id, natus::graphics::geometry_configuration_res_t geo )
+    bool_t update( size_t const id, natus::graphics::geometry_object_res_t geo )
     {
         auto& config = geo_configs[ id ] ;
 
@@ -1107,7 +1107,7 @@ struct gl3_backend::pimpl
         return true ;
     }
 
-    bool_t update( size_t const id, natus::graphics::image_configuration_ref_t confin )
+    bool_t update( size_t const id, natus::graphics::image_object_ref_t confin )
     {
         this_file::image_config& config = img_configs[ id ] ;
 
@@ -1481,7 +1481,7 @@ void_t gl3_backend::set_window_info( window_info_cref_t wi ) noexcept
 }
 
 //****
-natus::graphics::result gl3_backend::configure( natus::graphics::geometry_configuration_res_t gconf ) noexcept 
+natus::graphics::result gl3_backend::configure( natus::graphics::geometry_object_res_t gconf ) noexcept 
 {
     natus::graphics::id_res_t id = gconf->get_id() ;
 
@@ -1503,7 +1503,7 @@ natus::graphics::result gl3_backend::configure( natus::graphics::geometry_config
 }
 
 //****
-natus::graphics::result gl3_backend::configure( natus::graphics::render_configuration_res_t config ) noexcept 
+natus::graphics::result gl3_backend::configure( natus::graphics::render_object_res_t config ) noexcept 
 {
     natus::graphics::id_res_t id = config->get_id() ;
 
@@ -1526,7 +1526,7 @@ natus::graphics::result gl3_backend::configure( natus::graphics::render_configur
 }
 
 //***
-natus::graphics::result gl3_backend::configure( natus::graphics::shader_configuration_res_t config ) noexcept
+natus::graphics::result gl3_backend::configure( natus::graphics::shader_object_res_t config ) noexcept
 {
     natus::graphics::id_res_t id = config->get_id() ;
 
@@ -1549,7 +1549,7 @@ natus::graphics::result gl3_backend::configure( natus::graphics::shader_configur
 }
 
 //***
-natus::graphics::result gl3_backend::configure( natus::graphics::image_configuration_res_t config ) noexcept 
+natus::graphics::result gl3_backend::configure( natus::graphics::image_object_res_t config ) noexcept 
 {
     natus::graphics::id_res_t id = config->get_id() ;
 
@@ -1572,7 +1572,7 @@ natus::graphics::result gl3_backend::configure( natus::graphics::image_configura
 }
 
 //***
-natus::graphics::result gl3_backend::connect( natus::graphics::render_configuration_res_t config, natus::graphics::variable_set_res_t vs ) noexcept
+natus::graphics::result gl3_backend::connect( natus::graphics::render_object_res_t config, natus::graphics::variable_set_res_t vs ) noexcept
 {
     natus::graphics::id_res_t id = config->get_id() ;
 
@@ -1592,7 +1592,7 @@ natus::graphics::result gl3_backend::connect( natus::graphics::render_configurat
 }
 
 //****
-natus::graphics::result gl3_backend::update( natus::graphics::geometry_configuration_res_t config ) noexcept 
+natus::graphics::result gl3_backend::update( natus::graphics::geometry_object_res_t config ) noexcept 
 {
     natus::graphics::id_res_t id = config->get_id() ;
 
@@ -1612,7 +1612,7 @@ natus::graphics::result gl3_backend::update( natus::graphics::geometry_configura
 }
 
 //****
-natus::graphics::result gl3_backend::render( natus::graphics::render_configuration_res_t config, natus::graphics::backend::render_detail_cref_t detail ) noexcept 
+natus::graphics::result gl3_backend::render( natus::graphics::render_object_res_t config, natus::graphics::backend::render_detail_cref_t detail ) noexcept 
 { 
     natus::graphics::id_res_t id = config->get_id() ;
 

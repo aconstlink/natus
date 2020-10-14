@@ -12,9 +12,9 @@ namespace natus
 {
     namespace graphics
     {
-        class NATUS_GRAPHICS_API geometry_configuration : public object
+        class NATUS_GRAPHICS_API geometry_object : public object
         {
-            natus_this_typedefs( geometry_configuration ) ;
+            natus_this_typedefs( geometry_object ) ;
 
         private:
 
@@ -26,12 +26,12 @@ namespace natus
 
         public: 
 
-            geometry_configuration( void_t ) {}
+            geometry_object( void_t ) {}
 
-            geometry_configuration( natus::ntd::string_cref_t name ) : _name(name)
+            geometry_object( natus::ntd::string_cref_t name ) : _name(name)
             {}
 
-            geometry_configuration( natus::ntd::string_cref_t name, natus::graphics::primitive_type const pt, 
+            geometry_object( natus::ntd::string_cref_t name, natus::graphics::primitive_type const pt, 
                 natus::graphics::vertex_buffer_cref_t vb, natus::graphics::index_buffer_cref_t ib )
             {
                 _name = name ;
@@ -40,7 +40,7 @@ namespace natus
                 _ib = ib ;
             }
 
-            geometry_configuration( natus::ntd::string_cref_t name, natus::graphics::primitive_type const pt,
+            geometry_object( natus::ntd::string_cref_t name, natus::graphics::primitive_type const pt,
                 natus::graphics::vertex_buffer_rref_t vb, natus::graphics::index_buffer_rref_t ib )
             {
                 _name = name ;
@@ -49,7 +49,7 @@ namespace natus
                 _ib = ::std::move( ib ) ;
             }
 
-            geometry_configuration( this_cref_t rhv ) : object( rhv ) 
+            geometry_object( this_cref_t rhv ) : object( rhv ) 
             {
                 _pt = rhv._pt ;
                 _vb = rhv._vb ;
@@ -57,7 +57,7 @@ namespace natus
                 _name = rhv._name ;
             }
 
-            geometry_configuration( this_rref_t rhv ) : object( ::std::move( rhv ) )
+            geometry_object( this_rref_t rhv ) : object( ::std::move( rhv ) )
             {
                 _pt = rhv._pt ;
                 _vb = ::std::move( rhv._vb ) ;
@@ -65,7 +65,7 @@ namespace natus
                 _name = ::std::move( rhv._name ) ;
             }
 
-            ~geometry_configuration( void_t ) 
+            ~geometry_object( void_t ) 
             {}
 
             this_ref_t operator = ( this_cref_t rhv )
@@ -122,6 +122,6 @@ namespace natus
                 return _name ;
             }
         };
-        natus_res_typedef( geometry_configuration ) ;
+        natus_res_typedef( geometry_object ) ;
     }
 }

@@ -5,7 +5,7 @@
 #include "../module_registry.hpp"
 
 #include <natus/nsl/parser_structs.hpp>
-#include <natus/graphics/shader/shader_configuration.h>
+#include <natus/graphics/object/shader_object.h>
 
 namespace natus
 {

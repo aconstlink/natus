@@ -7,10 +7,10 @@
 
 
 #include "../id.hpp"
-#include "../shader/shader_configuration.h"
-#include "../configuration/render_configuration.h"
-#include "../configuration/geometry_configuration.h"
-#include "../configuration/image_configuration.h"
+#include "../object/shader_object.h"
+#include "../object/render_object.h"
+#include "../object/geometry_object.h"
+#include "../object/image_object.h"
 #include "../variable/variable_set.hpp"
 #include "../state/state_set.h"
 
@@ -46,15 +46,15 @@ namespace natus
 
         public:
 
-            virtual natus::graphics::result configure( natus::graphics::geometry_configuration_res_t ) noexcept = 0 ;
-            virtual natus::graphics::result configure( natus::graphics::render_configuration_res_t ) noexcept = 0 ;
-            virtual natus::graphics::result configure( natus::graphics::shader_configuration_res_t ) noexcept = 0 ;
-            virtual natus::graphics::result configure( natus::graphics::image_configuration_res_t ) noexcept = 0 ;
+            virtual natus::graphics::result configure( natus::graphics::geometry_object_res_t ) noexcept = 0 ;
+            virtual natus::graphics::result configure( natus::graphics::render_object_res_t ) noexcept = 0 ;
+            virtual natus::graphics::result configure( natus::graphics::shader_object_res_t ) noexcept = 0 ;
+            virtual natus::graphics::result configure( natus::graphics::image_object_res_t ) noexcept = 0 ;
 
-            virtual natus::graphics::result connect( natus::graphics::render_configuration_res_t, natus::graphics::variable_set_res_t ) noexcept = 0 ;
-            virtual natus::graphics::result update( natus::graphics::geometry_configuration_res_t ) noexcept = 0 ;
+            virtual natus::graphics::result connect( natus::graphics::render_object_res_t, natus::graphics::variable_set_res_t ) noexcept = 0 ;
+            virtual natus::graphics::result update( natus::graphics::geometry_object_res_t ) noexcept = 0 ;
 
-            virtual natus::graphics::result render( natus::graphics::render_configuration_res_t, natus::graphics::backend::render_detail_cref_t ) noexcept = 0 ;
+            virtual natus::graphics::result render( natus::graphics::render_object_res_t, natus::graphics::backend::render_detail_cref_t ) noexcept = 0 ;
 
             //virtual id_t feedback( id_rref_t id ) noexcept = 0 ;
             //virtual id_t compute( id_rref_t id ) noexcept = 0 ;
