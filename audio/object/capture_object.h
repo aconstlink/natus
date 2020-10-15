@@ -9,7 +9,6 @@
 #include <natus/ntd/vector.hpp>
 #include <natus/math/vector/vector2.hpp>
 
-
 #include <algorithm>
 #include <limits>
 
@@ -24,6 +23,9 @@ namespace natus
             microphone
         };
 
+        // the capture object holds the captured wave form (audio signal) and 
+        // the generated fft frequency bands.
+        // The number of new samples per update is determined by the backend system
         class capture_object : public object
         {
             natus_this_typedefs( capture_object ) ;
