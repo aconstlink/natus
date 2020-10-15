@@ -86,13 +86,13 @@ namespace natus
 
                     // shift by n values
                     {
-                        //std::memcpy( samples, samples + nn, n0 * sizeof( float_t ) ) ;
-                        for( size_t i = 0; i < n0; ++i ) samples[ i ] = samples[ nn + i ] ;
+                        std::memcpy( samples, samples + nn, n0 * sizeof( float_t ) ) ;
+                        //for( size_t i = 0; i < n0; ++i ) samples[ i ] = samples[ nn + i ] ;
                     }
                     // copy the new values
                     {
-                        //std::memcpy( samples + n0, values + n1, nn * sizeof( float_t ) ) ;
-                        for( size_t i = 0; i < nn; ++i ) samples[ n0 + i ] = values[ n1 + i ] ;
+                        std::memcpy( samples + n0, values + n1, nn * sizeof( float_t ) ) ;
+                        //for( size_t i = 0; i < nn; ++i ) samples[ n0 + i ] = values[ n1 + i ] ;
                     }
                 }
 
