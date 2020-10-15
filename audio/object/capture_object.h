@@ -4,6 +4,7 @@
 #include "../typedefs.h"
 #include "../object.hpp"
 #include "../enums.h"
+#include "../buffer.hpp"
 
 #include <natus/ntd/vector.hpp>
 #include <natus/math/vector/vector2.hpp>
@@ -132,6 +133,11 @@ namespace natus
             void_t copy_frequencies_from( floats_cref_t frequencies ) noexcept
             {
                 _frequencies = frequencies ;
+            }
+
+            void_t append_samples_to( natus::audio::buffer_ref_t b ) const noexcept
+            {
+                b.append( _samples ) ;
             }
 
             void_t copy_samples_to( natus::ntd::vector< float_t >& smps ) const noexcept

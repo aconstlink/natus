@@ -4,6 +4,7 @@ set( sources
     "typedefs.h"
     "result.h"
     "enums.h"
+    "buffer.hpp"
 
     "global.h"
     "global.cpp"
