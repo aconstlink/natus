@@ -61,7 +61,7 @@ namespace natus
             this_ref_t configure( natus::audio::capture_type const, natus::audio::capture_object_res_t, 
                 natus::audio::result_res_t = natus::audio::result_res_t() ) noexcept ;
 
-            this_ref_t capture( natus::audio::capture_object_res_t, bool_t const do_capture,
+            this_ref_t capture( natus::audio::capture_object_res_t, bool_t const do_capture = true,
                 natus::audio::result_res_t = natus::audio::result_res_t() ) noexcept ;
 
         public:
@@ -78,9 +78,9 @@ namespace natus
         natus_res_typedef( async ) ;
 
         // restricts access to the async
-        class async_view
+        class async_access
         {
-            natus_this_typedefs( async_view ) ;
+            natus_this_typedefs( async_access ) ;
 
         private:
 
@@ -89,21 +89,21 @@ namespace natus
 
         public:
 
-            async_view( natus::audio::async_res_t const& r, bool_ptr_t b ) :
+            async_access( natus::audio::async_res_t const& r, bool_ptr_t b ) :
                 _async( r ), _access( b ) {}
-            async_view( natus::audio::async_res_t&& r, bool_ptr_t b ) :
+            async_access( natus::audio::async_res_t&& r, bool_ptr_t b ) :
                 _async( ::std::move( r ) ), _access( b ) {}
 
         public:
 
-            async_view( void_t ) {}
-            async_view( this_cref_t rhv ) :
+            async_access( void_t ) {}
+            async_access( this_cref_t rhv ) :
                 _async( rhv._async ), _access( rhv._access ) {}
 
-            async_view( this_rref_t rhv ) :
+            async_access( this_rref_t rhv ) :
                 _async( ::std::move( rhv._async ) ), _access( rhv._access ) {}
 
-            ~async_view( void_t ) {}
+            ~async_access( void_t ) {}
 
             this_ref_t operator = ( this_cref_t rhv )
             {
@@ -130,7 +130,7 @@ namespace natus
                 return *this ;
             }
 
-            this_ref_t capture( natus::audio::capture_object_res_t config, bool_t do_capture,
+            this_ref_t capture( natus::audio::capture_object_res_t config, bool_t do_capture = true,
                 natus::audio::result_res_t res = natus::audio::result_res_t() ) noexcept
             {
                 _async->capture( config, do_capture, res ) ;
@@ -140,6 +140,6 @@ namespace natus
         public:
 
         };
-        natus_typedef( async_view ) ;
+        natus_typedef( async_access ) ;
     }
 }

@@ -60,7 +60,7 @@ app::~app( void_t )
 }
 
 //***
-natus::audio::async_view_t app::create_audio_engine( void_t )  noexcept
+natus::audio::async_access_t app::create_audio_engine( void_t )  noexcept
 {
     this_t::per_audio_info_t pai ;
     natus::audio::backend_res_t backend = natus::audio::oal_backend_res_t(
@@ -85,7 +85,7 @@ natus::audio::async_view_t app::create_audio_engine( void_t )  noexcept
         {
             async_->wait_for_frame() ;
             async_->system_update() ;
-            std::this_thread::sleep_for( std::chrono::milliseconds( 1000 ) ) ;
+            std::this_thread::sleep_for( std::chrono::milliseconds( 10 ) ) ;
         }
         natus::log::global_t::status( "[natus::app] : audio thread end" ) ;
     } ) ;
@@ -94,7 +94,7 @@ natus::audio::async_view_t app::create_audio_engine( void_t )  noexcept
     natus::concurrent::lock_guard_t lk( _amtx ) ;
     _audios.emplace_back( ::std::move( pai ) ) ;
 
-    return natus::audio::async_view_t( std::move( async ), _access ) ;
+    return natus::audio::async_access_t( std::move( async ), _access ) ;
 }
 
 //***

@@ -188,7 +188,7 @@ namespace natus
             natus::application::result request_change( this_t::window_info_in_t ) ;
 
 
-            natus::audio::async_view_t create_audio_engine( void_t ) noexcept ;
+            natus::audio::async_access_t create_audio_engine( void_t ) noexcept ;
 
         private:
 

@@ -5,7 +5,7 @@
 
 using namespace natus::audio ;
 
-async::async( void_t ) 
+async::async( void_t )
 {
 }
 
@@ -13,7 +13,7 @@ async::async( backend_res_t bke ) : _backend( bke )
 {
 }
 
-async::async( this_rref_t rhv ) 
+async::async( this_rref_t rhv )
 {
     _backend = std::move( rhv._backend ) ;
     _captures = std::move( rhv._captures ) ;
@@ -21,7 +21,7 @@ async::async( this_rref_t rhv )
     _num_enter = rhv._num_enter ;
 }
 
-async::~async( void_t ) 
+async::~async( void_t )
 {
 }
 
@@ -30,6 +30,16 @@ async::this_ref_t async::configure( natus::audio::capture_type const ct, natus::
     {
         natus::concurrent::lock_guard_t lk( _capture_configs_mtx ) ;
         _capture_configs.push_back( this_t::capture_config_data( { res, ct, config } ) ) ;
+    }
+    return *this ;
+}
+
+async::this_ref_t async::capture( natus::audio::capture_object_res_t cap, bool_t const do_capture,
+    natus::audio::result_res_t res ) noexcept
+{
+    {
+        natus::concurrent::lock_guard_t lk( _captures_mtx ) ;
+        _captures.push_back( { res, cap, do_capture } ) ;
     }
     return *this ;
 }
