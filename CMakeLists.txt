@@ -98,6 +98,7 @@ set( subdirs_header_only
     "ntd"
     "math"
     "nsl"
+    "profiling"
     )
 
 set( subdirs  )
