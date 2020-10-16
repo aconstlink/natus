@@ -40,6 +40,24 @@ namespace this_file
         natus::math::vec2f_t mm ;
     };
     natus_typedef( global_capture ) ;
+
+    struct buffer_config
+    {
+        natus::ntd::string_t name ;
+
+        // a source id used for purly playing the buffer
+        // it is generated along with the buffer
+        ALuint sid = ALuint( -1 ) ;
+
+        // the buffer id
+        ALuint id = ALuint( -1 ) ;
+
+        ALCenum format = 0 ;
+        ALvoid const* data = nullptr ;
+        ALsizei sib = 0 ;
+        ALsizei samplerate = 0 ;
+    };
+    natus_typedef( buffer_config ) ;
 }
 
 struct natus::audio::oal_backend::pimpl
@@ -50,6 +68,109 @@ struct natus::audio::oal_backend::pimpl
     size_t _do_captures = 0 ;
 
     this_file::global_capture_ptr_t _gc ;
+    natus::ntd::vector< this_file::buffer_config_t > buffers ;
+
+    ALCdevice * ddev = nullptr ;
+    ALCcontext * dctx = nullptr ;
+
+    bool_t init( void_t ) noexcept
+    {
+        {
+            auto const res = alcIsExtensionPresent( NULL, "ALC_ENUMERATION_EXT" ) ;
+            if( res != ALC_TRUE ) return false ;
+        }
+
+        {
+            auto const* list = alcGetString( NULL, ALC_DEVICE_SPECIFIER ) ;
+            size_t sib = 0 ;
+            while( true )
+            {
+                natus::ntd::string_t item = list + sib  ;
+
+                if( item.size() == 0 ) break ;
+
+                natus::log::global_t::status( item ) ;
+                sib += item.size() + 1 ;
+            }
+        }
+
+        {
+            ddev = alcOpenDevice( NULL ) ;
+            if( ddev == nullptr )
+            {
+                natus::log::global::error( "[OpenAL Backend] : alcOpenDevice for default device" ) ;
+                return false ;
+            }
+        }
+        {
+            dctx = alcCreateContext( ddev, NULL ) ;
+            auto const res = alcGetError( ddev ) ;
+            if( res != AL_NO_ERROR )
+            {
+                natus::log::global::error( "[OpenAL Backend] : alcCreateContext for default device context" ) ;
+                return false ;
+            }
+        }
+
+        {
+            alcMakeContextCurrent( dctx ) ;
+            auto const res = alcGetError( ddev ) ;
+            if( res != AL_NO_ERROR )
+            {
+                natus::log::global::error( "[OpenAL Backend] : alcMakeContextCurrent for default device context" ) ;
+                return false ;
+            }
+        }
+
+        return true ;
+    }
+
+    void_t release( void_t ) 
+    {
+        if( _gc != nullptr )
+        {
+            alcCaptureCloseDevice( _gc->dev ) ;
+            _gc->dev = nullptr ;
+            natus::memory::global_t::dealloc( _gc ) ;
+        }
+
+        for( auto& b : buffers )
+        {
+            if( b.id != ALuint( -1 ) )
+            {
+                alDeleteBuffers( 1, &b.id ) ;
+                auto const res = alGetError() ;
+                natus::log::global::error( res != AL_NO_ERROR, "[OpenAL Backend] : alDeleteBuffers" ) ;
+                b.id = ALuint( -1 ) ;
+            }
+            natus::memory::global_t::dealloc_raw( (void_ptr_t)b.data ) ;
+
+            b.data = nullptr ;
+            b.format = 0 ;
+            b.name = "" ;
+            b.samplerate = 0 ;
+            b.sib = 0 ;
+        }
+
+        if( dctx != nullptr )
+        {
+            {
+                auto const res = alcMakeContextCurrent( NULL ) ;
+                natus::log::global::error( res != AL_TRUE, "[OpenAL Backend] : alcMakeContextCurrent(NULL)" ) ;
+            }
+            {
+                alcDestroyContext( dctx ) ;
+                auto const res = alcGetError( ddev ) ;
+                natus::log::global::error( res != AL_NO_ERROR, "[OpenAL Backend] : alcDestroyContext" ) ;
+            }
+        }
+
+        if( ddev != nullptr )
+        {
+            auto const res = alcCloseDevice( ddev ) ;
+            natus::log::global::error( res != AL_TRUE, "[OpenAL Backend] : alcCloseDevice" ) ;
+        }
+    }
 
     void_t create_global_what_u_hear_capture_object( void_t )
     {
@@ -318,10 +439,13 @@ struct natus::audio::oal_backend::pimpl
                 float_t const a = std::abs( _gc->complex_frequencies[ i ] ) ;
 
                 _gc->frequencies[ i ] = a * div ;
+
                 _gc->frequencies[ i ] *= _gc->frequencies[ i ] ;
 
                 // for db calculation
                 //_frequencies[ i ] = 10.0f * std::log10( _frequencies[ i ] ) ;
+                //_gc->frequencies[ i ] = (_gc->frequencies[ i ] < (1.0f * div)) ? 0.0f : _gc->frequencies[ i ] ;
+
             }
             // the zero frequency should not receive the multiplier 2
             _gc->frequencies[ 0 ] /= 2.0f ;
@@ -358,6 +482,221 @@ struct natus::audio::oal_backend::pimpl
             cap.set_band_width( size_t( band_width ) ) ;
         }
     }
+
+    size_t construct_buffer_object( size_t oid, natus::ntd::string_cref_t name, natus::audio::buffer_object_ref_t )
+    {
+        // the name must be unique
+        {
+            auto iter = std::find_if( buffers.begin(), buffers.end(),
+                [&] ( this_file::buffer_config_cref_t c )
+            {
+                return c.name == name ;
+            } ) ;
+
+            if( iter != buffers.end() )
+            {
+                size_t const i = std::distance( buffers.begin(), iter ) ;
+                if( natus::log::global_t::error( i != oid && oid != size_t( -1 ),
+                    natus_log_fn( "name and id do not match" ) ) )
+                {
+                    return oid ;
+                }
+            }
+        }
+
+        // make oid
+        if( oid == size_t( -1 ) )
+        {
+            // must stay here because of 0 size buffers
+            size_t i = 0 ;
+            for( ; i < buffers.size(); ++i )
+            {
+                if( natus::core::is_not( buffers[ i ].id != ALuint( -1 ) ) ) break ;
+            }
+            oid = i ;
+        }
+
+        if( oid >= buffers.size() )
+            buffers.resize( oid + 1 ) ;
+
+        // create buffer
+        if( buffers[ oid ].id == ALuint( -1 ) )
+        {
+            {
+                ALCuint buffer = 0 ;
+                alGenBuffers( 1, &buffer ) ;
+                auto const res = alGetError() ;
+                natus::log::global_t::error( res != ALC_NO_ERROR,
+                    "[OpenAL Backend] : alGenBuffers" ) ;
+
+                buffers[ oid ].id = buffer ;
+            }
+
+            {
+                ALuint sid = ALuint( -1 ) ;
+                {
+                    alGenSources( 1, &sid ) ;
+                    auto const res = alGetError() ;
+                    natus::log::global_t::error( res != ALC_NO_ERROR,
+                        "[OpenAL Backend] : alGenSources" ) ;
+
+                    buffers[ oid ].sid = sid ;
+                }
+            }
+        }
+
+        return oid ;
+    }
+
+    bool_t update( size_t const oid, natus::audio::buffer_object_ref_t buffer ) noexcept
+    {
+        auto & alb = buffers[ oid ] ;
+
+        alb.samplerate = ALsizei( buffer.get_sample_rate() ) ;
+
+        // reallocate the buffer
+        {
+            auto const & floats = buffer.get_samples() ;
+            if( buffer.get_sib() != ( size_t ) alb.sib )
+            {
+                natus::memory::global_t::dealloc_raw<ALCbyte>( (ALCbyte*)alb.data ) ;
+                alb.data = natus::memory::global_t::alloc_raw<ALCbyte>( buffer.get_sib() ) ;
+                alb.sib = ALsizei( buffer.get_sib() ) ;
+            }
+        }
+
+        // determine format
+        {
+            ALCenum format = 0 ;
+            if( buffer.get_num_channels() == 1 )
+                format = AL_FORMAT_MONO16  ;
+            else if( buffer.get_num_channels() == 2 )
+                format = AL_FORMAT_STEREO16 ;
+
+            if( format == 0 )
+            {
+                natus::log::global_t::error( "[OpenAL Backend] : invalid number of channels for "
+                    "[" + buffer.get_name() + "]" ) ;
+                return false ;
+            }
+            alb.format = format ;
+        }
+
+        // convert float to 16 data
+        {
+            auto const & floats = buffer.get_samples() ;
+            ALshort* ptr = ( ALshort* ) alb.data ;
+            size_t const sample_rate = buffer.get_sample_rate() ;
+            size_t const channels = buffer.get_num_channels() ;
+            for( size_t i = 0; i < floats.size(); i+=channels )
+            {
+                size_t const idx = i ;
+                for( size_t c = 0; c < channels; ++c )
+                {
+                    *ptr = ALshort( floats[ idx + c ] * float_t( sample_rate ) ) ;
+                    ++ptr ;
+                }
+            }
+        }
+
+        // 
+        {
+            alSourcei( alb.sid, AL_BUFFER, 0 ) ;
+            auto const res = alGetError() ;
+            natus::log::global_t::error( res != ALC_NO_ERROR,
+                "[OpenAL Backend] : alGenSources" ) ;
+        }
+
+        // copy the buffer to al
+        {
+            ALuint const id = alb.id ;
+            ALCenum const format = alb.format ;
+            ALvoid const* data = alb.data ;
+            ALsizei const sib = alb.sib ;
+            ALsizei const samplerate = alb.samplerate ;
+
+            alBufferData( id, format, data, sib, samplerate );
+            auto const res = alGetError() ;
+            natus::log::global_t::error( res != ALC_NO_ERROR,
+                "[OpenAL Backend] : alBufferData" ) ;
+        }
+
+        {
+            alSourcei( alb.sid, AL_BUFFER, ( ALint ) alb.id ) ;
+            auto const res = alGetError() ;
+            natus::log::global_t::error( res != ALC_NO_ERROR,
+                "[OpenAL Backend] : alGenSources" ) ;
+        }
+
+        return true ;
+    }
+
+    void_t execute( size_t const oid, natus::audio::buffer_object_ref_t obj, 
+        natus::audio::backend::execute_detail_cref_t det ) noexcept
+    {
+        auto& bo = buffers[ oid ] ;
+
+        if( det.to == natus::audio::execution_options::stop )
+        {
+            alSourceStop( bo.sid ) ;
+            auto const res = alGetError() ;
+            natus::log::global_t::error( res != ALC_NO_ERROR,
+                "[OpenAL Backend] : alSourceStop" ) ;
+        }
+        else if( det.to == natus::audio::execution_options::pause )
+        {
+            alSourcePause( bo.sid ) ;
+            auto const res = alGetError() ;
+            natus::log::global_t::error( res != ALC_NO_ERROR,
+                "[OpenAL Backend] : alSourcePause" ) ;
+        }
+        else if( det.to == natus::audio::execution_options::replay )
+        {
+            alSourceRewind( bo.sid ) ;
+            auto const res = alGetError() ;
+            natus::log::global_t::error( res != ALC_NO_ERROR,
+                "[OpenAL Backend] : alSourceRewind" ) ;
+        }
+        else if( det.to == natus::audio::execution_options::play )
+        {
+            if( det.sample != size_t(-1) )
+            {
+                alSourcei( bo.sid, AL_SAMPLE_OFFSET, (ALint)det.sample ) ;
+                auto const res = alGetError() ;
+                natus::log::global_t::error( res != ALC_NO_ERROR,
+                    "[OpenAL Backend] : alSourcei" ) ;
+            }
+            else if( det.sec > 0.0f )
+            {
+                alSourcef( bo.sid, AL_SEC_OFFSET, (ALfloat) det.sec ) ;
+                auto const res = alGetError() ;
+                natus::log::global_t::error( res != ALC_NO_ERROR,
+                    "[OpenAL Backend] : alSourcef" ) ;
+            }
+
+            alSourcePlay( bo.sid );
+            auto const res = alGetError() ;
+            natus::log::global_t::error( res != ALC_NO_ERROR,
+                "[OpenAL Backend] : alSourceRewind" ) ;
+        }
+
+        {
+            ALenum state ;
+            alGetSourcei( bo.sid, AL_SOURCE_STATE, &state ) ;
+            if( state == AL_PLAYING )
+            {
+                obj.set_execution_state( natus::audio::execution_state::playing ) ;
+            }
+            else if( state == AL_INITIAL || state == AL_STOPPED )
+            {
+                obj.set_execution_state( natus::audio::execution_state::stopped ) ;
+            }
+            else if( state == AL_PAUSED )
+            {
+                obj.set_execution_state( natus::audio::execution_state::paused ) ;
+            }
+        }
+    }
 };
 
 size_t oal_backend::create_backend_id( void_t ) noexcept
@@ -369,7 +708,6 @@ size_t oal_backend::create_backend_id( void_t ) noexcept
 oal_backend::oal_backend( void_t ) noexcept : backend( natus::audio::backend_type::openal )
 {
     this_t::set_bid( this_t::create_backend_id() ) ;
-    _pimpl = natus::memory::global_t::alloc( pimpl(), "[natus::audio::oal_backend::pimpl]" ) ;
 }
 
 oal_backend::oal_backend( this_rref_t rhv ) noexcept : backend( std::move( rhv ) )
@@ -379,7 +717,6 @@ oal_backend::oal_backend( this_rref_t rhv ) noexcept : backend( std::move( rhv )
 
 oal_backend::~oal_backend( void_t ) noexcept
 {
-    natus::memory::global_t::dealloc( _pimpl ) ;
 }
 
 oal_backend::this_ref_t oal_backend::operator = ( this_rref_t rhv ) noexcept
@@ -423,8 +760,75 @@ natus::audio::result oal_backend::capture( natus::audio::capture_object_res_t ca
     return natus::audio::result::ok ;
 }
 
+natus::audio::result oal_backend::configure( natus::audio::buffer_object_res_t obj ) noexcept
+{
+    natus::audio::id_res_t id = obj->get_id() ;
+
+    {
+        id = natus::audio::id_t( this_t::get_bid(),
+            _pimpl->construct_buffer_object( id->get_oid( this_t::get_bid() ), obj->name(), *obj ) ) ;
+    }
+
+    {
+        auto const res = _pimpl->update( id->get_oid( this_t::get_bid() ), *obj ) ;
+        if( natus::core::is_not( res ) ) return natus::audio::result::failed ;
+    }
+
+    return natus::audio::result::ok ;
+}
+
+natus::audio::result oal_backend::update( natus::audio::buffer_object_res_t obj ) noexcept
+{
+    natus::audio::id_res_t id = obj->get_id() ;
+    if( id->is_not_valid() )
+    {
+        natus::log::global_t::error( "[OpenAL Backend] : invalid buffer id for [" + obj->get_name() + "]" ) ;
+        return natus::audio::result::invalid_argument ;
+    }
+
+    {
+        auto const res = _pimpl->update( id->get_oid( this_t::get_bid() ), *obj ) ;
+        if( natus::core::is_not( res ) ) return natus::audio::result::failed ;
+    }
+
+    return natus::audio::result::ok ;
+}
+
+natus::audio::result oal_backend::execute( natus::audio::buffer_object_res_t obj, natus::audio::backend::execute_detail_cref_t det ) noexcept
+{
+    natus::audio::id_res_t id = obj->get_id() ;
+    if( id->is_not_valid() )
+    {
+        natus::log::global_t::error( "[OpenAL Backend] : invalid buffer id for [" + obj->get_name() + "]" ) ;
+        return natus::audio::result::invalid_argument ;
+    }
+
+    _pimpl->execute( id->get_oid(), *obj, det ) ;
+
+    return natus::audio::result::ok ;
+}
+
+void_t oal_backend::init( void_t ) noexcept 
+{
+    if( _pimpl == nullptr )
+    {
+        _pimpl = natus::memory::global_t::alloc( pimpl(), "[natus::audio::oal_backend::pimpl]" ) ;
+        _pimpl->init() ;
+    }
+}
+
+void_t oal_backend::release( void_t ) noexcept 
+{
+    if( _pimpl != nullptr )
+    {
+        _pimpl->release() ;
+    }
+    natus::memory::global_t::dealloc( _pimpl ) ;
+}
+
 void_t oal_backend::begin( void_t ) noexcept
 {
+    
 }
 
 void_t oal_backend::end( void_t ) noexcept

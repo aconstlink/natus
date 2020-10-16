@@ -15,7 +15,7 @@ set( sources
     "object.hpp"
 
     "object/capture_object.h"
-    "object/play_object.h"
+    "object/buffer_object.h"
     "object/synth_object.h"
 
     "backend/backend.h"

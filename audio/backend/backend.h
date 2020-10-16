@@ -5,6 +5,7 @@
 #include "../result.h"
 
 #include "../object/capture_object.h"
+#include "../object/buffer_object.h"
 
 namespace natus
 {
@@ -19,6 +20,16 @@ namespace natus
             natus::audio::backend_type _bt = backend_type::unknown ;
             size_t _backend_id = size_t( -1 ) ;
 
+        public:
+
+            struct execute_detail
+            {
+                natus::audio::execution_options to ;
+                size_t sample = size_t( -1 ) ;
+                float_t sec = float_t( -1 ) ;
+            };
+            natus_typedef( execute_detail ) ;
+
         public: // ctor
 
             backend( natus::audio::backend_type const bt ) ;
@@ -31,6 +42,14 @@ namespace natus
             virtual natus::audio::result configure( natus::audio::capture_type const, 
                 natus::audio::capture_object_res_t ) noexcept = 0 ;
             virtual natus::audio::result capture( natus::audio::capture_object_res_t, bool_t const b = true ) noexcept = 0 ;
+
+            virtual natus::audio::result configure( natus::audio::buffer_object_res_t ) noexcept = 0 ;
+            virtual natus::audio::result update( natus::audio::buffer_object_res_t ) noexcept = 0 ;
+            virtual natus::audio::result execute( natus::audio::buffer_object_res_t, natus::audio::backend::execute_detail_cref_t ) noexcept = 0 ;
+
+
+            virtual void_t init( void_t ) noexcept = 0 ;
+            virtual void_t release( void_t ) noexcept = 0 ;
             virtual void_t begin( void_t ) noexcept = 0 ;
             virtual void_t end( void_t ) noexcept = 0 ;
 

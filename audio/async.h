@@ -42,6 +42,26 @@ namespace natus
             captures_t _captures ;
             natus::concurrent::mutex_t _captures_mtx ;
 
+            struct buffer_config_data
+            {
+                natus::audio::result_res_t res ;
+                natus::audio::buffer_object_res_t obj ;
+                bool_t update_only = false ;
+            };
+            typedef natus::ntd::vector< buffer_config_data > buffer_configs_t ;
+            buffer_configs_t _buffer_configs ;
+            natus::concurrent::mutex_t _buffer_configs_mtx ;
+
+            struct play_data
+            {
+                natus::audio::result_res_t res ;
+                natus::audio::buffer_object_res_t obj ;
+                natus::audio::backend::execute_detail_t ed ;
+            };
+            typedef natus::ntd::vector< play_data > plays_t ;
+            plays_t _plays ;
+            natus::concurrent::mutex_t _plays_mtx ;
+
         private: // sync
 
             natus::concurrent::mutex_t _frame_mtx ;
@@ -64,7 +84,19 @@ namespace natus
             this_ref_t capture( natus::audio::capture_object_res_t, bool_t const do_capture = true,
                 natus::audio::result_res_t = natus::audio::result_res_t() ) noexcept ;
 
+            this_ref_t configure( natus::audio::buffer_object_res_t,
+                natus::audio::result_res_t = natus::audio::result_res_t() ) noexcept ;
+
+            this_ref_t update( natus::audio::buffer_object_res_t,
+                natus::audio::result_res_t = natus::audio::result_res_t() ) noexcept ;
+
+            this_ref_t execute( natus::audio::buffer_object_res_t, natus::audio::backend::execute_detail_cref_t,
+                natus::audio::result_res_t = natus::audio::result_res_t() ) noexcept ;
+
         public:
+
+            void_t enter_thread( void_t ) noexcept ;
+            void_t leave_thread( void_t ) noexcept ;
 
             /// render thread update function - DO NOT USE.
             void_t system_update( void_t ) noexcept ;
@@ -134,6 +166,27 @@ namespace natus
                 natus::audio::result_res_t res = natus::audio::result_res_t() ) noexcept
             {
                 _async->capture( config, do_capture, res ) ;
+                return *this ;
+            }
+
+            this_ref_t configure( natus::audio::buffer_object_res_t po,
+                natus::audio::result_res_t res = natus::audio::result_res_t() ) noexcept 
+            {
+                _async->configure( po, res ) ;
+                return *this ;
+            }
+
+            this_ref_t update( natus::audio::buffer_object_res_t bo,
+                natus::audio::result_res_t res= natus::audio::result_res_t() ) noexcept 
+            {
+                _async->update( bo, res ) ;
+                return *this ;
+            }
+
+            this_ref_t execute( natus::audio::buffer_object_res_t po, natus::audio::backend::execute_detail_cref_t det,
+                natus::audio::result_res_t res = natus::audio::result_res_t() ) noexcept 
+            {
+                _async->execute( po, det, res ) ;
                 return *this ;
             }
 

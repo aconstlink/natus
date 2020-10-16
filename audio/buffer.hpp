@@ -15,7 +15,8 @@ namespace natus
 
         private:
 
-            natus::ntd::vector< float_t > _buffer ;
+            natus_typedefs( natus::ntd::vector< float_t >, floats ) ;
+            floats_t _buffer ;
 
         public:
 
@@ -96,6 +97,12 @@ namespace natus
                     }
                 }
 
+                return *this ;
+            }
+
+            this_cref_t copy_buffer( floats_out_t outs ) const noexcept
+            {
+                outs = _buffer ;
                 return *this ;
             }
         };

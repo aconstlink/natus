@@ -4,6 +4,21 @@ namespace natus
 {
     namespace audio
     {
+        enum class execution_state
+        {
+            undefined,
+            playing,
+            paused,
+            stopped
+        };
+        enum class execution_options
+        {
+            undefined,
+            play,
+            pause,
+            stop,
+            replay
+        };
         enum class channels
         {
             undefined,

@@ -12,7 +12,9 @@ namespace natus
             ok, 
             failed,
             invalid,
-            invalid_argument
+            invalid_argument,
+            initial,
+            in_progress
         };
         natus_res_typedef( result ) ;
 

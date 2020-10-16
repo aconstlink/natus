@@ -1,4 +1,5 @@
 
+
 #pragma once
 
 #include "../backend.h"
@@ -14,7 +15,7 @@ namespace natus
         private:
 
             struct pimpl ;
-            pimpl* _pimpl ;
+            pimpl* _pimpl = nullptr ;
 
             size_t _what_u_hear_count = 0 ;
 
@@ -23,7 +24,7 @@ namespace natus
             oal_backend( void_t ) noexcept ;
             oal_backend( this_cref_t ) = delete ;
             oal_backend( this_rref_t ) noexcept ;
-            virtual ~oal_backend( void_t ) ;
+            virtual ~oal_backend( void_t ) noexcept ;
 
             this_ref_t operator = ( this_rref_t ) noexcept ;
 
@@ -34,8 +35,14 @@ namespace natus
 
             virtual natus::audio::result capture( natus::audio::capture_object_res_t, bool_t const b = true ) noexcept ;
 
+            virtual natus::audio::result configure( natus::audio::buffer_object_res_t ) noexcept ;
+            virtual natus::audio::result update( natus::audio::buffer_object_res_t ) noexcept ;
+            virtual natus::audio::result execute( natus::audio::buffer_object_res_t, natus::audio::backend::execute_detail_cref_t ) noexcept ;
+
         public:
 
+            virtual void_t init( void_t ) noexcept ;
+            virtual void_t release( void_t ) noexcept ;
             virtual void_t begin( void_t ) noexcept ;
             virtual void_t end( void_t ) noexcept ;
 

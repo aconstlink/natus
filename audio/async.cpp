@@ -44,6 +44,49 @@ async::this_ref_t async::capture( natus::audio::capture_object_res_t cap, bool_t
     return *this ;
 }
 
+async::this_ref_t async::configure( natus::audio::buffer_object_res_t po,
+    natus::audio::result_res_t res ) noexcept 
+{
+    {
+        natus::concurrent::lock_guard_t lk( _buffer_configs_mtx ) ;
+        _buffer_configs.push_back( this_t::buffer_config_data( { res, po, false } ) ) ;
+    }
+    return *this ;
+}
+
+async::this_ref_t async::update( natus::audio::buffer_object_res_t po,
+    natus::audio::result_res_t res ) noexcept 
+{
+    {
+        natus::concurrent::lock_guard_t lk( _buffer_configs_mtx ) ;
+        _buffer_configs.push_back( this_t::buffer_config_data( { res, po, true } ) ) ;
+    }
+    return *this ;
+}
+
+async::this_ref_t async::execute( natus::audio::buffer_object_res_t po, 
+    natus::audio::backend::execute_detail_cref_t det,
+    natus::audio::result_res_t res ) noexcept 
+{
+    if( res.is_valid() ) *res = natus::audio::result::in_progress ;
+
+    {
+        natus::concurrent::lock_guard_t lk( _plays_mtx ) ;
+        _plays.push_back( { res, po, det } ) ;
+    }
+    return *this ;
+}
+
+void_t async::enter_thread( void_t ) noexcept
+{
+    _backend->init() ;
+}
+
+void_t async::leave_thread( void_t ) noexcept
+{
+    _backend->release() ;
+}
+
 void_t async::system_update( void_t ) noexcept
 {
     /////////////////////////////////////////////////
@@ -63,6 +106,28 @@ void_t async::system_update( void_t ) noexcept
         }
     }
 
+    // buffer objects
+    {
+        this_t::buffer_configs_t preps ;
+        {
+            natus::concurrent::lock_guard_t lk( _buffer_configs_mtx ) ;
+            preps = ::std::move( _buffer_configs ) ;
+        }
+        for( auto& prc : preps )
+        {
+            if( !prc.update_only )
+            {
+                auto const res = _backend->configure( std::move( prc.obj ) ) ;
+                if( prc.res.is_valid() ) prc.res = res ;
+            }
+            else
+            {
+                auto const res = _backend->update( std::move( prc.obj ) ) ;
+                if( prc.res.is_valid() ) prc.res = res ;
+            }
+        }
+    }
+
 
     /////////////////////////////////////////////////
     /////// render/capture/..
@@ -70,16 +135,32 @@ void_t async::system_update( void_t ) noexcept
     {
         _backend->begin() ;
 
-        this_t::captures_t captures ;
         {
-            natus::concurrent::lock_guard_t lk( _captures_mtx ) ;
-            captures = ::std::move( _captures ) ;
+            this_t::captures_t captures ;
+            {
+                natus::concurrent::lock_guard_t lk( _captures_mtx ) ;
+                captures = ::std::move( _captures ) ;
+            }
+
+            for( auto& rnd : captures )
+            {
+                auto const res = _backend->capture( ::std::move( rnd.config ), rnd.begin_capture ) ;
+                if( rnd.res.is_valid() ) rnd.res = res ;
+            }
         }
 
-        for( auto& rnd : captures )
         {
-            auto const res = _backend->capture( ::std::move( rnd.config ), rnd.begin_capture ) ;
-            if( rnd.res.is_valid() ) rnd.res = res ;
+            this_t::plays_t plays ;
+            {
+                natus::concurrent::lock_guard_t lk( _plays_mtx ) ;
+                plays = ::std::move( _plays ) ;
+            }
+
+            for( auto& rnd : plays )
+            {
+                auto const res = _backend->execute( std::move( rnd.obj ), rnd.ed ) ;
+                if( rnd.res.is_valid() ) rnd.res = res ;
+            }
         }
 
         _backend->end() ;
