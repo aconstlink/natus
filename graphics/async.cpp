@@ -144,7 +144,7 @@ void_t async::system_update( void_t ) noexcept
         for( auto& prc : preps )
         {
             auto const res = _backend->configure( ::std::move( prc.config ) ) ;
-            if( prc.res.is_valid() ) prc.res = res ;
+            if( prc.res.is_valid() ) *prc.res = res ;
         }
     }
 
@@ -158,7 +158,7 @@ void_t async::system_update( void_t ) noexcept
         for( auto& prc : preps )
         {
             auto const res = _backend->configure( ::std::move( prc.config ) ) ;
-            if( prc.res.is_valid() ) prc.res = res ;
+            if( prc.res.is_valid() ) *prc.res = res ;
         }
     }
 
@@ -172,7 +172,7 @@ void_t async::system_update( void_t ) noexcept
         for( auto& prc : preps )
         {
             auto const res = _backend->update( ::std::move( prc.config ) ) ;
-            if( prc.res.is_valid() ) prc.res = res ;
+            if( prc.res.is_valid() ) *prc.res = res ;
         }
     }
 
@@ -186,7 +186,7 @@ void_t async::system_update( void_t ) noexcept
         for( auto& prc : preps )
         {
             auto const res = _backend->configure( ::std::move( prc.config ) ) ;
-            if( prc.res.is_valid() ) prc.res = res ;
+            if( prc.res.is_valid() ) *prc.res = res ;
         }
     }
 
@@ -200,7 +200,7 @@ void_t async::system_update( void_t ) noexcept
         for( auto& prc : preps )
         {
             auto const res = _backend->configure( ::std::move( prc.config ) ) ;
-            if( prc.res.is_valid() ) prc.res = res ;
+            if( prc.res.is_valid() ) *prc.res = res ;
         }
     }
 
@@ -214,7 +214,7 @@ void_t async::system_update( void_t ) noexcept
         for( auto& prc : preps )
         {
             auto const res = _backend->connect( ::std::move( prc.config ), ::std::move( prc.vs ) ) ;
-            if( prc.res.is_valid() ) prc.res = res ;
+            if( prc.res.is_valid() ) *prc.res = res ;
         }
     }
 
@@ -230,7 +230,7 @@ void_t async::system_update( void_t ) noexcept
         for( auto& rnd : renders )
         {
             auto const res = _backend->render( ::std::move( rnd.config ), rnd.detail ) ;
-            if( rnd.res.is_valid() ) rnd.res = res ;
+            if( rnd.res.is_valid() ) *rnd.res = res ;
         }
 
         _backend->render_end() ;

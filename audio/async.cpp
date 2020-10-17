@@ -118,12 +118,12 @@ void_t async::system_update( void_t ) noexcept
             if( !prc.update_only )
             {
                 auto const res = _backend->configure( std::move( prc.obj ) ) ;
-                if( prc.res.is_valid() ) prc.res = res ;
+                if( prc.res.is_valid() ) *prc.res = res ;
             }
             else
             {
                 auto const res = _backend->update( std::move( prc.obj ) ) ;
-                if( prc.res.is_valid() ) prc.res = res ;
+                if( prc.res.is_valid() ) *prc.res = res ;
             }
         }
     }
@@ -145,7 +145,7 @@ void_t async::system_update( void_t ) noexcept
             for( auto& rnd : captures )
             {
                 auto const res = _backend->capture( ::std::move( rnd.config ), rnd.begin_capture ) ;
-                if( rnd.res.is_valid() ) rnd.res = res ;
+                if( rnd.res.is_valid() ) *rnd.res = res ;
             }
         }
 
@@ -159,7 +159,7 @@ void_t async::system_update( void_t ) noexcept
             for( auto& rnd : plays )
             {
                 auto const res = _backend->execute( std::move( rnd.obj ), rnd.ed ) ;
-                if( rnd.res.is_valid() ) rnd.res = res ;
+                if( rnd.res.is_valid() ) *rnd.res = res ;
             }
         }
 
