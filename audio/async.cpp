@@ -102,7 +102,7 @@ void_t async::system_update( void_t ) noexcept
         for( auto& prc : preps )
         {
             auto const res = _backend->configure( prc.ct, ::std::move( prc.config ) ) ;
-            if( prc.res.is_valid() ) prc.res = res ;
+            if( prc.res.is_valid() ) *prc.res = res ;
         }
     }
 
