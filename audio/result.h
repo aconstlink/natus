@@ -14,7 +14,8 @@ namespace natus
             invalid,
             invalid_argument,
             initial,
-            in_progress
+            in_progress,
+            idle
         };
         natus_res_typedef( result ) ;
 
