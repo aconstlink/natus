@@ -93,6 +93,8 @@ natus_vs_src_dir( sources )
 add_library( ${cur_lib_name} ${NATUS_LIBRARY_BUILD_TYPE} ${sources} )
 add_library( ${cur_alias_name} ALIAS ${cur_lib_name} )
 
+target_compile_options( ${cur_lib_name} PUBLIC -DNOMINMAX)
+
 ###########################################################
 # SECTION: Build Tree
 ###########################################################
