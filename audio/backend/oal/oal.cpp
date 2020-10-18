@@ -593,7 +593,7 @@ struct natus::audio::oal_backend::pimpl
                 size_t const idx = i ;
                 for( size_t c = 0; c < channels; ++c )
                 {
-                    *ptr = ALshort( floats[ idx + c ] * float_t( (1<<16)-1 ) ) ; ++ptr ;
+                    *ptr = ALshort( floats[ idx + c ] * float_t( (1<<15)-1 ) ) ; ++ptr ;
                 }
             }
         }
