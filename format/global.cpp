@@ -2,6 +2,7 @@
 #include "global.h"
 #include "stb/stb_module.h"
 #include "nsl/nsl_module.h"
+#include "wav/wav_module.h"
 
 #include <natus/memory/global.h>
 
@@ -44,4 +45,5 @@ void_t global::register_default_registries( void_t )
 {
     natus::format::stb_module_register::register_module( _mr ) ;
     natus::format::nsl_module_register::register_module( _mr ) ;
+    natus::format::wav_module_register::register_module( _mr ) ;
 }

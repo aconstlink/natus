@@ -2,7 +2,9 @@
 
 #include "typedefs.h"
 
+#include <natus/audio/object/buffer_object.h>
 #include <natus/graphics/texture/image.hpp>
+
 #include <future>
 
 namespace natus
@@ -22,9 +24,17 @@ namespace natus
             virtual ~image_item( void_t ) {}
 
             natus::graphics::image_res_t img ;
-
         };
         natus_res_typedef( image_item ) ;
+
+        struct audio_item : public item
+        {
+            audio_item( natus::audio::buffer_object_res_t&& obj_ ) : obj( std::move( obj_ ) ) {}
+            virtual ~audio_item( void_t ) {}
+
+            natus::audio::buffer_object_res_t obj ;
+        };
+        natus_res_typedef( audio_item ) ;
 
         struct status_item : public item
         {

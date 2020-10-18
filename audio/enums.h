@@ -35,6 +35,19 @@ namespace natus
             max_frequencies
         };
 
+        static channels to_enum( size_t const n ) noexcept
+        {
+            channels ret = channels::undefined ;
+            switch( n )
+            {
+            case 1: ret = channels::mono ; break ;
+            case 2: ret = channels::stereo ; break ;
+            default:
+                break;
+            }
+            return ret ;
+        }
+
         static size_t to_number( frequency const f ) noexcept
         {
             static size_t const _numbers[] = { 0, 48000, 96000, 128000 } ;

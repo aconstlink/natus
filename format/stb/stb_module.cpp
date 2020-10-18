@@ -36,7 +36,8 @@ natus::format::future_item_t stb_image_module::import_from( natus::io::location_
 
         if( !res ) 
         {
-            // funk not called
+            natus::log::global_t::error( "[wav_import] : can not load location " + loc.as_string() ) ;
+            return natus::format::item_res_t( natus::format::status_item_t( "error" ) ) ;
         }
 
         int width, height, comp ;
