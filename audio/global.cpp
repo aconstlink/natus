@@ -14,7 +14,7 @@ global::global( void_t )
 }
 
 //***
-global::global( this_rref_t rhv ) 
+global::global( this_rref_t /*rhv*/ ) 
 {
 }
 

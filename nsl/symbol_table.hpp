@@ -49,7 +49,7 @@ namespace natus
 
                 // @param name something like liba.libb.libc.name
                 // @param version something like nsl, gl3, es3, hlsl9...
-                symbol( natus::ntd::string_cref_t name, natus::ntd::string_cref_t version ) noexcept
+                symbol( natus::ntd::string_cref_t name, natus::ntd::string_cref_t /*version*/ ) noexcept
                 {
                     size_t off = 0 ;
                     size_t n = name.find_first_of( '.' ) ;

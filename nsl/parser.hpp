@@ -759,7 +759,6 @@ namespace natus
 
                 // 2. clear all /**/
                 {
-                    size_t off = 0 ;
                     size_t p0 = s.find( "/*" ) ;
                     while( p0 != std::string::npos )
                     {

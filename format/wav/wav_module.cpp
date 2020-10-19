@@ -207,7 +207,7 @@ natus::format::future_item_t wav_image_module::import_from( natus::io::location_
                 {
                     if( wf.fmt.bits_per_sample == 8 )
                     {
-                        natus_typedefs( natus::ntd::vector< float_t >, floats ) ;
+                        typedef natus::ntd::vector< float_t > floats_t ;
 
                         size_t const num_samples = chunk_size / sizeof( uint8_t ) ;
                         size_t const num_channels = wf.fmt.channels ;
@@ -226,7 +226,7 @@ natus::format::future_item_t wav_image_module::import_from( natus::io::location_
                     }
                     else if( wf.fmt.bits_per_sample == 16 )
                     {
-                        natus_typedefs( natus::ntd::vector< float_t >, floats ) ;
+                        typedef natus::ntd::vector< float_t > floats_t ;
 
                         size_t const num_samples = chunk_size / sizeof( uint16_t ) ;
                         size_t const num_channels = wf.fmt.channels ;
@@ -279,9 +279,10 @@ natus::format::future_item_t wav_image_module::import_from( natus::io::location_
                             }
                             #endif
                         };
-                        natus_typedef( uint24 ) ;
+                        typedef uint24 uint24_t ;
+                        typedef uint24 * uint24_ptr_t ;
 
-                        natus_typedefs( natus::ntd::vector< float_t >, floats ) ;
+                        typedef natus::ntd::vector< float_t > floats_t ;
 
                         size_t const num_samples = chunk_size / sizeof( uint24_t ) ;
                         size_t const num_channels = wf.fmt.channels ;
@@ -309,7 +310,7 @@ natus::format::future_item_t wav_image_module::import_from( natus::io::location_
                 {
                     if( wf.fmt.bits_per_sample == 32 )
                     {
-                        natus_typedefs( natus::ntd::vector< float_t >, floats ) ;
+                        typedef natus::ntd::vector< float_t > floats_t ;
 
                         size_t const num_samples = chunk_size / sizeof( float_t ) ;
                         size_t const num_channels = wf.fmt.channels ;

@@ -304,7 +304,7 @@ struct natus::audio::oal_backend::pimpl
 
         double_t const dfrequency = double_t( natus::audio::to_number( _gc->frequency ) ) ;
 
-        for( size_t i = 0; i < count; ++i )
+        for( size_t i = 0; i < (size_t)count; ++i )
         {
             // the index into the buffer
             size_t const idx = i * _gc->frame_size ;
@@ -385,7 +385,7 @@ struct natus::audio::oal_backend::pimpl
         // shift in new values and min/max
         {
             size_t const n = fbuffer.size() ;
-            float_cptr_t values = fbuffer.data() ;
+            //float_cptr_t values = fbuffer.data() ;
 
             // shift and copy
             {
@@ -461,7 +461,7 @@ struct natus::audio::oal_backend::pimpl
         //natus::log::global_t::status("Count : " + std::to_string(count) ) ;
     }
 
-    size_t construct_capture_object( natus::audio::capture_object_ref_t cap )
+    size_t construct_capture_object( natus::audio::capture_object_ref_t /*cap*/ )
     {
         return _captures++ ;
     }
@@ -556,8 +556,7 @@ struct natus::audio::oal_backend::pimpl
 
         // reallocate the buffer
         {
-            auto const & floats = buffer.get_samples() ;
-            if( buffer.get_sib() != ( size_t ) alb.sib )
+            if( buffer.get_sib() != size_t( alb.sib ) )
             {
                 natus::memory::global_t::dealloc_raw<ALCbyte>( (ALCbyte*)alb.data ) ;
                 alb.data = natus::memory::global_t::alloc_raw<ALCbyte>( buffer.get_sib() ) ;
@@ -586,7 +585,6 @@ struct natus::audio::oal_backend::pimpl
         {
             auto const & floats = buffer.get_samples() ;
             ALshort* ptr = ( ALshort* ) alb.data ;
-            size_t const sample_rate = buffer.get_sample_rate() ;
             size_t const channels = buffer.get_num_channels() ;
             for( size_t i = 0; i < floats.size(); i+=channels )
             {

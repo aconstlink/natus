@@ -13,7 +13,7 @@ target_include_directories( stb INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST
 if( NATUS_COMPILER_MSC )
   target_compile_options( stb INTERFACE /wd4267 /wd4244 /wd4245 /wd4456 /wd4457 /wd4701 /wd4996  )
 elseif( NATUS_COMPILER_GNU )
-  target_compile_options( stb INTERFACE -Wno-sign-compare -Wno-unused-but-set-variable )
+  target_compile_options( stb INTERFACE -Wno-unused-local-typedefs -Wno-unused-parameter -Wno-sign-compare -Wno-unused-but-set-variable )
 endif()
 
 export( TARGETS stb NAMESPACE natus:: APPEND FILE ${NATUS_BINARY_DIR}/natus-targets.cmake )
