@@ -29,10 +29,10 @@ namespace natus
 
         struct audio_item : public item
         {
-            audio_item( natus::audio::buffer_object_res_t&& obj_ ) : obj( std::move( obj_ ) ) {}
+            audio_item( natus::audio::buffer_res_t&& obj_ ) : obj( std::move( obj_ ) ) {}
             virtual ~audio_item( void_t ) {}
 
-            natus::audio::buffer_object_res_t obj ;
+            natus::audio::buffer_res_t obj ;
         };
         natus_res_typedef( audio_item ) ;
 

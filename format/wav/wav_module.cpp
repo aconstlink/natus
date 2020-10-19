@@ -130,7 +130,7 @@ natus::format::future_item_t wav_image_module::import_from( natus::io::location_
 
         natus::ntd::string_t fmt_tmp = "xxxx" ;
 
-        natus::audio::buffer_object_t bo ;
+        natus::audio::buffer_t bo ;
 
         while( pos < sib )
         {

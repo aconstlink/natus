@@ -18,6 +18,10 @@ namespace natus
             natus_typedefs( natus::ntd::vector< float_t >, floats ) ;
             floats_t _buffer ;
 
+            // the frequency per second. how many samples are taken per second per channel.
+            size_t _sample_rate = 0 ;
+            size_t _channels = 0 ;
+
         public:
 
             buffer( void_t ) 
@@ -30,11 +34,15 @@ namespace natus
 
             buffer( this_cref_t rhv )
             {
+                _sample_rate = rhv._sample_rate ;
+                _channels = rhv._channels ;
                 _buffer = rhv._buffer ;
             }
 
             buffer( this_rref_t rhv )
             {
+                _sample_rate = rhv._sample_rate ;
+                _channels = rhv._channels ;
                 _buffer = std::move( rhv._buffer ) ;
             }
 
@@ -43,12 +51,16 @@ namespace natus
 
             this_ref_t operator = ( this_cref_t rhv ) noexcept
             {
+                _sample_rate = rhv._sample_rate ;
+                _channels = rhv._channels ;
                 _buffer = rhv._buffer ;
                 return *this ;
             }
 
             this_ref_t operator = ( this_rref_t rhv ) noexcept
             {
+                _sample_rate = rhv._sample_rate ;
+                _channels = rhv._channels ;
                 _buffer = std::move( rhv._buffer ) ;
                 return *this ;
             }
@@ -105,7 +117,33 @@ namespace natus
                 outs = _buffer ;
                 return *this ;
             }
+
+            // set the samples and the sample rate per channel
+            // if 44.1 kHz is set, this is per channel.
+            void_t set_samples( natus::audio::channels const channels, size_t const sample_rate, this_t::floats_cref_t buffer ) noexcept
+            {
+                _channels = natus::audio::to_number( channels ) ;
+                _sample_rate = sample_rate ;
+                _buffer = buffer ;
+            }
+
+        public:
+
+            natus::audio::channels get_channels( void_t ) const noexcept
+            {
+                return natus::audio::to_enum( _channels ) ;
+            }
+
+            size_t get_sample_rate( void_t ) const noexcept
+            {
+                return _sample_rate ;
+            }
+
+            this_t::floats_cref_t get_samples( void_t ) const noexcept
+            {
+                return _buffer ;
+            }
         };
-        natus_typedef( buffer ) ;
+        natus_res_typedef( buffer ) ;
     }
 }

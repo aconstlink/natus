@@ -140,7 +140,7 @@ natus::format::future_item_t stb_audio_module::import_from( natus::io::location_
             return natus::format::item_res_t( natus::format::status_item_t( "error" ) ) ;
         }
 
-        natus::audio::buffer_object_t bo ;
+        natus::audio::buffer_t bo ;
 
         {
             int_t error ;
@@ -156,7 +156,7 @@ natus::format::future_item_t stb_audio_module::import_from( natus::io::location_
         }
 
         return natus::format::item_res_t( natus::format::audio_item_res_t(
-            natus::format::audio_item_t( std::move( bo ) ) ) ) ;
+            natus::format::audio_item_t( natus::audio::buffer_res_t( std::move( bo ) ) ) ) ) ;
     } ) ;
 }
 

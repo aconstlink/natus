@@ -51,6 +51,14 @@ namespace natus
 
         public:
 
+            this_ref_t operator = ( natus::audio::buffer_cref_t b ) 
+            {
+                this_t::set_samples( b.get_channels(), b.get_sample_rate(), b.get_samples() ) ;
+                return *this ;
+            }
+
+        public:
+
             natus::ntd::string_cref_t name( void_t ) const noexcept
             {
                 return _name ;
