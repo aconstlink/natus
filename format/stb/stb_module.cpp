@@ -11,6 +11,7 @@
 #include <stb_image.h>
 
 #include <stb_vorbis.c>
+#include <stb_truetype.h>
 
 using namespace natus::format ;
 
@@ -20,8 +21,8 @@ void_t stb_module_register::register_module( natus::format::module_registry_res_
     reg->register_import_factory( { "png", "jpg" }, stb_image_factory_res_t( stb_image_factory_t() ) ) ;
     reg->register_export_factory( { "png" }, stb_image_factory_res_t( stb_image_factory_t() ) ) ;
 
-    reg->register_import_factory( { "ogg" }, stb_image_factory_res_t( stb_image_factory_t() ) ) ;
-    reg->register_import_factory( { "ttf" }, stb_image_factory_res_t( stb_image_factory_t() ) ) ;
+    reg->register_import_factory( { "ogg" }, stb_audio_factory_res_t( stb_audio_factory_t() ) ) ;
+    reg->register_import_factory( { "ttf" }, stb_font_factory_res_t( stb_font_factory_t() ) ) ;
 }
 
 // ***
@@ -116,5 +117,26 @@ natus::format::future_item_t stb_image_module::import_from( natus::io::location_
          ;
         return natus::format::item_res_t( natus::format::image_item_res_t( 
             natus::format::image_item_t( std::move( img ) ) ) ) ;
+    } ) ;
+}
+
+
+// ***
+natus::format::future_item_t stb_audio_module::import_from( natus::io::location_cref_t /*loc*/, natus::io::database_res_t /*db*/ ) noexcept
+{
+    return std::async( std::launch::async, [=] ( void_t )
+    {
+        return natus::format::item_res_t( natus::format::status_item_res_t(
+            natus::format::status_item_t( "not implemented" ) ) ) ;
+    } ) ;
+}
+
+// ***
+natus::format::future_item_t stb_font_module::import_from( natus::io::location_cref_t /*loc*/, natus::io::database_res_t /*db*/ ) noexcept
+{
+    return std::async( std::launch::async, [=] ( void_t )
+    {
+        return natus::format::item_res_t( natus::format::status_item_res_t(
+            natus::format::status_item_t( "not implemented" ) ) ) ;
     } ) ;
 }
