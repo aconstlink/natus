@@ -6,8 +6,11 @@
 #include <natus/graphics/texture/image.hpp>
 #include <natus/math/vector/vector4.hpp>
 
+
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
+
+#include <stb_vorbis.c>
 
 using namespace natus::format ;
 

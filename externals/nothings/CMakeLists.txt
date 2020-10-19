@@ -11,7 +11,7 @@ add_library( stb INTERFACE )
 target_include_directories( stb INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/stb> )
 
 if( NATUS_COMPILER_MSC )
-  target_compile_options( stb INTERFACE /wd4267 /wd4996 )
+  target_compile_options( stb INTERFACE /wd4267 /wd4244 /wd4245 /wd4456 /wd4457 /wd4701 /wd4996  )
 elseif( NATUS_COMPILER_GNU )
   target_compile_options( stb INTERFACE -Wno-sign-compare -Wno-unused-but-set-variable )
 endif()
