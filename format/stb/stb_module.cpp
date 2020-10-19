@@ -122,12 +122,41 @@ natus::format::future_item_t stb_image_module::import_from( natus::io::location_
 
 
 // ***
-natus::format::future_item_t stb_audio_module::import_from( natus::io::location_cref_t /*loc*/, natus::io::database_res_t /*db*/ ) noexcept
+natus::format::future_item_t stb_audio_module::import_from( natus::io::location_cref_t loc, natus::io::database_res_t db ) noexcept
 {
     return std::async( std::launch::async, [=] ( void_t )
     {
-        return natus::format::item_res_t( natus::format::status_item_res_t(
-            natus::format::status_item_t( "not implemented" ) ) ) ;
+        natus::memory::malloc_guard<char_t> data_buffer ;
+
+        natus::io::database_t::cache_access_t ca = db->load( loc ) ;
+        auto const res = ca.wait_for_operation( [&] ( char_cptr_t data, size_t const sib )
+        {
+            data_buffer = natus::memory::malloc_guard<char_t>( data, sib ) ;
+        } ) ;
+
+        if( !res )
+        {
+            natus::log::global_t::error( "[wav_import] : can not load location " + loc.as_string() ) ;
+            return natus::format::item_res_t( natus::format::status_item_t( "error" ) ) ;
+        }
+
+        natus::audio::buffer_object_t bo ;
+
+        {
+            int_t error ;
+            stb_vorbis * stbv = stb_vorbis_open_memory( uchar_cptr_t( data_buffer.get() ), data_buffer.size(), &error, nullptr ) ;
+
+            if( stbv == nullptr ) 
+            {
+                natus::log::global_t::error( "[stb_audio_module] : failed to import .ogg file [" + loc.as_string() + "] with error code [" + std::to_string( error ) + "]" ) ;
+                return natus::format::item_res_t( natus::format::status_item_res_t(
+                    natus::format::status_item_t( "Error loading .ogg file" ) ) ) ;
+            }
+            int const bp = 0 ;
+        }
+
+        return natus::format::item_res_t( natus::format::audio_item_res_t(
+            natus::format::audio_item_t( std::move( bo ) ) ) ) ;
     } ) ;
 }
 

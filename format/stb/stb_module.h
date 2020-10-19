@@ -29,7 +29,7 @@ namespace natus
         {
         public:
 
-            virtual ~stb_audio_module( void_t ) {}
+            virtual ~stb_audio_module( void_t ) noexcept {}
             virtual natus::format::future_item_t import_from( natus::io::location_cref_t loc, natus::io::database_res_t ) noexcept ;
         };
         natus_typedef( stb_audio_module ) ;
@@ -40,7 +40,7 @@ namespace natus
         {
         public:
 
-            virtual ~stb_audio_module( void_t ) {}
+            virtual ~stb_font_module( void_t ) noexcept {}
             virtual natus::format::future_item_t import_from( natus::io::location_cref_t loc, natus::io::database_res_t ) noexcept ;
         };
         natus_typedef( stb_font_module ) ;
