@@ -542,6 +542,12 @@ struct natus::audio::oal_backend::pimpl
 
                     buffers[ oid ].sid = sid ;
                 }
+
+                {
+                    alSourcef( sid, AL_GAIN, 0.1f ) ;
+                    auto const res = alGetError() ;
+                    natus::log::global_t::error( res != ALC_NO_ERROR,
+                        "[OpenAL Backend] : alSourcef[GAIN]" ) ;}
             }
         }
 
