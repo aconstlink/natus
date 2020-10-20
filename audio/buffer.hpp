@@ -127,11 +127,18 @@ namespace natus
                 _buffer = buffer ;
             }
 
+            void_t set_samples( natus::audio::channels const channels, size_t const sample_rate, this_t::floats_rref_t buffer ) noexcept
+            {
+                _channels = natus::audio::to_number( channels ) ;
+                _sample_rate = sample_rate ;
+                _buffer = std::move( buffer ) ;
+            }
+
         public:
 
             natus::audio::channels get_channels( void_t ) const noexcept
             {
-                return natus::audio::to_enum( _channels ) ;
+                return natus::audio::to_channels( _channels ) ;
             }
 
             size_t get_sample_rate( void_t ) const noexcept

@@ -35,15 +35,14 @@ namespace natus
             max_frequencies
         };
 
-        static channels to_enum( size_t const n ) noexcept
+        static channels to_channels( size_t const n ) noexcept
         {
             channels ret = channels::undefined ;
             switch( n )
             {
             case 1: ret = channels::mono ; break ;
             case 2: ret = channels::stereo ; break ;
-            default:
-                break;
+            default: break;
             }
             return ret ;
         }
