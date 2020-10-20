@@ -222,7 +222,7 @@ natus::format::future_item_t wav_image_module::import_from( natus::io::location_
                             samples[ i ] = float_t( dptr[ i ] ) / 255.0f ;
                         }
 
-                        bo.set_samples( natus::audio::to_enum( num_channels ) , sample_rate, samples ) ;
+                        bo.set_samples( natus::audio::to_channels( num_channels ) , sample_rate, samples ) ;
                     }
                     else if( wf.fmt.bits_per_sample == 16 )
                     {
@@ -241,7 +241,7 @@ natus::format::future_item_t wav_image_module::import_from( natus::io::location_
                             samples[ i ] = float_t( double_t( dptr[ i ] ) / double_t( ( 1 << 15 ) - 1 ) ) ;
                         }
 
-                        bo.set_samples( natus::audio::to_enum( num_channels ) , sample_rate, samples ) ;
+                        bo.set_samples( natus::audio::to_channels( num_channels ) , sample_rate, samples ) ;
                     }
                     else if( wf.fmt.bits_per_sample == 24 )
                     {
@@ -297,7 +297,7 @@ natus::format::future_item_t wav_image_module::import_from( natus::io::location_
                             samples[ i ] = dptr[i].as_float() ;
                         }
 
-                        bo.set_samples( natus::audio::to_enum( num_channels ) , sample_rate, samples ) ;
+                        bo.set_samples( natus::audio::to_channels( num_channels ) , sample_rate, samples ) ;
                     }
                     else
                     {
@@ -325,7 +325,7 @@ natus::format::future_item_t wav_image_module::import_from( natus::io::location_
                             samples[ i ] = dptr[ i ] ;
                         }
 
-                        bo.set_samples( natus::audio::to_enum( num_channels ) , sample_rate, samples ) ;
+                        bo.set_samples( natus::audio::to_channels( num_channels ) , sample_rate, samples ) ;
                     }
                     else
                     {

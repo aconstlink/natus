@@ -144,15 +144,56 @@ natus::format::future_item_t stb_audio_module::import_from( natus::io::location_
 
         {
             int_t error ;
-            stb_vorbis * stbv = stb_vorbis_open_memory( uchar_cptr_t( data_buffer.get() ), data_buffer.size(), &error, nullptr ) ;
+            stb_vorbis* stbv = stb_vorbis_open_memory( uchar_cptr_t( data_buffer.get() ), data_buffer.size(), &error, nullptr ) ;
 
-            if( stbv == nullptr ) 
+            if( stbv == nullptr )
             {
-                natus::log::global_t::error( "[stb_audio_module] : failed to import .ogg file [" + loc.as_string() + "] with error code [" + std::to_string( error ) + "]" ) ;
+                natus::log::global_t::error( "[stb_audio_module] : failed to import .ogg file [" + loc.as_string() + "] with stb error code [" + std::to_string( error ) + "]" ) ;
                 return natus::format::item_res_t( natus::format::status_item_res_t(
                     natus::format::status_item_t( "Error loading .ogg file" ) ) ) ;
             }
-            int const bp = 0 ;
+
+            size_t sample_rate = 0 ;
+            size_t channels = 0 ;
+            size_t max_frames = 0 ;
+
+            {
+                stb_vorbis_info const info = stb_vorbis_get_info( stbv ) ;
+                sample_rate = info.sample_rate ;
+                channels = info.channels ;
+                max_frames = info.max_frame_size ;
+            }
+
+            {
+                natus::ntd::vector< float_t > samples ;
+                natus::ntd::vector< float_t > tmp( 1 << 14 ) ;
+
+                int_t num_samples = -1 ;
+                size_t s = 0 ;
+
+                while( num_samples != 0 )
+                {
+                    num_samples = stb_vorbis_get_samples_float_interleaved(
+                        stbv, channels, tmp.data(), tmp.size() ) ;
+
+                    size_t const start = samples.size() ;
+                    samples.resize( samples.size() + size_t( num_samples * channels) ) ;
+                    for( size_t i=0; i<num_samples<<1; i+=channels )
+                    {
+                        for( size_t j=0; j<channels; ++j )
+                        {
+                            samples[ start + i + j ] = tmp[ i + j ] ;
+                        }
+                    }
+
+                    ++s ;
+                }
+                
+                natus::log::global_t::status( "[stb_module] : Loaded (" + std::to_string( s ) + " x " + std::to_string( tmp.size() ) + ") samples : " + std::to_string( samples.size() ) ) ;
+
+                bo.set_samples( natus::audio::to_channels( channels ), sample_rate, std::move( samples ) ) ;
+            }
+            stb_vorbis_close( stbv ) ;
         }
 
         return natus::format::item_res_t( natus::format::audio_item_res_t(
