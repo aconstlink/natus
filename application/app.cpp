@@ -115,13 +115,6 @@ app::window_async_t app::create_window(
         natus::application::window_message_receiver_t() ) ;
 
     {
-#if defined( NATUS_GRAPHICS_WGL )
-
-        natus::application::gl_info_t gli ;
-        {
-            gli.vsync_enabled = wi.vsync ;
-        }
-
         natus::application::window_info_t wii ;
         {
             wii.x = wi.x ;
@@ -131,6 +124,13 @@ app::window_async_t app::create_window(
             wii.window_name = name ;
             wii.borderless = !wi.borders ;
             wii.fullscreen = wi.fullscreen ;
+        }
+
+#if defined( NATUS_GRAPHICS_WGL )
+
+        natus::application::gl_info_t gli ;
+        {
+            gli.vsync_enabled = wi.vsync ;
         }
 
         natus::application::wgl::window_res_t wglw =
@@ -183,17 +183,6 @@ app::window_async_t app::create_window(
             gli.vsync_enabled = wi.vsync ;
         }
 
-        natus::application::window_info_t wii ;
-        {
-            wii.x = wi.x ;
-            wii.y = wi.y ;
-            wii.w = wi.w ;
-            wii.h = wi.h ;
-            wii.window_name = name ;
-            wii.borderless = !wi.borders ;
-            wii.fullscreen = wi.fullscreen ;
-        }
-
         natus::application::egl::window_res_t eglw =
             natus::application::egl::window_t( gli, wii ) ;
         pwi.wnd = eglw ;
@@ -241,17 +230,6 @@ app::window_async_t app::create_window(
         natus::application::gl_info_t gli ;
         {
             gli.vsync_enabled = wi.vsync ;
-        }
-
-        natus::application::window_info_t wii ;
-        {
-            wii.x = wi.x ;
-            wii.y = wi.y ;
-            wii.w = wi.w ;
-            wii.h = wi.h ;
-            wii.window_name = name ;
-            wii.borderless = !wi.borders ;
-            wii.fullscreen = wi.fullscreen ;
         }
 
         natus::application::glx::window_res_t glxw =
