@@ -2,6 +2,7 @@
 #include "app.h"
 
 #include "platform/gfx_context.h"
+#include "platform/window_info.h"
 
 #if defined( NATUS_GRAPHICS_WGL )
 #include "platform/wgl/wgl_context.h"
