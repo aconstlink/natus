@@ -1,5 +1,4 @@
-message( STATUS "************************************************" )
-message( STATUS "[external] : Khronos Header" )
+message( STATUS ">>> [external : Khronos Header] >>>" )
 
 
 install( DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/include/GL" DESTINATION "include/natus/externals/khronos/include")
@@ -22,5 +21,4 @@ target_include_directories( gles3_header INTERFACE $<BUILD_INTERFACE:${CMAKE_CUR
 target_include_directories( gles3_header INTERFACE $<INSTALL_INTERFACE:include/natus/externals/khronos/include> )
 install_library( gles3_header ${PROJECT_NAME}-targets )
 
-message( STATUS "[external] : done" )
-message( STATUS "************************************************" )
+message( STATUS "<<< [external : Khronos Headers] <<<" )

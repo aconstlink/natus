@@ -1,6 +1,4 @@
-
-message( STATUS "************************************************" )
-message( STATUS "[external] : OpenAL-Soft" )
+message( STATUS ">>> [external : OpenAL-Soft] >>>" )
 
 option( ALSOFT_UTILS "" OFF )
 option( ALSOFT_INSTALL_UTILS "" OFF )
@@ -110,5 +108,4 @@ unset( ZLIB_INCLUDE_DIR CACHE )
 unset( ZLIB_LIBRARY_DEBUG CACHE )
 unset( ZLIB_LIBRARY_RELEASE CACHE )
 
-message( STATUS "[external] : done" )
-message( STATUS "************************************************" )
+message( STATUS "<<< [external : OpenAL-Soft] <<<" )
