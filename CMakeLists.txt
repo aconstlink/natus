@@ -32,10 +32,11 @@ include( install_headers )
 include( install_library )
 
 include( config_export_target )
+include( config_architecture )
 include( config_operating_system )
 include( config_compiler )
 include( config_compiler_flags )
-include( config_architecture )
+
 include( config_instruction_set )
 include( config_graphics )
 

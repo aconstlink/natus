@@ -18,6 +18,7 @@ set( NATUS_GRAPHICS_EGL OFF )
 set( NATUS_GRAPHICS_GLX OFF )
 set( NATUS_GRAPHICS_WGL OFF )
 
+#####################################################################
 #
 # Test OpenGL
 #
@@ -48,6 +49,7 @@ if( OPENGL_FOUND )
   endif()
 endif()
 
+#####################################################################
 #
 # Test OpenGLES 
 #
@@ -60,14 +62,19 @@ if( OPENGLES3_LIBRARY )
 endif()
 unset( OPENGLES3_LIBRARY CACHE )
 
+#####################################################################
 #
 # Test Directx
 #
+find_package( Direct3d )
+
+#####################################################################
 #
 # Test Vulkan
 #
 
-
+#####################################################################
+##
 set( NATUS_TARGET_GRAPHICS_CONFIGURED TRUE )
 
 #install_headers( "${sources}" "include/${PROJECT_NAME}/${cur_lib_name}" )

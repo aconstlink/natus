@@ -4,6 +4,8 @@
 #
 # the values here can be initialized using a toolchain file
 
+include( subdirectories )
+
 set( NATUS_OS_CONFIGURED FALSE )
 
 
@@ -78,7 +80,7 @@ if( CMAKE_SYSTEM_NAME STREQUAL "Windows" )
         set( NATUS_TARGET_OS_WIN_NAME_ "Windows 10" )
     endif() 
     
-    set( NATUS_WINDOWS_NAMES "Windows 7" "Windows 8.1" "Windows 10" )
+    set( NATUS_WINDOWS_NAMES "Windows 8.1" "Windows 10" )
     set( NATUS_TARGET_OS_WIN_NAME ${NATUS_TARGET_OS_WIN_NAME_} CACHE STRING "Select your windows target for this application/library." )
     
     set_property( CACHE NATUS_TARGET_OS_WIN_NAME PROPERTY STRINGS ${NATUS_WINDOWS_NAMES} )
@@ -149,6 +151,15 @@ elseif( NATUS_TARGET_OS_LIN )
 
 elseif( NATUS_TARGET_OS_MAC )
     message( FATAL_ERROR "Changes Required" )
+endif()
+
+#
+# Find Platform SDKs
+#
+if( NATUS_TARGET_OS_WIN )
+
+  include( config_platform_sdk )
+
 endif()
 
 #
