@@ -22,7 +22,8 @@
 #endif
 #endif
 #if defined( NATUS_GRAPHICS_DIRECT3D )
-//#include "platform/d3d/"
+#include "platform/d3d/d3d_context.h"
+#include "platform/d3d/d3d_window.h"
 #endif
 
 #include <natus/graphics/async.h>
@@ -130,7 +131,55 @@ app::window_async_t app::create_window(
             wii.fullscreen = wi.fullscreen ;
         }
 
-#if defined( NATUS_GRAPHICS_D3D )
+#if 0 //defined( NATUS_GRAPHICS_DIRECT3D )
+
+        natus::application::d3d_info_t d3di ;
+        {
+            d3di.vsync_enabled = wi.vsync ;
+        }
+
+        natus::application::d3d::window_res_t d3dw =
+            natus::application::d3d::window_t( d3di, wii ) ;
+
+        pwi.wnd = d3dw ;
+
+        natus::application::d3d::context_res_t glctx =
+            d3dw->get_context() ;
+
+        /*{
+            natus::application::d3d_version ver ;
+            glctx->get_gl_version( glv ) ;
+            if( glv.major >= 3 )
+            {
+                backend = natus::graphics::gl3_backend_res_t(
+                    natus::graphics::gl3_backend_t() ) ;
+            }
+        }*/
+
+        ctx = glctx ;
+
+        // window -> other entity
+        {
+            pwi.msg_recv = natus::application::window_message_receiver_res_t(
+                natus::application::window_message_receiver_t() ) ;
+            d3dw->get_window()->register_in( pwi.msg_recv ) ; // application
+            d3dw->get_window()->register_in( rnd_msg_recv ) ; // render
+        }
+
+        // other entity -> window
+        {
+            pwi.msg_send = natus::application::window_message_receiver_res_t(
+                natus::application::window_message_receiver_t() ) ;
+            d3dw->get_window()->register_out( pwi.msg_send ) ; // application
+        }
+
+        // other entity -> context
+        {
+            pwi.gfx_send = gfx_msg_send ;
+        }
+
+        // show the window after all listeners have been registered.
+        d3dw->get_window()->show_window( wii ) ;
 
 #elif defined( NATUS_GRAPHICS_WGL )
 

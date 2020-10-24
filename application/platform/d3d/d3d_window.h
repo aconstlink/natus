@@ -25,7 +25,7 @@ namespace natus
             public:
 
                 window( void_t ) ;
-                window( gl_info_cref_t gli, window_info_cref_t wi ) ;
+                window( d3d_info_cref_t gli, window_info_cref_t wi ) ;
                 window( this_rref_t ) ;
                 virtual ~window( void_t ) ;
 

@@ -11,7 +11,7 @@ window::window( void_t )
 {}
 
 //***********************************************************************
-window::window( gl_info_cref_t gli, window_info_cref_t wi ) 
+window::window( d3d_info_cref_t gli, window_info_cref_t wi ) 
 {
     _window = win32::window( wi ) ;
     _context = d3d::context_t( _window->get_handle() ) ;

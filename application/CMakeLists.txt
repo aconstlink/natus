@@ -14,6 +14,7 @@ set( XLIB_SOURCES
     )
 
 set( D3D_SOURCES
+    platform/d3d_info.h
     platform/d3d/d3d_window.h
     platform/d3d/d3d_window.cpp
     platform/d3d/d3d_context.h

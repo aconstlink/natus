@@ -16,6 +16,7 @@ namespace natus
             no_app,
             failed_wgl,
             failed_glx,
+            failed_d3d,
             failed_gfx_context_creation,
             invalid_extension,
             invalid_win32_handle,

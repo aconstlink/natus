@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../gl_info.h"
+#include "../d3d_info.h"
 
 #include "../gfx_context.h"
 
@@ -8,6 +8,8 @@
 #include <natus/math/vector/vector4.hpp>
 
 #include <windows.h>
+#include <d3d11_1.h>
+#include <directxcolors.h>
 
 namespace natus
 {
@@ -22,32 +24,36 @@ namespace natus
             private:
 
                 HWND _hwnd = NULL ;
-                HGLRC _hrc = NULL ;
+                UINT _vsync = 1 ;
 
-                /// will only be used temporarily for making the
-                /// context active. Will be released on deactivation.
-                HDC _hdc = NULL ;
+                D3D_DRIVER_TYPE _driverType = D3D_DRIVER_TYPE_NULL;
+                D3D_FEATURE_LEVEL _featureLevel = D3D_FEATURE_LEVEL_11_0;
+                ID3D11Device * _pd3dDevice = nullptr;
+                ID3D11Device1 * _pd3dDevice1 = nullptr;
+                ID3D11DeviceContext * _pImmediateContext = nullptr;
+                ID3D11DeviceContext1 * _pImmediateContext1 = nullptr;
+                IDXGISwapChain* _pSwapChain = nullptr;
+                IDXGISwapChain1* _pSwapChain1 = nullptr;
+                ID3D11RenderTargetView* _pRenderTargetView = nullptr;
 
             public:
 
                 /// initializes this context but does not create the context.
                 /// @see create_context
-                context( void_t ) ;
-                context( HWND ) ;
+                context( void_t ) noexcept ;
+                context( HWND ) noexcept ;
                 context( this_cref_t ) = delete ;
-
-                /// allows to move-construct a context.
-                context( this_rref_t ) ;
-                ~context( void_t ) ;
+                context( this_rref_t ) noexcept ;
+                ~context( void_t ) noexcept ;
 
             private:
 
-                context( HWND hwnd, HGLRC ctx ) ;
+                context( HWND hwnd, HGLRC ctx ) noexcept ;
 
             public: // operator =
 
                 this_ref_t operator = ( this_cref_t ) = delete ;
-                this_ref_t operator = ( this_rref_t ) ;
+                this_ref_t operator = ( this_rref_t ) noexcept ;
 
             public:
 
@@ -66,7 +72,7 @@ namespace natus
 
             private:
 
-                natus::application::result create_the_context( natus::application::gl_info_cref_t gli ) ;
+                natus::application::result create_the_context( natus::application::d3d_info_cref_t gli ) ;
             };
             natus_typedef( context ) ;
             typedef natus::memory::res< context_t > context_res_t ;
