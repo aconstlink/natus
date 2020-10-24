@@ -1,6 +1,6 @@
 # natus 
 
-natus is a software framework for real-time interactive audio/visual application. Ok, ok. Not yet but it will be. :art: :construction:
+natus is a software framework for real-time interactive audio/visual applications. Ok, ok. Not yet but it will be. :art: :construction:
 
 [![Travis (.org)](https://img.shields.io/travis/aconstlink/natus?label=Travis%40master)](https://travis-ci.org/github/aconstlink/natus/builds)
 [![Azure DevOps builds](https://img.shields.io/azure-devops/build/aconstlink/cfc6b414-d551-4b4f-8dd7-ef0788dc1680/1?label=Azure%40master)](https://dev.azure.com/aconstlink/natus/_build?definitionId=1)
