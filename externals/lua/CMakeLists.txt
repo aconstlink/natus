@@ -1,5 +1,6 @@
 
-
+message( STATUS "************************************************" )
+message( STATUS "[external] : Lua" )
 
 set( LUA_BUILD_TYPE STATIC )
 
@@ -61,3 +62,6 @@ set_target_properties( onelua PROPERTIES FOLDER "natus/externals/lua" )
 
 install_headers( "${INCLUDES}" "include/${PROJECT_NAME}/externals/lua" )
 install_library( lua ${PROJECT_NAME}-targets )
+
+message( STATUS "[external] : done" )
+message( STATUS "************************************************" )

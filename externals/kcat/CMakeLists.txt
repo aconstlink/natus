@@ -1,4 +1,14 @@
 
+message( STATUS "************************************************" )
+message( STATUS "[external] : OpenAL-Soft" )
+
+option( ALSOFT_UTILS "" OFF )
+option( ALSOFT_INSTALL_UTILS "" OFF )
+option( ALSOFT_INSTALL_CONFIG "" OFF )
+option( ALSOFT_INSTALL_EXAMPLES "" OFF )
+option( ALSOFT_INSTALL_HRTF_DEFS "" OFF )
+option( ALSOFT_INSTALL_AMBDEC_PRESETS "" OFF )
+
 add_subdirectory( "openal-soft" )
 
 #
@@ -59,6 +69,8 @@ if( TARGET openal-info )
   endif()
 endif()
 
+
+
 #
 # unset variables
 #
@@ -97,3 +109,6 @@ unset( SOUNDIO_LIBRARY CACHE )
 unset( ZLIB_INCLUDE_DIR CACHE )
 unset( ZLIB_LIBRARY_DEBUG CACHE )
 unset( ZLIB_LIBRARY_RELEASE CACHE )
+
+message( STATUS "[external] : done" )
+message( STATUS "************************************************" )

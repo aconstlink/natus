@@ -1,3 +1,5 @@
+message( STATUS "************************************************" )
+message( STATUS "[external] : STB" )
 
 # Used headers
 set( INCLUDES 
@@ -17,3 +19,6 @@ elseif( NATUS_COMPILER_GNU )
 endif()
 
 export( TARGETS stb NAMESPACE natus:: APPEND FILE ${NATUS_BINARY_DIR}/natus-targets.cmake )
+
+message( STATUS "[external] : done" )
+message( STATUS "************************************************" )

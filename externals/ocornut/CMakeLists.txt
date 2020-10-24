@@ -1,3 +1,6 @@
+message( STATUS "************************************************" )
+message( STATUS "[external] : ImGui" )
+
 if( MSVC )
 #set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /wd4244 /wd4324 /wd4310" )
 endif()
@@ -45,3 +48,6 @@ endif()
 
 install_headers( "${INCLUDES}" "include/${PROJECT_NAME}/externals/imgui" )
 install_library( imgui${cur_lib_name} ${PROJECT_NAME}-targets )
+
+message( STATUS "[external] : done" )
+message( STATUS "************************************************" )
