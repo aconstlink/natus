@@ -67,7 +67,12 @@ unset( OPENGLES3_LIBRARY CACHE )
 # Test Directx
 #
 find_package( Direct3d )
-
+if( TARGET d3d11 )
+  set( NATUS_GRAPHICS_DIRECT3D ON )
+  target_compile_definitions( ${THIS_TARGET} INTERFACE -DNATUS_GRAPHICS_DIRECT3D )
+  target_link_libraries( ${THIS_TARGET} INTERFACE d3d11 )
+  message( STATUS "[graphics] : Direc3d 11 found" )
+endif()
 #####################################################################
 #
 # Test Vulkan

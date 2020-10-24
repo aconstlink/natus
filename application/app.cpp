@@ -21,6 +21,9 @@
 #include <natus/graphics/backend/es3/es3.h>
 #endif
 #endif
+#if defined( NATUS_GRAPHICS_DIRECT3D )
+//#include "platform/d3d/"
+#endif
 
 #include <natus/graphics/async.h>
 #include <natus/graphics/backend/null/null.h>
@@ -127,7 +130,9 @@ app::window_async_t app::create_window(
             wii.fullscreen = wi.fullscreen ;
         }
 
-#if defined( NATUS_GRAPHICS_WGL )
+#if defined( NATUS_GRAPHICS_D3D )
+
+#elif defined( NATUS_GRAPHICS_WGL )
 
         natus::application::gl_info_t gli ;
         {

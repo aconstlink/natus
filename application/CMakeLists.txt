@@ -13,6 +13,13 @@ set( XLIB_SOURCES
     platform/xlib/xlib_window.cpp
     )
 
+set( D3D_SOURCES
+    platform/d3d/d3d_window.h
+    platform/d3d/d3d_window.cpp
+    platform/d3d/d3d_context.h
+    platform/d3d/d3d_context.cpp
+)
+
 set( WGL_SOURCES
     platform/wgl/wgl_window.h
     platform/wgl/wgl_window.cpp
@@ -63,7 +70,9 @@ endif()
 if( NATUS_GRAPHICS_EGL )
     set( sources ${sources} ${EGL_SOURCES} )
 endif()
-
+if( NATUS_GRAPHICS_DIRECT3D )
+  list( APPEND sources ${D3D_SOURCES} )
+endif()
 if( NATUS_WINDOW_SYSTEM_WIN32 )
     set( sources ${sources} ${WIN32_SOURCES} )
     add_definitions( -DWIN32_LEAN_AND_MEAN )
