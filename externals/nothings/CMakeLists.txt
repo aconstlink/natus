@@ -1,4 +1,4 @@
-message( STATUS ">>> [external : STB] >>>" )
+message( STATUS ">>> [external : stb] >>>" )
 
 # Used headers
 set( INCLUDES 
@@ -19,4 +19,5 @@ endif()
 
 export( TARGETS stb NAMESPACE natus:: APPEND FILE ${NATUS_BINARY_DIR}/natus-targets.cmake )
 
-message( STATUS "<<< [external : STB] <<<" )
+message( STATUS "[stb] : target available : stb" )
+message( STATUS "<<< [external : stb] <<<" )

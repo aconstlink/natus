@@ -38,6 +38,8 @@ if( NATUS_COMPILER_GNU )
   target_compile_options( imgui PUBLIC -DfPIC )
 endif()
 
+message( STATUS "[ImGui] : Target available : imgui" )
+
 ###########################################################
 # SECTION: Install
 ###########################################################
