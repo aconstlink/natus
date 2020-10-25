@@ -5,7 +5,9 @@
 #include "typedefs.h"
 #include "result.h"
 #include "protos.h"
+#include "platform/window_info.h"
 #include "platform/platform_window.h"
+#include "platform/gfx_context.h"
 
 #include <natus/audio/async.h>
 #include <natus/graphics/async.h>
@@ -207,6 +209,10 @@ namespace natus
             bool_t after_render( void_t ) ;
             bool_t before_audio( void_t ) ;
             bool_t after_audio( void_t ) ;
+
+        private:
+
+            natus::application::gfx_context_res_t create_wgl_window( natus::application::window_info_in_t, natus::application::window_message_receiver_res_t, this_t::per_window_info_inout_t ) noexcept ;
 
         };
         natus_res_typedef( app ) ;

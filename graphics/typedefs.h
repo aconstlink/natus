@@ -15,7 +15,5 @@ namespace natus
     {
         using namespace natus::core ;
         using namespace natus::core::types ;
-
-        static size_t const max_backends = 2 ;
     }
 }

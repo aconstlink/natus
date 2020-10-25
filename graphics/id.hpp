@@ -3,6 +3,7 @@
 #include "api.h"
 #include "typedefs.h"
 #include "result.h"
+#include "backend/types.h"
 
 // memset
 #include <cstring>
