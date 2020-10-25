@@ -14,7 +14,9 @@ window::window( void_t )
 //***********************************************************************
 window::window( gl_info_cref_t gli, window_info_cref_t wi ) 
 {
-    _window = win32::window( wi ) ;
+    auto wii = wi ;
+    wii.window_name = "[wgl] " + wi.window_name ;
+    _window = win32::window( wii ) ;
     _context = wgl::context_t( _window->get_handle() ) ;
 
     _vsync = gli.vsync_enabled ;

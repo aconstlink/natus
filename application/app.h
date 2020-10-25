@@ -182,10 +182,10 @@ namespace natus
 
         protected:
 
-            typedef ::std::pair< this_t::window_view_t, natus::graphics::async_view_t > window_async_t ;
+            typedef std::pair< this_t::window_view_t, natus::graphics::async_view_t > window_async_t ;
 
             this_t::window_async_t create_window( 
-                natus::ntd::string_cref_t name, this_t::window_info_in_t ) ;
+                natus::ntd::string_cref_t name, this_t::window_info_in_t, natus::ntd::vector< natus::graphics::backend_type > types = { } ) ;
 
             natus::application::result request_change( this_t::window_info_in_t ) ;
 
@@ -213,6 +213,14 @@ namespace natus
         private:
 
             natus::application::gfx_context_res_t create_wgl_window( natus::application::window_info_in_t, natus::application::window_message_receiver_res_t, this_t::per_window_info_inout_t ) noexcept ;
+
+            natus::application::gfx_context_res_t create_egl_window( natus::application::window_info_in_t, natus::application::window_message_receiver_res_t, this_t::per_window_info_inout_t ) noexcept ;
+
+            natus::application::gfx_context_res_t create_d3d_window( natus::application::window_info_in_t, natus::application::window_message_receiver_res_t, this_t::per_window_info_inout_t ) noexcept ;
+
+            natus::application::gfx_context_res_t create_glx_window( natus::application::window_info_in_t, natus::application::window_message_receiver_res_t, this_t::per_window_info_inout_t ) noexcept ;
+
+            natus::application::gfx_context_res_t create_null_window( natus::application::window_info_in_t, natus::application::window_message_receiver_res_t, this_t::per_window_info_inout_t ) noexcept ;
 
         };
         natus_res_typedef( app ) ;

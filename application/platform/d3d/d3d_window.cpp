@@ -13,7 +13,10 @@ window::window( void_t )
 //***********************************************************************
 window::window( d3d_info_cref_t gli, window_info_cref_t wi ) 
 {
-    _window = win32::window( wi ) ;
+    auto wii = wi ;
+    wii.window_name = "[d3d] " + wi.window_name ;
+
+    _window = win32::window( wii ) ;
     _context = d3d::context_t( _window->get_handle() ) ;
 
     _vsync = gli.vsync_enabled ;
