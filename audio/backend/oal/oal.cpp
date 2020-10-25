@@ -720,6 +720,7 @@ oal_backend::oal_backend( this_rref_t rhv ) noexcept : backend( std::move( rhv )
 
 oal_backend::~oal_backend( void_t ) noexcept
 {
+    this_t::release() ;
 }
 
 oal_backend::this_ref_t oal_backend::operator = ( this_rref_t rhv ) noexcept
@@ -827,6 +828,7 @@ void_t oal_backend::release( void_t ) noexcept
         _pimpl->release() ;
     }
     natus::memory::global_t::dealloc( _pimpl ) ;
+    _pimpl = nullptr ;
 }
 
 void_t oal_backend::begin( void_t ) noexcept
