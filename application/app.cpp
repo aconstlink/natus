@@ -611,7 +611,7 @@ natus::application::gfx_context_res_t app::create_d3d_window( natus::application
         }
     }*/
 
-    Ctx = glctx ;
+    ctx = glctx ;
 
     // window -> other entity
     {
