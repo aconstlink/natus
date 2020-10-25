@@ -11,7 +11,7 @@ namespace natus
             es3,
             d3d11
         };
-        static size_t const max_backends = 3 ;
+        static size_t const max_backends = 4 ;
 
         namespace detail
         {

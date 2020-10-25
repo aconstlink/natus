@@ -137,8 +137,8 @@ app::window_async_t app::create_window(
         {
             types = 
             { 
-                natus::graphics::backend_type::es3,
                 natus::graphics::backend_type::gl3,
+                natus::graphics::backend_type::es3,
                 natus::graphics::backend_type::d3d11
             } ;
         }
