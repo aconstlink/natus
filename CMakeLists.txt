@@ -180,9 +180,10 @@ foreach( _subdir ${subdirs} )
     target_include_directories( ${cur_lib_name} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/..> )
     
     set_target_properties( ${cur_lib_name} PROPERTIES FOLDER "natus" )
-    
-    target_link_libraries( complete INTERFACE ${cur_lib_name} )
+    target_compile_definitions( ${cur_lib_name} PUBLIC -DUNICODE )
 
+    target_link_libraries( complete INTERFACE ${cur_lib_name} )
+    
 endforeach()
 export( TARGETS complete NAMESPACE natus:: APPEND FILE ${PROJECT_NAME}-targets.cmake)
 

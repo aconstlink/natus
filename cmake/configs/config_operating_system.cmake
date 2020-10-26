@@ -68,7 +68,8 @@ endif()
 #######################################################################################
 message( STATUS "+++ Determine Target Operating System +++ " )
 
-if( CMAKE_SYSTEM_NAME STREQUAL "Windows" )
+if( CMAKE_SYSTEM_NAME STREQUAL "Windows" OR
+    CMAKE_SYSTEM_NAME STREQUAL "WindowsStore" )
 
     set( NATUS_TARGET_OS_WIN_NAME_ "unknown" )
     
