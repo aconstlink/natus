@@ -17,8 +17,11 @@ window::window( void_t )
 //***********************************************************************
 window::window( gl_info_cref_t gli, window_info_cref_t wi ) 
 {
+    auto wii = wi ;
+    wii.window_name = "[wgl] " + wi.window_name ;
+
     // the egl window handles renderable surface window
-    Window wnd = this_t::create_egl_window( wi ) ;
+    Window wnd = this_t::create_egl_window( wii ) ;
 
     // the xlib window handles all the xlib messages
     _window = natus::application::xlib::window_res_t(

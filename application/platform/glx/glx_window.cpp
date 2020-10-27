@@ -16,7 +16,9 @@ window::window( void_t )
 //***********************************************************************
 window::window( gl_info_cref_t gli, window_info_cref_t wi ) 
 {
-    Window glx_wnd = this_t::create_glx_window( wi ) ;
+    auto wii = wi ;
+    wii.window_name = "[glx] " + wi.window_name ;
+    Window glx_wnd = this_t::create_glx_window( wii ) ;
 
     _window = natus::application::xlib::window_res_t(
                 natus::application::xlib::window_t(
