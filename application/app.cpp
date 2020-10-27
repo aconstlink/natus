@@ -476,8 +476,6 @@ void_t app::window_view::fullscreen( bool_t const onoff ) noexcept
 natus::application::gfx_context_res_t app::create_wgl_window( natus::application::window_info_in_t wii, natus::application::window_message_receiver_res_t rnd_msg_recv, this_t::per_window_info_inout_t pwi ) noexcept
 {
     natus::application::gfx_context_res_t ctx ;
-    natus::graphics::backend_res_t backend = natus::graphics::null_backend_res_t(
-        natus::graphics::null_backend_t() ) ;
 
 #if defined( NATUS_GRAPHICS_WGL )
 
@@ -485,11 +483,7 @@ natus::application::gfx_context_res_t app::create_wgl_window( natus::application
     natus::application::wgl::window_t( natus::application::gl_info_t(), wii ) ;
 
     pwi.wnd = wglw ;
-
-    {
-        ctx = wglw->get_context() ;
-        backend = ctx->create_backend() ;
-    }
+    ctx = wglw->get_context() ;
 
     // window -> other entity
     {
@@ -516,7 +510,7 @@ natus::application::gfx_context_res_t app::create_wgl_window( natus::application
 #endif
 
     pwi.async = natus::graphics::async_res_t(
-        natus::graphics::async_t( std::move( backend ) ) ) ;
+        natus::graphics::async_t( std::move( ctx->create_backend() ) ) ) ;
 
     return std::move( ctx ) ;
 }
@@ -524,8 +518,6 @@ natus::application::gfx_context_res_t app::create_wgl_window( natus::application
 natus::application::gfx_context_res_t app::create_egl_window( natus::application::window_info_in_t wii, natus::application::window_message_receiver_res_t rnd_msg_recv, this_t::per_window_info_inout_t pwi) noexcept 
 {
     natus::application::gfx_context_res_t ctx ;
-    natus::graphics::backend_res_t backend = natus::graphics::null_backend_res_t(
-        natus::graphics::null_backend_t() ) ;
 
 #if defined( NATUS_GRAPHICS_EGL )
 
@@ -533,11 +525,7 @@ natus::application::gfx_context_res_t app::create_egl_window( natus::application
         natus::application::egl::window_t( natus::application::gl_info_t(), wii ) ;
 
     pwi.wnd = eglw ;    
-
-    {
-        ctx = eglw->get_context() ;
-        backend = ctx->create_backend() ;
-    }
+    ctx = eglw->get_context() ;
 
     // window -> other entity
     {
@@ -557,10 +545,14 @@ natus::application::gfx_context_res_t app::create_egl_window( natus::application
     // show the window after all listeners have been registered.
     eglw->get_window()->show_window( wii ) ;
 
+#else
+    ( void ) wii ;
+    ( void ) rnd_msg_recv ;
+    ( void ) pwi ;
 #endif
 
     pwi.async = natus::graphics::async_res_t(
-        natus::graphics::async_t( std::move( backend ) ) ) ;
+        natus::graphics::async_t( std::move( ctx->create_backend() ) ) ) ;
 
     return std::move( ctx ) ;
 }
@@ -625,8 +617,6 @@ natus::application::gfx_context_res_t app::create_d3d_window( natus::application
 natus::application::gfx_context_res_t app::create_glx_window( natus::application::window_info_in_t wii, natus::application::window_message_receiver_res_t rnd_msg_recv, this_t::per_window_info_inout_t pwi ) noexcept 
 {
     natus::application::gfx_context_res_t ctx ;
-    natus::graphics::backend_res_t backend = natus::graphics::null_backend_res_t(
-        natus::graphics::null_backend_t() ) ;
 
 #if defined( NATUS_GRAPHICS_GLX )
 
@@ -634,11 +624,7 @@ natus::application::gfx_context_res_t app::create_glx_window( natus::application
         natus::application::glx::window_t( natus::application::gl_info_t(), wii ) ;
 
     pwi.wnd = glxw ;
-
-    {
-        ctx = glxw->get_context() ;
-        backend = ctx->create_backend() ;
-    }
+    ctx = glxw->get_context() ;
 
     // window -> other entity
     {
@@ -661,7 +647,7 @@ natus::application::gfx_context_res_t app::create_glx_window( natus::application
 #endif
 
     pwi.async = natus::graphics::async_res_t(
-        natus::graphics::async_t( std::move( backend ) ) ) ;
+        natus::graphics::async_t( std::move( ctx->create_backend() ) ) ) ;
 
     return std::move( ctx ) ;
 }
