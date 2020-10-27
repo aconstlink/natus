@@ -5,6 +5,9 @@
 
 #include <natus/ntd/string.hpp>
 
+#include <d3d11.h>
+#include <d3d11_1.h>
+
 namespace natus
 {
     namespace graphics
@@ -17,8 +20,8 @@ namespace natus
 
         public:
 
-            virtual bool_t dummy( natus::ntd::string_cref_t ) const noexcept = 0 ;
-
+            virtual ID3D11DeviceContext * ctx( void_t ) noexcept = 0 ;
+            virtual ID3D11Device * dev( void_t ) noexcept = 0 ;
         };
         natus_res_typedef( d3d11_context ) ;
     }

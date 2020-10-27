@@ -25,6 +25,8 @@ namespace natus
 
             class NATUS_APPLICATION_API context : public gfx_context
             {
+                friend class d3d11_context ;
+
                 natus_this_typedefs( context ) ;
 
             private:
@@ -116,7 +118,16 @@ namespace natus
 
             public:
 
-                virtual bool_t dummy( natus::ntd::string_cref_t ) const noexcept { return false ; }
+
+                virtual ID3D11DeviceContext * ctx( void_t ) noexcept 
+                {
+                    return _app_context->_pImmediateContext ;
+                }
+
+                virtual ID3D11Device * dev( void_t ) noexcept 
+                {
+                    return _app_context->_pd3dDevice ;
+                }
             };
 
         }
