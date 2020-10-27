@@ -1,6 +1,8 @@
 #include "glx_context.h"
 #include "glx_window.h"
 
+#include <natus/graphics/backend/gl/gl3.h>
+
 #include <natus/ogl/gl/gl.h>
 #include <natus/ogl/glx/glx.h>
 #include <natus/ntd/string/split.hpp>
@@ -11,11 +13,16 @@ using namespace natus::application::glx ;
 //***********************n*****************************************
 context::context( void_t )
 {
+    _bend_ctx = natus::memory::global_t::alloc( natus::application::wgl::gl_context( this ),
+        "[context] : backend gl_context" ) ;
 }
 
 //****************************************************************
 context::context( gl_info_in_t gli, Window wnd, Display * disp ) 
 {
+    _bend_ctx = natus::memory::global_t::alloc( natus::application::wgl::gl_context( this ),
+        "[context] : backend gl_context" ) ;
+
     _display = disp ;
     _wnd = wnd ;
     this_t::create_the_context( gli ) ;
@@ -32,6 +39,9 @@ context::context( this_rref_t rhv )
 
     _context = rhv._context ;
     rhv._context = 0 ;
+
+    natus_move_member_ptr( _bend_ctx, rhv ) ;
+    _bend_ctx->change_owner( this ) ;
 }
 
 //****************************************************************
@@ -45,6 +55,9 @@ context::this_ref_t context::operator = ( this_rref_t rhv )
 
     _context = rhv._context ;
     rhv._context = 0 ;
+    
+    natus_move_member_ptr( _bend_ctx, rhv ) ;
+    _bend_ctx->change_owner( this ) ;
 
     return *this ;
 }
@@ -53,6 +66,8 @@ context::this_ref_t context::operator = ( this_rref_t rhv )
 context::~context( void_t )
 {
     this_t::deactivate() ;
+
+    natus::memory::global_t::dealloc( _bend_ctx ) ;
 }
 
 //***************************************************************
@@ -92,6 +107,20 @@ natus::application::result context::swap( void_t )
     natus::log::global_t::warning( glerr != GL_NO_ERROR, 
             natus_log_fn( "glXSwapBuffers" ) ) ;
     return natus::application::result::ok ;
+}
+
+natus::graphics::backend_res_t context::create_backend( void_t ) noexcept 
+{
+    natus::application::gl_version glv ;
+    this->get_gl_version( glv ) ;
+    if( glv.major >= 3 )
+    {
+        return natus::graphics::gl3_backend_res_t(
+            natus::graphics::gl3_backend_t( _bend_ctx ) ) ;
+    }
+
+    return natus::graphics::null_backend_res_t(
+        natus::graphics::null_backend_t() ) ;
 }
 
 //**************************************************************

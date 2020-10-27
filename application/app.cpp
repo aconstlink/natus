@@ -4,18 +4,18 @@
 #if defined( NATUS_GRAPHICS_WGL )
 #include "platform/wgl/wgl_context.h"
 #include "platform/wgl/wgl_window.h"
-#include <natus/graphics/backend/gl3/gl3.h>
+#include <natus/graphics/backend/gl/gl3.h>
 #endif
 #if defined( NATUS_GRAPHICS_GLX )
 #include "platform/glx/glx_context.h"
 #include "platform/glx/glx_window.h"
-#include <natus/graphics/backend/gl3/gl3.h>
+#include <natus/graphics/backend/gl/gl3.h>
 #endif
 #if defined( NATUS_GRAPHICS_EGL )
 #include "platform/egl/egl_context.h"
 #include "platform/egl/egl_window.h"
 #if defined( NATUS_GRAPHICS_OPENGLES )
-#include <natus/graphics/backend/es3/es3.h>
+#include <natus/graphics/backend/gl/es3.h>
 #endif
 #endif
 #if defined( NATUS_GRAPHICS_DIRECT3D )
@@ -486,20 +486,10 @@ natus::application::gfx_context_res_t app::create_wgl_window( natus::application
 
     pwi.wnd = wglw ;
 
-    natus::application::wgl::context_res_t glctx =
-    wglw->get_context() ;
-
     {
-        natus::application::gl_version glv ;
-        glctx->get_gl_version( glv ) ;
-        if( glv.major >= 3 )
-        {
-            backend = natus::graphics::gl3_backend_res_t(
-                natus::graphics::gl3_backend_t() ) ;
-        }
+        ctx = wglw->get_context() ;
+        backend = ctx->create_backend() ;
     }
-
-    ctx = glctx ;
 
     // window -> other entity
     {
@@ -542,22 +532,12 @@ natus::application::gfx_context_res_t app::create_egl_window( natus::application
     natus::application::egl::window_res_t eglw =
         natus::application::egl::window_t( natus::application::gl_info_t(), wii ) ;
 
-    pwi.wnd = eglw ;
-
-    natus::application::egl::context_res_t glctx =
-        eglw->get_context() ;
+    pwi.wnd = eglw ;    
 
     {
-        natus::application::gl_version glv ;
-        glctx->get_es_version( glv ) ;
-        if( glv.major >= 3 )
-        {
-            backend = natus::graphics::es3_backend_res_t(
-                natus::graphics::es3_backend_t() ) ;
-        }
+        ctx = eglw->get_context() ;
+        backend = ctx->create_backend() ;
     }
-
-    ctx = glctx ;
 
     // window -> other entity
     {
@@ -655,20 +635,10 @@ natus::application::gfx_context_res_t app::create_glx_window( natus::application
 
     pwi.wnd = glxw ;
 
-    natus::application::glx::context_res_t glctx =
-        glxw->get_context() ;
-
     {
-        natus::application::gl_version glv ;
-        glctx->get_gl_version( glv ) ;
-        if( glv.major >= 3 )
-        {
-            backend = natus::graphics::gl3_backend_res_t(
-                natus::graphics::gl3_backend_t() ) ;
-        }
+        ctx = glxw->get_context() ;
+        backend = ctx->create_backend() ;
     }
-
-    ctx = glctx ;
 
     // window -> other entity
     {

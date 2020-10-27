@@ -1,5 +1,7 @@
 #include "wgl_context.h"
 
+#include <natus/graphics/backend/null/null.h>
+
 #include <natus/core/assert.h>
 
 #include <natus/ogl/gl/gl.h>
@@ -19,6 +21,9 @@ context::context( void_t )
 //***********************************************************************
 context::context( HWND hwnd ) 
 {
+    _bend_ctx = natus::memory::global_t::alloc( natus::application::wgl::gl_context( this ),
+        "[context] : backend gl_context" ) ;
+
     this_t::create_context( hwnd ) ;
 }
 
@@ -27,12 +32,17 @@ context::context( HWND hwnd, HGLRC ctx )
 {
     _hwnd = hwnd ;
     _hrc = ctx ;
+
+    _bend_ctx = natus::memory::global_t::alloc( natus::application::wgl::gl_context( this ),
+        "[context] : backend gl_context" ) ;
 }
 
 //***********************************************************************
 context::context( this_rref_t rhv )
 {
     *this = ::std::move( rhv ) ;
+    natus_move_member_ptr( _bend_ctx, rhv ) ;
+    _bend_ctx->change_owner( this ) ;
 }
 
 //***********************************************************************
@@ -42,6 +52,8 @@ context::~context( void_t )
 
     if( _hrc != NULL )
         wglDeleteContext( _hrc ) ;
+
+    natus::memory::global_t::dealloc( _bend_ctx ) ;
 }
 
 //***********************************************************************
@@ -116,6 +128,21 @@ natus::application::result context::swap( void_t )
         return natus::application::result::failed_wgl ;
     
     return natus::application::result::ok ;
+}
+
+//***********************************************************************
+natus::graphics::backend_res_t context::create_backend( void_t ) noexcept 
+{
+    natus::application::gl_version glv ;
+    this->get_gl_version( glv ) ;
+    if( glv.major >= 3 )
+    {
+        return natus::graphics::gl3_backend_res_t(
+            natus::graphics::gl3_backend_t( _bend_ctx ) ) ;
+    }
+    
+    return natus::graphics::null_backend_res_t(
+        natus::graphics::null_backend_t() ) ;
 }
 
 //***********************************************************************

@@ -11,20 +11,20 @@ set( sources
     "global.cpp"
     "id.hpp"
 
-    "backend/types.h"
-    "backend/backend.h"
-    "backend/backend.cpp"
     "async.h"
     "async.cpp"
     "async_id.hpp"
-    
-    
+
     "state/render_states.h"
     "state/state_set.h"
 
+    "backend/types.h"
+    "backend/backend.h"
+    "backend/backend.cpp"
+    "backend/icontext.h"
     "backend/null/null.h"
     "backend/null/null.cpp"
-   
+
     "shader/shader_set.hpp"
     "shader/shader.hpp"
     "shader/variable_binding.h"
@@ -48,15 +48,17 @@ set( sources
 
 if( NATUS_GRAPHICS_OPENGL )
 list( APPEND sources 
-    "backend/gl3/gl3.h"
-    "backend/gl3/gl3.cpp"
-    "backend/gl3/gl3_convert.h"
+    "backend/gl/gl3.h"
+    "backend/gl/gl3.cpp"
+    "backend/gl/gl3_convert.h"
+    "backend/gl/gl_context.h"
 )
 endif()
 if( NATUS_GRAPHICS_OPENGLES )
 list( APPEND sources 
-    "backend/es3/es3.h"
-    "backend/es3/es3.cpp"
+    "backend/gl/es3.h"
+    "backend/gl/es3.cpp"
+    "backend/gl/es_context.h"
 )
 endif()
 

@@ -1,6 +1,8 @@
 #include "egl_context.h"
 #include "egl_window.h"
 
+#include <natus/graphics/backend/gl/es3.h>
+
 #include <natus/ntd/string/split.hpp>
 #include <GLES3/gl3.h>
 
@@ -10,11 +12,16 @@ using namespace natus::application::egl ;
 //***********************n*****************************************
 context::context( void_t )
 {
+    _bend_ctx = natus::memory::global_t::alloc( natus::application::egl::es_context( this ),
+        "[context] : backend es_context" ) ;
 }
 
 //****************************************************************
 context::context( gl_info_in_t gli, EGLNativeWindowType wnd, EGLNativeDisplayType disp ) 
 {
+    _bend_ctx = natus::memory::global_t::alloc( natus::application::egl::es_context( this ),
+        "[context] : backend es_context" ) ;
+
     _ndt = disp ;
     _wnd = wnd ;
     this_t::create_the_context( gli ) ;
@@ -37,6 +44,9 @@ context::context( this_rref_t rhv )
 
     _ndt = rhv._ndt ;
     rhv._ndt = 0 ;
+
+    natus_move_member_ptr( _bend_ctx, rhv ) ;
+    _bend_ctx->change_owner( this ) ;
 }
 
 context::this_ref_t context::operator = ( this_rref_t rhv ) 
@@ -55,6 +65,9 @@ context::this_ref_t context::operator = ( this_rref_t rhv )
 
     _ndt = rhv._ndt ;
     rhv._ndt = 0 ;
+
+    natus_move_member_ptr( _bend_ctx, rhv ) ;
+    _bend_ctx->change_owner( this ) ;
     return *this ;
 }
 
@@ -62,6 +75,7 @@ context::this_ref_t context::operator = ( this_rref_t rhv )
 context::~context( void_t )
 {
     this_t::deactivate() ;
+    natus::memory::global_t::dealloc( _bend_ctx ) ;
 }
 
 //***************************************************************
@@ -96,6 +110,20 @@ natus::application::result context::swap( void_t )
 {
     eglSwapBuffers( _display, _surface ) ;
     return natus::application::result::ok ;
+}
+
+natus::graphics::backend_res_t context::create_backend( void_t ) noexcept ;
+{
+    natus::application::gl_version glv ;
+    this->get_es_version( glv ) ;
+    if( glv.major >= 3 )
+    {
+        return natus::graphics::es3_backend_res_t(
+            natus::graphics::es3_backend_t() ) ;
+    }
+
+    return natus::graphics::null_backend_res_t(
+        natus::graphics::null_backend_t() ) ;
 }
 
 //***************************************************************

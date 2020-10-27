@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include "gl_context.h"
 #include "../backend.h"
 
 namespace natus
@@ -16,9 +17,11 @@ namespace natus
             struct pimpl ;
             pimpl * _pimpl ;
 
+            natus::graphics::gl_context_ptr_t _context = nullptr ;
+
         public:
 
-            gl3_backend( void_t ) noexcept ;
+            gl3_backend( natus::graphics::gl_context_ptr_t ) noexcept ;
             gl3_backend( this_cref_t ) = delete ;
             gl3_backend( this_rref_t ) noexcept ;
             virtual ~gl3_backend( void_t ) ;

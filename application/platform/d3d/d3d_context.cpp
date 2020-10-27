@@ -1,12 +1,12 @@
 #include "d3d_context.h"
 
+#include <natus/graphics/backend/null/null.h>
+
 #include <natus/core/assert.h>
 
 #include <natus/ntd/string/split.hpp>
 
 #include <natus/log/global.h>
-
-
 
 using namespace natus::application ;
 using namespace natus::application::d3d ;
@@ -96,6 +96,12 @@ natus::application::result context::swap( void_t )
 {
     _pSwapChain->Present( _vsync, 0 );
     return natus::application::result::ok ;
+}
+
+natus::graphics::backend_res_t context::create_backend( void_t ) noexcept 
+{
+    return natus::graphics::null_backend_res_t(
+        natus::graphics::null_backend_t() ) ;
 }
 
 //***********************************************************************

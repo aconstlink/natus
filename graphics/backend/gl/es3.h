@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include "es_context.h"
 #include "../backend.h"
 
 namespace natus
@@ -16,9 +17,11 @@ namespace natus
             struct pimpl ;
             pimpl* _pimpl ;
 
+            es_context_ptr_t _context = nullptr ;
+
         public:
 
-            es3_backend( void_t ) noexcept ;
+            es3_backend( natus::graphics::es_context_ptr_t ) noexcept ;
             es3_backend( this_cref_t ) = delete ;
             es3_backend( this_rref_t ) noexcept ;
             virtual ~es3_backend( void_t ) ;

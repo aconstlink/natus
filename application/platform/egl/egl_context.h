@@ -5,6 +5,9 @@
 
 #include "../gfx_context.h"
 
+#include <natus/graphics/backend/null/null.h>
+#include <natus/graphics/backend/gl/es_context.h>
+
 #include <natus/memory/res.hpp>
 #include <natus/math/vector/vector4.hpp>
 
@@ -17,6 +20,9 @@ namespace natus
     {
         namespace egl
         {
+            class es_context ;
+            natus_class_proto_typedefs( es_context ) ;
+
             class context : public gfx_context
             {
                 natus_this_typedefs( context ) ;
@@ -29,6 +35,8 @@ namespace natus
 
                 EGLContext _context ;
                 EGLSurface _surface ;
+
+                es_context_ptr_t _bend_ctx = nullptr ;
 
             public:
 
@@ -56,6 +64,8 @@ namespace natus
                 virtual natus::application::result deactivate( void_t ) ;
                 virtual natus::application::result vsync( bool_t const on_off ) ;
                 virtual natus::application::result swap( void_t ) ;
+
+                virtual natus::graphics::backend_res_t create_backend( void_t ) noexcept ;
 
             public:
 
@@ -99,6 +109,45 @@ namespace natus
             };
             natus_typedef( context ) ;
             typedef natus::memory::res< context_t > context_res_t ;
+
+
+            // this is passed to the graphics backend at construction time, so the backend
+            // can check for extensions or other context related topics.
+            class NATUS_APPLICATION_API es_context : public natus::graphics::es_context
+            {
+                natus_this_typedefs( es_context ) ;
+
+                friend class natus::application::egl::context ;
+
+            private:
+
+                // owner
+                context_ptr_t _app_context = nullptr ;
+
+                es_context( context_ptr_t ctx ) noexcept : _app_context( ctx ) {}
+                es_context( this_cref_t ) = delete ;
+
+            public:
+
+                es_context( this_rref_t rhv ) noexcept
+                {
+                    natus_move_member_ptr( _app_context, rhv ) ;
+                }
+
+                void_t change_owner( context_ptr_t ctx ) noexcept { _app_context = ctx ; }
+
+            public:
+
+                virtual ~es_context( void_t ) noexcept {}
+
+            public:
+
+                virtual bool_t is_extension_supported( natus::ntd::string_cref_t ext ) const noexcept
+                {
+                    auto const res = _app_context->is_extension_supported( ext ) ;
+                    return res == natus::application::result::ok ;
+                }
+            };
         }
     }
 }

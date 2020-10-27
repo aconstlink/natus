@@ -4,6 +4,8 @@
 
 #include "../gfx_context.h"
 
+#include <natus/graphics/backend/icontext.h>
+
 #include <natus/memory/res.hpp>
 #include <natus/math/vector/vector4.hpp>
 
@@ -61,6 +63,8 @@ namespace natus
                 virtual natus::application::result deactivate( void_t ) ;
                 virtual natus::application::result vsync( bool_t const on_off ) ;
                 virtual natus::application::result swap( void_t ) ;
+
+                virtual natus::graphics::backend_res_t create_backend( void_t ) noexcept ;
 
             public:
 

@@ -201,8 +201,9 @@ struct es3_backend::pimpl
     // the current render state set
     natus::graphics::render_state_sets_t render_states ;
 
-    pimpl( void_t ) 
-    {}
+    natus::graphics::es_context_ptr_t _ctx = nullptr ;
+
+    pimpl( natus::graphics::es_context_ptr_t ctx ) : _ctx( ctx ){}
 
     size_t construct_shader_config( size_t oid, natus::ntd::string_cref_t name,
         natus::graphics::shader_object_ref_t config )
@@ -1384,23 +1385,26 @@ struct es3_backend::pimpl
 //************************************************************************************************
 
 //****
-es3_backend::es3_backend( void_t ) noexcept : backend( natus::graphics::backend_type::es3 )
+es3_backend::es3_backend( natus::graphics::es_context_ptr_t ctx ) noexcept : 
+    backend( natus::graphics::backend_type::es3 )
 {
-    _pimpl = natus::memory::global_t::alloc( pimpl(), 
+    _pimpl = natus::memory::global_t::alloc( pimpl( ctx ), 
         natus_log_fn("es3_backend::pimpl") ) ;
+
+    _context = ctx ;
 }
 
 //****
 es3_backend::es3_backend( this_rref_t rhv ) noexcept : backend( ::std::move( rhv ) )
 {
     natus_move_member_ptr( _pimpl, rhv ) ;
+    natus_move_member_ptr( _context, rhv ) ;
 }
 
 //****
 es3_backend::~es3_backend( void_t ) 
 {
-    if( natus::core::is_not_nullptr( _pimpl ) )
-        natus::memory::global_t::dealloc( _pimpl ) ;
+    natus::memory::global_t::dealloc( _pimpl ) ;
 }
 
 //****
