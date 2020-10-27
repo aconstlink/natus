@@ -61,6 +61,13 @@ list( APPEND sources
     "backend/gl/es_context.h"
 )
 endif()
+if( NATUS_GRAPHICS_DIRECT3D )
+list( APPEND sources 
+    "backend/d3d/d3d11.h"
+    "backend/d3d/d3d11.cpp"
+    "backend/d3d/d3d11_context.h"
+)
+endif()
 
 natus_vs_src_dir( sources )
 

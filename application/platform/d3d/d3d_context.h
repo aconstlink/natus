@@ -4,7 +4,8 @@
 
 #include "../gfx_context.h"
 
-#include <natus/graphics/backend/icontext.h>
+#include <natus/graphics/backend/d3d/d3d11_context.h>
+#include <natus/graphics/backend/null/null.h>
 
 #include <natus/memory/res.hpp>
 #include <natus/math/vector/vector4.hpp>
@@ -19,6 +20,9 @@ namespace natus
     {
         namespace d3d
         {
+            class d3d11_context ;
+            natus_class_proto_typedefs( d3d11_context ) ;
+
             class NATUS_APPLICATION_API context : public gfx_context
             {
                 natus_this_typedefs( context ) ;
@@ -37,6 +41,8 @@ namespace natus
                 IDXGISwapChain* _pSwapChain = nullptr;
                 IDXGISwapChain1* _pSwapChain1 = nullptr;
                 ID3D11RenderTargetView* _pRenderTargetView = nullptr;
+
+                d3d11_context_ptr_t _bend_ctx = nullptr ;
 
             public:
 
@@ -80,6 +86,39 @@ namespace natus
             };
             natus_typedef( context ) ;
             typedef natus::memory::res< context_t > context_res_t ;
+
+            class NATUS_APPLICATION_API d3d11_context : public natus::graphics::d3d11_context
+            {
+                natus_this_typedefs( d3d11_context ) ;
+
+                friend class natus::application::d3d::context ;
+
+            private:
+
+                // owner
+                context_ptr_t _app_context = nullptr ;
+
+                d3d11_context( context_ptr_t ctx ) noexcept : _app_context( ctx ) {}
+                d3d11_context( this_cref_t ) = delete ;
+
+            public:
+
+                d3d11_context( this_rref_t rhv ) noexcept
+                {
+                    natus_move_member_ptr( _app_context, rhv ) ;
+                }
+
+                void_t change_owner( context_ptr_t ctx ) noexcept { _app_context = ctx ; }
+
+            public:
+
+                virtual ~d3d11_context( void_t ) noexcept {}
+
+            public:
+
+                virtual bool_t dummy( natus::ntd::string_cref_t ) const noexcept { return false ; }
+            };
+
         }
     }
 }

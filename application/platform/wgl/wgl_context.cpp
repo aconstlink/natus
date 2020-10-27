@@ -16,7 +16,10 @@ using namespace natus::application::wgl ;
 
 //***********************************************************************
 context::context( void_t )
-{}
+{
+    _bend_ctx = natus::memory::global_t::alloc( natus::application::wgl::gl_context( this ),
+        "[context] : backend gl_context" ) ;
+}
 
 //***********************************************************************
 context::context( HWND hwnd ) 

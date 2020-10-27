@@ -137,9 +137,9 @@ app::window_async_t app::create_window(
         {
             types = 
             { 
-                natus::graphics::backend_type::gl3,
+                natus::graphics::backend_type::d3d11,
                 natus::graphics::backend_type::es3,
-                natus::graphics::backend_type::d3d11
+                natus::graphics::backend_type::gl3
             } ;
         }
 
@@ -582,20 +582,8 @@ natus::application::gfx_context_res_t app::create_d3d_window( natus::application
 
     pwi.wnd = d3dw ;
 
-    natus::application::d3d::context_res_t glctx =
-        d3dw->get_context() ;
-
-    /*{
-        natus::application::d3d_version ver ;
-        glctx->get_gl_version( glv ) ;
-        if( glv.major >= 3 )
-        {
-            backend = natus::graphics::gl3_backend_res_t(
-                natus::graphics::gl3_backend_t() ) ;
-        }
-    }*/
-
-    ctx = glctx ;
+    ctx = d3dw->get_context() ;
+    backend = ctx->create_backend() ;
 
     // window -> other entity
     {

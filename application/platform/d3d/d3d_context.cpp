@@ -1,6 +1,6 @@
 #include "d3d_context.h"
 
-#include <natus/graphics/backend/null/null.h>
+#include <natus/graphics/backend/d3d/d3d11.h>
 
 #include <natus/core/assert.h>
 
@@ -13,17 +13,25 @@ using namespace natus::application::d3d ;
 
 //***********************************************************************
 context::context( void_t ) noexcept
-{}
+{
+    _bend_ctx = natus::memory::global_t::alloc( natus::application::d3d::d3d11_context( this ),
+        "[context] : backend gl_context" ) ;
+}
 
 //***********************************************************************
 context::context( HWND hwnd ) noexcept
 {
+    _bend_ctx = natus::memory::global_t::alloc( natus::application::d3d::d3d11_context( this ),
+        "[context] : backend gl_context" ) ;
     this_t::create_context( hwnd ) ;
 }
 
 //***********************************************************************
 context::context( HWND hwnd, HGLRC ctx ) noexcept
 {
+    _bend_ctx = natus::memory::global_t::alloc( natus::application::d3d::d3d11_context( this ),
+        "[context] : backend gl_context" ) ;
+
     _hwnd = hwnd ;
 }
 
@@ -31,6 +39,8 @@ context::context( HWND hwnd, HGLRC ctx ) noexcept
 context::context( this_rref_t rhv ) noexcept
 {
     *this = std::move( rhv ) ;
+    natus_move_member_ptr( _bend_ctx, rhv ) ;
+    _bend_ctx->change_owner( this ) ;
 }
 
 //***********************************************************************
@@ -47,6 +57,8 @@ context::~context( void_t ) noexcept
     if( _pImmediateContext ) _pImmediateContext->Release();
     if( _pd3dDevice1 ) _pd3dDevice1->Release();
     if( _pd3dDevice ) _pd3dDevice->Release();
+
+    natus::memory::global_t::dealloc( _bend_ctx ) ;
 }
 
 //***********************************************************************
@@ -100,6 +112,12 @@ natus::application::result context::swap( void_t )
 
 natus::graphics::backend_res_t context::create_backend( void_t ) noexcept 
 {
+    if( _pd3dDevice != nullptr )
+    {
+        return natus::graphics::d3d11_backend_res_t(
+            natus::graphics::d3d11_backend_t( _bend_ctx ) ) ;
+    }
+
     return natus::graphics::null_backend_res_t(
         natus::graphics::null_backend_t() ) ;
 }
