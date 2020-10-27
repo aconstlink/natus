@@ -13,14 +13,14 @@ using namespace natus::application::glx ;
 //***********************n*****************************************
 context::context( void_t )
 {
-    _bend_ctx = natus::memory::global_t::alloc( natus::application::wgl::gl_context( this ),
+    _bend_ctx = natus::memory::global_t::alloc( natus::application::glx::gl_context( this ),
         "[context] : backend gl_context" ) ;
 }
 
 //****************************************************************
 context::context( gl_info_in_t gli, Window wnd, Display * disp ) 
 {
-    _bend_ctx = natus::memory::global_t::alloc( natus::application::wgl::gl_context( this ),
+    _bend_ctx = natus::memory::global_t::alloc( natus::application::glx::gl_context( this ),
         "[context] : backend gl_context" ) ;
 
     _display = disp ;

@@ -112,14 +112,14 @@ natus::application::result context::swap( void_t )
     return natus::application::result::ok ;
 }
 
-natus::graphics::backend_res_t context::create_backend( void_t ) noexcept ;
+natus::graphics::backend_res_t context::create_backend( void_t ) noexcept
 {
     natus::application::gl_version glv ;
     this->get_es_version( glv ) ;
     if( glv.major >= 3 )
     {
         return natus::graphics::es3_backend_res_t(
-            natus::graphics::es3_backend_t() ) ;
+            natus::graphics::es3_backend_t( _bend_ctx ) ) ;
     }
 
     return natus::graphics::null_backend_res_t(
