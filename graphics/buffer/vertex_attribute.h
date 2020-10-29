@@ -25,7 +25,8 @@ namespace natus
             texcoord4,
             texcoord5,
             texcoord6,
-            texcoord7
+            texcoord7,
+            num_attributes
         } ;
 
         namespace detail

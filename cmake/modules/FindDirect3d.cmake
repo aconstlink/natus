@@ -41,14 +41,19 @@ set( D3D_INCLUDE_DIRS
 # Search Direct3D 10
 #
 find_library( D3D10_LIBRARY_GENERAL 
-    NAMES "d3d10" "d3d10_1" 
+    NAMES "d3d10" "d3d10_1" "d3dcompiler"
+    HINTS ${D3D_LIBRARIES_SEARCH_PATHS} 
+    )
+
+find_library( D3D_COMPILER_GENERAL 
+    NAMES "d3dcompiler"
     HINTS ${D3D_LIBRARIES_SEARCH_PATHS} 
     )
 
 if( D3D10_LIBRARY_GENERAL )
     add_library( d3d10 INTERFACE )
     target_include_directories( d3d10 INTERFACE ${D3D_INCLUDE_DIRS} )
-    target_link_libraries( d3d10 INTERFACE ${D3D10_LIBRARY_GENERAL} )
+    target_link_libraries( d3d10 INTERFACE ${D3D10_LIBRARY_GENERAL} INTERFACE ${D3D_COMPILER_GENERAL} )
     message( STATUS "[Direct3d] : Target available : d3d10" )
 endif()
 
@@ -56,14 +61,19 @@ endif()
 # Search Direct3D 11
 #
 find_library( D3D11_LIBRARY_GENERAL 
-    NAMES "d3d11"
+    NAMES "d3d11" "d3dcompiler"
+    HINTS ${D3D_LIBRARIES_SEARCH_PATHS} 
+    )
+
+find_library( D3D_COMPILER_GENERAL 
+    NAMES "d3dcompiler"
     HINTS ${D3D_LIBRARIES_SEARCH_PATHS} 
     )
 
 if( D3D11_LIBRARY_GENERAL )
     add_library( d3d11 INTERFACE )
     target_include_directories( d3d11 INTERFACE ${D3D_INCLUDE_DIRS} )
-    target_link_libraries( d3d11 INTERFACE ${D3D11_LIBRARY_GENERAL} )
+    target_link_libraries( d3d11 INTERFACE ${D3D11_LIBRARY_GENERAL} INTERFACE ${D3D_COMPILER_GENERAL} )
     message( STATUS "[Direct3d] : Target available : d3d11" )
 endif()
 
