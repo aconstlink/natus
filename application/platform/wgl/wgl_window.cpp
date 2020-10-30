@@ -15,7 +15,7 @@ window::window( void_t )
 window::window( gl_info_cref_t gli, window_info_cref_t wi ) 
 {
     auto wii = wi ;
-    wii.window_name = "[egl] " + wi.window_name ;
+    wii.window_name = "[wgl] " + wi.window_name ;
     _window = win32::window( wii ) ;
     _context = wgl::context_t( _window->get_handle() ) ;
 
