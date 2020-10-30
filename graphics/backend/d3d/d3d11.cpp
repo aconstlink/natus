@@ -1,7 +1,7 @@
 
 
 #include "d3d11.h"
-//#include "gl3_convert.h"
+#include "d3d11_convert.h"
 
 #include "../../buffer/vertex_buffer.hpp"
 #include "../../buffer/index_buffer.hpp"
@@ -54,6 +54,32 @@ struct d3d11_backend::pimpl
             }
         };
         natus::ntd::vector< layout_element > elements ;
+
+        DXGI_FORMAT get_format_from_element( natus::graphics::vertex_attribute const va ) const noexcept
+        {
+            for( auto const & e : elements )
+            {
+                if( e.va == va )
+                {
+                    return natus::graphics::d3d11::convert_type_to_vec_format( e.type, e.type_struct ) ;
+                }
+            }
+
+            return DXGI_FORMAT_UNKNOWN ;
+        }
+
+        UINT get_sib( natus::graphics::vertex_attribute const va ) const noexcept
+        {
+            size_t ret = 0 ;
+            for( auto const& e : elements )
+            {
+                if( e.va == va )
+                {
+                    ret = natus::graphics::size_of( e.type ) * natus::graphics::size_of( e.type_struct ) ;
+                }
+            }
+            return UINT( ret ) ;
+        }
 
         #if 0
         GLenum ib_type ;
@@ -363,7 +389,7 @@ struct d3d11_backend::pimpl
                 void_cptr_t data = geo->vertex_buffer().data() ;
                 CD3D11_BOX const box( 0, 0, 0, ne, 1, 1 ) ;
 
-                //_ctx->ctx()->UpdateSubresource( config.vb, 0, &box, data, lsib, ne ) ;
+                _ctx->ctx()->UpdateSubresource( config.vb, 0, &box, data, lsib, ne ) ;
             }
         }
 
@@ -404,7 +430,7 @@ struct d3d11_backend::pimpl
                 void_cptr_t data = geo->index_buffer().data() ;
                 CD3D11_BOX const box( 0, 0, 0, ne, 1, 1 ) ;
 
-                //_ctx->ctx()->UpdateSubresource( config.ib, 0, &box, data, lsib, ne ) ;
+                _ctx->ctx()->UpdateSubresource( config.ib, 0, &box, data, lsib, ne ) ;
             }
         }
 
@@ -517,7 +543,6 @@ struct d3d11_backend::pimpl
                         natus::log::global_t::error( s ) ;
                         errblob->Release() ;
                     }
-                    pVSBlob->Release() ;
 
                     return oid ;
                 }
@@ -554,8 +579,6 @@ struct d3d11_backend::pimpl
                         natus::log::global_t::error( s ) ;
                         errblob->Release() ;
                     }
-                    pVSBlob->Release() ;
-
                     return oid ;
                 }
             }
@@ -596,7 +619,6 @@ struct d3d11_backend::pimpl
                         natus::log::global_t::error( s ) ;
                         errblob->Release() ;
                     }
-                    pPSBlob->Release() ;
 
                     return oid ;
                 }
@@ -741,6 +763,7 @@ struct d3d11_backend::pimpl
             }
             D3D11_RASTERIZER_DESC desc = { } ;
             desc.CullMode = D3D11_CULL_NONE ;
+            desc.FillMode = D3D11_FILL_SOLID ;
             _ctx->dev()->CreateRasterizerState( &desc, &rd.raster_state ) ;
         }
 
@@ -785,31 +808,42 @@ struct d3d11_backend::pimpl
 
             rd.shaders_ptr = &shaders[ std::distance( shaders.begin(), iter ) ] ;
         }
+
+        // may happen if shaders did not compile properly the first time.
+        if( rd.shaders_ptr == nullptr ||
+            rd.shaders_ptr->vs_blob == nullptr )
+        {
+            return false ;
+        }
         
         // for binding attributes, the shader and the geometry is required.
         {
+            size_t i = 0 ; 
             this_t::shader_data_ref_t shd = *rd.shaders_ptr ;
+            UINT offset = 0 ;
             for( auto const & b : shd.vertex_inputs )
             {
-                char_cptr_t name = b.name.c_str() ;
+                char_cptr_t name = natus::graphics::d3d11::vertex_binding_to_semantic( b.va ).c_str() ;
                 UINT const semantic_index = 0 ;
-                DXGI_FORMAT fmt = DXGI_FORMAT_R32G32B32_FLOAT ;
+                DXGI_FORMAT const fmt = rd.geo->get_format_from_element( b.va ) ;
                 UINT input_slot = 0 ;
-                UINT aligned_byte_offset = 0 ;
+                UINT aligned_byte_offset = offset ;
                 D3D11_INPUT_CLASSIFICATION const iclass = D3D11_INPUT_PER_VERTEX_DATA ;
                 UINT instance_data_step_rate = 0 ;
                 
-                rd.layout[ size_t( b.va ) ] = { name, semantic_index, fmt, 
-                    input_slot, aligned_byte_offset, iclass, instance_data_step_rate } ;
+                rd.layout[ i++ ] = { name, semantic_index, fmt, input_slot, 
+                    aligned_byte_offset, iclass, instance_data_step_rate } ;
+
+                offset += rd.geo->get_sib( b.va ) ;
             }
 
             // test, we know the layout
             {
-                rd.layout[ 0 ] = { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 } ;
-                //rd.layout[ 1 ] = { "TEXCOORD0", 0, DXGI_FORMAT_R32G32_FLOAT, 0, sizeof(natus::math::vec3f_t), D3D11_INPUT_PER_VERTEX_DATA, 0 } ;
+                //rd.layout[ 0 ] = { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 } ;
+                //rd.layout[ 1 ] = { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, sizeof(natus::math::vec3f_t), D3D11_INPUT_PER_VERTEX_DATA, 0 } ;
             }
 
-            UINT const num_elements = UINT( shd.vertex_inputs.size() ) ;
+            UINT const num_elements = UINT( i ) ;
 
             if( rd.vertex_layout != nullptr )
             {
@@ -849,6 +883,12 @@ struct d3d11_backend::pimpl
         this_t::render_data_cref_t rnd = renders[ id ] ;
         this_t::shader_data_cref_t shd = *rnd.shaders_ptr ;
         this_t::geo_data_ref_t geo = *rnd.geo ;
+     
+        if( rnd.shaders_ptr == nullptr )
+        {
+            natus::log::global_t::error(natus_log_fn( "shader invalid. First shader compilation failed probably." )) ;
+            return false ;
+        }
 
         UINT const stride = geo.stride ;
         UINT const offset = 0 ;
@@ -908,7 +948,9 @@ struct d3d11_backend::pimpl
         vp.MaxDepth = 1.0f ;
         vp.TopLeftX = 0 ;
         vp.TopLeftY = 0 ;
-        _ctx->ctx()->RSSetViewports( 1, &vp );
+        //_ctx->ctx()->RSSetViewports( 1, &vp );
+
+        _ctx->clear_default( natus::math::vec4f_t() );
     }
 
     void_t end_frame( void_t )

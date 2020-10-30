@@ -128,6 +128,11 @@ namespace natus
                 {
                     return _app_context->_pd3dDevice ;
                 }
+
+                virtual void_t clear_default( natus::math::vec4f_cref_t color ) noexcept
+                {
+                    _app_context->clear_now( color ) ;
+                }
             };
 
         }

@@ -66,6 +66,7 @@ list( APPEND sources
     "backend/d3d/d3d11.h"
     "backend/d3d/d3d11.cpp"
     "backend/d3d/d3d11_context.h"
+    "backend/d3d/d3d11_convert.h"
 )
 endif()
 

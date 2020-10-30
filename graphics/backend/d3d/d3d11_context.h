@@ -4,6 +4,7 @@
 #include "../icontext.h"
 
 #include <natus/ntd/string.hpp>
+#include <natus/math/vector/vector4.hpp>
 
 #include <d3d11.h>
 #include <d3d11_1.h>
@@ -22,6 +23,8 @@ namespace natus
 
             virtual ID3D11DeviceContext * ctx( void_t ) noexcept = 0 ;
             virtual ID3D11Device * dev( void_t ) noexcept = 0 ;
+
+            virtual void_t clear_default( natus::math::vec4f_cref_t ) noexcept = 0 ;
         };
         natus_res_typedef( d3d11_context ) ;
     }
