@@ -184,6 +184,26 @@ struct d3d11_backend::pimpl
 
         ID3D11RasterizerState* raster_state = nullptr ;
 
+        struct data_variable
+        {
+            natus::ntd::string name ;
+            natus::graphics::ivariable_ptr_t ivar = nullptr ;
+            natus::graphics::type t ;
+            natus::graphics::type_struct ts ;
+
+            size_t sib = 0 ;
+
+            size_t do_copy_funk( void_ptr_t dest )
+            {
+                if( ivar == 0 ) return 0 ;
+
+                std::memcpy( dest, ivar->data_ptr(), sib ) ;
+                return sib ;
+            }
+        } ;
+        natus_typedef( data_variable ) ;
+        natus_typedefs( natus::ntd::vector< data_variable_t >, data_variables ) ;
+
         // represents the cbuffer data of a shader stage.
         // very linked shader in a render data object
         // requires its own constant buffer data.
@@ -192,6 +212,9 @@ struct d3d11_backend::pimpl
             UINT slot ;
             void_ptr_t mem = nullptr ;
             ID3D11Buffer * ptr = nullptr ;
+            data_variables_t data_variables ;
+            // textures
+            // ...
         } ;
         natus_typedef( cbuffer ) ;
         natus_typedefs( natus::ntd::vector< cbuffer_t >, cbuffers ) ;
@@ -921,21 +944,38 @@ struct d3d11_backend::pimpl
                     cb.mem = natus::memory::global_t::alloc_raw< uint8_t >( c.sib ) ;
                     cb.slot = c.slot ;
 
-                    D3D11_BUFFER_DESC bd = {};
-                    bd.Usage = D3D11_USAGE_DEFAULT;
+                    D3D11_BUFFER_DESC bd = {} ;
+                    bd.Usage = D3D11_USAGE_DEFAULT ;
                     bd.ByteWidth = UINT( c.sib ) ;
-                    bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-                    bd.CPUAccessFlags = 0;
+                    bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER ;
+                    bd.CPUAccessFlags = 0 ;
 
-                    D3D11_SUBRESOURCE_DATA InitData = { };
-                    InitData.pSysMem = cb.mem;
-                    auto const hr = _ctx->dev()->CreateBuffer( &bd, &InitData, &cb.ptr );
+                    D3D11_SUBRESOURCE_DATA InitData = { } ;
+                    InitData.pSysMem = cb.mem ;
+                    auto const hr = _ctx->dev()->CreateBuffer( &bd, &InitData, &cb.ptr ) ;
                     if( FAILED( hr ) )
                     {
                         natus::log::global_t::error( natus_log_fn("D3D11_BIND_CONSTANT_BUFFER") ) ;
                     }
+
+                    for( auto& var : c.datas )
+                    {
+                        render_data_t::data_variable_t dv ;
+                        dv.ivar = vs->data_variable( var.name, var.t, var.ts ) ;
+                        dv.sib = natus::graphics::size_of( var.t ) * natus::graphics::size_of( var.ts ) ;
+                        dv.name = var.name ;
+                        dv.t = var.t ;
+                        dv.ts = var.ts ;
+                        cb.data_variables.emplace_back( dv ) ;
+                    }
+
                     cbs.emplace_back( std::move( cb ) ) ;
                 }
+
+                // gs cbuffers
+                // ps cbuffers
+
+                // texture buffers... some day
 
                  rd.var_sets_data.emplace_back( std::make_pair( vs, std::move( cbs ) ) ) ;
             } ) ;
@@ -947,7 +987,7 @@ struct d3d11_backend::pimpl
     bool_t render( size_t const id, size_t const varset_id = size_t( 0 ), UINT const start_element = UINT( 0 ),
         UINT const num_elements = UINT( -1 ) )
     {
-        this_t::render_data_cref_t rnd = renders[ id ] ;
+        this_t::render_data_ref_t rnd = renders[ id ] ;
         this_t::shader_data_cref_t shd = *rnd.shaders_ptr ;
         this_t::geo_data_ref_t geo = *rnd.geo ;
      
@@ -957,13 +997,34 @@ struct d3d11_backend::pimpl
             return false ;
         }
 
-        UINT const stride = geo.stride ;
-        UINT const offset = 0 ;
+        
         ID3D11DeviceContext * ctx = _ctx->ctx() ;
 
-
-        for( auto& cb : rnd.var_sets_data[ varset_id ].second )
+        for( auto & cb : rnd.var_sets_data[ varset_id ].second )
         {
+            size_t offset = 0 ;
+
+            for( auto iter = cb.data_variables.begin(); iter != cb.data_variables.end(); ++iter )
+            {
+                // if a variable was not there at construction time, 
+                // try is once more. If still not found, remove the entry.
+                while( iter->ivar == nullptr )
+                {
+                    auto & var = *iter ;
+                    auto * ptr = rnd.var_sets_data[ varset_id ].first->data_variable( var.name, var.t, var.ts ) ;
+                    if( ptr == nullptr )
+                    {
+                        iter = cb.data_variables.erase( iter ) ;
+                    }
+                    if( iter == cb.data_variables.end() ) break ;
+                }
+                if( iter == cb.data_variables.end() ) break ;
+
+                iter->do_copy_funk( uint8_ptr_t(cb.mem) + offset ) ;
+                offset += iter->sib ;
+            }
+
+            #if 0
             auto* var0 = rnd.var_sets_data[ varset_id ].first->data_variable<natus::math::mat4f_t>( "u_view" ) ;
             auto* var1 = rnd.var_sets_data[ varset_id ].first->data_variable<natus::math::mat4f_t>( "u_proj" ) ;
 
@@ -971,16 +1032,22 @@ struct d3d11_backend::pimpl
             std::memcpy( cb.mem, var0->data_ptr(), sizeof(natus::math::mat4f_t) ) ;
             of = sizeof( natus::math::mat4f_t ) ;
             std::memcpy( uint8_ptr_t( cb.mem ) + of, var1->data_ptr(), sizeof(natus::math::mat4f_t) ) ;
+            #endif
 
             ctx->UpdateSubresource( cb.ptr, 0, nullptr, cb.mem, 0, 0 );
             ctx->VSSetConstantBuffers( cb.slot, 1, &cb.ptr ) ;
         }
 
-
+        
         ctx->RSSetState( rnd.raster_state ) ; 
 
         ctx->IASetInputLayout( rnd.vertex_layout );
-        ctx->IASetVertexBuffers( 0, 1, &geo.vb, &stride, &offset );
+
+        {
+            UINT const stride = geo.stride ;
+            UINT const offset = 0 ;
+            ctx->IASetVertexBuffers( 0, 1, &geo.vb, &stride, &offset );
+        }
         
         ctx->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
 
