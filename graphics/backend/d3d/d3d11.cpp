@@ -425,7 +425,7 @@ struct d3d11_backend::pimpl
                 void_cptr_t data = geo->vertex_buffer().data() ;
                 CD3D11_BOX const box( 0, 0, 0, ne, 1, 1 ) ;
 
-                _ctx->ctx()->UpdateSubresource( config.vb, 0, nullptr/*&box*/, data, lsib, ne ) ;
+                _ctx->ctx()->UpdateSubresource( config.vb, 0, nullptr /*&box*/, data, lsib, 1 ) ;
             }
         }
 
@@ -1040,7 +1040,6 @@ struct d3d11_backend::pimpl
         ctx->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
 
         ctx->VSSetShader( shd.vs, nullptr, 0 );
-        //ctx->VSSetConstantBuffers( 0, 1, &g_pConstantBuffer );
         ctx->PSSetShader( shd.ps, nullptr, 0 );
 
         if( geo.ib != nullptr )
@@ -1048,7 +1047,7 @@ struct d3d11_backend::pimpl
             ctx->IASetIndexBuffer( geo.ib, DXGI_FORMAT_R32_UINT, 0 );
 
             UINT const max_elems = num_elements == UINT( -1 ) ? UINT( geo.num_elements_ib ) : num_elements ;
-            ctx->DrawIndexed( max_elems, start_element, UINT( start_element ) ) ;
+            ctx->DrawIndexed( max_elems, start_element, 0 ) ;
         }
         else
         {

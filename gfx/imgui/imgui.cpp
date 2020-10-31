@@ -154,6 +154,51 @@ void_t imgui::init( natus::graphics::async_view_ref_t async )
             ) ;
         }
 
+        // shaders : hlsl 11
+        {
+            sc.insert( natus::graphics::backend_type::d3d11, natus::graphics::shader_set_t().
+
+                set_vertex_shader( natus::graphics::shader_t( R"(
+                            cbuffer Camera : register( b0 ) 
+                            {
+                                matrix u_proj ;
+                                matrix u_view ;
+                            }
+
+                            struct VS_OUTPUT
+                            {
+                                float4 pos : SV_POSITION ;
+                                float2 tx : TEXCOORD0 ;
+                                float4 color : COLOR0 ;
+                            };
+
+                            VS_OUTPUT VS( float2 in_pos : POSITION, float2 in_uv : TEXCOORD0, 
+                                        float4 in_color : COLOR0 )
+                            {
+                                float4 pos = float4( in_pos.xy, 0.0f, 1.0f ) ;
+                                VS_OUTPUT output = (VS_OUTPUT)0;
+                                output.pos = mul( pos, u_view );
+                                output.pos = mul( output.pos, u_proj );
+                                output.tx = in_uv ;
+                                output.color = in_color ;
+                                return output;
+                            } )" ) ).
+
+                set_pixel_shader( natus::graphics::shader_t( R"(
+                            struct VS_OUTPUT
+                            {
+                                float4 pos : SV_POSITION ;
+                                float2 uv : TEXCOORD0 ;
+                                float4 color : COLOR0 ;
+                            };
+
+                            float4 PS( VS_OUTPUT input ) : SV_Target
+                            {
+                                return input.color ;
+                            } )" 
+                ) ) ) ;
+        }
+
         // configure more details
         {
             sc
