@@ -997,7 +997,6 @@ struct d3d11_backend::pimpl
             return false ;
         }
 
-        
         ID3D11DeviceContext * ctx = _ctx->ctx() ;
 
         for( auto & cb : rnd.var_sets_data[ varset_id ].second )
@@ -1007,7 +1006,7 @@ struct d3d11_backend::pimpl
             for( auto iter = cb.data_variables.begin(); iter != cb.data_variables.end(); ++iter )
             {
                 // if a variable was not there at construction time, 
-                // try is once more. If still not found, remove the entry.
+                // try it once more. If still not found, remove the entry.
                 while( iter->ivar == nullptr )
                 {
                     auto & var = *iter ;
@@ -1024,20 +1023,9 @@ struct d3d11_backend::pimpl
                 offset += iter->sib ;
             }
 
-            #if 0
-            auto* var0 = rnd.var_sets_data[ varset_id ].first->data_variable<natus::math::mat4f_t>( "u_view" ) ;
-            auto* var1 = rnd.var_sets_data[ varset_id ].first->data_variable<natus::math::mat4f_t>( "u_proj" ) ;
-
-            size_t of = 0 ;
-            std::memcpy( cb.mem, var0->data_ptr(), sizeof(natus::math::mat4f_t) ) ;
-            of = sizeof( natus::math::mat4f_t ) ;
-            std::memcpy( uint8_ptr_t( cb.mem ) + of, var1->data_ptr(), sizeof(natus::math::mat4f_t) ) ;
-            #endif
-
             ctx->UpdateSubresource( cb.ptr, 0, nullptr, cb.mem, 0, 0 );
             ctx->VSSetConstantBuffers( cb.slot, 1, &cb.ptr ) ;
         }
-
         
         ctx->RSSetState( rnd.raster_state ) ; 
 
@@ -1060,15 +1048,13 @@ struct d3d11_backend::pimpl
             ctx->IASetIndexBuffer( geo.ib, DXGI_FORMAT_R32_UINT, 0 );
 
             UINT const max_elems = num_elements == UINT( -1 ) ? UINT( geo.num_elements_ib ) : num_elements ;
-            ctx->DrawIndexed( max_elems, start_element, 0 ) ;
-            
+            ctx->DrawIndexed( max_elems, start_element, UINT( start_element ) ) ;
         }
         else
         {
-            //ctx->Draw( 3, 0 ) ;
+            UINT const max_elems = num_elements == UINT( -1 ) ? UINT( geo.num_elements_vb ) : num_elements ;
+            ctx->Draw( max_elems, UINT( start_element ) ) ;
         }
-        
-        
         
         return true ;
     }
