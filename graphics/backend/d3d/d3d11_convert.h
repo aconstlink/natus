@@ -125,6 +125,83 @@ namespace natus
                 return DXGI_FORMAT_UNKNOWN ;
             }
 
+            static natus::graphics::type_struct to_type_struct( D3D_SHADER_VARIABLE_CLASS const cls, UINT const elems ) noexcept
+            {
+                switch( cls )
+                {
+                case D3D_SVC_SCALAR: return natus::graphics::type_struct::vec1 ;
+                case D3D_SVC_VECTOR:
+                {
+                    if( elems == 2 ) return natus::graphics::type_struct::vec2 ;
+                    else if( elems == 3 ) return natus::graphics::type_struct::vec3 ;
+                    else if( elems == 4 ) return natus::graphics::type_struct::vec4 ;
+                }
+                case D3D_SVC_MATRIX_COLUMNS:
+                case D3D_SVC_MATRIX_ROWS:
+                {
+                    if( elems == 2 ) return natus::graphics::type_struct::mat2 ;
+                    else if( elems == 3 ) return natus::graphics::type_struct::mat3 ;
+                    else if( elems == 4 ) return natus::graphics::type_struct::mat4 ;
+                }
+                }
+
+                return natus::graphics::type_struct::undefined ;
+            }
+
+            static natus::graphics::type to_type( D3D_SHADER_VARIABLE_TYPE const t ) noexcept
+            {
+                switch( t )
+                {
+                case D3D_SVT_BOOL: return natus::graphics::type::tbool ;
+                case D3D_SVT_INT: return natus::graphics::type::tint ;
+                case D3D_SVT_MIN16INT: return natus::graphics::type::tshort ;
+                case D3D_SVT_FLOAT: return natus::graphics::type::tfloat ;
+                // half float not supported
+                //case D3D_SVT_MIN16FLOAT: return natus::graphics::type::tfloat ;
+                case D3D_SVT_UINT: return natus::graphics::type::tuint ;
+                case D3D_SVT_MIN16UINT: return natus::graphics::type::tushort ;
+                case D3D_SVT_DOUBLE: return natus::graphics::type::tdouble ;
+                default: break;
+                }
+
+                return natus::graphics::type::undefined ;
+            }
+
+            static bool_t is_texture_type( D3D_SHADER_VARIABLE_TYPE const t ) noexcept
+            {
+                switch( t ) 
+                {
+                case D3D_SVT_TEXTURE: return true ;
+                case D3D_SVT_TEXTURE1D: return true ;
+                case D3D_SVT_TEXTURE2D: return true ;
+                case D3D_SVT_TEXTURE3D: return true ;
+                case D3D_SVT_TEXTURECUBE: return true ;
+                case D3D_SVT_SAMPLER: return true ;
+                case D3D_SVT_SAMPLER1D: return true ;
+                case D3D_SVT_SAMPLER2D: return true ;
+                case D3D_SVT_SAMPLER3D: return true ;
+                case D3D_SVT_SAMPLERCUBE: return true ;
+                case D3D_SVT_TEXTURE1DARRAY: return true ;
+                case D3D_SVT_TEXTURE2DARRAY: return true ;
+                case D3D_SVT_DEPTHSTENCIL: return true ;
+                default:break ;
+                }
+
+                return false ;
+            }
+
+            static bool_t is_buffer_type( D3D_SHADER_VARIABLE_TYPE const t ) noexcept
+            {
+                switch( t )
+                {
+                case D3D_SVT_BUFFER: return true ;
+                case D3D_SVT_CBUFFER: return true ;
+                case D3D_SVT_TBUFFER: return true ;
+                default:break ;
+                }
+
+                return false ;
+            }
         }
     }
 }

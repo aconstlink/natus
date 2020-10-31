@@ -61,7 +61,7 @@ endif()
 # Search Direct3D 11
 #
 find_library( D3D11_LIBRARY_GENERAL 
-    NAMES "d3d11" "d3dcompiler"
+    NAMES "d3d11"
     HINTS ${D3D_LIBRARIES_SEARCH_PATHS} 
     )
 
@@ -70,10 +70,19 @@ find_library( D3D_COMPILER_GENERAL
     HINTS ${D3D_LIBRARIES_SEARCH_PATHS} 
     )
 
+# for reflection interface
+find_library( D3D_DXGUID_GENERAL 
+    NAMES "dxguid"
+    HINTS ${D3D_LIBRARIES_SEARCH_PATHS} 
+    )
+
 if( D3D11_LIBRARY_GENERAL )
     add_library( d3d11 INTERFACE )
     target_include_directories( d3d11 INTERFACE ${D3D_INCLUDE_DIRS} )
-    target_link_libraries( d3d11 INTERFACE ${D3D11_LIBRARY_GENERAL} INTERFACE ${D3D_COMPILER_GENERAL} )
+    target_link_libraries( d3d11 
+      INTERFACE ${D3D11_LIBRARY_GENERAL} 
+      INTERFACE ${D3D_COMPILER_GENERAL} 
+      INTERFACE ${D3D_DXGUID_GENERAL} )
     message( STATUS "[Direct3d] : Target available : d3d11" )
 endif()
 
