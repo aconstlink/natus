@@ -333,10 +333,10 @@ struct d3d11_backend::pimpl
             size_t const byte_width = geo.vertex_buffer().get_sib() ;
 
             D3D11_BUFFER_DESC bd = { } ;
-            bd.Usage = D3D11_USAGE_DEFAULT ;
+            bd.Usage = D3D11_USAGE_DYNAMIC ;
             bd.ByteWidth = uint_t( std::max( size_t(1), byte_width ) ) ;
             bd.BindFlags = D3D11_BIND_VERTEX_BUFFER ;
-            bd.CPUAccessFlags = 0 ;
+            bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE ;
 
             natus::memory::global_t::dealloc_raw( config.vb_mem ) ;
             config.vb_mem = natus::memory::global_t::alloc_raw< uint8_t >( 
@@ -361,10 +361,10 @@ struct d3d11_backend::pimpl
             size_t const byte_width = geo.index_buffer().get_sib() ;
 
             D3D11_BUFFER_DESC bd = { } ;
-            bd.Usage = D3D11_USAGE_DEFAULT ;
+            bd.Usage = D3D11_USAGE_DYNAMIC ;
             bd.ByteWidth = uint_t( byte_width ) ;
             bd.BindFlags = D3D11_BIND_INDEX_BUFFER ;
-            bd.CPUAccessFlags = 0 ;
+            bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE ;
 
             natus::memory::global_t::dealloc_raw( config.ib_mem ) ;
             config.ib_mem = natus::memory::global_t::alloc_raw< uint8_t >(
@@ -425,7 +425,11 @@ struct d3d11_backend::pimpl
                 void_cptr_t data = geo->vertex_buffer().data() ;
                 CD3D11_BOX const box( 0, 0, 0, ne, 1, 1 ) ;
 
-                _ctx->ctx()->UpdateSubresource( config.vb, 0, nullptr /*&box*/, data, lsib, 1 ) ;
+                //_ctx->ctx()->UpdateSubresource( config.vb, 0, nullptr /*&box*/, data, lsib, 0 ) ;
+                D3D11_MAPPED_SUBRESOURCE resource;
+                _ctx->ctx()->Map( config.vb, 0, D3D11_MAP_WRITE_DISCARD, 0, &resource ) ;
+                std::memcpy( resource.pData, data, lsib * ne ) ;
+                _ctx->ctx()->Unmap( config.vb, 0 ) ;
             }
         }
 
@@ -466,7 +470,11 @@ struct d3d11_backend::pimpl
                 void_cptr_t data = geo->index_buffer().data() ;
                 CD3D11_BOX const box( 0, 0, 0, ne, 1, 1 ) ;
 
-                _ctx->ctx()->UpdateSubresource( config.ib, 0, &box, data, lsib, ne ) ;
+                //_ctx->ctx()->UpdateSubresource( config.ib, 0, &box, data, lsib, ne ) ;
+                D3D11_MAPPED_SUBRESOURCE resource;
+                _ctx->ctx()->Map( config.ib, 0, D3D11_MAP_WRITE_DISCARD, 0, &resource ) ;
+                std::memcpy( resource.pData, data, lsib * ne ) ;
+                _ctx->ctx()->Unmap( config.ib, 0 ) ;
             }
         }
 
