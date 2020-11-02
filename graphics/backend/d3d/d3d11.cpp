@@ -5,6 +5,7 @@
 
 #include "../../buffer/vertex_buffer.hpp"
 #include "../../buffer/index_buffer.hpp"
+#include "../../texture/image.hpp"
 
 #include <natus/memory/global.h>
 #include <natus/memory/guards/malloc_guard.hpp>
@@ -17,6 +18,38 @@
 #include <d3d11shader.h>
 
 using namespace natus::graphics ;
+
+template< typename T >
+class guard
+{
+private:
+
+    T * _ptr = nullptr ;
+
+public:
+
+    guard( void_t ) noexcept {}
+    ~guard( void_t ) noexcept
+    {
+
+        if( _ptr != nullptr ) _ptr->Release() ;
+    }
+
+    operator T** ( void_t ) noexcept
+    {
+        return &_ptr ;
+    }
+
+    operator void** ( void_t ) noexcept
+    {
+        return (void**)&_ptr ;
+    }
+
+    T* operator -> ( void_t ) noexcept
+    {
+        return _ptr ;
+    }
+} ;
 
 struct d3d11_backend::pimpl
 {
@@ -142,6 +175,15 @@ struct d3d11_backend::pimpl
         };
         natus_typedef( data_variable ) ;
 
+        struct image_variable
+        {
+            // texture and its sampler must be on the same slot
+            natus::ntd::string_t name ;
+            UINT slot ;
+        } ;
+        natus_typedef( image_variable ) ;
+        natus_typedefs( natus::ntd::vector< image_variable_t >, image_variables ) ;
+
         // a constant buffer represent a way to send 
         // variable data to the shader. This struct
         // keeps track of a buffer in the shader and its
@@ -166,9 +208,22 @@ struct d3d11_backend::pimpl
         cbuffers_t vs_cbuffers ;
         cbuffers_t gs_cbuffers ;
         cbuffers_t ps_cbuffers ;
+
+        image_variables_t vs_textures ;
+        image_variables_t ps_textures ;
         
     } ;
     natus_typedef( shader_data ) ;
+
+    struct image_data
+    {
+        natus::ntd::string_t name ;
+
+        ID3D11ShaderResourceView * view = nullptr ;
+        ID3D11Texture2D * texture = nullptr ;
+        ID3D11SamplerState * sampler = nullptr ;
+    };
+    natus_typedef( image_data ) ;
 
     struct render_data
     {
@@ -182,7 +237,9 @@ struct d3d11_backend::pimpl
         D3D11_INPUT_ELEMENT_DESC layout[ size_t( natus::graphics::vertex_attribute::num_attributes ) ] ;
         ID3D11InputLayout* vertex_layout = nullptr ;
 
-        ID3D11RasterizerState* raster_state = nullptr ;
+        ID3D11RasterizerState * raster_state = nullptr ;
+        ID3D11BlendState * blend_state_on = nullptr ;
+        ID3D11BlendState * blend_state_off = nullptr ;
 
         struct data_variable
         {
@@ -204,6 +261,24 @@ struct d3d11_backend::pimpl
         natus_typedef( data_variable ) ;
         natus_typedefs( natus::ntd::vector< data_variable_t >, data_variables ) ;
 
+        struct image_variable
+        {
+            // texture and its sampler must be on the same slot
+            natus::ntd::string_t name ;
+            UINT slot ;
+
+            // index into the images vector
+            size_t id = size_t( -1 ) ;
+        } ;
+        natus_typedef( image_variable ) ;
+        natus_typedefs( natus::ntd::vector< image_variable_t >, image_variables ) ;
+
+        natus::ntd::vector< std::pair< natus::graphics::variable_set_res_t,
+            image_variables_t > > var_sets_imgs_vs ;
+
+        natus::ntd::vector< std::pair< natus::graphics::variable_set_res_t,
+            image_variables_t > > var_sets_imgs_ps ;
+
         // represents the cbuffer data of a shader stage.
         // very linked shader in a render data object
         // requires its own constant buffer data.
@@ -221,6 +296,9 @@ struct d3d11_backend::pimpl
 
         natus::ntd::vector< std::pair< natus::graphics::variable_set_res_t,
             cbuffers_t > > var_sets_data ;
+
+        natus::ntd::vector< std::pair< natus::graphics::variable_set_res_t,
+            cbuffers_t > > var_sets_data_ps ;
 
         #if 0
         struct uniform_variable_link
@@ -252,6 +330,8 @@ struct d3d11_backend::pimpl
     };
     natus_typedef( render_data ) ;
 
+    
+
     natus::graphics::backend_type const bt = natus::graphics::backend_type::d3d11 ;
     natus::graphics::d3d11_context_ptr_t _ctx ;
 
@@ -264,6 +344,9 @@ struct d3d11_backend::pimpl
 
     typedef natus::ntd::vector< this_t::render_data > render_datas_t ;
     render_datas_t renders ;
+
+    typedef natus::ntd::vector< this_t::image_data > image_datas_t ;
+    image_datas_t images ;
 
     FLOAT vp_width = FLOAT( 0 ) ;
     FLOAT vp_height = FLOAT( 0 ) ;
@@ -334,7 +417,10 @@ struct d3d11_backend::pimpl
 
             D3D11_BUFFER_DESC bd = { } ;
             bd.Usage = D3D11_USAGE_DYNAMIC ;
-            bd.ByteWidth = uint_t( std::max( size_t(1), byte_width ) ) ;
+            // using max of 1 sib so empty vbs will create and will 
+            // be resized in the update function. Important for now
+            // is that the buffer will be NOT nullptr.
+            bd.ByteWidth = UINT( std::max( byte_width, size_t( 1 ) ) ) ;
             bd.BindFlags = D3D11_BIND_VERTEX_BUFFER ;
             bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE ;
 
@@ -342,27 +428,40 @@ struct d3d11_backend::pimpl
             config.vb_mem = natus::memory::global_t::alloc_raw< uint8_t >( 
                 byte_width, "[d3d11] : vertex buffer memory" ) ;
 
-            D3D11_SUBRESOURCE_DATA init_data = { } ;
-            init_data.pSysMem = (void_cptr_t)config.vb_mem ;
-            
-            std::memcpy( config.vb_mem, geo.vertex_buffer().data(), byte_width ) ;
-
-            HRESULT const hr = _ctx->dev()->CreateBuffer( &bd, &init_data, &config.vb ) ;
-            if( FAILED( hr ) )
+            if( byte_width != 0 )
             {
-                natus::log::global_t::error( natus_log_fn( "D3D11_BIND_VERTEX_BUFFER" ) ) ;
+                D3D11_SUBRESOURCE_DATA init_data = { } ;
+                init_data.pSysMem = ( void_cptr_t ) config.vb_mem ;
+
+                std::memcpy( config.vb_mem, geo.vertex_buffer().data(), byte_width ) ;
+
+                HRESULT const hr = _ctx->dev()->CreateBuffer( &bd, &init_data, &config.vb ) ;
+                if( FAILED( hr ) )
+                {
+                    natus::log::global_t::error( natus_log_fn( "D3D11_BIND_VERTEX_BUFFER" ) ) ;
+                }
+            }
+            else
+            {
+                HRESULT const hr = _ctx->dev()->CreateBuffer( &bd, nullptr, &config.vb ) ;
+                if( FAILED( hr ) )
+                {
+                    natus::log::global_t::error( natus_log_fn( "D3D11_BIND_VERTEX_BUFFER" ) ) ;
+                }
             }
         }
 
         // index buffer object
-        if( geo.index_buffer().get_sib() > 0 )
         {
             // = number of vertices * sizeof( index_t )
             size_t const byte_width = geo.index_buffer().get_sib() ;
 
             D3D11_BUFFER_DESC bd = { } ;
             bd.Usage = D3D11_USAGE_DYNAMIC ;
-            bd.ByteWidth = uint_t( byte_width ) ;
+            // using max of 1 sib so empty ibs will create and will 
+            // be resized in the update function. Important for now
+            // is that the buffer will be NOT nullptr.
+            bd.ByteWidth = uint_t( std::max( byte_width, size_t( 1 ) ) ) ;
             bd.BindFlags = D3D11_BIND_INDEX_BUFFER ;
             bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE ;
 
@@ -370,15 +469,26 @@ struct d3d11_backend::pimpl
             config.ib_mem = natus::memory::global_t::alloc_raw< uint8_t >(
                 byte_width, "[d3d11] : index buffer memory" ) ;
 
-            D3D11_SUBRESOURCE_DATA init_data = { } ;
-            init_data.pSysMem = (void_cptr_t)config.ib_mem ;
-
-            std::memcpy( config.ib_mem, geo.index_buffer().data(), byte_width ) ;
-
-            HRESULT const hr = _ctx->dev()->CreateBuffer( &bd, &init_data, &config.ib ) ;
-            if( FAILED( hr ) )
+            if( byte_width != 0 )
             {
-                natus::log::global_t::error( natus_log_fn( "D3D11_BIND_INDEX_BUFFER" ) ) ;
+                D3D11_SUBRESOURCE_DATA init_data = { } ;
+                init_data.pSysMem = ( void_cptr_t ) config.ib_mem ;
+
+                std::memcpy( config.ib_mem, geo.index_buffer().data(), byte_width ) ;
+
+                HRESULT const hr = _ctx->dev()->CreateBuffer( &bd, &init_data, &config.ib ) ;
+                if( FAILED( hr ) )
+                {
+                    natus::log::global_t::error( natus_log_fn( "D3D11_BIND_INDEX_BUFFER" ) ) ;
+                }
+            }
+            else
+            {
+                HRESULT const hr = _ctx->dev()->CreateBuffer( &bd, nullptr, &config.ib ) ;
+                if( FAILED( hr ) )
+                {
+                    natus::log::global_t::error( natus_log_fn( "D3D11_BIND_INDEX_BUFFER" ) ) ;
+                }
             }
         }
 
@@ -596,6 +706,7 @@ struct d3d11_backend::pimpl
                 // find shader variables in constant buffer
                 {
                     shd.vs_cbuffers = this_t::determine_cbuffer( pVSBlob ) ;
+                    shd.vs_textures = this_t::determine_texture( pVSBlob ) ;
                 }
             }
 
@@ -682,6 +793,7 @@ struct d3d11_backend::pimpl
                 // find shader variables in constant buffer
                 {
                     shd.ps_cbuffers = this_t::determine_cbuffer( pPSBlob ) ;
+                    shd.ps_textures = this_t::determine_texture( pPSBlob ) ;
                 }
             }
             else if( shd.ps != nullptr )
@@ -828,6 +940,24 @@ struct d3d11_backend::pimpl
             _ctx->dev()->CreateRasterizerState( &desc, &rd.raster_state ) ;
         }
 
+        {
+            if( rd.blend_state_on != nullptr )
+            {
+                rd.blend_state_on->Release() ;
+            }
+            D3D11_BLEND_DESC desc = { } ;
+            desc.RenderTarget[ 0 ].BlendEnable = true ;
+            desc.RenderTarget[ 0 ].SrcBlend = D3D11_BLEND_SRC_ALPHA;
+            desc.RenderTarget[ 0 ].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+            desc.RenderTarget[ 0 ].BlendOp = D3D11_BLEND_OP_ADD;
+            desc.RenderTarget[ 0 ].SrcBlendAlpha = D3D11_BLEND_ONE;
+            desc.RenderTarget[ 0 ].DestBlendAlpha = D3D11_BLEND_ZERO;
+            desc.RenderTarget[ 0 ].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+            desc.RenderTarget[ 0 ].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+
+            _ctx->dev()->CreateBlendState( &desc, &rd.blend_state_on ) ;
+        }
+
         return oid ;
     }
 
@@ -940,56 +1070,273 @@ struct d3d11_backend::pimpl
             rd.var_sets_data.clear() ;
         }
 
+        // release all cbuffers
+        {
+            for( auto& vsd : rd.var_sets_data_ps )
+            {
+                for( auto& b : vsd.second )
+                {
+                    if( b.mem != nullptr )
+                    {
+                        natus::memory::global_t::dealloc_raw( b.mem ) ;
+                        b.mem = nullptr ;
+                    }
+
+                    if( b.ptr != nullptr )
+                    {
+                        b.ptr->Release() ;
+                        b.ptr = nullptr ;
+                    }
+                }
+                vsd.second.clear() ;
+            }
+            rd.var_sets_data_ps.clear() ;
+        }
+
+        // constant buffer mapping
         {
             this_t::shader_data_ref_t shd = *rd.shaders_ptr ;
             rc.for_each( [&] ( size_t const /*i*/, natus::graphics::variable_set_res_t vs )
             {
-                this_t::render_data_t::cbuffers_t cbs ;
-
-                for( auto& c : shd.vs_cbuffers )
                 {
-                    this_t::render_data_t::cbuffer_t cb ;
-                    cb.mem = natus::memory::global_t::alloc_raw< uint8_t >( c.sib ) ;
-                    cb.slot = c.slot ;
+                    this_t::render_data_t::cbuffers_t cbs ;
 
-                    D3D11_BUFFER_DESC bd = {} ;
-                    bd.Usage = D3D11_USAGE_DEFAULT ;
-                    bd.ByteWidth = UINT( c.sib ) ;
-                    bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER ;
-                    bd.CPUAccessFlags = 0 ;
-
-                    D3D11_SUBRESOURCE_DATA InitData = { } ;
-                    InitData.pSysMem = cb.mem ;
-                    auto const hr = _ctx->dev()->CreateBuffer( &bd, &InitData, &cb.ptr ) ;
-                    if( FAILED( hr ) )
+                    for( auto& c : shd.vs_cbuffers )
                     {
-                        natus::log::global_t::error( natus_log_fn("D3D11_BIND_CONSTANT_BUFFER") ) ;
-                    }
+                        this_t::render_data_t::cbuffer_t cb ;
+                        cb.mem = natus::memory::global_t::alloc_raw< uint8_t >( c.sib ) ;
+                        cb.slot = c.slot ;
 
-                    for( auto& var : c.datas )
-                    {
-                        render_data_t::data_variable_t dv ;
-                        dv.ivar = vs->data_variable( var.name, var.t, var.ts ) ;
-                        dv.sib = natus::graphics::size_of( var.t ) * natus::graphics::size_of( var.ts ) ;
-                        dv.name = var.name ;
-                        dv.t = var.t ;
-                        dv.ts = var.ts ;
-                        cb.data_variables.emplace_back( dv ) ;
-                    }
+                        D3D11_BUFFER_DESC bd = { } ;
+                        bd.Usage = D3D11_USAGE_DEFAULT ;
+                        bd.ByteWidth = UINT( c.sib ) ;
+                        bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER ;
+                        bd.CPUAccessFlags = 0 ;
 
-                    cbs.emplace_back( std::move( cb ) ) ;
+                        D3D11_SUBRESOURCE_DATA InitData = { } ;
+                        InitData.pSysMem = cb.mem ;
+                        auto const hr = _ctx->dev()->CreateBuffer( &bd, &InitData, &cb.ptr ) ;
+                        if( FAILED( hr ) )
+                        {
+                            natus::log::global_t::error( natus_log_fn( "D3D11_BIND_CONSTANT_BUFFER" ) ) ;
+                        }
+
+                        for( auto& var : c.datas )
+                        {
+                            render_data_t::data_variable_t dv ;
+                            dv.ivar = vs->data_variable( var.name, var.t, var.ts ) ;
+                            dv.sib = natus::graphics::size_of( var.t ) * natus::graphics::size_of( var.ts ) ;
+                            dv.name = var.name ;
+                            dv.t = var.t ;
+                            dv.ts = var.ts ;
+                            cb.data_variables.emplace_back( dv ) ;
+                        }
+
+                        cbs.emplace_back( std::move( cb ) ) ;
+                    }
+                    rd.var_sets_data.emplace_back( std::make_pair( vs, std::move( cbs ) ) ) ;
                 }
 
                 // gs cbuffers
-                // ps cbuffers
+               
+                {
+                    this_t::render_data_t::cbuffers_t cbs ;
+
+                    for( auto& c : shd.ps_cbuffers )
+                    {
+                        this_t::render_data_t::cbuffer_t cb ;
+                        cb.mem = natus::memory::global_t::alloc_raw< uint8_t >( c.sib ) ;
+                        cb.slot = c.slot ;
+
+                        D3D11_BUFFER_DESC bd = { } ;
+                        bd.Usage = D3D11_USAGE_DEFAULT ;
+                        bd.ByteWidth = UINT( c.sib ) ;
+                        bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER ;
+                        bd.CPUAccessFlags = 0 ;
+
+                        D3D11_SUBRESOURCE_DATA InitData = { } ;
+                        InitData.pSysMem = cb.mem ;
+                        auto const hr = _ctx->dev()->CreateBuffer( &bd, &InitData, &cb.ptr ) ;
+                        if( FAILED( hr ) )
+                        {
+                            natus::log::global_t::error( natus_log_fn( "D3D11_BIND_CONSTANT_BUFFER" ) ) ;
+                        }
+
+                        for( auto& var : c.datas )
+                        {
+                            render_data_t::data_variable_t dv ;
+                            dv.ivar = vs->data_variable( var.name, var.t, var.ts ) ;
+                            dv.sib = natus::graphics::size_of( var.t ) * natus::graphics::size_of( var.ts ) ;
+                            dv.name = var.name ;
+                            dv.t = var.t ;
+                            dv.ts = var.ts ;
+                            cb.data_variables.emplace_back( dv ) ;
+                        }
+
+                        cbs.emplace_back( std::move( cb ) ) ;
+                    }
+
+                    rd.var_sets_data_ps.emplace_back( std::make_pair( vs, std::move( cbs ) ) ) ;
+                }
 
                 // texture buffers... some day
 
-                 rd.var_sets_data.emplace_back( std::make_pair( vs, std::move( cbs ) ) ) ;
+                 
+            } ) ;
+        }
+
+        // texture mapping
+        {
+            this_t::shader_data_ref_t shd = *rd.shaders_ptr ;
+            rc.for_each( [&] ( size_t const /*i*/, natus::graphics::variable_set_res_t vs )
+            {
+                this_t::render_data_t::image_variables_t ivs ;
+                for( auto& t : shd.ps_textures )
+                {
+                    auto * dv = vs->texture_variable( t.name ) ;
+                    natus::ntd::string_t const img_name = dv->get() ;
+
+                    size_t i = 0 ;
+                    for( ; i < images.size(); ++i ) if( images[ i ].name == img_name ) break ;
+
+                    if( i == images.size() ) continue ;
+                    
+                    this_t::render_data_t::image_variable_t iv ;
+                    iv.id = i ;
+                    iv.name = t.name ;
+                    iv.slot = t.slot ;
+                    ivs.emplace_back( std::move( iv ) ) ;
+                }
+                rd.var_sets_imgs_ps.emplace_back( std::make_pair( vs, std::move( ivs ) ) ) ;
             } ) ;
         }
 
         return true ;
+    }
+
+    //***********************
+    size_t construct_image_config( size_t /*oid*/, natus::ntd::string_cref_t name, 
+        natus::graphics::image_object_ref_t config )
+    {
+        // the name is unique
+        {
+            auto iter = std::find_if( images.begin(), images.end(),
+                [&] ( this_t::image_data_cref_t config )
+            {
+                return config.name == name ;
+            } ) ;
+
+            if( iter != images.end() )
+                return std::distance( images.begin(), iter ) ;
+        }
+
+        size_t i = 0 ;
+        {
+            for( ; i < images.size(); ++i ) if( images[ i ].texture == nullptr ) break ;
+            if( i == images.size() ) images.resize( i + 1 ) ;
+        }
+
+        this_t::image_data_ref_t img = images[ i ] ;
+        img.name = name ;
+
+        if( img.texture != nullptr )
+        {
+            img.texture->Release() ;
+            img.sampler->Release() ;
+            img.view->Release() ;
+
+            img.texture = nullptr ;
+            img.sampler = nullptr ;
+            img.view = nullptr ;
+        }
+
+        // sampler
+        {
+            D3D11_SAMPLER_DESC sampDesc = { } ;
+            sampDesc.Filter = natus::graphics::d3d11::convert( 
+                config.get_filter( natus::graphics::texture_filter_mode::min_filter ),
+                config.get_filter( natus::graphics::texture_filter_mode::mag_filter ) ) ;
+            
+            sampDesc.AddressU = natus::graphics::d3d11::convert(
+                config.get_wrap( natus::graphics::texture_wrap_mode::wrap_s ) ) ;
+
+            sampDesc.AddressV = natus::graphics::d3d11::convert(
+                config.get_wrap( natus::graphics::texture_wrap_mode::wrap_t ) ) ;
+
+            sampDesc.AddressW = natus::graphics::d3d11::convert(
+                config.get_wrap( natus::graphics::texture_wrap_mode::wrap_r ) ) ;
+
+            sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER ;
+            sampDesc.MinLOD = 0;
+            sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+            auto const hr = _ctx->dev()->CreateSamplerState( &sampDesc, &img.sampler );
+            if( FAILED( hr ) )
+            {
+                natus::log::global_t::error( natus_log_fn( "D3D11_BIND_CONSTANT_BUFFER" ) ) ;
+            }
+        }
+
+        // texture
+        {
+            auto iref = config.image() ;
+
+            size_t const width = iref.get_dims().x() ;
+            size_t const height = iref.get_dims().y() ;
+            D3D11_TEXTURE2D_DESC desc = { } ;
+            desc.Width = static_cast< UINT >( width ) ;
+            desc.Height = static_cast< UINT >( height ) ;
+            desc.MipLevels = static_cast< UINT >( 1 );
+            desc.ArraySize = static_cast< UINT >( 1 );
+            desc.Format = natus::graphics::d3d11::convert( iref.get_image_format(), iref.get_image_element_type() ) ;
+            desc.SampleDesc.Count = 1;
+            desc.SampleDesc.Quality = 0;
+            desc.Usage = D3D11_USAGE_DEFAULT ;
+            desc.BindFlags = D3D11_BIND_SHADER_RESOURCE ;
+            desc.CPUAccessFlags = 0 ;
+            desc.MiscFlags = 0 ;
+
+            size_t const bpp = natus::graphics::size_of( iref.get_image_format() ) *
+                natus::graphics::size_of( iref.get_image_element_type() ) ;
+
+            //uint8_ptr_t mem = natus::memory::global_t::alloc_raw<uint8_t>( width * height * 4 ) ;
+            //for( size_t p = 0; p < width * height * 4; ++p ) mem[ p ] = uint8_t( 255 ) ;
+
+            D3D11_SUBRESOURCE_DATA init_data = { } ;
+            init_data.pSysMem = iref.get_image_ptr() ;
+            init_data.SysMemPitch = UINT( width * bpp ) ;
+            init_data.SysMemSlicePitch = UINT( width * height * bpp ) ;
+
+            {
+                auto const hr = _ctx->dev()->CreateTexture2D( &desc, &init_data, &img.texture ) ;
+                if( FAILED( hr ) )
+                {
+                    natus::log::global_t::error( natus_log_fn( "CreateTexture2D" ) ) ;
+                }
+            }
+
+            {
+                //_ctx->ctx()->UpdateSubresource( img.texture, 0, NULL, mem, init_data.SysMemPitch, 0);
+            }
+
+            {
+                D3D11_SHADER_RESOURCE_VIEW_DESC res_desc = { } ;
+                res_desc.Format = desc.Format ;
+                res_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D ;
+                //res_desc.Texture2DArray.ArraySize = 1 ;
+                //res_desc.Texture2DArray.FirstArraySlice = 0 ;
+                res_desc.Texture2D.MostDetailedMip = 0 ;
+                res_desc.Texture2D.MipLevels = UINT(1) ;
+
+                auto const hr = _ctx->dev()->CreateShaderResourceView( img.texture, &res_desc, &img.view ) ;
+                if( FAILED( hr ) )
+                {
+                    natus::log::global_t::error( natus_log_fn( "CreateShaderResourceView for texture : [" + img.name + "]" ) ) ;
+                }
+            }
+        }
+
+        return i ;
     }
 
     bool_t render( size_t const id, size_t const varset_id = size_t( 0 ), UINT const start_element = UINT( 0 ),
@@ -1035,7 +1382,9 @@ struct d3d11_backend::pimpl
             ctx->VSSetConstantBuffers( cb.slot, 1, &cb.ptr ) ;
         }
         
+
         ctx->RSSetState( rnd.raster_state ) ; 
+        ctx->OMSetBlendState( rnd.blend_state_on, 0, 0xffffffff );
 
         ctx->IASetInputLayout( rnd.vertex_layout );
 
@@ -1049,6 +1398,12 @@ struct d3d11_backend::pimpl
 
         ctx->VSSetShader( shd.vs, nullptr, 0 );
         ctx->PSSetShader( shd.ps, nullptr, 0 );
+
+        for( auto& img : rnd.var_sets_imgs_ps[ varset_id ].second )
+        {
+            ctx->PSSetShaderResources( img.slot, 1, &(images[ img.id ].view) ) ;
+            ctx->PSSetSamplers( img.slot, 1, &(images[ img.id ].sampler) ) ;
+        }
 
         if( geo.ib != nullptr )
         {
@@ -1129,13 +1484,70 @@ struct d3d11_backend::pimpl
         return std::move( code ) ;
     }
 
+    static shader_data_t::image_variables_t determine_texture( ID3DBlob * blob ) noexcept
+    {
+        shader_data_t::image_variables_t ret ;
+
+        guard< ID3D11ShaderReflection >  reflector ;
+        D3DReflect( blob->GetBufferPointer(), blob->GetBufferSize(),
+            IID_ID3D11ShaderReflection, reflector ) ;
+
+        D3D11_SHADER_DESC shd_desc ;
+        {
+            auto const hr = reflector->GetDesc( &shd_desc ) ;
+            if( FAILED( hr ) )
+            {
+                natus::log::global_t::error( natus_log_fn( "Can not get shader reflection desc" ) ) ;
+                return shader_data_t::image_variables_t() ;
+            }
+        }
+
+        UINT const num_irb = shd_desc.BoundResources ;
+        for( UINT i=0; i<num_irb; ++i )
+        {
+            D3D11_SHADER_INPUT_BIND_DESC ibd ;
+            {
+                auto const hr = reflector->GetResourceBindingDesc( i, &ibd ) ;
+                if( FAILED( hr ) )
+                {
+                    natus::log::global_t::error( natus_log_fn( "GetResourceBindingDesc" ) ) ;
+                    return shader_data_t::image_variables_t() ;
+                }
+            }
+
+            if( (ibd.Type != D3D_SIT_TEXTURE) && (ibd.Type != D3D_SIT_SAMPLER) ) continue ;
+
+            // somehow, we can not do this:
+            // ID3D11ShaderReflectionVariable * var = reflector->GetVariableByName( ibd.Name ) ;
+            // getting the type from the variable will not work. So we are going through 
+            // yet another D3D11 types enum.
+            if( ibd.Type == D3D_SIT_SAMPLER )
+            {
+                // ?
+            }
+            else if( ibd.Type == D3D_SIT_TEXTURE && ibd.Dimension == D3D_SRV_DIMENSION_TEXTURE2D )
+            {
+                shader_data_t::image_variable_t ivar ;
+                ivar.name = ibd.Name ;
+                ivar.slot = ibd.BindPoint ;
+                ret.emplace_back( ivar ) ;
+            }
+            else
+            {
+                natus::log::global_t::warning( natus_log_fn("Detected texture but type is not supported.") ) ;
+            }
+        }
+
+        return std::move( ret ) ;
+    }
+
     // performs reflection on the constant buffers present in
     // a shader for user variable binding
     static shader_data_t::cbuffers_t determine_cbuffer( ID3DBlob * blob ) noexcept
     {
         shader_data_t::cbuffers_t ret ;
 
-        ID3D11ShaderReflection* reflector = NULL ;
+        ID3D11ShaderReflection * reflector = nullptr ;
         D3DReflect( blob->GetBufferPointer(), blob->GetBufferSize(),
             IID_ID3D11ShaderReflection, ( void** ) &reflector ) ;
 
@@ -1148,7 +1560,7 @@ struct d3d11_backend::pimpl
                 return shader_data_t::cbuffers_t() ;
             }
         }
-
+        
         UINT const num_cb = shd_desc.ConstantBuffers ;
         for( UINT i = 0; i < num_cb; ++i )
         {
@@ -1211,9 +1623,11 @@ struct d3d11_backend::pimpl
 
                 if( natus::graphics::d3d11::is_texture_type( type_desc.Type ) )
                 {
+                    // this is in another function - determine_texture
                 }
                 else if( natus::graphics::d3d11::is_buffer_type( type_desc.Type ) )
                 {
+                    // this is in another function - determin_texture
                 }
                 else
                 {
@@ -1361,8 +1775,7 @@ natus::graphics::result d3d11_backend::configure( natus::graphics::shader_object
 natus::graphics::result d3d11_backend::configure( natus::graphics::image_object_res_t config ) noexcept 
 {
     natus::graphics::id_res_t id = config->get_id() ;
-
-    #if 0
+    
     {
         id = natus::graphics::id_t( this_t::get_bid(), _pimpl->construct_image_config( 
             id->get_oid( this_t::get_bid() ), config->name(), *config ) ) ;
@@ -1370,6 +1783,7 @@ natus::graphics::result d3d11_backend::configure( natus::graphics::image_object_
 
     size_t const oid = id->get_oid( this_t::get_bid() ) ;
 
+    #if 0
     {
         auto const res = _pimpl->update( oid, *config ) ;
         if( natus::core::is_not( res ) )

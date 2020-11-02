@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include "../../types.h"
 #include "../../buffer/vertex_attribute.h"
 
 namespace natus
@@ -201,6 +202,111 @@ namespace natus
                 }
 
                 return false ;
+            }
+
+            static D3D11_FILTER convert( natus::graphics::texture_filter_type const ft_min, natus::graphics::texture_filter_type const ft_mag ) noexcept
+            {
+                switch( ft_min )
+                {
+                case natus::graphics::texture_filter_type::linear: 
+                    switch( ft_mag )
+                    {
+                    case natus::graphics::texture_filter_type::linear:
+                        return D3D11_FILTER::D3D11_FILTER_MIN_MAG_MIP_LINEAR ;
+                    case natus::graphics::texture_filter_type::nearest:
+                        return D3D11_FILTER::D3D11_FILTER_MIN_LINEAR_MAG_POINT_MIP_LINEAR ;
+                    default: break ;
+                    }
+                case natus::graphics::texture_filter_type::nearest:
+                    switch( ft_mag )
+                    {
+                    case natus::graphics::texture_filter_type::linear:
+                        return D3D11_FILTER::D3D11_FILTER_MINIMUM_MIN_POINT_MAG_MIP_LINEAR ;
+                    case natus::graphics::texture_filter_type::nearest:
+                        return D3D11_FILTER::D3D11_FILTER_MIN_MAG_POINT_MIP_LINEAR ;
+                    default: break ;
+                    }
+                default: break ;
+                }
+                return D3D11_FILTER::D3D11_FILTER_MIN_MAG_MIP_POINT ;
+            }
+
+            static D3D11_TEXTURE_ADDRESS_MODE convert( natus::graphics::texture_wrap_type const wt ) noexcept
+            {
+                switch( wt ) 
+                {
+                case natus::graphics::texture_wrap_type::repeat:
+                    return D3D11_TEXTURE_ADDRESS_WRAP ;
+                case natus::graphics::texture_wrap_type::clamp:
+                    return D3D11_TEXTURE_ADDRESS_CLAMP ;
+                case natus::graphics::texture_wrap_type::clamp_border:
+                case natus::graphics::texture_wrap_type::clamp_edge:
+                    return D3D11_TEXTURE_ADDRESS_BORDER ;
+                case natus::graphics::texture_wrap_type::mirror :
+                    return D3D11_TEXTURE_ADDRESS_MIRROR ;
+                default: break ;
+                }
+                return D3D11_TEXTURE_ADDRESS_WRAP ; ;
+            }
+
+            static DXGI_FORMAT convert( natus::graphics::image_format const fmt, 
+                natus::graphics::image_element_type const iet ) noexcept
+            {
+                switch( fmt ) 
+                {
+                case natus::graphics::image_format::rgb: 
+                    switch( iet )
+                    {
+                    case natus::graphics::image_element_type::float32:
+                        return DXGI_FORMAT_R32G32B32_FLOAT ;
+                    case natus::graphics::image_element_type::int32:
+                        return DXGI_FORMAT_R32G32B32_SINT ;
+                    case natus::graphics::image_element_type::uint32:
+                        return DXGI_FORMAT_R32G32B32_UINT ;
+                    case natus::graphics::image_element_type::uint8:
+                        return DXGI_FORMAT_R8G8B8A8_UNORM ;
+                    default:
+                        break;
+                    }
+                case natus::graphics::image_format::rgba: 
+                    switch( iet )
+                    {
+                    case natus::graphics::image_element_type::float32:
+                        return DXGI_FORMAT_R32G32B32A32_FLOAT ;
+                    case natus::graphics::image_element_type::int32:
+                        return DXGI_FORMAT_R32G32B32A32_SINT ;
+                    case natus::graphics::image_element_type::uint32:
+                        return DXGI_FORMAT_R32G32B32A32_UINT ;
+                    case natus::graphics::image_element_type::uint8:
+                        return DXGI_FORMAT_R8G8B8A8_UNORM ;
+                    default:
+                        break;
+                    }
+                case natus::graphics::image_format::depth: 
+                    switch( iet )
+                    {
+                    case natus::graphics::image_element_type::float32:
+                        return DXGI_FORMAT_D32_FLOAT ;
+                    default:
+                        break;
+                    }
+                case natus::graphics::image_format::intensity: 
+                    switch( iet )
+                    {
+                    case natus::graphics::image_element_type::float32:
+                        return DXGI_FORMAT_R32_FLOAT ;
+                    case natus::graphics::image_element_type::int32:
+                        return DXGI_FORMAT_R32_SINT ;
+                    case natus::graphics::image_element_type::uint32:
+                        return DXGI_FORMAT_R32_UINT ;
+                    case natus::graphics::image_element_type::uint8:
+                        return DXGI_FORMAT_R8_UNORM ;
+                    default:
+                        break;
+                    }
+                }
+
+                return DXGI_FORMAT_UNKNOWN ;
             }
         }
     }

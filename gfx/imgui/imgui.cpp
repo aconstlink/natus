@@ -185,16 +185,19 @@ void_t imgui::init( natus::graphics::async_view_ref_t async )
                             } )" ) ).
 
                 set_pixel_shader( natus::graphics::shader_t( R"(
+                            Texture2D u_tex : register( t0 );
+                            SamplerState smp_u_tex : register( s0 );
+
                             struct VS_OUTPUT
                             {
                                 float4 pos : SV_POSITION ;
-                                float2 uv : TEXCOORD0 ;
+                                float2 tx : TEXCOORD0 ;
                                 float4 color : COLOR0 ;
                             };
 
                             float4 PS( VS_OUTPUT input ) : SV_Target
                             {
-                                return input.color ;
+                                return u_tex.Sample( smp_u_tex, input.tx ) * input.color ;
                             } )" 
                 ) ) ) ;
         }
