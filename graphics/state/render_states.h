@@ -29,8 +29,8 @@ namespace natus
             sub,
             reverse_sub,
             min,
-            max,
-            logic_op
+            max
+            //,logic_op
         } ;
 
         enum class clear_mode

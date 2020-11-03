@@ -348,6 +348,8 @@ struct d3d11_backend::pimpl
     typedef natus::ntd::vector< this_t::image_data > image_datas_t ;
     image_datas_t images ;
 
+    natus::graphics::render_state_sets_t render_states ;
+
     FLOAT vp_width = FLOAT( 0 ) ;
     FLOAT vp_height = FLOAT( 0 ) ;
 
@@ -1381,10 +1383,39 @@ struct d3d11_backend::pimpl
             ctx->UpdateSubresource( cb.ptr, 0, nullptr, cb.mem, 0, 0 );
             ctx->VSSetConstantBuffers( cb.slot, 1, &cb.ptr ) ;
         }
+
+        for( auto& cb : rnd.var_sets_data_ps[ varset_id ].second )
+        {
+            size_t offset = 0 ;
+
+            for( auto iter = cb.data_variables.begin(); iter != cb.data_variables.end(); ++iter )
+            {
+                // if a variable was not there at construction time, 
+                // try it once more. If still not found, remove the entry.
+                while( iter->ivar == nullptr )
+                {
+                    auto& var = *iter ;
+                    auto* ptr = rnd.var_sets_data_ps[ varset_id ].first->data_variable( var.name, var.t, var.ts ) ;
+                    if( ptr == nullptr )
+                    {
+                        iter = cb.data_variables.erase( iter ) ;
+                    }
+                    if( iter == cb.data_variables.end() ) break ;
+                }
+                if( iter == cb.data_variables.end() ) break ;
+
+                iter->do_copy_funk( uint8_ptr_t( cb.mem ) + offset ) ;
+                offset += iter->sib ;
+            }
+
+            ctx->UpdateSubresource( cb.ptr, 0, nullptr, cb.mem, 0, 0 );
+            ctx->PSSetConstantBuffers( cb.slot, 1, &cb.ptr ) ;
+        }
         
 
         ctx->RSSetState( rnd.raster_state ) ; 
-        ctx->OMSetBlendState( rnd.blend_state_on, 0, 0xffffffff );
+
+        //ctx->OMSetBlendState( rnd.blend_state_on, 0, 0xffffffff );
 
         ctx->IASetInputLayout( rnd.vertex_layout );
 
@@ -1421,6 +1452,105 @@ struct d3d11_backend::pimpl
         return true ;
     }
 
+    void_t do_render_states( natus::graphics::render_state_sets_in_t rs, ID3D11BlendState* d3drs = nullptr )
+    {
+        D3D11_BLEND_DESC desc = { } ;
+        
+        desc.RenderTarget[ 0 ].SrcBlend = D3D11_BLEND_SRC_ALPHA;
+        desc.RenderTarget[ 0 ].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+        desc.RenderTarget[ 0 ].BlendOp = D3D11_BLEND_OP_ADD;
+        desc.RenderTarget[ 0 ].SrcBlendAlpha = D3D11_BLEND_ONE;
+        desc.RenderTarget[ 0 ].DestBlendAlpha = D3D11_BLEND_ZERO;
+        desc.RenderTarget[ 0 ].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+        desc.RenderTarget[ 0 ].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+
+        if( render_states.blend_s.do_blend != rs.blend_s.do_blend )
+        {
+            if( rs.blend_s.do_blend )
+            {
+                desc.RenderTarget[ 0 ].BlendEnable = true ;
+
+                desc.RenderTarget[ 0 ].SrcBlend = natus::graphics::d3d11::convert( rs.blend_s.src_blend_factor ) ;
+                desc.RenderTarget[ 0 ].DestBlend = natus::graphics::d3d11::convert( rs.blend_s.dst_blend_factor ) ;
+                desc.RenderTarget[ 0 ].BlendOp = natus::graphics::d3d11::convert( rs.blend_s.blend_func ) ;
+
+                desc.RenderTarget[ 0 ].SrcBlendAlpha = D3D11_BLEND_ONE ;
+                desc.RenderTarget[ 0 ].DestBlendAlpha = D3D11_BLEND_ZERO ;
+                desc.RenderTarget[ 0 ].BlendOpAlpha = D3D11_BLEND_OP_ADD ;
+            }
+            else
+            {
+                desc.RenderTarget[ 0 ].BlendEnable = false ;
+            }
+
+            ID3D11BlendState* old = nullptr ;
+            UINT mask ;
+            _ctx->ctx()->OMGetBlendState( &old, 0, &mask ) ;
+
+            if( d3drs != nullptr )
+            {
+                _ctx->ctx()->OMSetBlendState( d3drs, 0, 0xffffffff );
+            }
+            else
+            {
+                auto const res = _ctx->dev()->CreateBlendState( &desc, &d3drs ) ;
+                if( SUCCEEDED( res ) )
+                {
+                    _ctx->ctx()->OMSetBlendState( d3drs, 0, 0xffffffff );
+                    d3drs->Release() ;
+                }
+            }
+
+            if( old != nullptr )
+            {
+                _ctx->ctx()->OMSetBlendState( old, 0, mask ) ;
+            }
+        }
+
+        #if 0
+        if( render_states.depth_s.do_depth_test != rs.depth_s.do_depth_test )
+        {
+            if( rs.depth_s.do_depth_test )
+            {
+                glEnable( GL_DEPTH_TEST ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
+            }
+            else
+            {
+                glDisable( GL_DEPTH_TEST ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glDisable" ) ) ;
+            }
+        }
+
+        
+        if( render_states.polygon_s.do_culling != rs.polygon_s.do_culling )
+        {
+            if( rs.polygon_s.do_culling )
+            {
+                glEnable( GL_CULL_FACE ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
+            }
+            else
+            {
+                glDisable( GL_CULL_FACE ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glDisable" ) ) ;
+            }
+        }
+
+        #endif
+
+        if( render_states.scissor_s.do_scissor_test != rs.scissor_s.do_scissor_test )
+        {
+            if( rs.scissor_s.do_scissor_test )
+            {
+                
+            }
+            else
+            {
+                
+            }
+        }
+    }
 
     void_t begin_frame( void_t )
     {
@@ -1854,7 +1984,7 @@ natus::graphics::result d3d11_backend::render( natus::graphics::render_object_re
 
     if( detail.render_states.is_valid() )
     {
-        //_pimpl->set_render_states( *( detail.render_states ) ) ;
+        _pimpl->do_render_states( *( detail.render_states ) ) ;
     }
 
     _pimpl->render( id->get_oid(), detail.varset, (UINT)detail.start, (UINT)detail.num_elems ) ;

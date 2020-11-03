@@ -10,6 +10,55 @@ namespace natus
     {
         namespace d3d11
         {
+            namespace detail
+            {
+                static const D3D11_BLEND convert_blend_factor_d3d11[] =
+                {
+                    D3D11_BLEND_ZERO,
+                    D3D11_BLEND_ONE,
+                    D3D11_BLEND_SRC_COLOR,
+                    D3D11_BLEND_INV_SRC_COLOR,
+                    D3D11_BLEND_DEST_COLOR,
+                    D3D11_BLEND_INV_DEST_COLOR,
+                    D3D11_BLEND_SRC_ALPHA,
+                    D3D11_BLEND_INV_SRC_ALPHA,
+                    D3D11_BLEND_DEST_ALPHA,
+                    D3D11_BLEND_INV_DEST_ALPHA,
+                    D3D11_BLEND_SRC1_COLOR,
+                    D3D11_BLEND_INV_SRC1_COLOR,
+                    D3D11_BLEND_SRC1_ALPHA,
+                    D3D11_BLEND_INV_SRC1_ALPHA,
+                    D3D11_BLEND_INV_BLEND_FACTOR
+                } ;
+
+                static const size_t convert_blend_factors_d3d11_size =
+                    sizeof( convert_blend_factor_d3d11 ) / sizeof( convert_blend_factor_d3d11[ 0 ] ) ;
+
+                static const D3D11_BLEND_OP convert_blend_op_d3d11[] =
+                { 
+                    D3D11_BLEND_OP_ADD,
+                    D3D11_BLEND_OP_SUBTRACT,
+                    D3D11_BLEND_OP_REV_SUBTRACT,
+                    D3D11_BLEND_OP_MIN,
+                    D3D11_BLEND_OP_MAX
+                } ;
+                static const size_t convert_blend_ops_d3d11_size =
+                    sizeof( convert_blend_op_d3d11 ) / sizeof( convert_blend_op_d3d11[ 0 ] ) ;
+            }
+
+            static D3D11_BLEND convert( blend_factor const bf ) noexcept
+            {
+                return detail::convert_blend_factor_d3d11[ size_t( bf ) ] ;
+            }
+
+            static D3D11_BLEND_OP convert( blend_function const bf ) noexcept
+            {
+                return detail::convert_blend_op_d3d11[ size_t( bf ) ] ;
+            }
+        }
+
+        namespace d3d11
+        {
             static natus::ntd::string_cref_t vertex_binding_to_semantic( natus::graphics::vertex_attribute const va ) noexcept
             {
                 static natus::ntd::string_t const _semantics[] = { 
