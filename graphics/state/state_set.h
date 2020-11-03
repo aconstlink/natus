@@ -68,7 +68,7 @@ namespace natus
             front_face ff = natus::graphics::front_face::clock_wise ;
 
             // fill mode
-            cull_mode cm_fill = natus::graphics::cull_mode::front_back ;
+            cull_mode cm_fill = natus::graphics::cull_mode::none ;
             fill_mode fm = natus::graphics::fill_mode::fill ;
         };
 

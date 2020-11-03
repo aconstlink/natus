@@ -44,7 +44,7 @@ namespace natus
         {
             front,
             back,
-            front_back
+            none
         } ;
 
         enum class fill_mode
