@@ -303,6 +303,15 @@ public: // functions
         natus_move_member_ptr( _ctx, rhv ) ;
         geo_datas = std::move( rhv.geo_datas ) ;
     }
+    
+    ~pimpl( void_t ) 
+    {
+        for( auto & g : geo_datas )
+        {
+            natus::memory::global_t::dealloc_raw( g.vb_mem ) ;
+            natus::memory::global_t::dealloc_raw( g.ib_mem ) ;
+        }
+    }
 
     size_t construct_geo( natus::ntd::string_cref_t name, natus::graphics::geometry_object_ref_t geo )
     {
