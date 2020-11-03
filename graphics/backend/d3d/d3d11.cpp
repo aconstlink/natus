@@ -290,11 +290,6 @@ public: // variables
     FLOAT vp_width = FLOAT( 0 ) ;
     FLOAT vp_height = FLOAT( 0 ) ;
 
-    // the default raster state
-    ID3D11RasterizerState* raster_state = nullptr ;
-    // the default blend state
-    ID3D11BlendState* blend_state = nullptr ;
-
 public: // functions
 
     pimpl( natus::graphics::d3d11_context_ptr_t ctx ) noexcept
@@ -1479,20 +1474,6 @@ public: // functions
 
     void_t begin_frame( void_t )
     {
-
-        #if 0
-        glClearColor( 0.4f, 0.1f, 0.1f, 1.0f ) ;
-        natus::ogl::error::check_and_log( natus_log_fn( "glClearColor" ) ) ;
-
-        glClear( GL_COLOR_BUFFER_BIT ) ;
-        natus::ogl::error::check_and_log( natus_log_fn( "glClear" ) ) ;
-
-        // reset render states
-        this_t::set_render_states( *natus::graphics::backend_t::default_render_states() ) ;
-
-        
-        #endif
-
         // Setup the viewport
         D3D11_VIEWPORT vp ;
         vp.Width = ( FLOAT ) vp_width ;
@@ -1504,51 +1485,10 @@ public: // functions
         //_ctx->ctx()->RSSetViewports( 1, &vp );
 
         _ctx->clear_default( natus::math::vec4f_t() );
-
-        #if 0
-        // default raster state
-        if( raster_state == nullptr )
-        {
-            D3D11_RASTERIZER_DESC desc = { } ;
-            desc.CullMode = D3D11_CULL_BACK ;
-            desc.FillMode = D3D11_FILL_SOLID ;
-            desc.ScissorEnable = FALSE ;
-            auto const res = _ctx->dev()->CreateRasterizerState( &desc, &raster_state ) ;
-            if( SUCCEEDED( res ) )
-            {
-                _ctx->ctx()->RSSetState( raster_state ) ; 
-            }
-        }
-        else
-        {
-            _ctx->ctx()->RSSetState( raster_state ) ; 
-        }
-
-        // default blend state
-        if( blend_state == nullptr )
-        {
-            D3D11_BLEND_DESC desc = { } ;
-            desc.RenderTarget[ 0 ].BlendEnable = FALSE ;
-
-            auto const res = _ctx->dev()->CreateBlendState( &desc, &blend_state ) ;
-            if( SUCCEEDED( res ) )
-            {
-                _ctx->ctx()->OMSetBlendState( blend_state, 0, 0xffffffff );
-            }
-        }
-        else
-        {
-            _ctx->ctx()->OMSetBlendState( blend_state, 0, 0xffffffff );
-        }
-        #endif
     }
 
     void_t end_frame( void_t )
     {
-        #if 0
-        glFlush() ;
-        glFinish() ;
-        #endif
     }
 
     natus::ntd::string_t remove_unwanded_characters( natus::ntd::string_cref_t code_in ) const noexcept
