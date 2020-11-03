@@ -1279,7 +1279,7 @@ public: // variables
      
         if( rnd.shaders_ptr == nullptr )
         {
-            natus::log::global_t::error(natus_log_fn( "shader invalid. First shader compilation failed probably." )) ;
+            natus::log::global_t::error( natus_log_fn( "shader invalid. First shader compilation failed probably." ) ) ;
             return false ;
         }
 
@@ -1468,17 +1468,7 @@ public: // variables
 
         #endif
 
-        if( render_states.scissor_s.do_scissor_test != rs.scissor_s.do_scissor_test )
-        {
-            if( rs.scissor_s.do_scissor_test )
-            {
-                
-            }
-            else
-            {
-                
-            }
-        }
+        
     }
 
     void_t begin_frame( void_t )
