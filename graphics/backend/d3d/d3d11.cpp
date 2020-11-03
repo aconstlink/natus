@@ -204,9 +204,8 @@ struct d3d11_backend::pimpl
         D3D11_INPUT_ELEMENT_DESC layout[ size_t( natus::graphics::vertex_attribute::num_attributes ) ] ;
         ID3D11InputLayout* vertex_layout = nullptr ;
 
-        ID3D11RasterizerState * raster_state = nullptr ;
-        ID3D11BlendState * blend_state_on = nullptr ;
-        ID3D11BlendState * blend_state_off = nullptr ;
+        ID3D11RasterizerState* raster_state = nullptr ;
+        ID3D11BlendState* blend_state = nullptr ;
 
         struct data_variable
         {
@@ -290,6 +289,13 @@ public: // variables
 
     FLOAT vp_width = FLOAT( 0 ) ;
     FLOAT vp_height = FLOAT( 0 ) ;
+
+    // the default raster state
+    ID3D11RasterizerState* raster_state = nullptr ;
+    // the default blend state
+    ID3D11BlendState* blend_state = nullptr ;
+
+public: // functions
 
     pimpl( natus::graphics::d3d11_context_ptr_t ctx ) noexcept
     {
@@ -859,36 +865,6 @@ public: // variables
 
         std::memset( rd.layout, 0, ARRAYSIZE( rd.layout ) ) ;
 
-        // raster state
-        {
-            if( rd.raster_state != nullptr )
-            {
-                rd.raster_state->Release() ;
-            }
-            D3D11_RASTERIZER_DESC desc = { } ;
-            desc.CullMode = D3D11_CULL_NONE ;
-            desc.FillMode = D3D11_FILL_SOLID ;
-            _ctx->dev()->CreateRasterizerState( &desc, &rd.raster_state ) ;
-        }
-
-        {
-            if( rd.blend_state_on != nullptr )
-            {
-                rd.blend_state_on->Release() ;
-            }
-            D3D11_BLEND_DESC desc = { } ;
-            desc.RenderTarget[ 0 ].BlendEnable = true ;
-            desc.RenderTarget[ 0 ].SrcBlend = D3D11_BLEND_SRC_ALPHA;
-            desc.RenderTarget[ 0 ].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
-            desc.RenderTarget[ 0 ].BlendOp = D3D11_BLEND_OP_ADD;
-            desc.RenderTarget[ 0 ].SrcBlendAlpha = D3D11_BLEND_ONE;
-            desc.RenderTarget[ 0 ].DestBlendAlpha = D3D11_BLEND_ZERO;
-            desc.RenderTarget[ 0 ].BlendOpAlpha = D3D11_BLEND_OP_ADD;
-            desc.RenderTarget[ 0 ].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-
-            _ctx->dev()->CreateBlendState( &desc, &rd.blend_state_on ) ;
-        }
-
         return oid ;
     }
 
@@ -1340,11 +1316,6 @@ public: // variables
             ctx->UpdateSubresource( cb.ptr, 0, nullptr, cb.mem, 0, 0 );
             ctx->PSSetConstantBuffers( cb.slot, 1, &cb.ptr ) ;
         }
-        
-
-        ctx->RSSetState( rnd.raster_state ) ; 
-
-        //ctx->OMSetBlendState( rnd.blend_state_on, 0, 0xffffffff );
 
         ctx->IASetInputLayout( rnd.vertex_layout );
 
@@ -1381,59 +1352,109 @@ public: // variables
         return true ;
     }
 
-    void_t do_render_states( natus::graphics::render_state_sets_in_t rs, ID3D11BlendState* d3drs = nullptr )
+    void_t do_render_states( natus::graphics::render_state_sets_in_t rs, ID3D11BlendState* d3drs = nullptr,
+        ID3D11RasterizerState* d3draster_state = nullptr )
     {
-        D3D11_BLEND_DESC desc = { } ;
-        
-        desc.RenderTarget[ 0 ].SrcBlend = D3D11_BLEND_SRC_ALPHA;
-        desc.RenderTarget[ 0 ].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
-        desc.RenderTarget[ 0 ].BlendOp = D3D11_BLEND_OP_ADD;
-        desc.RenderTarget[ 0 ].SrcBlendAlpha = D3D11_BLEND_ONE;
-        desc.RenderTarget[ 0 ].DestBlendAlpha = D3D11_BLEND_ZERO;
-        desc.RenderTarget[ 0 ].BlendOpAlpha = D3D11_BLEND_OP_ADD;
-        desc.RenderTarget[ 0 ].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-
-        if( render_states.blend_s.do_blend != rs.blend_s.do_blend )
+        // blend
         {
-            if( rs.blend_s.do_blend )
-            {
-                desc.RenderTarget[ 0 ].BlendEnable = true ;
+            D3D11_BLEND_DESC desc = { } ;
 
-                desc.RenderTarget[ 0 ].SrcBlend = natus::graphics::d3d11::convert( rs.blend_s.src_blend_factor ) ;
-                desc.RenderTarget[ 0 ].DestBlend = natus::graphics::d3d11::convert( rs.blend_s.dst_blend_factor ) ;
-                desc.RenderTarget[ 0 ].BlendOp = natus::graphics::d3d11::convert( rs.blend_s.blend_func ) ;
+            desc.RenderTarget[ 0 ].SrcBlend = D3D11_BLEND_SRC_ALPHA;
+            desc.RenderTarget[ 0 ].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+            desc.RenderTarget[ 0 ].BlendOp = D3D11_BLEND_OP_ADD;
+            desc.RenderTarget[ 0 ].SrcBlendAlpha = D3D11_BLEND_ONE;
+            desc.RenderTarget[ 0 ].DestBlendAlpha = D3D11_BLEND_ZERO;
+            desc.RenderTarget[ 0 ].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+            desc.RenderTarget[ 0 ].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 
-                desc.RenderTarget[ 0 ].SrcBlendAlpha = D3D11_BLEND_ONE ;
-                desc.RenderTarget[ 0 ].DestBlendAlpha = D3D11_BLEND_ZERO ;
-                desc.RenderTarget[ 0 ].BlendOpAlpha = D3D11_BLEND_OP_ADD ;
-            }
-            else
+            if( render_states.blend_s.do_blend != rs.blend_s.do_blend )
             {
-                desc.RenderTarget[ 0 ].BlendEnable = false ;
-            }
+                if( rs.blend_s.do_blend )
+                {
+                    desc.RenderTarget[ 0 ].BlendEnable = true ;
 
-            ID3D11BlendState* old = nullptr ;
-            UINT mask ;
-            _ctx->ctx()->OMGetBlendState( &old, 0, &mask ) ;
+                    desc.RenderTarget[ 0 ].SrcBlend = natus::graphics::d3d11::convert( rs.blend_s.src_blend_factor ) ;
+                    desc.RenderTarget[ 0 ].DestBlend = natus::graphics::d3d11::convert( rs.blend_s.dst_blend_factor ) ;
+                    desc.RenderTarget[ 0 ].BlendOp = natus::graphics::d3d11::convert( rs.blend_s.blend_func ) ;
 
-            if( d3drs != nullptr )
-            {
-                _ctx->ctx()->OMSetBlendState( d3drs, 0, 0xffffffff );
-            }
-            else
-            {
-                auto const res = _ctx->dev()->CreateBlendState( &desc, &d3drs ) ;
-                if( SUCCEEDED( res ) )
+                    desc.RenderTarget[ 0 ].SrcBlendAlpha = D3D11_BLEND_ONE ;
+                    desc.RenderTarget[ 0 ].DestBlendAlpha = D3D11_BLEND_ZERO ;
+                    desc.RenderTarget[ 0 ].BlendOpAlpha = D3D11_BLEND_OP_ADD ;
+                }
+                else
+                {
+                    desc.RenderTarget[ 0 ].BlendEnable = false ;
+                }
+
+                ID3D11BlendState* old = nullptr ;
+                UINT mask ;
+                _ctx->ctx()->OMGetBlendState( &old, 0, &mask ) ;
+
+                if( d3drs != nullptr )
                 {
                     _ctx->ctx()->OMSetBlendState( d3drs, 0, 0xffffffff );
-                    d3drs->Release() ;
+                }
+                else
+                {
+                    auto const res = _ctx->dev()->CreateBlendState( &desc, &d3drs ) ;
+                    if( SUCCEEDED( res ) )
+                    {
+                        _ctx->ctx()->OMSetBlendState( d3drs, 0, 0xffffffff );
+                        d3drs->Release() ;
+                    }
+                }
+
+                if( old != nullptr )
+                {
+                    _ctx->ctx()->OMSetBlendState( old, 0, mask ) ;
+                }
+            }
+        }
+
+        // scissor/culling
+        {
+            D3D11_RASTERIZER_DESC desc = { } ;
+            
+            if( !rs.polygon_s.do_culling )
+            {
+                desc.CullMode = D3D11_CULL_NONE ;
+                desc.FillMode = D3D11_FILL_SOLID ;
+            }
+            else
+            {
+                desc.CullMode = natus::graphics::d3d11::convert( rs.polygon_s.cm ) ;
+                desc.FillMode = natus::graphics::d3d11::convert( rs.polygon_s.fm ) ;
+            }
+
+            bool_t const created = d3draster_state == nullptr ;
+            if( d3draster_state == nullptr )
+            {
+                auto const res = _ctx->dev()->CreateRasterizerState( &desc, &d3draster_state ) ;
+                if( FAILED( res ) )
+                {
+                    natus::log::global_t::error( natus_log_fn("CreateRasterizerState") ) ;
                 }
             }
 
-            if( old != nullptr )
+            desc.ScissorEnable = rs.scissor_s.do_scissor_test ;
+
+            if( rs.scissor_s.do_scissor_test )
             {
-                _ctx->ctx()->OMSetBlendState( old, 0, mask ) ;
+                D3D11_RECT rect ;
+                rect.left = rs.scissor_s.rect.x() ;
+                rect.right = rs.scissor_s.rect.x() + rs.scissor_s.rect.z() ;
+                rect.top = rs.scissor_s.rect.y() ;
+                rect.bottom = rs.scissor_s.rect.y() + rs.scissor_s.rect.w() ;
+
+                _ctx->ctx()->RSSetScissorRects( 1, &rect ) ;
             }
+
+            if( d3draster_state )
+            {
+                _ctx->ctx()->RSSetState( d3draster_state ) ;
+            }
+
+            if( created ) d3draster_state->Release() ;
         }
 
         #if 0
@@ -1450,22 +1471,7 @@ public: // variables
                 natus::ogl::error::check_and_log( natus_log_fn( "glDisable" ) ) ;
             }
         }
-
-        
-        if( render_states.polygon_s.do_culling != rs.polygon_s.do_culling )
-        {
-            if( rs.polygon_s.do_culling )
-            {
-                glEnable( GL_CULL_FACE ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
-            }
-            else
-            {
-                glDisable( GL_CULL_FACE ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glDisable" ) ) ;
-            }
-        }
-
+       
         #endif
 
         
@@ -1498,6 +1504,43 @@ public: // variables
         //_ctx->ctx()->RSSetViewports( 1, &vp );
 
         _ctx->clear_default( natus::math::vec4f_t() );
+
+        #if 0
+        // default raster state
+        if( raster_state == nullptr )
+        {
+            D3D11_RASTERIZER_DESC desc = { } ;
+            desc.CullMode = D3D11_CULL_BACK ;
+            desc.FillMode = D3D11_FILL_SOLID ;
+            desc.ScissorEnable = FALSE ;
+            auto const res = _ctx->dev()->CreateRasterizerState( &desc, &raster_state ) ;
+            if( SUCCEEDED( res ) )
+            {
+                _ctx->ctx()->RSSetState( raster_state ) ; 
+            }
+        }
+        else
+        {
+            _ctx->ctx()->RSSetState( raster_state ) ; 
+        }
+
+        // default blend state
+        if( blend_state == nullptr )
+        {
+            D3D11_BLEND_DESC desc = { } ;
+            desc.RenderTarget[ 0 ].BlendEnable = FALSE ;
+
+            auto const res = _ctx->dev()->CreateBlendState( &desc, &blend_state ) ;
+            if( SUCCEEDED( res ) )
+            {
+                _ctx->ctx()->OMSetBlendState( blend_state, 0, 0xffffffff );
+            }
+        }
+        else
+        {
+            _ctx->ctx()->OMSetBlendState( blend_state, 0, 0xffffffff );
+        }
+        #endif
     }
 
     void_t end_frame( void_t )

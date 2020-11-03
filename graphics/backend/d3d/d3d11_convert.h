@@ -370,6 +370,30 @@ namespace natus
                 }
                 return D3D_PRIMITIVE_TOPOLOGY_UNDEFINED ;
             }
+
+            static D3D11_CULL_MODE convert( cull_mode const cm ) noexcept
+            {
+                switch( cm )
+                {
+                case natus::graphics::cull_mode::back: return D3D11_CULL_BACK ;
+                case natus::graphics::cull_mode::front: return D3D11_CULL_FRONT ;
+                case natus::graphics::cull_mode::none: return D3D11_CULL_NONE ;
+                default: break ;
+                }
+                return D3D11_CULL_NONE ;
+            }
+
+            static D3D11_FILL_MODE convert( fill_mode const fm ) noexcept
+            {
+                switch( fm )
+                {
+                case natus::graphics::fill_mode::fill: return D3D11_FILL_SOLID ;
+                case natus::graphics::fill_mode::line: return D3D11_FILL_WIREFRAME ;
+                default: break ;
+                }
+                return D3D11_FILL_SOLID ;
+            }
+
         }
     }
 }
