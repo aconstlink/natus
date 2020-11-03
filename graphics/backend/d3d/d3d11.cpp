@@ -1116,7 +1116,7 @@ public: // variables
             } ) ;
         }
 
-        // texture mapping
+        // texture variable mapping
         {
             this_t::shader_data_ref_t shd = *rd.shaders_ptr ;
             rc.for_each( [&] ( size_t const /*i*/, natus::graphics::variable_set_res_t vs )
@@ -1181,6 +1181,8 @@ public: // variables
             img.view = nullptr ;
         }
 
+        auto * dev = _ctx->dev() ;
+
         // sampler
         {
             D3D11_SAMPLER_DESC sampDesc = { } ;
@@ -1201,7 +1203,7 @@ public: // variables
             sampDesc.MinLOD = 0;
             sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
 
-            auto const hr = _ctx->dev()->CreateSamplerState( &sampDesc, &img.sampler );
+            auto const hr = dev->CreateSamplerState( &sampDesc, &img.sampler );
             if( FAILED( hr ) )
             {
                 natus::log::global_t::error( natus_log_fn( "D3D11_BIND_CONSTANT_BUFFER" ) ) ;
@@ -1238,28 +1240,26 @@ public: // variables
             init_data.SysMemPitch = UINT( width * bpp ) ;
             init_data.SysMemSlicePitch = UINT( width * height * bpp ) ;
 
+            // create the texture object
             {
-                auto const hr = _ctx->dev()->CreateTexture2D( &desc, &init_data, &img.texture ) ;
+                auto const hr = dev->CreateTexture2D( &desc, &init_data, &img.texture ) ;
                 if( FAILED( hr ) )
                 {
                     natus::log::global_t::error( natus_log_fn( "CreateTexture2D" ) ) ;
                 }
             }
 
-            {
-                //_ctx->ctx()->UpdateSubresource( img.texture, 0, NULL, mem, init_data.SysMemPitch, 0);
-            }
-
+            // create the resource view for the texture in order to be
+            // shader variable bindable.
+            if( img.texture != nullptr )
             {
                 D3D11_SHADER_RESOURCE_VIEW_DESC res_desc = { } ;
                 res_desc.Format = desc.Format ;
                 res_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D ;
-                //res_desc.Texture2DArray.ArraySize = 1 ;
-                //res_desc.Texture2DArray.FirstArraySlice = 0 ;
                 res_desc.Texture2D.MostDetailedMip = 0 ;
                 res_desc.Texture2D.MipLevels = UINT(1) ;
 
-                auto const hr = _ctx->dev()->CreateShaderResourceView( img.texture, &res_desc, &img.view ) ;
+                auto const hr = dev->CreateShaderResourceView( img.texture, &res_desc, &img.view ) ;
                 if( FAILED( hr ) )
                 {
                     natus::log::global_t::error( natus_log_fn( "CreateShaderResourceView for texture : [" + img.name + "]" ) ) ;
