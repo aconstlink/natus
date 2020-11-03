@@ -116,12 +116,6 @@ struct d3d11_backend::pimpl
             }
             return UINT( ret ) ;
         }
-
-        #if 0
-        GLenum ib_type ;
-        size_t ib_elem_sib = 0  ;
-        GLenum pt ;
-        #endif
     };
     natus_typedef( geo_data ) ;
 
@@ -149,31 +143,6 @@ struct d3d11_backend::pimpl
             natus::ntd::string_t name ;
             natus::graphics::type t ;
             natus::graphics::type_struct ts ;
-
-            //GLuint loc ;
-            //GLenum type ;
-
-            // this variable's memory location
-            //void_ptr_t mem = nullptr ;
-
-            #if 0
-            // the GL uniform function
-            natus::ogl::uniform_funk_t uniform_funk ;
-
-            // set by the user in user-space
-            //natus::graphics::ivariable_ptr_t var ;
-
-            void_t do_uniform_funk( void_t )
-            {
-                uniform_funk( loc, 1, mem ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glUniform" ) ) ;
-            }
-
-            void_t do_copy_funk( natus::graphics::ivariable_ptr_t var )
-            {
-                ::std::memcpy( mem, var->data_ptr(), natus::ogl::uniform_size_of( type ) ) ;
-            }
-            #endif
         };
         natus_typedef( data_variable ) ;
 
@@ -201,9 +170,6 @@ struct d3d11_backend::pimpl
             natus::ntd::vector< data_variable > datas ;
 
             size_t sib = 0 ;
-
-            // textures
-            // buffers
         } ;
         natus_typedef( cbuffer ) ;
         natus_typedefs( natus::ntd::vector< cbuffer_t >, cbuffers ) ;
@@ -213,7 +179,6 @@ struct d3d11_backend::pimpl
 
         image_variables_t vs_textures ;
         image_variables_t ps_textures ;
-        
     } ;
     natus_typedef( shader_data ) ;
 
@@ -301,45 +266,16 @@ struct d3d11_backend::pimpl
 
         natus::ntd::vector< std::pair< natus::graphics::variable_set_res_t,
             cbuffers_t > > var_sets_data_ps ;
-
-        #if 0
-        struct uniform_variable_link
-        {
-            // the index into the shader_config::uniforms array
-            size_t uniform_id ;
-            // the user variable holding the data.
-            natus::graphics::ivariable_ptr_t var ;
-        };
-
-        // user provided variable set
-        natus::ntd::vector< ::std::pair<
-            natus::graphics::variable_set_res_t,
-            natus::ntd::vector< uniform_variable_link > > > var_sets_data ;
-
-        struct uniform_texture_link
-        {
-            // the index into the shader_config::uniforms array
-            size_t uniform_id ;
-            GLint tex_id ;
-            size_t img_id ;
-        };
-        natus::ntd::vector< ::std::pair<
-            natus::graphics::variable_set_res_t,
-            natus::ntd::vector< uniform_texture_link > > > var_sets_texture ;
-
-        #endif
-
     };
     natus_typedef( render_data ) ;
 
-    
+public: // variables
 
     natus::graphics::backend_type const bt = natus::graphics::backend_type::d3d11 ;
     natus::graphics::d3d11_context_ptr_t _ctx ;
 
     typedef natus::ntd::vector< this_t::geo_data > geo_configs_t ;
     geo_configs_t geo_datas ;
-
 
     typedef natus::ntd::vector< this_t::shader_data > shader_datas_t ;
     shader_datas_t shaders ;
@@ -638,19 +574,13 @@ struct d3d11_backend::pimpl
             oid = i ;
         }
 
-        if( oid >= shaders.size() ) 
-        {
-            shaders.resize( oid + 1 ) ;
-        }
+        if( oid >= shaders.size() ) shaders.resize( oid + 1 ) ;
 
         //
         // Do Configuration
         //
         auto & shd = shaders[ oid ] ;
-
-        {
-            shd.name = name ;
-        }
+        shd.name = name ;
 
         // shader code
         natus::graphics::shader_set_t ss ;
@@ -916,15 +846,10 @@ struct d3d11_backend::pimpl
             oid = i ;
         }
 
-        if( oid >= renders.size() ) {
-            renders.resize( oid + 1 ) ;
-        }
+        if( oid >= renders.size() ) renders.resize( oid + 1 ) ;
 
         this_t::render_data_ref_t rd = renders[ oid ] ;
-
-        {
-            rd.name = name ;
-        }
+        rd.name = name ;
 
         if( rd.vertex_layout != nullptr )
         {
