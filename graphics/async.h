@@ -152,10 +152,22 @@ namespace natus
                 return *this ;
             }
 
+            this_ref_t configure( natus::graphics::framebuffer_object_res_t obj, natus::graphics::result_res_t res = natus::graphics::result_res_t() ) noexcept 
+            {
+                _async->configure( obj, res ) ;
+                return *this ;
+            }
+
             this_ref_t update( natus::graphics::geometry_object_res_t gs,
                 natus::graphics::result_res_t res = natus::graphics::result_res_t() ) noexcept
             {
                 _async->update( gs, res ) ;
+                return *this ;
+            }
+
+            this_ref_t use( natus::graphics::framebuffer_object_res_t obj, natus::graphics::result_res_t res = natus::graphics::result_res_t() ) noexcept 
+            {
+                _async->use( obj, res ) ;
                 return *this ;
             }
 
