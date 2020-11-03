@@ -1482,7 +1482,7 @@ public: // functions
         vp.MaxDepth = 1.0f ;
         vp.TopLeftX = 0 ;
         vp.TopLeftY = 0 ;
-        //_ctx->ctx()->RSSetViewports( 1, &vp );
+        _ctx->ctx()->RSSetViewports( 1, &vp );
 
         _ctx->clear_default( natus::math::vec4f_t() );
     }

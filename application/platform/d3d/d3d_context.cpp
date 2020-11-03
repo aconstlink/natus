@@ -107,9 +107,63 @@ natus::application::result context::vsync( bool_t const on_off )
 natus::application::result context::swap( void_t )
 {
     _pSwapChain->Present( _vsync, 0 );
+
+    {
+        RECT rc ;
+        GetClientRect( _hwnd, &rc ) ;
+        UINT const width = rc.right - rc.left ;
+        UINT const height = rc.bottom - rc.top ;
+
+        DXGI_SWAP_CHAIN_DESC desc ;
+        _pSwapChain->GetDesc( &desc ) ;
+
+        if( desc.BufferDesc.Width != width ||
+            desc.BufferDesc.Height != height )
+        {
+            _pImmediateContext->OMSetRenderTargets( 0, 0, 0 );
+
+            // Release all outstanding references to the swap chain's buffers.
+            _pRenderTargetView->Release();
+
+            HRESULT hr;
+            // Preserve the existing buffer count and format.
+            // Automatically choose the width and height to match the client rect for HWNDs.
+            hr = _pSwapChain->ResizeBuffers( 0, 0, 0, DXGI_FORMAT_UNKNOWN, 0 );
+            
+            if( FAILED( hr ) )
+            {
+                natus::log::global_t::error( "D3D11 context resize failed" ) ;
+                return natus::application::result::failed_d3d ;
+            }
+
+            // Get buffer and create a render-target-view.
+            ID3D11Texture2D* pBuffer;
+            hr = _pSwapChain->GetBuffer( 0, __uuidof( ID3D11Texture2D ),
+                ( void** ) &pBuffer );
+            // Perform error handling here!
+
+            hr = _pd3dDevice->CreateRenderTargetView( pBuffer, NULL,
+                &_pRenderTargetView );
+            // Perform error handling here!
+            pBuffer->Release();
+
+            _pImmediateContext->OMSetRenderTargets( 1, &_pRenderTargetView, NULL );
+
+            // Set up the viewport.
+            D3D11_VIEWPORT vp;
+            vp.Width = FLOAT( width ) ;
+            vp.Height = FLOAT( height ) ;
+            vp.MinDepth = 0.0f;
+            vp.MaxDepth = 1.0f;
+            vp.TopLeftX = 0;
+            vp.TopLeftY = 0;
+            _pImmediateContext->RSSetViewports( 1, &vp );
+        }
+    }
     return natus::application::result::ok ;
 }
 
+//***********************************************************************
 natus::graphics::backend_res_t context::create_backend( void_t ) noexcept 
 {
     if( _pd3dDevice != nullptr )
