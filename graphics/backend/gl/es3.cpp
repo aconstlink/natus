@@ -14,8 +14,10 @@
 
 using namespace natus::graphics ;
 
-namespace this_file_es
+struct es3_backend::pimpl
 {
+    natus_this_typedefs( pimpl ) ;
+
     struct geo_config
     {
         natus::ntd::string_t name ;
@@ -29,7 +31,7 @@ namespace this_file_es
 
         size_t num_elements_vb = 0 ;
         size_t num_elements_ib = 0 ;
-        
+
         size_t sib_vb = 0 ;
         size_t sib_ib = 0 ;
 
@@ -39,7 +41,7 @@ namespace this_file_es
             natus::graphics::type type ;
             natus::graphics::type_struct type_struct ;
 
-            GLuint sib( void_t ) const noexcept 
+            GLuint sib( void_t ) const noexcept
             {
                 return GLuint( natus::graphics::size_of( type ) *
                     natus::graphics::size_of( type_struct ) ) ;
@@ -70,9 +72,9 @@ namespace this_file_es
             natus::ntd::string_t name ;
         };
         natus::ntd::vector< vertex_input_binding > vertex_inputs ;
-        
+
         bool_t find_vertex_input_binding_by_name( natus::ntd::string_cref_t name_,
-            natus::graphics::vertex_attribute & va ) const noexcept
+            natus::graphics::vertex_attribute& va ) const noexcept
         {
             auto iter = ::std::find_if( vertex_inputs.begin(), vertex_inputs.end(),
                 [&] ( vertex_input_binding const& b )
@@ -146,10 +148,10 @@ namespace this_file_es
         };
 
         // user provided variable set
-        natus::ntd::vector< ::std::pair< 
-            natus::graphics::variable_set_res_t, 
+        natus::ntd::vector< ::std::pair<
+            natus::graphics::variable_set_res_t,
             natus::ntd::vector< uniform_variable_link > > > var_sets_data ;
-        
+
         struct uniform_texture_link
         {
             // the index into the shader_config::uniforms array
@@ -160,7 +162,7 @@ namespace this_file_es
         natus::ntd::vector< ::std::pair<
             natus::graphics::variable_set_res_t,
             natus::ntd::vector< uniform_texture_link > > > var_sets_texture ;
-        
+
     };
 
     struct image_config
@@ -175,22 +177,17 @@ namespace this_file_es
 
         // sampler ids for gl>=3.3
     };
-}
 
-struct es3_backend::pimpl
-{
-    natus_this_typedefs( pimpl ) ;
-
-    typedef natus::ntd::vector< this_file_es::shader_config > shaders_t ;
+    typedef natus::ntd::vector< this_t::shader_config > shaders_t ;
     shaders_t shaders ;
 
-    typedef natus::ntd::vector< this_file_es::render_config > rconfigs_t ;
+    typedef natus::ntd::vector< this_t::render_config > rconfigs_t ;
     rconfigs_t rconfigs ;
 
-    typedef natus::ntd::vector< this_file_es::geo_config > geo_configs_t ;
+    typedef natus::ntd::vector< this_t::geo_config > geo_configs_t ;
     geo_configs_t geo_configs ;
 
-    typedef natus::ntd::vector< this_file_es::image_config > image_configs_t ;
+    typedef natus::ntd::vector< this_t::image_config > image_configs_t ;
     image_configs_t img_configs ;
 
     GLsizei vp_width = 0 ;
@@ -215,7 +212,7 @@ struct es3_backend::pimpl
         // the name must be unique
         {
             auto iter = ::std::find_if( shaders.begin(), shaders.end(),
-                [&] ( this_file_es::shader_config const& c )
+                [&] ( this_t::shader_config const& c )
             {
                 return c.name == name ;
             } ) ;
@@ -343,7 +340,7 @@ struct es3_backend::pimpl
     }
 
     //***********************
-    void_t delete_all_variables( this_file_es::shader_config & config )
+    void_t delete_all_variables( this_t::shader_config & config )
     {
         config.vertex_inputs.clear() ;
 
@@ -457,7 +454,7 @@ struct es3_backend::pimpl
     }
 
     //***********************
-    void_t post_link_attributes( this_file_es::shader_config & config )
+    void_t post_link_attributes( this_t::shader_config & config )
     {
         GLuint const program_id = config.pg_id ;
 
@@ -495,7 +492,7 @@ struct es3_backend::pimpl
 
             natus::ntd::string_t const variable_name = natus::ntd::string_t( ( const char* ) buffer ) ;
 
-            this_file_es::shader_config::attribute_variable_t vd ;
+            this_t::shader_config::attribute_variable_t vd ;
             vd.name = ::std::move( variable_name ) ;
             vd.loc = location_id ;
             vd.type = gl_attrib_type ;
@@ -512,7 +509,7 @@ struct es3_backend::pimpl
     }
 
     //***********************
-    bool_t bind_attributes( this_file_es::shader_config & sconfig, this_file_es::geo_config & gconfig )
+    bool_t bind_attributes( this_t::shader_config & sconfig, this_t::geo_config & gconfig )
     {
         // bind vertex array object
         {
@@ -555,7 +552,7 @@ struct es3_backend::pimpl
             uiOffset = e.sib() ;
 
             auto iter = ::std::find_if( sconfig.attributes.begin(), sconfig.attributes.end(), 
-                [&]( this_file_es::shader_config::attribute_variable_cref_t av )
+                [&]( this_t::shader_config::attribute_variable_cref_t av )
             {
                 return av.va == e.va ;
             } ) ;
@@ -592,7 +589,7 @@ struct es3_backend::pimpl
     }
 
     //***********************
-    void_t post_link_uniforms( this_file_es::shader_config & config )
+    void_t post_link_uniforms( this_t::shader_config & config )
     {
         GLuint const program_id = config.pg_id ;
 
@@ -631,7 +628,7 @@ struct es3_backend::pimpl
 
             natus::ntd::string const variable_name = natus::ntd::string( char_cptr_t( buffer ) ) ;
 
-            this_file_es::shader_config::uniform_variable_t vd ;
+            this_t::shader_config::uniform_variable_t vd ;
             vd.name = ::std::move( variable_name ) ;
             vd.loc = location_id ;
             vd.type = gl_uniform_type ;
@@ -665,7 +662,7 @@ struct es3_backend::pimpl
     }
 
     //***********************
-    void_t update_all_uniforms( this_file_es::shader_config & config )
+    void_t update_all_uniforms( this_t::shader_config & config )
     {
         GLuint const program_id = config.pg_id ;
 
@@ -688,7 +685,7 @@ struct es3_backend::pimpl
         // the name is unique
         {
             auto iter = ::std::find_if( img_configs.begin(), img_configs.end(),
-                [&] ( this_file_es::image_config const& config )
+                [&] ( this_t::image_config const& config )
             {
                 return config.name == name ;
             } ) ;
@@ -747,7 +744,7 @@ struct es3_backend::pimpl
         // the name must be unique
         {
             auto iter = ::std::find_if( rconfigs.begin(), rconfigs.end(),
-                [&] ( this_file_es::render_config const& c )
+                [&] ( this_t::render_config const& c )
             {
                 return c.name == name ;
             } ) ;
@@ -800,7 +797,7 @@ struct es3_backend::pimpl
             sc.for_each_vertex_input_binding( [&]( 
                 natus::graphics::vertex_attribute const va, natus::ntd::string_cref_t name )
             {
-                sconfig.vertex_inputs.emplace_back( this_file_es::shader_config::vertex_input_binding 
+                sconfig.vertex_inputs.emplace_back( this_t::shader_config::vertex_input_binding 
                     { va, name } ) ;
             } ) ;
         }
@@ -836,7 +833,7 @@ struct es3_backend::pimpl
         // find geometry
         {
             auto const iter = ::std::find_if( geo_configs.begin(), geo_configs.end(),
-                [&] ( this_file_es::geo_config const& d )
+                [&] ( this_t::geo_config const& d )
             {
                 return d.name == rc.get_geometry() ;
             } ) ;
@@ -853,7 +850,7 @@ struct es3_backend::pimpl
         // find shader
         {
             auto const iter = ::std::find_if( shaders.begin(), shaders.end(),
-                [&] ( this_file_es::shader_config const& d )
+                [&] ( this_t::shader_config const& d )
             {
                 return d.name == rc.get_shader() ;
             } ) ;
@@ -899,7 +896,7 @@ struct es3_backend::pimpl
         // the name is unique
         {
             auto iter = ::std::find_if( geo_configs.begin(), geo_configs.end(), 
-                [&]( this_file_es::geo_config const & config )
+                [&]( this_t::geo_config const & config )
             {
                 return config.name == name ;
             } ) ;
@@ -962,7 +959,7 @@ struct es3_backend::pimpl
             geo.vertex_buffer().for_each_layout_element( 
                 [&]( natus::graphics::vertex_buffer_t::data_cref_t d )
             {
-                this_file_es::geo_config::layout_element le ;
+                this_t::geo_config::layout_element le ;
                 le.va = d.va ;
                 le.type = d.type ;
                 le.type_struct = d.type_struct ;
@@ -1051,7 +1048,7 @@ struct es3_backend::pimpl
 
     bool_t update( size_t const id, natus::graphics::image_object_ref_t confin )
     {
-        this_file_es::image_config& config = img_configs[ id ] ;
+        this_t::image_config& config = img_configs[ id ] ;
 
         glBindTexture( GL_TEXTURE_2D, config.tex_id ) ;
         if( natus::es::error::check_and_log( natus_log_fn( "glBindTexture" ) ) )
@@ -1108,7 +1105,7 @@ struct es3_backend::pimpl
     {
         auto& config = rconfigs[ id ] ;
 
-        this_file_es::shader_config & sconfig = *config.shaders_ptr ;
+        this_t::shader_config & sconfig = *config.shaders_ptr ;
 
         if( this_t::connect( config, vs ) )
             this_t::update_all_uniforms( sconfig ) ;
@@ -1116,15 +1113,15 @@ struct es3_backend::pimpl
         return true ;
     }
 
-    bool_t connect( this_file_es::render_config & config, natus::graphics::variable_set_res_t vs )
+    bool_t connect( this_t::render_config & config, natus::graphics::variable_set_res_t vs )
     {
         auto item_data = ::std::make_pair( vs,
-            natus::ntd::vector< this_file_es::render_config::uniform_variable_link >() ) ;
+            natus::ntd::vector< this_t::render_config::uniform_variable_link >() ) ;
 
         auto item_tex = ::std::make_pair( vs,
-            natus::ntd::vector< this_file_es::render_config::uniform_texture_link >() ) ;
+            natus::ntd::vector< this_t::render_config::uniform_texture_link >() ) ;
 
-        this_file_es::shader_config & sconfig = *config.shaders_ptr ;
+        this_t::shader_config & sconfig = *config.shaders_ptr ;
 
         size_t id = 0 ;
         for( auto& uv : sconfig.uniforms )
@@ -1142,7 +1139,7 @@ struct es3_backend::pimpl
                     continue ;
                 }
                 
-                this_file_es::render_config::uniform_variable_link link ;
+                this_t::render_config::uniform_variable_link link ;
                 link.uniform_id = id++ ;
                 link.var = var ;
 
@@ -1173,7 +1170,7 @@ struct es3_backend::pimpl
                     continue ;
                 }
 
-                this_file_es::render_config::uniform_texture_link link ;
+                this_t::render_config::uniform_texture_link link ;
                 link.uniform_id = id++ ;
                 link.tex_id = img_configs[ i ].tex_id ;
                 link.img_id = i ;
@@ -1190,9 +1187,9 @@ struct es3_backend::pimpl
     bool_t render( size_t const id, size_t const varset_id = size_t(0), GLsizei const start_element = GLsizei(0), 
         GLsizei const num_elements = GLsizei(-1) )
     {
-        this_file_es::render_config & config = rconfigs[ id ] ;
-        this_file_es::shader_config & sconfig = *config.shaders_ptr ;
-        this_file_es::geo_config & gconfig = *config.geo ;
+        this_t::render_config & config = rconfigs[ id ] ;
+        this_t::shader_config & sconfig = *config.shaders_ptr ;
+        this_t::geo_config & gconfig = *config.geo ;
 
         {
             glBindVertexArray( gconfig.va_id ) ;
