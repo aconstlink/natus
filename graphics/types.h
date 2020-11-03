@@ -259,11 +259,16 @@ namespace natus
 
     namespace graphics
     {
-        enum class render_target_type
+        enum class color_target_type
         {
             unknown,
             rgba_uint_8,
-            rbga_float_32,
+            rgba_float_32,
+        };
+
+        enum class depth_stencil_target_type
+        {
+            unknown,
             depth32,
             depth24_stencil8
         };

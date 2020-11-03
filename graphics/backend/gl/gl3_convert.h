@@ -263,6 +263,52 @@ namespace natus
             static GLenum convert( texture_wrap_type const t ) noexcept {
                 return natus::graphics::gl3::detail::wrap_types_gl[ ( size_t ) t ] ;
             }
+
+            static GLenum to_pixel_type( color_target_type const ct ) noexcept 
+            {
+                switch( ct )
+                {
+                case natus::graphics::color_target_type::rgba_float_32: return GL_FLOAT ;
+                case natus::graphics::color_target_type::rgba_uint_8: return GL_UNSIGNED_BYTE ;
+                default: break;
+                }
+                return GL_NONE ;
+            }
+
+            static GLenum to_gl_format( color_target_type const ct ) noexcept
+            {
+                switch( ct )
+                {
+                case natus::graphics::color_target_type::rgba_float_32: return GL_RGBA32F ;
+                case natus::graphics::color_target_type::rgba_uint_8: return GL_RGBA ;
+                default: break;
+                }
+                return GL_NONE ;
+            }
+
+            static GLenum to_gl_format( depth_stencil_target_type const t ) noexcept
+            {
+                switch( t )
+                {
+                case natus::graphics::depth_stencil_target_type::depth32 : return GL_DEPTH_COMPONENT ;
+                case natus::graphics::depth_stencil_target_type::depth24_stencil8: return GL_DEPTH24_STENCIL8 ;
+                default: break;
+                }
+                return GL_NONE ;
+            }
+
+            static size_t calc_sib( size_t const width, size_t const height, color_target_type const ct ) noexcept
+            {
+                switch( ct )
+                {
+                case natus::graphics::color_target_type::rgba_float_32: 
+                    return width * height * 4 * 4 ;
+                case natus::graphics::color_target_type::rgba_uint_8: 
+                    return width * height * 4 * 1 ;
+                default: break;
+                }
+                return GL_NONE ;
+            }
         }
     }
 }

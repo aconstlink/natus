@@ -62,6 +62,8 @@ struct gl3_backend::pimpl
 
     struct shader_config
     {
+        bool_t valid = false ;
+
         natus::ntd::string_t name ;
 
         GLuint vs_id = GLuint( -1 ) ;
@@ -181,6 +183,35 @@ struct gl3_backend::pimpl
         // sampler ids for gl>=3.3
     };
 
+    struct framebuffer_data
+    {
+        bool_t valid = false ;
+
+        natus::ntd::string_t name ;
+
+        GLuint gl_id = GLuint( -1 ) ;
+
+        size_t nt = 0 ;
+        GLuint colors[ 8 ] = {
+            GLuint( -1 ), GLuint( -1 ), GLuint( -1 ), GLuint( -1 ),
+            GLuint( -1 ), GLuint( -1 ), GLuint( -1 ), GLuint( -1 ) } ;
+
+        void_ptr_t mem_ptr = nullptr ;
+
+        natus::math::vec2ui_t dims ;
+
+        struct color_target
+        {
+            //
+        };
+
+        struct depth_target
+        {
+            // 
+        };
+    };
+    natus_typedef( framebuffer_data ) ;
+
     typedef natus::ntd::vector< this_t::shader_config > shaders_t ;
     shaders_t shaders ;
 
@@ -192,6 +223,9 @@ struct gl3_backend::pimpl
 
     typedef natus::ntd::vector< this_t::image_config > image_configs_t ;
     image_configs_t img_configs ;
+
+    typedef natus::ntd::vector< this_t::framebuffer_data_t > framebuffers_t ;
+    framebuffers_t _framebuffers ;
 
     GLsizei vp_width = 0 ;
     GLsizei vp_height = 0 ;
@@ -207,60 +241,159 @@ struct gl3_backend::pimpl
     {
         _ctx = ctx ;
     }
-
-    size_t construct_shader_config( size_t oid, natus::ntd::string_cref_t name,
-        natus::graphics::shader_object_ref_t config )
+    
+    template< typename T >
+    static size_t determine_oid( natus::ntd::string_cref_t name, natus::ntd::vector< T > & v ) noexcept
     {
-        //
-        // Array Management
-        //
+        size_t oid = size_t( -1 ) ;
 
-        // the name must be unique
         {
-            auto iter = ::std::find_if( shaders.begin(), shaders.end(),
-                [&] ( this_t::shader_config const& c )
+            auto iter = std::find_if( v.begin(), v.end(), [&] ( T const & c )
             {
                 return c.name == name ;
             } ) ;
 
-            if( iter != shaders.end() )
+            if( iter != v.end() )
             {
-                size_t const i = ( iter - shaders.begin() ) ;
-                if( natus::log::global_t::error( i != oid && oid != size_t( -1 ),
-                    natus_log_fn( "name and id do not fit " ) ) )
-                {
-                    return oid ;
-                }
+                oid = std::distance( v.begin(), iter ) ;
             }
         }
 
         if( oid == size_t( -1 ) )
         {
-            size_t i = 0 ;
-            for( ; i < shaders.size(); ++i )
+            for( size_t i = 0 ; i < v.size(); ++i )
             {
-                // here the vertex shader id is used for validity check.
-                // if invalid, that object in the array will be repopulated
-                if( natus::core::is_not( shaders[ i ].vs_id != GLuint( -1 ) ) )
+                if( !v[ i ].valid )
                 {
+                    oid = i ;
                     break ;
                 }
             }
-            oid = i ;
         }
 
-        if( oid >= shaders.size() ) 
+        if( oid >= v.size() )
         {
-            shaders.resize( oid + 1 ) ;
+            oid = v.size() ;
+            v.resize( oid + 1 ) ;
         }
+
+        v[ oid ].name = name ;
+
+        return oid ;
+    }
+
+    size_t construct_framebuffer( size_t oid, natus::graphics::framebuffer_object_ref_t obj ) noexcept
+    {
+        oid = determine_oid( obj.name(), _framebuffers ) ;
+
+        framebuffer_data_ref_t fb = _framebuffers[ oid ] ;
+
+        if( fb.gl_id == GLuint( -1 ) )
+        {
+            glGenFramebuffers( 1, &fb.gl_id ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glGenFramebuffers" ) ) ;
+        }
+
+        if( fb.gl_id == GLuint( -1 ) )return oid ;
+
+        // bind
+        {
+            glBindFramebuffer( GL_FRAMEBUFFER, fb.gl_id ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glGenFramebuffers" ) ) ;
+        }
+
+        size_t const nt = obj.get_num_color_targets() ;
+        auto const ctt = obj.get_color_target() ;
+        natus::math::vec2ui_t dims = obj.get_dims() ;
+        
+        // fix dims
+        {
+            dims.x( dims.x() + dims.x() % 2 ) ;
+            dims.y( dims.y() + dims.y() % 2 ) ;
+        }
+
+        // construct textures
+        // with memory
+        {
+            glDeleteTextures( GLsizei( fb.nt ), fb.colors ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glDeleteTextures" ) ) ;
+
+            glGenTextures( GLsizei( nt ), fb.colors ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glGenTextures" ) ) ;
+
+            for( size_t i=0; i<nt; ++i )
+            {
+                GLuint const tid = fb.colors[i] ;
+
+                glBindTexture( GL_TEXTURE_2D, tid ) ;
+                if( natus::ogl::error::check_and_log( natus_log_fn( "glBindTexture" ) ) )
+                    continue ;
+
+                GLenum const target = GL_TEXTURE_2D ;
+                GLint const level = 0 ;
+                GLsizei const width = dims.x() ;
+                GLsizei const height = dims.y() ;
+                GLenum const format = GL_RGBA ;
+                GLenum const type = natus::graphics::gl3::to_pixel_type( ctt ) ;
+                GLint const border = 0 ;
+                GLint const internal_format = natus::graphics::gl3::to_gl_format( ctt ) ;
+
+                // maybe required for memory allocation
+                // at the moment, render targets do not have system memory.
+                #if 0
+                size_t const sib = natus::graphics::gl3::calc_sib( dims.x(), dims.y(), ctt ) ;
+                #endif
+                void_cptr_t data = nullptr ;
+
+                glTexImage2D( target, level, internal_format, width, height, border, format, type, data ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glTexImage2D" ) ) ;
+            }
+        }
+
+        // attach
+        for( size_t i=0; i<nt; ++i )
+        {
+            GLuint const tid = fb.colors[ i ] ;
+            GLenum const att = GLenum( size_t( GL_COLOR_ATTACHMENT0 ) + i ) ;
+            glFramebufferTexture2D( GL_FRAMEBUFFER, att, GL_TEXTURE_2D, tid, 0 ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glFramebufferTexture2D" ) ) ;
+        }
+
+        GLenum status = 0 ;
+        // validate
+        {
+            status = glCheckFramebufferStatus( GL_FRAMEBUFFER ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glCheckFramebufferStatus" ) ) ;
+
+            natus::log::global_t::warning( status != GL_FRAMEBUFFER_COMPLETE, 
+                "Incomplete framebuffer : [" + obj.name() + "]" ) ;
+        }
+
+        // unbind
+        {
+            glBindFramebuffer( GL_FRAMEBUFFER, 0 ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glGenFramebuffers" ) ) ;
+        }
+
+        // remember data
+        if( status == GL_FRAMEBUFFER_COMPLETE )
+        {
+            // color type maybe?
+            fb.nt = nt ;
+            fb.dims = dims ;
+        }
+
+        return oid ;
+    }
+
+    size_t construct_shader_config( size_t oid,
+        natus::graphics::shader_object_ref_t obj ) noexcept
+    {
+        oid = determine_oid( obj.name(), shaders ) ;
 
         //
         // Do Configuration
         //
-
-        {
-            shaders[ oid ].name = name ;
-        }
 
         // program
         if( shaders[ oid ].pg_id == GLuint( -1 ) )
@@ -293,11 +426,11 @@ struct gl3_backend::pimpl
 
         natus::graphics::shader_set_t ss ;
         {
-            auto const res = config.shader_set( this_t::bt, ss ) ;
+            auto const res = obj.shader_set( this_t::bt, ss ) ;
             if( natus::core::is_not(res) )
             {
                 natus::log::global_t::warning( natus_log_fn(
-                    "config [" + config.name() + "] has no shaders for " + 
+                    "config [" + obj.name() + "] has no shaders for " + 
                     natus::graphics::to_string( this_t::bt ) ) ) ;
                 return oid ;
             }
@@ -1536,7 +1669,7 @@ natus::graphics::result gl3_backend::configure( natus::graphics::shader_object_r
 
     {
         id = natus::graphics::id_t( this_t::get_bid(),
-            _pimpl->construct_shader_config( id->get_oid( this_t::get_bid() ), config->name(), *config ) ) ;
+            _pimpl->construct_shader_config( id->get_oid( this_t::get_bid() ), *config ) ) ;
     }
 
     size_t const oid = id->get_oid( this_t::get_bid() ) ;
@@ -1576,8 +1709,15 @@ natus::graphics::result gl3_backend::configure( natus::graphics::image_object_re
 }
 
 //***
-natus::graphics::result gl3_backend::configure( natus::graphics::framebuffer_object_res_t ) noexcept 
+natus::graphics::result gl3_backend::configure( natus::graphics::framebuffer_object_res_t obj ) noexcept 
 {
+    natus::graphics::id_res_t id = obj->get_id() ;
+
+    {
+        id = natus::graphics::id_t( this_t::get_bid(), _pimpl->construct_framebuffer(
+            id->get_oid( this_t::get_bid() ), *obj ) ) ;
+    }
+
     return natus::graphics::result::ok ;
 }
 
