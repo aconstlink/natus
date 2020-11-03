@@ -35,7 +35,7 @@ namespace natus
                     sizeof( convert_blend_factor_d3d11 ) / sizeof( convert_blend_factor_d3d11[ 0 ] ) ;
 
                 static const D3D11_BLEND_OP convert_blend_op_d3d11[] =
-                { 
+                {
                     D3D11_BLEND_OP_ADD,
                     D3D11_BLEND_OP_SUBTRACT,
                     D3D11_BLEND_OP_REV_SUBTRACT,
@@ -61,31 +61,31 @@ namespace natus
         {
             static natus::ntd::string_cref_t vertex_binding_to_semantic( natus::graphics::vertex_attribute const va ) noexcept
             {
-                static natus::ntd::string_t const _semantics[] = { 
-                    "INVALID", "POSITION", "NORMAL", "TANGENT", 
-                    "COLOR", "COLOR1", "COLOR2", "COLOR3", "COLOR4", "COLOR5", 
-                    "TEXCOORD","TEXCOORD1", "TEXCOORD2", "TEXCOORD3", 
-                    "TEXCOORD4", "TEXCOORD5", "TEXCOORD6", "TEXCOORD7"} ;
+                static natus::ntd::string_t const _semantics[] = {
+                    "INVALID", "POSITION", "NORMAL", "TANGENT",
+                    "COLOR", "COLOR1", "COLOR2", "COLOR3", "COLOR4", "COLOR5",
+                    "TEXCOORD", "TEXCOORD1", "TEXCOORD2", "TEXCOORD3",
+                    "TEXCOORD4", "TEXCOORD5", "TEXCOORD6", "TEXCOORD7" } ;
 
                 switch( va )
                 {
-                case natus::graphics::vertex_attribute::position: return _semantics[1] ;
-                case natus::graphics::vertex_attribute::normal: return _semantics[2] ;
-                case natus::graphics::vertex_attribute::tangent: return _semantics[3] ;
-                case natus::graphics::vertex_attribute::color0: return _semantics[4] ;
-                case natus::graphics::vertex_attribute::color1: return _semantics[5] ;
-                case natus::graphics::vertex_attribute::color2: return _semantics[6] ;
-                case natus::graphics::vertex_attribute::color3: return _semantics[7] ;
-                case natus::graphics::vertex_attribute::color4: return _semantics[8] ;
-                case natus::graphics::vertex_attribute::color5: return _semantics[9] ;
-                case natus::graphics::vertex_attribute::texcoord0: return _semantics[10] ;
-                case natus::graphics::vertex_attribute::texcoord1: return _semantics[11] ;
-                case natus::graphics::vertex_attribute::texcoord2: return _semantics[12] ;
-                case natus::graphics::vertex_attribute::texcoord3: return _semantics[13] ;
-                case natus::graphics::vertex_attribute::texcoord4: return _semantics[14] ;
-                case natus::graphics::vertex_attribute::texcoord5: return _semantics[15] ;
-                case natus::graphics::vertex_attribute::texcoord6: return _semantics[16] ;
-                case natus::graphics::vertex_attribute::texcoord7: return _semantics[17] ;
+                case natus::graphics::vertex_attribute::position: return _semantics[ 1 ] ;
+                case natus::graphics::vertex_attribute::normal: return _semantics[ 2 ] ;
+                case natus::graphics::vertex_attribute::tangent: return _semantics[ 3 ] ;
+                case natus::graphics::vertex_attribute::color0: return _semantics[ 4 ] ;
+                case natus::graphics::vertex_attribute::color1: return _semantics[ 5 ] ;
+                case natus::graphics::vertex_attribute::color2: return _semantics[ 6 ] ;
+                case natus::graphics::vertex_attribute::color3: return _semantics[ 7 ] ;
+                case natus::graphics::vertex_attribute::color4: return _semantics[ 8 ] ;
+                case natus::graphics::vertex_attribute::color5: return _semantics[ 9 ] ;
+                case natus::graphics::vertex_attribute::texcoord0: return _semantics[ 10 ] ;
+                case natus::graphics::vertex_attribute::texcoord1: return _semantics[ 11 ] ;
+                case natus::graphics::vertex_attribute::texcoord2: return _semantics[ 12 ] ;
+                case natus::graphics::vertex_attribute::texcoord3: return _semantics[ 13 ] ;
+                case natus::graphics::vertex_attribute::texcoord4: return _semantics[ 14 ] ;
+                case natus::graphics::vertex_attribute::texcoord5: return _semantics[ 15 ] ;
+                case natus::graphics::vertex_attribute::texcoord6: return _semantics[ 16 ] ;
+                case natus::graphics::vertex_attribute::texcoord7: return _semantics[ 17 ] ;
                 default: break ;
                 }
 
@@ -206,8 +206,8 @@ namespace natus
                 case D3D_SVT_INT: return natus::graphics::type::tint ;
                 case D3D_SVT_MIN16INT: return natus::graphics::type::tshort ;
                 case D3D_SVT_FLOAT: return natus::graphics::type::tfloat ;
-                // half float not supported
-                //case D3D_SVT_MIN16FLOAT: return natus::graphics::type::tfloat ;
+                    // half float not supported
+                    //case D3D_SVT_MIN16FLOAT: return natus::graphics::type::tfloat ;
                 case D3D_SVT_UINT: return natus::graphics::type::tuint ;
                 case D3D_SVT_MIN16UINT: return natus::graphics::type::tushort ;
                 case D3D_SVT_DOUBLE: return natus::graphics::type::tdouble ;
@@ -219,7 +219,7 @@ namespace natus
 
             static bool_t is_texture_type( D3D_SHADER_VARIABLE_TYPE const t ) noexcept
             {
-                switch( t ) 
+                switch( t )
                 {
                 case D3D_SVT_TEXTURE: return true ;
                 case D3D_SVT_TEXTURE1D: return true ;
@@ -257,7 +257,7 @@ namespace natus
             {
                 switch( ft_min )
                 {
-                case natus::graphics::texture_filter_type::linear: 
+                case natus::graphics::texture_filter_type::linear:
                     switch( ft_mag )
                     {
                     case natus::graphics::texture_filter_type::linear:
@@ -282,7 +282,7 @@ namespace natus
 
             static D3D11_TEXTURE_ADDRESS_MODE convert( natus::graphics::texture_wrap_type const wt ) noexcept
             {
-                switch( wt ) 
+                switch( wt )
                 {
                 case natus::graphics::texture_wrap_type::repeat:
                     return D3D11_TEXTURE_ADDRESS_WRAP ;
@@ -291,19 +291,19 @@ namespace natus
                 case natus::graphics::texture_wrap_type::clamp_border:
                 case natus::graphics::texture_wrap_type::clamp_edge:
                     return D3D11_TEXTURE_ADDRESS_BORDER ;
-                case natus::graphics::texture_wrap_type::mirror :
+                case natus::graphics::texture_wrap_type::mirror:
                     return D3D11_TEXTURE_ADDRESS_MIRROR ;
                 default: break ;
                 }
                 return D3D11_TEXTURE_ADDRESS_WRAP ; ;
             }
 
-            static DXGI_FORMAT convert( natus::graphics::image_format const fmt, 
+            static DXGI_FORMAT convert( natus::graphics::image_format const fmt,
                 natus::graphics::image_element_type const iet ) noexcept
             {
-                switch( fmt ) 
+                switch( fmt )
                 {
-                case natus::graphics::image_format::rgb: 
+                case natus::graphics::image_format::rgb:
                     switch( iet )
                     {
                     case natus::graphics::image_element_type::float32:
@@ -317,7 +317,7 @@ namespace natus
                     default:
                         break;
                     }
-                case natus::graphics::image_format::rgba: 
+                case natus::graphics::image_format::rgba:
                     switch( iet )
                     {
                     case natus::graphics::image_element_type::float32:
@@ -331,7 +331,7 @@ namespace natus
                     default:
                         break;
                     }
-                case natus::graphics::image_format::depth: 
+                case natus::graphics::image_format::depth:
                     switch( iet )
                     {
                     case natus::graphics::image_element_type::float32:
@@ -339,7 +339,7 @@ namespace natus
                     default:
                         break;
                     }
-                case natus::graphics::image_format::intensity: 
+                case natus::graphics::image_format::intensity:
                     switch( iet )
                     {
                     case natus::graphics::image_element_type::float32:
@@ -356,6 +356,19 @@ namespace natus
                 }
 
                 return DXGI_FORMAT_UNKNOWN ;
+            }
+
+
+            static D3D_PRIMITIVE_TOPOLOGY convert( natus::graphics::primitive_type const pt ) noexcept
+            {
+                switch( pt )
+                {
+                case natus::graphics::primitive_type::lines: return D3D_PRIMITIVE_TOPOLOGY_LINELIST ;
+                case natus::graphics::primitive_type::triangles: return D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST ;
+                case natus::graphics::primitive_type::points: return D3D_PRIMITIVE_TOPOLOGY_POINTLIST ;
+                default: break ;
+                }
+                return D3D_PRIMITIVE_TOPOLOGY_UNDEFINED ;
             }
         }
     }

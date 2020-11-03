@@ -75,6 +75,8 @@ struct d3d11_backend::pimpl
         // per vertex sib
         UINT stride = 0 ;
 
+        natus::graphics::primitive_type pt ;
+
         struct layout_element
         {
             natus::graphics::vertex_attribute va ;
@@ -398,6 +400,8 @@ struct d3d11_backend::pimpl
 
         auto & config = geo_datas[ i ] ;
         config.name = name ;
+
+        config.pt = geo.primitive_type() ;
 
         // vertex buffer object
         {
@@ -1425,10 +1429,10 @@ struct d3d11_backend::pimpl
             ctx->IASetVertexBuffers( 0, 1, &geo.vb, &stride, &offset );
         }
         
-        ctx->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
+        ctx->IASetPrimitiveTopology( natus::graphics::d3d11::convert( geo.pt ) ) ;
 
-        ctx->VSSetShader( shd.vs, nullptr, 0 );
-        ctx->PSSetShader( shd.ps, nullptr, 0 );
+        ctx->VSSetShader( shd.vs, nullptr, 0 ) ;
+        ctx->PSSetShader( shd.ps, nullptr, 0 ) ;
 
         for( auto& img : rnd.var_sets_imgs_ps[ varset_id ].second )
         {
