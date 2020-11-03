@@ -182,7 +182,43 @@ namespace natus
 
         protected:
 
-            typedef std::pair< this_t::window_view_t, natus::graphics::async_view_t > window_async_t ;
+            struct window_async
+            {
+                friend class app ;
+
+            private:
+
+                this_t::window_view_t _wv ;
+                natus::graphics::async_view_t _av ;
+
+                window_async( this_t::window_view_t wv, natus::graphics::async_view_t p ) :
+                    _wv( std::move(wv) ), _av( std::move(p) ) {}
+
+            public:
+
+                window_async( void_t ) {}
+                window_async( window_async && rhv )
+                {
+                    _wv = std::move( rhv._wv ) ;
+                    _av = std::move( rhv._av ) ;
+                }
+
+                ~window_async( void_t ) {}
+
+                window_async & operator = ( window_async&& rhv )
+                {
+                    _wv = std::move( rhv._wv ) ;
+                    _av = std::move( rhv._av ) ;
+                    return *this ;
+                }
+
+            public:
+
+                this_t::window_view_t window( void_t ) const noexcept { return _wv ; }
+                natus::graphics::async_view_t async( void_t ) const noexcept { return _av ; }
+
+            };
+            natus_typedef( window_async ) ;
 
             this_t::window_async_t create_window( 
                 natus::ntd::string_cref_t name, this_t::window_info_in_t, natus::ntd::vector< natus::graphics::backend_type > types = { } ) ;

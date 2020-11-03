@@ -235,7 +235,7 @@ app::window_async_t app::create_window(
     _windows.emplace_back( ::std::move( pwi ) ) ;
     
 
-    return ::std::make_pair( this_t::window_view_t( _windows.size()-1, msg_send, gfx_msg_send ), 
+    return this_t::window_async_t( this_t::window_view_t( _windows.size()-1, msg_send, gfx_msg_send ), 
         natus::graphics::async_view_t( ::std::move( async ), _access ) ) ;
 }
 
