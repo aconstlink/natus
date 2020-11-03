@@ -15,9 +15,8 @@ async::async( backend_res_t rptr ) : _backend( rptr )
 async::async( this_rref_t rhv ) 
 {
     _runtimes = std::move( rhv._runtimes ) ;
-    _backend = std::move( rhv._backend ) ;    
-    _rconfigs = std::move( rhv._rconfigs ) ;
-    _gconfigs = std::move( rhv._gconfigs ) ;
+    _configures = std::move( rhv._configures ) ;
+    _backend = std::move( rhv._backend ) ;   
     _num_enter = rhv._num_enter ;
 }
 
@@ -36,13 +35,15 @@ natus::graphics::result async::set_window_info( natus::graphics::backend_t::wind
 
 //****
 async::this_ref_t async::configure( natus::graphics::geometry_object_res_t gconfig, 
-    natus::graphics::result_res_t res ) noexcept
-{
-    //auto const res = aid->swap( natus::graphics::async_result::in_transit ) ;
-    //if( res != natus::graphics::async_result::in_transit )
+    natus::graphics::result_res_t res ) noexcept{
+    
     {
-        natus::concurrent::lock_guard_t lk( _gconfigs_mtx ) ;
-        _gconfigs.push_back( gconfig_data( { res, gconfig } ) ) ;
+        natus::concurrent::lock_guard_t lk( _configures_mtx ) ;
+        _configures.emplace_back( [=] ( natus::graphics::backend_ptr_t be ) mutable 
+        { 
+            auto const ires = _backend->configure( std::move( gconfig ) ) ;
+            if( res.is_valid() ) *res = ires ;
+        } ) ;
     }
     return *this ;
 }
@@ -51,11 +52,13 @@ async::this_ref_t async::configure( natus::graphics::geometry_object_res_t gconf
 async::this_ref_t async::configure( natus::graphics::render_object_res_t rc, 
     natus::graphics::result_res_t res ) noexcept 
 {
-    //auto const res = aid->swap( natus::graphics::async_result::in_transit ) ;
-    //if( res != natus::graphics::async_result::in_transit ) 
     {
-        natus::concurrent::lock_guard_t lk( _rconfigs_mtx ) ;
-        _rconfigs.push_back( rconfig_data( { res, rc } ) ) ;
+        natus::concurrent::lock_guard_t lk( _configures_mtx ) ;
+        _configures.emplace_back( [=] ( natus::graphics::backend_ptr_t be ) mutable
+        {
+            auto const ires = _backend->configure( std::move( rc ) ) ;
+            if( res.is_valid() ) *res = ires ;
+        } ) ;
     }
     
     return *this ;
@@ -66,8 +69,12 @@ async::this_ref_t async::configure( natus::graphics::shader_object_res_t sc,
     natus::graphics::result_res_t res ) noexcept 
 {
     {
-        natus::concurrent::lock_guard_t lk( _shader_configs_mtx ) ;
-        _shader_configs.push_back( shader_config_data( { res, sc } ) ) ;
+        natus::concurrent::lock_guard_t lk( _configures_mtx ) ;
+        _configures.emplace_back( [=] ( natus::graphics::backend_ptr_t be ) mutable
+        {
+            auto const ires = _backend->configure( std::move( sc ) ) ;
+            if( res.is_valid() ) *res = ires ;
+        } ) ;
     }
 
     return *this ;
@@ -78,8 +85,12 @@ async::this_ref_t async::configure( natus::graphics::image_object_res_t sc,
     natus::graphics::result_res_t res ) noexcept 
 {
     {
-        natus::concurrent::lock_guard_t lk( _image_configs_mtx ) ;
-        _image_configs.push_back( image_config_data( { res, sc } ) ) ;
+        natus::concurrent::lock_guard_t lk( _configures_mtx ) ;
+        _configures.emplace_back( [=] ( natus::graphics::backend_ptr_t be ) mutable
+        {
+            auto const ires = _backend->configure( std::move( sc ) ) ;
+            if( res.is_valid() ) *res = ires ;
+        } ) ;
     }
 
     return *this ;
@@ -90,19 +101,12 @@ async::this_ref_t async::configure( natus::graphics::framebuffer_object_res_t fb
     natus::graphics::result_res_t res ) noexcept 
 {
     {
-        natus::concurrent::lock_guard_t lk( _fb_configs_mtx ) ;
-        _fbconfigs.push_back( framebuffer_config_data( { res, fb } ) ) ;
-    }
-    return *this ;
-}
-
-//****
-async::this_ref_t async::connect( natus::graphics::render_object_res_t config, 
-    natus::graphics::variable_set_res_t vs, natus::graphics::result_res_t res ) noexcept 
-{
-    {
-        natus::concurrent::lock_guard_t lk( _connects_mtx ) ;
-        _connects.push_back( connect_data( { res, vs, config } ) ) ;
+        natus::concurrent::lock_guard_t lk( _configures_mtx ) ;
+        _configures.emplace_back( [=] ( natus::graphics::backend_ptr_t be ) mutable
+        {
+            auto const ires = _backend->configure( std::move( fb ) ) ;
+            if( res.is_valid() ) *res = ires ;
+        } ) ;
     }
     return *this ;
 }
@@ -111,9 +115,15 @@ async::this_ref_t async::update( natus::graphics::geometry_object_res_t gs,
     natus::graphics::result_res_t res ) noexcept 
 {
     {
-        natus::concurrent::lock_guard_t lk( _gupdates_mtx ) ;
-        _gupdates.push_back( gupdate_data( { res, gs } ) ) ;
+        natus::concurrent::lock_guard_t lk( _runtimes_mtx ) ;
+
+        _configures.push_back( [=] ( natus::graphics::backend_ptr_t be ) mutable
+        {
+            auto const ires = be->update( std::move( gs ) ) ;
+            if( res.is_valid() ) *res = ires ;
+        } ) ;
     }
+
     return *this ;
 }
 
@@ -163,108 +173,26 @@ void_t async::system_update( void_t ) noexcept
         _backend->set_window_info( wi ) ;
     }
 
-    // image configs
+    // configures
     {
-        this_t::image_configs_t preps ;
+        this_t::commands_t coms ;
         {
-            natus::concurrent::lock_guard_t lk( _image_configs_mtx ) ;
-            preps = ::std::move( _image_configs ) ;
+            natus::concurrent::lock_guard_t lk( _configures_mtx ) ;
+            coms = std::move( _configures ) ;
         }
-        for( auto& prc : preps )
+
+        auto* bptr = _backend.get_sptr().get() ;
+        for( auto& rtz : coms )
         {
-            auto const res = _backend->configure( ::std::move( prc.config ) ) ;
-            if( prc.res.is_valid() ) *prc.res = res ;
+            rtz( bptr ) ;
         }
     }
 
-    // geometry configs
-    {
-        this_t::gconfigs_t preps ;
-        {
-            natus::concurrent::lock_guard_t lk( _gconfigs_mtx ) ;
-            preps = ::std::move( _gconfigs ) ;
-        }
-        for( auto& prc : preps )
-        {
-            auto const res = _backend->configure( ::std::move( prc.config ) ) ;
-            if( prc.res.is_valid() ) *prc.res = res ;
-        }
-    }
-
-    // framebuffer objects
-    {
-        this_t::fb_configs_t preps ;
-        {
-            natus::concurrent::lock_guard_t lk( _fb_configs_mtx ) ;
-            preps = std::move( _fbconfigs ) ;
-        }
-        for( auto& prc : preps )
-        {
-            auto const res = _backend->configure( std::move( prc.config ) ) ;
-            if( prc.res.is_valid() ) *prc.res = res ;
-        }
-    }
-
-    // geometry update
-    {
-        this_t::gupdates_t preps ;
-        {
-            natus::concurrent::lock_guard_t lk( _gupdates_mtx ) ;
-            preps = ::std::move( _gupdates ) ;
-        }
-        for( auto& prc : preps )
-        {
-            auto const res = _backend->update( ::std::move( prc.config ) ) ;
-            if( prc.res.is_valid() ) *prc.res = res ;
-        }
-    }
-
-    // shader configs
-    {
-        this_t::shader_configs_t preps ;
-        {
-            natus::concurrent::lock_guard_t lk( _shader_configs_mtx ) ;
-            preps = ::std::move( _shader_configs ) ;
-        }
-        for( auto& prc : preps )
-        {
-            auto const res = _backend->configure( ::std::move( prc.config ) ) ;
-            if( prc.res.is_valid() ) *prc.res = res ;
-        }
-    }
-
-    // render configs
-    {
-        this_t::rconfigs_t preps ;
-        {
-            natus::concurrent::lock_guard_t lk( _rconfigs_mtx ) ;
-            preps = ::std::move( _rconfigs ) ;
-        }
-        for( auto& prc : preps )
-        {
-            auto const res = _backend->configure( ::std::move( prc.config ) ) ;
-            if( prc.res.is_valid() ) *prc.res = res ;
-        }
-    }
-
-    // connects
-    {
-        this_t::connects_t preps ;
-        {
-            natus::concurrent::lock_guard_t lk( _connects_mtx ) ;
-            preps = ::std::move( _connects ) ;
-        }
-        for( auto& prc : preps )
-        {
-            auto const res = _backend->connect( ::std::move( prc.config ), ::std::move( prc.vs ) ) ;
-            if( prc.res.is_valid() ) *prc.res = res ;
-        }
-    }
-
+    // runtime functions
     {
         _backend->render_begin() ;
 
-        this_t::runtime_commands_t coms ;
+        this_t::commands_t coms ;
         {
             natus::concurrent::lock_guard_t lk( _runtimes_mtx ) ;
             coms = std::move( _runtimes ) ;
