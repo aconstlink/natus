@@ -175,6 +175,7 @@ namespace natus
         // per channel type and bit-ness
         enum class image_element_type
         {
+            unknown,
             float8,
             float16,
             float32,
@@ -254,5 +255,17 @@ namespace natus
             linear,
             size
         } ;
+    }
+
+    namespace graphics
+    {
+        enum class render_target_type
+        {
+            unknown,
+            rgba_uint_8,
+            rbga_float_32,
+            depth32,
+            depth24_stencil8
+        };
     }
 }

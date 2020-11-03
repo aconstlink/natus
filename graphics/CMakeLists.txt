@@ -38,6 +38,7 @@ set( sources
     "object/geometry_object.h"
     "object/image_object.h"
     "object/shader_object.h"
+    "object/framebuffer_object.h"
 
     "variable/variables.hpp"
     "variable/variable_set.hpp"

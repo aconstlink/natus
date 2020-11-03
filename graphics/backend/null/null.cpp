@@ -43,6 +43,12 @@ natus::graphics::result null_backend::configure( natus::graphics::image_object_r
 }
 
 //***
+natus::graphics::result null_backend::configure( natus::graphics::framebuffer_object_res_t ) noexcept 
+{
+    return natus::graphics::result::ok ;
+}
+
+//***
 natus::graphics::result null_backend::connect( natus::graphics::render_object_res_t, natus::graphics::variable_set_res_t ) noexcept 
 {
     return natus::graphics::result::ok ;
@@ -50,6 +56,12 @@ natus::graphics::result null_backend::connect( natus::graphics::render_object_re
 
 //***
 natus::graphics::result null_backend::update( natus::graphics::geometry_object_res_t ) noexcept 
+{
+    return natus::graphics::result::ok ;
+}
+
+//****
+natus::graphics::result null_backend::use( natus::graphics::framebuffer_object_res_t ) noexcept 
 {
     return natus::graphics::result::ok ;
 }

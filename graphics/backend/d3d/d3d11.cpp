@@ -1837,6 +1837,12 @@ natus::graphics::result d3d11_backend::configure( natus::graphics::image_object_
 }
 
 //***
+natus::graphics::result d3d11_backend::configure( natus::graphics::framebuffer_object_res_t ) noexcept 
+{
+    return natus::graphics::result::ok ;
+}
+
+//***
 natus::graphics::result d3d11_backend::connect( natus::graphics::render_object_res_t config, natus::graphics::variable_set_res_t vs ) noexcept
 {
     natus::graphics::id_res_t id = config->get_id() ;
@@ -1877,6 +1883,12 @@ natus::graphics::result d3d11_backend::update( natus::graphics::geometry_object_
         natus_log_fn( "update geometry" ) ) ;
     
 
+    return natus::graphics::result::ok ;
+}
+
+//****
+natus::graphics::result d3d11_backend::use( natus::graphics::framebuffer_object_res_t ) noexcept 
+{
     return natus::graphics::result::ok ;
 }
 
