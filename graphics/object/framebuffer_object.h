@@ -30,14 +30,13 @@ namespace natus
         public:
 
             framebuffer_object( void_t ) {}
+            framebuffer_object( natus::ntd::string_cref_t name ) : _name( name ) {}
 
             framebuffer_object( size_t const width, size_t const height,
                natus::graphics::color_target_type const t ) : _width( width ), _height( height ), _ctt( t ) {}
 
-            framebuffer_object( natus::ntd::string_cref_t name )
-                : _name( name ) {}
 
-            ~framebuffer_object( void_t ) {}
+            virtual ~framebuffer_object( void_t ) {}
 
             natus::ntd::string_cref_t name( void_t ) const noexcept { return _name ; }
 
