@@ -136,6 +136,7 @@ struct es3_backend::pimpl
 
     struct render_config
     {
+        bool_t valid = false ;
         natus::ntd::string_t name ;
 
         size_t geo_id = size_t( -1 ) ;
@@ -286,7 +287,7 @@ struct es3_backend::pimpl
         if( fb.gl_id == GLuint( -1 ) )
         {
             glGenFramebuffers( 1, &fb.gl_id ) ;
-            natus::ogl::error::check_and_log( natus_log_fn( "glGenFramebuffers" ) ) ;
+            natus::es::error::check_and_log( natus_log_fn( "glGenFramebuffers" ) ) ;
         }
 
         if( fb.gl_id == GLuint( -1 ) )return oid ;
@@ -294,7 +295,7 @@ struct es3_backend::pimpl
         // bind
         {
             glBindFramebuffer( GL_FRAMEBUFFER, fb.gl_id ) ;
-            natus::ogl::error::check_and_log( natus_log_fn( "glGenFramebuffers" ) ) ;
+            natus::es::error::check_and_log( natus_log_fn( "glGenFramebuffers" ) ) ;
         }
 
         size_t const nt = obj.get_num_color_targets() ;
@@ -311,17 +312,17 @@ struct es3_backend::pimpl
         // with memory
         {
             glDeleteTextures( GLsizei( fb.nt ), fb.colors ) ;
-            natus::ogl::error::check_and_log( natus_log_fn( "glDeleteTextures" ) ) ;
+            natus::es::error::check_and_log( natus_log_fn( "glDeleteTextures" ) ) ;
 
             glGenTextures( GLsizei( nt ), fb.colors ) ;
-            natus::ogl::error::check_and_log( natus_log_fn( "glGenTextures" ) ) ;
+            natus::es::error::check_and_log( natus_log_fn( "glGenTextures" ) ) ;
 
             for( size_t i = 0; i < nt; ++i )
             {
                 GLuint const tid = fb.colors[ i ] ;
 
                 glBindTexture( GL_TEXTURE_2D, tid ) ;
-                if( natus::ogl::error::check_and_log( natus_log_fn( "glBindTexture" ) ) )
+                if( natus::es::error::check_and_log( natus_log_fn( "glBindTexture" ) ) )
                     continue ;
 
                 GLenum const target = GL_TEXTURE_2D ;
@@ -329,36 +330,51 @@ struct es3_backend::pimpl
                 GLsizei const width = dims.x() ;
                 GLsizei const height = dims.y() ;
                 GLenum const format = GL_RGBA ;
-                GLenum const type = natus::graphics::gl3::to_pixel_type( ctt ) ;
+                GLenum const type = natus::graphics::es3::to_pixel_type( ctt ) ;
                 GLint const border = 0 ;
-                GLint const internal_format = natus::graphics::gl3::to_gl_format( ctt ) ;
+                GLint const internal_format = natus::graphics::es3::to_gl_format( ctt ) ;
 
                 // maybe required for memory allocation
                 // at the moment, render targets do not have system memory.
                 #if 0
-                size_t const sib = natus::graphics::gl3::calc_sib( dims.x(), dims.y(), ctt ) ;
+                size_t const sib = natus::graphics::es3::calc_sib( dims.x(), dims.y(), ctt ) ;
                 #endif
-                void_cptr_t data = nullptr ;
+                void_cptr_t data = 0;//nullptr ;
 
                 glTexImage2D( target, level, internal_format, width, height, border, format, type, data ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glTexImage2D" ) ) ;
+                natus::es::error::check_and_log( natus_log_fn( "glTexImage2D" ) ) ;
             }
         }
 
-        // attach
+        // Attach
         for( size_t i = 0; i < nt; ++i )
         {
             GLuint const tid = fb.colors[ i ] ;
             GLenum const att = GLenum( size_t( GL_COLOR_ATTACHMENT0 ) + i ) ;
             glFramebufferTexture2D( GL_FRAMEBUFFER, att, GL_TEXTURE_2D, tid, 0 ) ;
-            natus::ogl::error::check_and_log( natus_log_fn( "glFramebufferTexture2D" ) ) ;
+            natus::es::error::check_and_log( natus_log_fn( "glFramebufferTexture2D" ) ) ;
         }
+
+        // setup color
+        {
+            GLenum attachments[ 15 ] ;
+            size_t const num_color = nt ;
+
+            for( size_t i = 0; i < num_color; ++i )
+            {
+                attachments[ i ] = GLenum( size_t( GL_COLOR_ATTACHMENT0 ) + i ) ;
+            }
+
+            glDrawBuffers( GLsizei( num_color ), attachments ) ;
+            natus::es::error::check_and_log( natus_log_fn( "glGenFramebuffers" ) ) ;
+        }
+
 
         GLenum status = 0 ;
         // validate
         {
             status = glCheckFramebufferStatus( GL_FRAMEBUFFER ) ;
-            natus::ogl::error::check_and_log( natus_log_fn( "glCheckFramebufferStatus" ) ) ;
+            natus::es::error::check_and_log( natus_log_fn( "glCheckFramebufferStatus" ) ) ;
 
             natus::log::global_t::warning( status != GL_FRAMEBUFFER_COMPLETE,
                 "Incomplete framebuffer : [" + obj.name() + "]" ) ;
@@ -367,7 +383,7 @@ struct es3_backend::pimpl
         // unbind
         {
             glBindFramebuffer( GL_FRAMEBUFFER, 0 ) ;
-            natus::ogl::error::check_and_log( natus_log_fn( "glGenFramebuffers" ) ) ;
+            natus::es::error::check_and_log( natus_log_fn( "glGenFramebuffers" ) ) ;
         }
 
         // remember data
@@ -391,7 +407,7 @@ struct es3_backend::pimpl
 
                 for( size_t j = 0; j < ( size_t ) natus::graphics::texture_wrap_mode::size; ++j )
                 {
-                    img_configs[ idx ].wrap_types[ j ] = GL_CLAMP_TO_BORDER ;
+                    img_configs[ idx ].wrap_types[ j ] = GL_CLAMP_TO_EDGE ;
                 }
 
                 for( size_t j = 0; j < ( size_t ) natus::graphics::texture_filter_mode::size; ++j )
@@ -411,8 +427,12 @@ struct es3_backend::pimpl
         // bind
         {
             glBindFramebuffer( GL_FRAMEBUFFER, fb.gl_id ) ;
-            natus::ogl::error::check_and_log( natus_log_fn( "glGenFramebuffers" ) ) ;
+            natus::es::error::check_and_log( natus_log_fn( "glGenFramebuffers" ) ) ;
         }
+
+        //glClearColor ( 0.0f, 1.0f, 1.0f, 0.0f );
+        //glClear ( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+        //natus::es::error::check_and_log( natus_log_fn( "glGenFramebuffers" ) ) ;
 
         // setup color
         {
@@ -425,13 +445,13 @@ struct es3_backend::pimpl
             }
 
             glDrawBuffers( GLsizei( num_color ), attachments ) ;
-            natus::ogl::error::check_and_log( natus_log_fn( "glGenFramebuffers" ) ) ;
+            natus::es::error::check_and_log( natus_log_fn( "glGenFramebuffers" ) ) ;
         }
 
         // there is only one dimension at the moment
         {
             glViewport( 0, 0, GLsizei( fb.dims.x() ), GLsizei( fb.dims.y() ) ) ;
-            natus::ogl::error::check_and_log( natus_log_fn( "glViewport" ) ) ;
+            natus::es::error::check_and_log( natus_log_fn( "glViewport" ) ) ;
         }
 
         return true ;
@@ -442,13 +462,13 @@ struct es3_backend::pimpl
         // unbind
         {
             glBindFramebuffer( GL_FRAMEBUFFER, 0 ) ;
-            natus::ogl::error::check_and_log( natus_log_fn( "glGenFramebuffers" ) ) ;
+            natus::es::error::check_and_log( natus_log_fn( "glGenFramebuffers" ) ) ;
         }
 
         // reset viewport
         {
             glViewport( 0, 0, vp_width, vp_height ) ;
-            natus::ogl::error::check_and_log( natus_log_fn( "glViewport" ) ) ;
+            natus::es::error::check_and_log( natus_log_fn( "glViewport" ) ) ;
         }
     }
 
@@ -988,50 +1008,12 @@ struct es3_backend::pimpl
     }
 
     //***********************
-    size_t construct_render_config( size_t oid, natus::ntd::string_cref_t name,
-        natus::graphics::render_object_ref_t /*config*/ )
+    size_t construct_render_config( size_t oid, natus::graphics::render_object_ref_t obj )
     {
-        // the name must be unique
+        oid = determine_oid( obj.name(), rconfigs ) ;
+        
         {
-            auto iter = ::std::find_if( rconfigs.begin(), rconfigs.end(),
-                [&] ( this_t::render_config const& c )
-            {
-                return c.name == name ;
-            } ) ;
-
-            if( iter != rconfigs.end() )
-            {
-                size_t const i = ( iter - rconfigs.begin() ) ;
-                if( natus::log::global_t::error( i != oid && oid != size_t( -1 ),
-                    natus_log_fn( "name and id do not fit " ) ) )
-                {
-                    return oid ;
-                }
-            }
-        }
-
-        if( oid == size_t( -1 ) )
-        {
-            size_t i = 0 ;
-            for( ; i < rconfigs.size(); ++i )
-            {
-                if( natus::core::is_not( rconfigs[ i ].name.empty() ) )
-                {
-                    break ;
-                }
-            }
-            oid = i ;
-        }
-
-        if( oid >= rconfigs.size() ) {
-            rconfigs.resize( oid + 1 ) ;
-        }
-
-        {
-            rconfigs[ oid ].name = name ;
-        }
-
-        {
+            rconfigs[ oid ].name = obj.name() ;
             rconfigs[ oid ].var_sets_data.clear() ;
             rconfigs[ oid ].var_sets_texture.clear() ;
         }
@@ -1078,7 +1060,6 @@ struct es3_backend::pimpl
     bool_t update( size_t const id, natus::graphics::render_object_ref_t rc )
     {
         auto& config = rconfigs[ id ] ;
-        config.geo = nullptr ;
 
         // find geometry
         {
@@ -1094,7 +1075,7 @@ struct es3_backend::pimpl
                 return false ;
             }
 
-            config.geo_id = std::distance( geo_configs.begin(), iter ) ;
+            config.geo_id = std::distance( geo_datas.begin(), iter ) ;
         }
 
         // find shader
@@ -1117,7 +1098,7 @@ struct es3_backend::pimpl
         // for binding attributes, the shader and the geometry is required.
         {
             this_t::shader_data_ref_t shd = shaders[ config.shd_id ] ;
-            this_t::geo_data_ref_t geo = geo_configs[ config.geo_id ] ;
+            this_t::geo_data_ref_t geo = geo_datas[ config.geo_id ] ;
             this_t::bind_attributes( shd, geo ) ;
         }
 
@@ -1441,7 +1422,7 @@ struct es3_backend::pimpl
     {
         this_t::render_config & config = rconfigs[ id ] ;
         this_t::shader_data& sconfig = shaders[ config.shd_id ] ;
-        this_t::geo_data& gconfig = geo_configs[ config.geo_id ] ;
+        this_t::geo_data& gconfig = geo_datas[ config.geo_id ] ;
 
         {
             glBindVertexArray( gconfig.va_id ) ;
@@ -1700,7 +1681,7 @@ natus::graphics::result es3_backend::configure( natus::graphics::render_object_r
 
     {
         id = natus::graphics::id_t( this_t::get_bid(),
-            _pimpl->construct_render_config( id->get_oid( this_t::get_bid() ), config->name(), *config ) ) ;
+            _pimpl->construct_render_config( id->get_oid( this_t::get_bid() ), *config ) ) ;
     }
 
     size_t const oid = id->get_oid( this_t::get_bid() ) ;
@@ -1763,6 +1744,25 @@ natus::graphics::result es3_backend::configure( natus::graphics::image_object_re
 }
 
 //***
+natus::graphics::result es3_backend::configure( natus::graphics::framebuffer_object_res_t obj ) noexcept 
+{
+    if( !obj.is_valid() || obj->name().empty() )
+    {
+        natus::log::global_t::error( natus_log_fn( "Object must be valid and requires a name" ) ) ;
+        return natus::graphics::result::invalid_argument ;
+    }
+
+    natus::graphics::id_res_t id = obj->get_id() ;
+
+    {
+        id = natus::graphics::id_t( this_t::get_bid(), _pimpl->construct_framebuffer(
+            id->get_oid( this_t::get_bid() ), *obj ) ) ;
+    }
+
+    return natus::graphics::result::ok ;
+}
+
+//***
 natus::graphics::result es3_backend::connect( natus::graphics::render_object_res_t config, natus::graphics::variable_set_res_t vs ) noexcept
 {
     natus::graphics::id_res_t id = config->get_id() ;
@@ -1798,6 +1798,29 @@ natus::graphics::result es3_backend::update( natus::graphics::geometry_object_re
     auto const res = _pimpl->update( oid, config ) ;
     natus::log::global_t::error( natus::graphics::is_not( res ),
         natus_log_fn( "update geometry" ) ) ;
+
+    return natus::graphics::result::ok ;
+}
+
+natus::graphics::result es3_backend::use( natus::graphics::framebuffer_object_res_t obj ) noexcept 
+{
+    if( !obj.is_valid() )
+    {
+        _pimpl->deactivate_framebuffer() ;
+        return natus::graphics::result::ok ;
+    }
+
+    natus::graphics::id_res_t id = obj->get_id() ;
+
+    if( id->is_not_valid( this_t::get_bid() ) )
+    {
+        _pimpl->deactivate_framebuffer() ;
+        return natus::graphics::result::ok ;
+    }
+
+    size_t const oid = id->get_oid( this_t::get_bid() ) ;
+    auto const res = _pimpl->activate_framebuffer( oid ) ;
+    if( !res ) return natus::graphics::result::failed ;
 
     return natus::graphics::result::ok ;
 }

@@ -40,7 +40,7 @@ void_t imgui::execute( exec_funk_t funk )
 }
 
 //***
-void_t imgui::init( natus::graphics::async_view_ref_t async ) 
+void_t imgui::init( natus::graphics::async_view_t async ) 
 {    
     _ctx = ImGui::CreateContext() ;
 
@@ -276,7 +276,7 @@ void_t imgui::begin( void_t )
 }
 
 //***
-void_t imgui::render( natus::graphics::async_view_ref_t async ) 
+void_t imgui::render( natus::graphics::async_view_t async ) 
 {
     natus::gfx::pinhole_camera_t camera ;
     camera.orthographic( float_t( _width ), float_t(_height), 1.0f, 1000.0f ) ;
