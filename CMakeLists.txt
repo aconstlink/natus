@@ -120,6 +120,7 @@ list( APPEND subdirs
     "device"
     "format"
     "audio"
+    "geometry"
     ${subdirs_header_only}
     )
 
