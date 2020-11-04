@@ -1,6 +1,8 @@
 
 #include "fractal.h"
 
+#include <cstring>
+
 using namespace natus::geometry ;
 
 //*************************************************************************************
