@@ -201,19 +201,12 @@ struct gl3_backend::pimpl
             GLuint( -1 ), GLuint( -1 ), GLuint( -1 ), GLuint( -1 ),
             GLuint( -1 ), GLuint( -1 ), GLuint( -1 ), GLuint( -1 ) } ;
 
+        GLuint depth = GLuint( -1 ) ;
+
         void_ptr_t mem_ptr = nullptr ;
 
         natus::math::vec2ui_t dims ;
 
-        struct color_target
-        {
-            //
-        };
-
-        struct depth_target
-        {
-            // 
-        };
     };
     natus_typedef( framebuffer_data ) ;
 
@@ -301,7 +294,7 @@ struct gl3_backend::pimpl
         }
 
         if( fb.gl_id == GLuint( -1 ) )return oid ;
-
+        
         // bind
         {
             glBindFramebuffer( GL_FRAMEBUFFER, fb.gl_id ) ;
@@ -310,6 +303,7 @@ struct gl3_backend::pimpl
 
         size_t const nt = obj.get_num_color_targets() ;
         auto const ctt = obj.get_color_target() ;
+        auto const dst = obj.get_depth_target();
         natus::math::vec2ui_t dims = obj.get_dims() ;
         
         // fix dims
@@ -318,7 +312,7 @@ struct gl3_backend::pimpl
             dims.y( dims.y() + dims.y() % 2 ) ;
         }
 
-        // construct textures
+        // construct color textures
         // with memory
         {
             glDeleteTextures( GLsizei( fb.nt ), fb.colors ) ;
@@ -354,16 +348,69 @@ struct gl3_backend::pimpl
                 glTexImage2D( target, level, internal_format, width, height, border, format, type, data ) ;
                 natus::ogl::error::check_and_log( natus_log_fn( "glTexImage2D" ) ) ;
             }
+
+            // attach
+            for( size_t i = 0; i < nt; ++i )
+            {
+                GLuint const tid = fb.colors[ i ] ;
+                GLenum const att = GLenum( size_t( GL_COLOR_ATTACHMENT0 ) + i ) ;
+                glFramebufferTexture2D( GL_FRAMEBUFFER, att, GL_TEXTURE_2D, tid, 0 ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glFramebufferTexture2D" ) ) ;
+            }
         }
 
-        // attach
-        for( size_t i=0; i<nt; ++i )
+        // depth/stencil
+        if( dst != natus::graphics::depth_stencil_target_type::unknown )
         {
-            GLuint const tid = fb.colors[ i ] ;
-            GLenum const att = GLenum( size_t( GL_COLOR_ATTACHMENT0 ) + i ) ;
-            glFramebufferTexture2D( GL_FRAMEBUFFER, att, GL_TEXTURE_2D, tid, 0 ) ;
-            natus::ogl::error::check_and_log( natus_log_fn( "glFramebufferTexture2D" ) ) ;
+            glDeleteTextures( GLsizei( 1 ), &fb.depth ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glDeleteTextures" ) ) ;
+
+            glGenTextures( GLsizei( 1 ), &fb.depth ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glGenTextures" ) ) ;
+
+            {
+                GLuint const tid = fb.depth ;
+
+                glBindTexture( GL_TEXTURE_2D, tid ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glBindTexture" ) ) ;
+
+                GLenum const target = GL_TEXTURE_2D ;
+                GLint const level = 0 ;
+                GLsizei const width = dims.x() ;
+                GLsizei const height = dims.y() ;
+                GLenum const format = GL_DEPTH_COMPONENT;// natus::graphics::gl3::to_gl_format( dst ) ;
+                GLenum const type = GL_FLOAT;// natus::graphics::gl3::to_gl_type( dst ) ;
+                GLint const border = 0 ;
+                GLint const internal_format = GL_DEPTH_COMPONENT;// natus::graphics::gl3::to_gl_format( dst ) ;
+
+                // maybe required for memory allocation
+                // at the moment, render targets do not have system memory.
+                #if 0
+                size_t const sib = natus::graphics::gl3::calc_sib( dims.x(), dims.y(), ctt ) ;
+                #endif
+                void_cptr_t data = nullptr ;
+
+                glTexImage2D( target, level, internal_format, width, height, border, format, type, data ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glTexImage2D" ) ) ;
+            }
+
+            // attach
+            {
+                GLuint const tid = fb.depth ;
+                GLenum const att = GL_DEPTH_ATTACHMENT ;
+                glFramebufferTexture2D( GL_FRAMEBUFFER, att, GL_TEXTURE_2D, tid, 0 ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glFramebufferTexture2D" ) ) ;
+            }
+
+            if( dst == natus::graphics::depth_stencil_target_type::depth24_stencil8 )
+            {
+                GLuint const tid = fb.depth ;
+                GLenum const att = GL_STENCIL_ATTACHMENT ;
+                glFramebufferTexture2D( GL_FRAMEBUFFER, att, GL_TEXTURE_2D, tid, 0 ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glFramebufferTexture2D" ) ) ;
+            }
         }
+
 
         GLenum status = 0 ;
         // validate
@@ -412,6 +459,28 @@ struct gl3_backend::pimpl
             }
         }
 
+        // store depth/stencil
+        {
+            size_t const id = img_configs.size() ;
+            img_configs.resize( img_configs.size() + 1 ) ;
+
+            {
+                size_t const idx = id + 0 ;
+                img_configs[ idx ].name = fb.name + ".depth" ;
+                img_configs[ idx ].tex_id = fb.depth ;
+
+                for( size_t j = 0; j < ( size_t ) natus::graphics::texture_wrap_mode::size; ++j )
+                {
+                    img_configs[ idx ].wrap_types[ j ] = GL_REPEAT ;
+                }
+
+                for( size_t j = 0; j < ( size_t ) natus::graphics::texture_filter_mode::size; ++j )
+                {
+                    img_configs[ idx ].filter_types[ j ] = GL_NEAREST ;
+                }
+            }
+        }
+
         return oid ;
     }
 
@@ -445,6 +514,22 @@ struct gl3_backend::pimpl
             natus::ogl::error::check_and_log( natus_log_fn( "glViewport" ) ) ;
         }
 
+        #if 0
+
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
+        natus::ogl::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
+
+        glEnable( GL_DEPTH_TEST );
+        natus::ogl::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
+
+        glDepthMask(GL_TRUE); 
+        natus::ogl::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
+
+        glDepthFunc(GL_ALWAYS);  
+        natus::ogl::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
+
+        #endif
+
         return true ;
     }
 
@@ -461,6 +546,9 @@ struct gl3_backend::pimpl
             glViewport( 0, 0, vp_width, vp_height ) ;
             natus::ogl::error::check_and_log( natus_log_fn( "glViewport" ) ) ;
         }
+
+        glDisable( GL_DEPTH_TEST );
+        natus::ogl::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
     }
 
     size_t construct_shader_config( size_t oid,
