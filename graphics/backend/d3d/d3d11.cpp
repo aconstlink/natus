@@ -57,6 +57,8 @@ struct d3d11_backend::pimpl
 
     struct geo_data
     {
+        bool_t valid = false ;
+
         // empty names indicate free configs
         natus::ntd::string_t name ;
 
@@ -121,6 +123,7 @@ struct d3d11_backend::pimpl
 
     struct shader_data
     {
+        bool_t valid = false ;
         natus::ntd::string_t name ;
 
         // vs, gs, ps, else?
@@ -184,6 +187,7 @@ struct d3d11_backend::pimpl
 
     struct image_data
     {
+        bool_t valid = false ;
         natus::ntd::string_t name ;
 
         ID3D11ShaderResourceView * view = nullptr ;
@@ -194,6 +198,8 @@ struct d3d11_backend::pimpl
 
     struct render_data
     {
+        bool_t valid = false ;
+
         natus::ntd::string_t name ;
 
         geo_data* geo = nullptr ;
@@ -290,6 +296,47 @@ public: // variables
     FLOAT vp_width = FLOAT( 0 ) ;
     FLOAT vp_height = FLOAT( 0 ) ;
 
+    template< typename T >
+    static size_t determine_oid( natus::ntd::string_cref_t name, natus::ntd::vector< T >& v ) noexcept
+    {
+        size_t oid = size_t( -1 ) ;
+
+        {
+            auto iter = std::find_if( v.begin(), v.end(), [&] ( T const& c )
+            {
+                return c.name == name ;
+            } ) ;
+
+            if( iter != v.end() )
+            {
+                oid = std::distance( v.begin(), iter ) ;
+            }
+        }
+
+        if( oid == size_t( -1 ) )
+        {
+            for( size_t i = 0 ; i < v.size(); ++i )
+            {
+                if( !v[ i ].valid )
+                {
+                    oid = i ;
+                    break ;
+                }
+            }
+        }
+
+        if( oid >= v.size() )
+        {
+            oid = v.size() ;
+            v.resize( oid + 1 ) ;
+        }
+
+        v[ oid ].valid = true ;
+        v[ oid ].name = name ;
+
+        return oid ;
+    }
+
 public: // functions
 
     pimpl( natus::graphics::d3d11_context_ptr_t ctx ) noexcept
@@ -313,45 +360,18 @@ public: // functions
         }
     }
 
-    size_t construct_geo( natus::ntd::string_cref_t name, natus::graphics::geometry_object_ref_t geo )
+    size_t construct_geo( size_t oid, natus::graphics::geometry_object_ref_t obj )
     {
-        // the name is unique
-        // do not reconstruct if configs already exists.
-        // we just reuse the d3d buffers objects and do update the data.
-        {
-            auto iter = std::find_if( geo_datas.begin(), geo_datas.end(),
-                [&] ( this_t::geo_data const& config )
-            {
-                return config.name == name ;
-            } ) ;
+        oid = this_t::determine_oid( obj.name(), renders ) ;
 
-            if( iter != geo_datas.end() )
-                return iter - geo_datas.begin() ;
-        }
+        auto & config = geo_datas[ oid ] ;
+        config.name = obj.name() ;
 
-        // the name does not exist, so look for some released 
-        // config objects.
-        size_t i = 0 ;
-        for( ; i < geo_datas.size(); ++i )
-        {
-            if( geo_datas[ i ].name.empty() )
-            {
-                break ;
-            }
-        }
-
-        if( i == geo_datas.size() ) {
-            geo_datas.emplace_back( this_t::geo_data() ) ;
-        }
-
-        auto & config = geo_datas[ i ] ;
-        config.name = name ;
-
-        config.pt = geo.primitive_type() ;
+        config.pt = obj.primitive_type() ;
 
         // vertex buffer object
         {
-            geo.vertex_buffer().for_each_layout_element(
+            obj.vertex_buffer().for_each_layout_element(
                 [&] ( natus::graphics::vertex_buffer_t::data_cref_t d )
             {
                 this_t::geo_data::layout_element le ;
@@ -361,11 +381,11 @@ public: // functions
                 config.elements.push_back( le ) ;
             } ) ;
 
-            config.stride = UINT( geo.vertex_buffer().get_layout_sib() ) ;
+            config.stride = UINT( obj.vertex_buffer().get_layout_sib() ) ;
 
             // = number of vertices * sizeof( vertex )
             // if there are vertices already setup, take the numbers
-            size_t const byte_width = geo.vertex_buffer().get_sib() ;
+            size_t const byte_width = obj.vertex_buffer().get_sib() ;
 
             D3D11_BUFFER_DESC bd = { } ;
             bd.Usage = D3D11_USAGE_DYNAMIC ;
@@ -380,12 +400,18 @@ public: // functions
             config.vb_mem = natus::memory::global_t::alloc_raw< uint8_t >( 
                 byte_width, "[d3d11] : vertex buffer memory" ) ;
 
+            if( config.vb != nullptr ) 
+            {
+                config.vb->Release() ;
+                config.vb = nullptr ;
+            }
+
             if( byte_width != 0 )
             {
                 D3D11_SUBRESOURCE_DATA init_data = { } ;
                 init_data.pSysMem = ( void_cptr_t ) config.vb_mem ;
 
-                std::memcpy( config.vb_mem, geo.vertex_buffer().data(), byte_width ) ;
+                std::memcpy( config.vb_mem, obj.vertex_buffer().data(), byte_width ) ;
 
                 HRESULT const hr = _ctx->dev()->CreateBuffer( &bd, &init_data, &config.vb ) ;
                 if( FAILED( hr ) )
@@ -406,7 +432,7 @@ public: // functions
         // index buffer object
         {
             // = number of vertices * sizeof( index_t )
-            size_t const byte_width = geo.index_buffer().get_sib() ;
+            size_t const byte_width = obj.index_buffer().get_sib() ;
 
             D3D11_BUFFER_DESC bd = { } ;
             bd.Usage = D3D11_USAGE_DYNAMIC ;
@@ -421,12 +447,18 @@ public: // functions
             config.ib_mem = natus::memory::global_t::alloc_raw< uint8_t >(
                 byte_width, "[d3d11] : index buffer memory" ) ;
 
+            if( config.ib != nullptr )
+            {
+                config.ib->Release() ;
+                config.ib = nullptr ;
+            }
+
             if( byte_width != 0 )
             {
                 D3D11_SUBRESOURCE_DATA init_data = { } ;
                 init_data.pSysMem = ( void_cptr_t ) config.ib_mem ;
 
-                std::memcpy( config.ib_mem, geo.index_buffer().data(), byte_width ) ;
+                std::memcpy( config.ib_mem, obj.index_buffer().data(), byte_width ) ;
 
                 HRESULT const hr = _ctx->dev()->CreateBuffer( &bd, &init_data, &config.ib ) ;
                 if( FAILED( hr ) )
@@ -444,7 +476,7 @@ public: // functions
             }
         }
 
-        return i ;
+        return oid ;
     }
 
     bool_t update( size_t const id, natus::graphics::geometry_object_res_t geo )
@@ -543,63 +575,24 @@ public: // functions
         return true ;
     }
 
-    size_t construct_shader_config( size_t oid, natus::ntd::string_cref_t name,
-        natus::graphics::shader_object_ref_t config )
+    size_t construct_shader_config( size_t oid, natus::graphics::shader_object_ref_t obj )
     {
-        //
-        // Array Management
-        //
-
-        // the name must be unique
-        {
-            auto iter = ::std::find_if( shaders.begin(), shaders.end(),
-                [&] ( this_t::shader_data_cref_t  const& c )
-            {
-                return c.name == name ;
-            } ) ;
-
-            if( iter != shaders.end() )
-            {
-                size_t const i = ( iter - shaders.begin() ) ;
-                if( natus::log::global_t::error( i != oid && oid != size_t( -1 ),
-                    natus_log_fn( "name and id do not fit " ) ) )
-                {
-                    return oid ;
-                }
-            }
-        }
-
-        if( oid == size_t( -1 ) )
-        {
-            size_t i = 0 ;
-            for( ; i < shaders.size(); ++i )
-            {
-                // here the vertex shader is used for validity check.
-                // if invalid, that object in the array will be repopulated
-                if( shaders[ i ].vs == nullptr )
-                {
-                    break ;
-                }
-            }
-            oid = i ;
-        }
-
-        if( oid >= shaders.size() ) shaders.resize( oid + 1 ) ;
+        oid = this_t::determine_oid( obj.name(), shaders ) ;
 
         //
         // Do Configuration
         //
         auto & shd = shaders[ oid ] ;
-        shd.name = name ;
+        shd.name = obj.name() ;
 
         // shader code
         natus::graphics::shader_set_t ss ;
         {
-            auto const res = config.shader_set( this->bt, ss ) ;
+            auto const res = obj.shader_set( this->bt, ss ) ;
             if( natus::core::is_not(res) )
             {
                 natus::log::global_t::warning( natus_log_fn(
-                    "config [" + config.name() + "] has no shaders for " + 
+                    "config [" + obj.name() + "] has no shaders for " + 
                     natus::graphics::to_string( this->bt ) ) ) ;
                 return oid ;
             }
@@ -625,12 +618,12 @@ public: // functions
                 // "vs_4_1" : Direct3D 10.1
                 // "vs_4_0" : Direct3D 10
                 {
-                    auto const hr = D3DCompile( cptr, sib, name.c_str(), Shader_Macros, nullptr, "VS", "vs_5_0", 0, 0, &pVSBlob, &errblob );
+                    auto const hr = D3DCompile( cptr, sib, obj.name().c_str(), Shader_Macros, nullptr, "VS", "vs_5_0", 0, 0, &pVSBlob, &errblob );
 
                     if( FAILED( hr ) )
                     {
                         natus::log::global_t::warning( natus_log_fn(
-                            "vertex shader [" + config.name() + "] failed " +
+                            "vertex shader [" + obj.name() + "] failed " +
                             natus::graphics::to_string( this->bt ) ) ) ;
 
                         if( errblob != nullptr )
@@ -639,7 +632,7 @@ public: // functions
                             size_t const ssib = ( size_t ) errblob->GetBufferSize() ;
                             natus::ntd::string_t s( ptr, ssib ) ;
 
-                            auto const pos = s.find( config.name() ) ;
+                            auto const pos = s.find( obj.name() ) ;
                             s = s.substr( pos, s.size() - pos ) ;
                             natus::log::global_t::error( s ) ;
                             errblob->Release() ;
@@ -668,12 +661,12 @@ public: // functions
                 // "gs_5_0" : Direct3D 11 and 11.1
                 // "gs_4_1" : Direct3D 10.1
                 // "gs_4_0" : Direct3D 10
-                auto const hr = D3DCompile( cptr, sib, name.c_str(), Shader_Macros, nullptr, "GS", "gs_5_0", 0, 0, &pGSBlob, &errblob );
+                auto const hr = D3DCompile( cptr, sib, obj.name().c_str(), Shader_Macros, nullptr, "GS", "gs_5_0", 0, 0, &pGSBlob, &errblob );
 
                 if( FAILED( hr ) )
                 {
                     natus::log::global_t::warning( natus_log_fn(
-                        "geometry shader [" + config.name() + "] failed " +
+                        "geometry shader [" + obj.name() + "] failed " +
                         natus::graphics::to_string( this->bt ) ) ) ;
 
                     if( errblob != nullptr )
@@ -682,7 +675,7 @@ public: // functions
                         size_t const ssib = ( size_t ) errblob->GetBufferSize() ;
                         natus::ntd::string_t s( ptr, ssib ) ;
 
-                        auto const pos = s.find( config.name() ) ;
+                        auto const pos = s.find( obj.name() ) ;
                         s = s.substr( pos, s.size() - pos ) ;
                         natus::log::global_t::error( s ) ;
                         errblob->Release() ;
@@ -713,12 +706,12 @@ public: // functions
                 // "ps_5_0" : Direct3D 11 and 11.1
                 // "ps_4_1" : Direct3D 10.1
                 // "ps_4_0" : Direct3D 10
-                auto const hr = D3DCompile( cptr, sib, name.c_str(), Shader_Macros, nullptr, "PS", "ps_5_0", 0, 0, &pPSBlob, &errblob );
+                auto const hr = D3DCompile( cptr, sib, obj.name().c_str(), Shader_Macros, nullptr, "PS", "ps_5_0", 0, 0, &pPSBlob, &errblob );
 
                 if( FAILED( hr ) )
                 {
                     natus::log::global_t::warning( natus_log_fn(
-                        "pixel shader [" + config.name() + "] failed " +
+                        "pixel shader [" + obj.name() + "] failed " +
                         natus::graphics::to_string( this->bt ) ) ) ;
 
                     if( errblob != nullptr )
@@ -727,7 +720,7 @@ public: // functions
                         size_t const ssib = ( size_t ) errblob->GetBufferSize() ;
                         natus::ntd::string_t s( ptr, ssib ) ;
 
-                        auto const pos = s.find( config.name() ) ;
+                        auto const pos = s.find( obj.name() ) ;
                         s = s.substr( pos, s.size() - pos ) ;
                         natus::log::global_t::error( s ) ;
                         errblob->Release() ;
@@ -809,7 +802,7 @@ public: // functions
         // the final layout elements for the d3d input layout
         // is done if the render configuration is known.
         {
-            config.for_each_vertex_input_binding( [&] (
+            obj.for_each_vertex_input_binding( [&] (
                 natus::graphics::vertex_attribute const va, natus::ntd::string_cref_t name )
             {
                 shd.vertex_inputs.emplace_back( this_t::shader_data::vertex_input_binding
@@ -821,45 +814,12 @@ public: // functions
     }
 
     //***********************
-    size_t construct_render_config( size_t oid, natus::ntd::string_cref_t name,
-        natus::graphics::render_object_ref_t /*config*/ )
+    size_t construct_render_config( size_t oid, natus::graphics::render_object_ref_t obj )
     {
-        // the name must be unique
-        {
-            auto iter = std::find_if( renders.begin(), renders.end(),
-                [&] ( this_t::render_data_cref_t c )
-            {
-                return c.name == name ;
-            } ) ;
-
-            if( iter != renders.end() )
-            {
-                size_t const i = std::distance( renders.begin(), iter ) ;
-                if( natus::log::global_t::error( i != oid && oid != size_t( -1 ),
-                    natus_log_fn( "name and id do not fit " ) ) )
-                {
-                    return oid ;
-                }
-            }
-        }
-
-        if( oid == size_t( -1 ) )
-        {
-            size_t i = 0 ;
-            for( ; i < renders.size(); ++i )
-            {
-                if( natus::core::is_not( renders[ i ].name.empty() ) )
-                {
-                    break ;
-                }
-            }
-            oid = i ;
-        }
-
-        if( oid >= renders.size() ) renders.resize( oid + 1 ) ;
-
+        oid = this_t::determine_oid( obj.name(), renders ) ;
+        
         this_t::render_data_ref_t rd = renders[ oid ] ;
-        rd.name = name ;
+        rd.name = obj.name() ;
 
         if( rd.vertex_layout != nullptr )
         {
@@ -1126,29 +1086,12 @@ public: // functions
     }
 
     //***********************
-    size_t construct_image_config( size_t /*oid*/, natus::ntd::string_cref_t name, 
-        natus::graphics::image_object_ref_t config )
+    size_t construct_image_config( size_t oid, natus::graphics::image_object_ref_t obj )
     {
-        // the name is unique
-        {
-            auto iter = std::find_if( images.begin(), images.end(),
-                [&] ( this_t::image_data_cref_t config )
-            {
-                return config.name == name ;
-            } ) ;
+        oid = this_t::determine_oid( obj.name(), images ) ;
 
-            if( iter != images.end() )
-                return std::distance( images.begin(), iter ) ;
-        }
-
-        size_t i = 0 ;
-        {
-            for( ; i < images.size(); ++i ) if( images[ i ].texture == nullptr ) break ;
-            if( i == images.size() ) images.resize( i + 1 ) ;
-        }
-
-        this_t::image_data_ref_t img = images[ i ] ;
-        img.name = name ;
+        this_t::image_data_ref_t img = images[ oid ] ;
+        img.name = obj.name() ;
 
         if( img.texture != nullptr )
         {
@@ -1167,17 +1110,17 @@ public: // functions
         {
             D3D11_SAMPLER_DESC sampDesc = { } ;
             sampDesc.Filter = natus::graphics::d3d11::convert( 
-                config.get_filter( natus::graphics::texture_filter_mode::min_filter ),
-                config.get_filter( natus::graphics::texture_filter_mode::mag_filter ) ) ;
+                obj.get_filter( natus::graphics::texture_filter_mode::min_filter ),
+                obj.get_filter( natus::graphics::texture_filter_mode::mag_filter ) ) ;
             
             sampDesc.AddressU = natus::graphics::d3d11::convert(
-                config.get_wrap( natus::graphics::texture_wrap_mode::wrap_s ) ) ;
+                obj.get_wrap( natus::graphics::texture_wrap_mode::wrap_s ) ) ;
 
             sampDesc.AddressV = natus::graphics::d3d11::convert(
-                config.get_wrap( natus::graphics::texture_wrap_mode::wrap_t ) ) ;
+                obj.get_wrap( natus::graphics::texture_wrap_mode::wrap_t ) ) ;
 
             sampDesc.AddressW = natus::graphics::d3d11::convert(
-                config.get_wrap( natus::graphics::texture_wrap_mode::wrap_r ) ) ;
+                obj.get_wrap( natus::graphics::texture_wrap_mode::wrap_r ) ) ;
 
             sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER ;
             sampDesc.MinLOD = 0;
@@ -1192,7 +1135,7 @@ public: // functions
 
         // texture
         {
-            auto iref = config.image() ;
+            auto iref = obj.image() ;
 
             size_t const width = iref.get_dims().x() ;
             size_t const height = iref.get_dims().y() ;
@@ -1247,7 +1190,7 @@ public: // functions
             }
         }
 
-        return i ;
+        return oid ;
     }
 
     bool_t render( size_t const id, size_t const varset_id = size_t( 0 ), UINT const start_element = UINT( 0 ),
@@ -1747,10 +1690,9 @@ natus::graphics::result d3d11_backend::configure( natus::graphics::geometry_obje
     if( gconf->name().empty() )
         return natus::graphics::result::invalid_argument ;
     
-    if( id->is_not_valid( this_t::get_bid() ) )
     {
         id = natus::graphics::id_t( this_t::get_bid(),
-            _pimpl->construct_geo( gconf->name(), *(gconf.get_sptr()) ) ) ;
+            _pimpl->construct_geo( id->get_oid(), *gconf ) ) ;
     }
     
     {
@@ -1771,7 +1713,7 @@ natus::graphics::result d3d11_backend::configure( natus::graphics::render_object
     
     {
         id = natus::graphics::id_t( this_t::get_bid(),
-            _pimpl->construct_render_config( id->get_oid( this_t::get_bid() ), config->name(), *config ) ) ;
+            _pimpl->construct_render_config( id->get_oid( this_t::get_bid() ), *config ) ) ;
     }
 
     size_t const oid = id->get_oid( this_t::get_bid() ) ;
@@ -1795,7 +1737,7 @@ natus::graphics::result d3d11_backend::configure( natus::graphics::shader_object
     
     {
         id = natus::graphics::id_t( this_t::get_bid(),
-            _pimpl->construct_shader_config( id->get_oid( this_t::get_bid() ), config->name(), *config ) ) ;
+            _pimpl->construct_shader_config( id->get_oid( this_t::get_bid() ), *config ) ) ;
     }
 
     #if 0
@@ -1819,7 +1761,7 @@ natus::graphics::result d3d11_backend::configure( natus::graphics::image_object_
     
     {
         id = natus::graphics::id_t( this_t::get_bid(), _pimpl->construct_image_config( 
-            id->get_oid( this_t::get_bid() ), config->name(), *config ) ) ;
+            id->get_oid( this_t::get_bid() ), *config ) ) ;
     }
 
     size_t const oid = id->get_oid( this_t::get_bid() ) ;
