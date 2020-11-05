@@ -217,7 +217,9 @@ void_t window::xevent_callback( XEvent const & event )
         XConfigureEvent xce = event.xconfigure ;
         natus::application::resize_message const rm 
         {
+         true,
          0,0,
+         true,
          (size_t)xce.width, (size_t)xce.height
         } ;
 
@@ -242,7 +244,7 @@ void_t window::xevent_callback( XEvent const & event )
 
             XResizeRequestEvent const & rse = (XResizeRequestEvent const &) event ;
             natus::application::resize_message const rm {
-                attr.x, attr.y, 
+                true, attr.x, attr.y, true,
                 (size_t)rse.width, (size_t)rse.height
             } ;
 
