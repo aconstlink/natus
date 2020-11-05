@@ -5,7 +5,7 @@ natus is a software framework for real-time interactive audio/visual application
 
 
 [![AppVeyor](https://img.shields.io/appveyor/build/aconstlink/natus?label=Vs2019%3AWin10%40master)](https://ci.appveyor.com/project/aconstlink/natus)
-[![Travis (.org)](https://img.shields.io/travis/aconstlink/natus?label=GCC%3ANoGfx%40master)](https://travis-ci.org/github/aconstlink/natus/builds)
+[![Travis (.org)](https://img.shields.io/travis/aconstlink/natus?label=Linux%3AGCC%40master)](https://travis-ci.org/github/aconstlink/natus/builds)
 [![Azure DevOps builds](https://img.shields.io/azure-devops/build/aconstlink/cfc6b414-d551-4b4f-8dd7-ef0788dc1680/1?label=Azure%40master)](https://dev.azure.com/aconstlink/natus/_build?definitionId=1)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
