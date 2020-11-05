@@ -42,7 +42,8 @@ namespace natus
 
                 HWND get_handle( void_t ) ;
 
-                void_t send_toggle( natus::application::toggle_window_in_t ) ;
+                void_t send_toggle( natus::application::toggle_window_in_t ) noexcept ;
+                void_t send_resize( natus::application::resize_message_in_t ) noexcept  ;
 
                 void_t show_window(  window_info const & wi ) ;
 

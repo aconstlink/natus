@@ -79,6 +79,7 @@ namespace natus
             public:
 
                 window_id_t id( void_t ) const noexcept ;
+                void_t position( int_t const x, int_t const y ) noexcept ;
                 void_t resize( size_t const w, size_t const h ) noexcept ;
                 void_t vsync( bool_t const ) noexcept ;
                 void_t fullscreen( bool_t const ) noexcept ;

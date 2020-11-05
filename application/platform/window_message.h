@@ -14,10 +14,30 @@ namespace natus
 
         struct resize_message
         {
-            int_t x ;
-            int_t y ;
-            size_t w ;
-            size_t h ;
+            bool_t position = false ;
+            int_t x = 0 ;
+            int_t y = 0 ;
+
+            bool_t resize = false ;
+            size_t w = 0 ;
+            size_t h = 0 ;
+
+            resize_message & combine( resize_message const & rhv ) noexcept
+            {
+                if( rhv.position )
+                {
+                    position = true ;
+                    x = rhv.x ;
+                    y = rhv.y ;
+                }
+                if( rhv.resize )
+                {
+                    resize = true ;
+                    w = rhv.w ;
+                    h = rhv.h ;
+                }
+                return *this ;
+            }
         };
         natus_typedef( resize_message ) ;
 

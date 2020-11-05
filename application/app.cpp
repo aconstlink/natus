@@ -448,9 +448,20 @@ app::window_id_t app::window_view::id( void_t ) const noexcept
 }
 
 //***
+void_t app::window_view::position( int_t const x, int_t const y ) noexcept 
+{
+    natus::application::resize_message_t msg ;
+    msg.position = true ;
+    msg.x = x ;
+    msg.y = y ;
+    _msg_wnd->on_resize( msg ) ;
+}
+
+//***
 void_t app::window_view::resize( size_t const w, size_t const h ) noexcept
 {
     natus::application::resize_message_t msg ;
+    msg.resize = true ;
     msg.w = w ;
     msg.h = h ;
     _msg_wnd->on_resize( msg ) ;

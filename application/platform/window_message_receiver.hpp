@@ -129,7 +129,7 @@ namespace natus
             {
                 natus::concurrent::lock_t lk( _mtx ) ;
                 _states.resize_changed = true ;
-                _states.resize_msg = msg ;
+                _states.resize_msg.combine( msg ) ;
                 _has_any_change = true ;
             }
 

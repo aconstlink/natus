@@ -58,7 +58,7 @@ HWND window::get_handle( void_t )
 }
 
 //***
-void_t window::send_toggle( natus::application::toggle_window_in_t di ) 
+void_t window::send_toggle( natus::application::toggle_window_in_t di ) noexcept
 {
     if( _is_fullscreen != di.toggle_fullscreen )
     {
@@ -121,6 +121,42 @@ void_t window::send_toggle( natus::application::toggle_window_in_t di )
             ShowCursor( TRUE ) ;
         }
     }
+}
+
+//***
+void_t window::send_resize( natus::application::resize_message_in_t msg ) noexcept
+{
+    RECT rc, wr ;
+    GetClientRect( _handle, &rc ) ;
+    GetWindowRect( _handle, &wr ) ;
+
+    int_t x = rc.left ;
+    int_t y = rc.top ;
+    int_t width = int_t( rc.right - rc.left ) ;
+    int_t height = int_t( rc.bottom - rc.top ) ;
+
+    int_t const difx = ( wr.right - wr.left ) - rc.right;
+    int_t const dify = ( wr.bottom - wr.top ) - rc.bottom;
+
+    if( msg.position )
+    {
+        x = msg.x ;
+        y = msg.y ;
+        rc.left = x ;
+        rc.top = y ;
+    }
+
+    if( msg.resize )
+    {
+        width = ( int_t ) msg.w ;
+        height = ( int_t ) msg.h ;
+
+        rc.right = x + width ;
+        rc.bottom = y + height ;
+    }
+
+    SetWindowPos( _handle, NULL, x, y, width+difx, height+dify, 0 ) ;
+    
 }
 
 //***
@@ -293,6 +329,11 @@ LRESULT CALLBACK window::WndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
                         tw.toggle_fullscreen = states.fulls_msg.on_off ;
                         this_t::send_toggle( tw ) ;
                     }
+                    if( states.resize_changed )
+                    {
+                        natus::application::resize_message_t & msg = states.resize_msg ;
+                        this_t::send_resize( msg ) ;
+                    }
                 }
             } ) ;
         }
@@ -348,7 +389,9 @@ void_t window::send_resize( HWND hwnd )
     GetClientRect( hwnd, &rect ) ;
 
     natus::application::resize_message const rm {
+        true,
         int_t(rect.left), int_t(rect.top), 
+        true,
         size_t(rect.right-rect.left), size_t(rect.bottom-rect.top)
     } ;
 
