@@ -66,6 +66,16 @@ namespace natus
                 return *this ;
             }
 
+            this_ref_t look_at( natus::math::vec3f_cref_t pos,
+                natus::math::vec3f_cref_t up, natus::math::vec3f_cref_t at ) 
+            {
+                _camera->for_each_lens( [&] ( icamera_ref_t, lens_res_t& l ) 
+                { 
+                    l->look_at( pos, up, at ) ;
+                } ) ;
+                return *this ;
+            }
+
         public:
 
             natus::math::mat4f_t mat_proj( void_t ) const noexcept
