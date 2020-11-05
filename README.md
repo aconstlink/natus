@@ -13,6 +13,7 @@ There is also a place for [collaboration](https://github.com/aconstlink/collab).
 ## Prerequisites
 
 Windows prerequisites:  
+ - Windows 10 SDK
  - Visual Studio 2019 Community **or**
  - msys/mingw :construction:
  - CMake
