@@ -23,6 +23,7 @@ struct gl3_backend::pimpl
 
     struct geo_data
     {
+        bool_t valid = false ;
         natus::ntd::string_t name ;
 
         GLuint vb_id = GLuint( -1 ) ;
@@ -1214,85 +1215,63 @@ struct gl3_backend::pimpl
         return true ;
     }
 
-    size_t construct_geo( natus::ntd::string_cref_t name, natus::graphics::geometry_object_ref_t geo ) 
+    size_t construct_geo( size_t oid, natus::graphics::geometry_object_ref_t obj ) 
     {
-        // the name is unique
-        {
-            auto iter = ::std::find_if( geo_configs.begin(), geo_configs.end(), 
-                [&]( this_t::geo_data const & config )
-            {
-                return config.name == name ;
-            } ) ;
-
-            if( iter != geo_configs.end() )
-                return iter - geo_configs.begin() ;
-        }
-
-        size_t i = 0 ;
-        for( ; i < geo_configs.size(); ++i )
-        {
-            if( natus::core::is_not( geo_configs[ i ].vb_id != GLuint(-1) ) )
-            {
-                break ;
-            }
-        }
-
-        if( i == geo_configs.size() ) {
-            geo_configs.resize( i + 1 ) ;
-        }
+        oid = determine_oid( obj.name(), geo_configs ) ;
 
         bool_t error = false ;
+        auto& config = geo_configs[ oid ] ;
 
         // vertex array object
-        if( geo_configs[ i ].va_id == GLuint( -1 ) )
+        if( config.va_id == GLuint( -1 ) )
         {
             GLuint id = GLuint( -1 ) ;
             glGenVertexArrays( 1, &id ) ;
             natus::ogl::error::check_and_log(
                 natus_log_fn( "Vertex Array creation" ) ) ;
 
-            geo_configs[ i ].va_id = id ;
+            config.va_id = id ;
         }
 
         // vertex buffer
-        if( geo_configs[i].vb_id == GLuint(-1) )
+        if( config.vb_id == GLuint(-1) )
         {
             GLuint id = GLuint( -1 ) ;
             glGenBuffers( 1, &id ) ;
             error = natus::ogl::error::check_and_log( 
                 natus_log_fn( "Vertex Buffer creation" ) ) ;
 
-            geo_configs[ i ].vb_id = id ;
+            config.vb_id = id ;
         }
 
         // index buffer
-        if( geo_configs[i].ib_id == GLuint(-1) )
+        if( config.ib_id == GLuint(-1) )
         {
             GLuint id = GLuint( -1 ) ;
             glGenBuffers( 1, &id ) ;
             error = natus::ogl::error::check_and_log(
                 natus_log_fn( "Index Buffer creation" ) ) ;
 
-            geo_configs[ i ].ib_id = id ;
+            config.ib_id = id ;
         }
 
         {
-            geo_configs[ i ].name = name ;
-            geo_configs[ i ].stride = GLuint( geo.vertex_buffer().get_layout_sib() ) ;
-            geo.vertex_buffer().for_each_layout_element( 
+            config.name = obj.name() ;
+            config.stride = GLuint( obj.vertex_buffer().get_layout_sib() ) ;
+            obj.vertex_buffer().for_each_layout_element( 
                 [&]( natus::graphics::vertex_buffer_t::data_cref_t d )
             {
                 this_t::geo_data::layout_element le ;
                 le.va = d.va ;
                 le.type = d.type ;
                 le.type_struct = d.type_struct ;
-                geo_configs[ i ].elements.push_back( le ) ;
+                config.elements.push_back( le ) ;
             }) ;
         }
 
-        natus::log::global_t::error( error, natus_log_fn("Error ocurred") ) ;
+        natus::log::global_t::error( error, natus_log_fn("Error ocurred for ["+ obj.name() +"]") ) ;
 
-        return i ;
+        return oid ;
     }
 
     bool_t update( size_t const id, natus::graphics::geometry_object_res_t geo )
@@ -1754,8 +1733,8 @@ natus::graphics::result gl3_backend::configure( natus::graphics::geometry_object
 
     if( id->is_not_valid( this_t::get_bid() ) )
     {
-        id = natus::graphics::id_t( this_t::get_bid(),
-            _pimpl->construct_geo( gconf->name(), *(gconf.get_sptr()) ) ) ;
+        id->set_oid( this_t::get_bid(),
+            _pimpl->construct_geo( id->get_oid(this_t::get_bid() ), *gconf ) ) ;
     }
 
     {
@@ -1775,8 +1754,8 @@ natus::graphics::result gl3_backend::configure( natus::graphics::render_object_r
     natus::graphics::id_res_t id = config->get_id() ;
 
     {
-        id = natus::graphics::id_t( this_t::get_bid(),
-            _pimpl->construct_render_data( id->get_oid( this_t::get_bid() ), *config ) ) ;
+        id->set_oid( this_t::get_bid(), _pimpl->construct_render_data( 
+            id->get_oid( this_t::get_bid() ), *config ) ) ;
     }
 
     size_t const oid = id->get_oid( this_t::get_bid() ) ;
@@ -1798,8 +1777,8 @@ natus::graphics::result gl3_backend::configure( natus::graphics::shader_object_r
     natus::graphics::id_res_t id = config->get_id() ;
 
     {
-        id = natus::graphics::id_t( this_t::get_bid(),
-            _pimpl->construct_shader_config( id->get_oid( this_t::get_bid() ), *config ) ) ;
+        id->set_oid( this_t::get_bid(), _pimpl->construct_shader_config( 
+            id->get_oid( this_t::get_bid() ), *config ) ) ;
     }
 
     size_t const oid = id->get_oid( this_t::get_bid() ) ;
@@ -1821,7 +1800,7 @@ natus::graphics::result gl3_backend::configure( natus::graphics::image_object_re
     natus::graphics::id_res_t id = config->get_id() ;
 
     {
-        id = natus::graphics::id_t( this_t::get_bid(), _pimpl->construct_image_config( 
+        id->set_oid( this_t::get_bid(), _pimpl->construct_image_config( 
             id->get_oid( this_t::get_bid() ), config->name(), *config ) ) ;
     }
 
@@ -1928,7 +1907,7 @@ natus::graphics::result gl3_backend::render( natus::graphics::render_object_res_
 
     //natus::log::global_t::status( natus_log_fn("render") ) ;
 
-    if( id->is_not_bid( this_t::get_bid() ) || id->is_not_valid() )
+    if( id->is_not_valid( this_t::get_bid() )  )
     {
         natus::log::global_t::error( natus_log_fn( "invalid id" ) ) ;
         return natus::graphics::result::failed ;
@@ -1939,7 +1918,7 @@ natus::graphics::result gl3_backend::render( natus::graphics::render_object_res_
         _pimpl->set_render_states( *( detail.render_states ) ) ;
     }
 
-    _pimpl->render( id->get_oid(), detail.varset, (GLsizei)detail.start, (GLsizei)detail.num_elems ) ;
+    _pimpl->render( id->get_oid( this_t::get_bid() ), detail.varset, (GLsizei)detail.start, (GLsizei)detail.num_elems ) ;
 
     return natus::graphics::result::ok ;
 }
