@@ -1671,6 +1671,12 @@ natus::graphics::result es3_backend::configure( natus::graphics::framebuffer_obj
 }
 
 //***
+natus::graphics::result es3_backend::configure( natus::graphics::state_object_res_t ) noexcept
+{
+    return natus::graphics::result::ok ;
+}
+
+//***
 natus::graphics::result es3_backend::connect( natus::graphics::render_object_res_t config, natus::graphics::variable_set_res_t vs ) noexcept
 {
     natus::graphics::id_res_t id = config->get_id() ;
@@ -1730,6 +1736,12 @@ natus::graphics::result es3_backend::use( natus::graphics::framebuffer_object_re
     auto const res = _pimpl->activate_framebuffer( oid ) ;
     if( !res ) return natus::graphics::result::failed ;
 
+    return natus::graphics::result::ok ;
+}
+
+//****
+natus::graphics::result es3_backend::use( natus::graphics::state_object_res_t ) noexcept 
+{
     return natus::graphics::result::ok ;
 }
 

@@ -59,9 +59,12 @@ namespace natus
 
             this_ref_t configure( natus::graphics::framebuffer_object_res_t, natus::graphics::result_res_t = natus::graphics::result_res_t() ) noexcept ;
 
+            this_ref_t configure( natus::graphics::state_object_res_t, natus::graphics::result_res_t = natus::graphics::result_res_t() ) noexcept ;
+
             
             this_ref_t update( natus::graphics::geometry_object_res_t, natus::graphics::result_res_t = natus::graphics::result_res_t() ) noexcept ;
             this_ref_t use( natus::graphics::framebuffer_object_res_t, natus::graphics::result_res_t = natus::graphics::result_res_t() ) noexcept ;
+            this_ref_t use( natus::graphics::state_object_res_t, natus::graphics::result_res_t = natus::graphics::result_res_t() ) noexcept ;
             this_ref_t render( natus::graphics::render_object_res_t, natus::graphics::backend::render_detail_cref_t, 
                 natus::graphics::result_res_t = natus::graphics::result_res_t() ) noexcept ;
 
@@ -158,6 +161,12 @@ namespace natus
                 return *this ;
             }
 
+            this_ref_t configure( natus::graphics::state_object_res_t obj, natus::graphics::result_res_t res = natus::graphics::result_res_t() ) noexcept
+            {
+                _async->configure( obj, res ) ;
+                return *this ;
+            }
+
             this_ref_t update( natus::graphics::geometry_object_res_t gs,
                 natus::graphics::result_res_t res = natus::graphics::result_res_t() ) noexcept
             {
@@ -166,6 +175,12 @@ namespace natus
             }
 
             this_ref_t use( natus::graphics::framebuffer_object_res_t obj, natus::graphics::result_res_t res = natus::graphics::result_res_t() ) noexcept 
+            {
+                _async->use( obj, res ) ;
+                return *this ;
+            }
+
+            this_ref_t use( natus::graphics::state_object_res_t obj, natus::graphics::result_res_t res = natus::graphics::result_res_t() ) noexcept
             {
                 _async->use( obj, res ) ;
                 return *this ;

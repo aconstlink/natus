@@ -111,6 +111,21 @@ async::this_ref_t async::configure( natus::graphics::framebuffer_object_res_t fb
     return *this ;
 }
 
+async::this_ref_t async::configure( natus::graphics::state_object_res_t s, 
+    natus::graphics::result_res_t res ) noexcept 
+{
+    {
+        natus::concurrent::lock_guard_t lk( _configures_mtx ) ;
+        _configures.emplace_back( [=] ( natus::graphics::backend_ptr_t be ) mutable
+        {
+            auto const ires = _backend->configure( std::move( s ) ) ;
+            if( res.is_valid() ) *res = ires ;
+        } ) ;
+    }
+
+    return *this ;
+}
+
 async::this_ref_t async::update( natus::graphics::geometry_object_res_t gs, 
     natus::graphics::result_res_t res ) noexcept 
 {
@@ -127,6 +142,7 @@ async::this_ref_t async::update( natus::graphics::geometry_object_res_t gs,
     return *this ;
 }
 
+//****
 async::this_ref_t async::use( natus::graphics::framebuffer_object_res_t fb, 
     natus::graphics::result_res_t res ) noexcept 
 {
@@ -139,6 +155,20 @@ async::this_ref_t async::use( natus::graphics::framebuffer_object_res_t fb,
             if( res.is_valid() ) *res = ires ;
         } ) ;
     }
+    return *this ;
+}
+
+//****
+async::this_ref_t async::use( natus::graphics::state_object_res_t s, 
+    natus::graphics::result_res_t res ) noexcept 
+{
+    natus::concurrent::lock_guard_t lk( _runtimes_mtx ) ;
+
+    _runtimes.push_back( [=] ( natus::graphics::backend_ptr_t be ) mutable
+    {
+        auto const ires = be->use( std::move( s ) ) ;
+        if( res.is_valid() ) *res = ires ;
+    } ) ;
     return *this ;
 }
 

@@ -6,6 +6,7 @@
 #include "../object/shader_object.h"
 #include "../buffer/vertex_attribute.h"
 #include "../variable/variable_set.hpp"
+#include "../state/state_set.h"
 
 #include <natus/ntd/vector.hpp>
 
@@ -26,6 +27,7 @@ namespace natus
             natus::ntd::string_t _shader ;
 
             natus::ntd::vector< natus::graphics::variable_set_res_t > _vars ;
+            natus::ntd::vector< natus::graphics::render_state_sets_t > _states ;
 
         public:
             
@@ -39,14 +41,16 @@ namespace natus
                 _geo = rhv._geo;
                 _shader = rhv._shader ;
                 _vars = rhv._vars ;
+                _states = rhv._states ;
             }
 
             render_object( this_rref_t rhv ) : object( ::std::move( rhv ) )
             {
-                _name = ::std::move( rhv._name ) ;
-                _geo = ::std::move( rhv._geo ) ;
-                _shader = ::std::move( rhv._shader ) ;
-                _vars = ::std::move( rhv._vars ) ;
+                _name = std::move( rhv._name ) ;
+                _geo = std::move( rhv._geo ) ;
+                _shader = std::move( rhv._shader ) ;
+                _vars = std::move( rhv._vars ) ;
+                _states = std::move( rhv._states ) ;
             }
 
             this_ref_t operator = ( this_cref_t rhv ) noexcept
@@ -57,6 +61,7 @@ namespace natus
                 _geo = rhv._geo;
                 _shader = rhv._shader ;
                 _vars = rhv._vars ;
+                _states = rhv._states ;
 
                 return *this ;
             }
@@ -65,10 +70,11 @@ namespace natus
             {
                 object::operator=( ::std::move( rhv ) ) ;
 
-                _name = ::std::move( rhv._name ) ;
-                _geo = ::std::move( rhv._geo ) ;
-                _shader = ::std::move( rhv._shader ) ;
-                _vars = ::std::move( rhv._vars ) ;
+                _name = std::move( rhv._name ) ;
+                _geo = std::move( rhv._geo ) ;
+                _shader = std::move( rhv._shader ) ;
+                _vars = std::move( rhv._vars ) ;
+                _states = std::move( rhv._states ) ;
 
                 return *this ;
             }
@@ -100,18 +106,39 @@ namespace natus
                 return _shader ;
             }
 
+        public: // variable sets
+
             this_ref_t add_variable_set( natus::graphics::variable_set_res_t vs )
             {
                 _vars.emplace_back( ::std::move( vs ) ) ;
                 return *this ;
             }
 
-            typedef ::std::function< void_t ( size_t const i, natus::graphics::variable_set_res_t const & ) > for_each_var_funk_t ;
+            typedef std::function< void_t ( size_t const i, natus::graphics::variable_set_res_t const & ) > for_each_var_funk_t ;
 
             void_t for_each( for_each_var_funk_t funk )
             {
                 size_t i = 0 ;
                 for( auto const & v : _vars )
+                {
+                    funk( i++, v ) ;
+                }
+            }
+
+        public: // render state sets
+
+            this_ref_t add_render_state_set( natus::graphics::render_state_sets_cref_t rs )
+            {
+                _states.emplace_back( rs ) ;
+                return *this ;
+            }
+
+            typedef std::function< void_t ( size_t const i, natus::graphics::render_state_sets_cref_t ) > for_each_render_state_funk_t ;
+
+            void_t for_each( for_each_render_state_funk_t funk )
+            {
+                size_t i = 0 ;
+                for( auto const& v : _states )
                 {
                     funk( i++, v ) ;
                 }

@@ -12,6 +12,7 @@
 #include "../object/geometry_object.h"
 #include "../object/image_object.h"
 #include "../object/framebuffer_object.h"
+#include "../object/state_object.h"
 #include "../variable/variable_set.hpp"
 #include "../state/state_set.h"
 
@@ -46,13 +47,14 @@ namespace natus
             };
             natus_typedef( render_detail ) ;
 
-        public:
+        public: // user interface
 
             virtual natus::graphics::result configure( natus::graphics::geometry_object_res_t ) noexcept = 0 ;
             virtual natus::graphics::result configure( natus::graphics::render_object_res_t ) noexcept = 0 ;
             virtual natus::graphics::result configure( natus::graphics::shader_object_res_t ) noexcept = 0 ;
             virtual natus::graphics::result configure( natus::graphics::image_object_res_t ) noexcept = 0 ;
             virtual natus::graphics::result configure( natus::graphics::framebuffer_object_res_t ) noexcept = 0 ;
+            virtual natus::graphics::result configure( natus::graphics::state_object_res_t ) noexcept = 0 ;
 
             // @obsolete
             virtual natus::graphics::result connect( natus::graphics::render_object_res_t, natus::graphics::variable_set_res_t ) noexcept = 0 ;
@@ -60,11 +62,11 @@ namespace natus
             virtual natus::graphics::result update( natus::graphics::geometry_object_res_t ) noexcept = 0 ;
 
             virtual natus::graphics::result use( natus::graphics::framebuffer_object_res_t ) noexcept = 0 ;
+            virtual natus::graphics::result use( natus::graphics::state_object_res_t ) noexcept = 0 ;
 
             virtual natus::graphics::result render( natus::graphics::render_object_res_t, natus::graphics::backend::render_detail_cref_t ) noexcept = 0 ;
 
-            //virtual id_t feedback( id_rref_t id ) noexcept = 0 ;
-            //virtual id_t compute( id_rref_t id ) noexcept = 0 ;
+        public: // engine interface
 
             virtual void_t render_begin( void_t ) noexcept = 0 ;
             virtual void_t render_end( void_t ) noexcept = 0 ;
