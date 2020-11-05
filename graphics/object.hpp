@@ -17,7 +17,7 @@ namespace natus
 
         private:
 
-            natus::graphics::id_res_t _id = natus::graphics::id_t() ;
+            natus::graphics::id_res_t _id = natus::graphics::id_res_t( natus::graphics::id_t() ) ;
 
         public:
 

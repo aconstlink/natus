@@ -40,6 +40,7 @@ namespace natus
                 size_t start = size_t( 0 ) ;
                 size_t num_elems = size_t( -1 ) ;
                 size_t varset = size_t( 0 ) ;
+                size_t state_set = size_t( -1 ) ;
                 natus::graphics::render_state_sets_res_t render_states = 
                     this_t::default_render_states() ;
             };
@@ -85,12 +86,11 @@ namespace natus
 
         protected:
 
-            size_t get_bid( void_t ) const { return _backend_id ; }
+            size_t get_bid( void_t ) const { return size_t( _bt ) ; }
             void_t set_type( natus::graphics::backend_type const bt ) { _bt = bt ; }
 
         private:
-
-            size_t _backend_id = size_t(-1) ;
+            
             static size_t create_backend_id( void_t ) noexcept ;
 
         };

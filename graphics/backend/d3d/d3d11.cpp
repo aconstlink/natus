@@ -1643,7 +1643,7 @@ public: // functions
 
 //****
 d3d11_backend::d3d11_backend( natus::graphics::d3d11_context_ptr_t ctx ) noexcept : 
-    backend( natus::graphics::backend_type::gl3 )
+    backend( natus::graphics::backend_type::d3d11 )
 {
     _pimpl = natus::memory::global_t::alloc( this_t::pimpl( ctx ), 
         natus_log_fn("d3d11_backend::pimpl") ) ;
@@ -1691,8 +1691,8 @@ natus::graphics::result d3d11_backend::configure( natus::graphics::geometry_obje
         return natus::graphics::result::invalid_argument ;
     
     {
-        id = natus::graphics::id_t( this_t::get_bid(),
-            _pimpl->construct_geo( id->get_oid(), *gconf ) ) ;
+        id->set_oid( this_t::get_bid(), _pimpl->construct_geo( 
+            id->get_oid( this_t::get_bid() ), *gconf ) ) ;
     }
     
     {
@@ -1712,7 +1712,7 @@ natus::graphics::result d3d11_backend::configure( natus::graphics::render_object
     natus::graphics::id_res_t id = config->get_id() ;
     
     {
-        id = natus::graphics::id_t( this_t::get_bid(),
+        id->set_oid( this_t::get_bid(),
             _pimpl->construct_render_config( id->get_oid( this_t::get_bid() ), *config ) ) ;
     }
 
@@ -1736,7 +1736,7 @@ natus::graphics::result d3d11_backend::configure( natus::graphics::shader_object
 
     
     {
-        id = natus::graphics::id_t( this_t::get_bid(),
+        id->set_oid( this_t::get_bid(),
             _pimpl->construct_shader_config( id->get_oid( this_t::get_bid() ), *config ) ) ;
     }
 
@@ -1760,7 +1760,7 @@ natus::graphics::result d3d11_backend::configure( natus::graphics::image_object_
     natus::graphics::id_res_t id = config->get_id() ;
     
     {
-        id = natus::graphics::id_t( this_t::get_bid(), _pimpl->construct_image_config( 
+        id->set_oid( this_t::get_bid(), _pimpl->construct_image_config( 
             id->get_oid( this_t::get_bid() ), *config ) ) ;
     }
 
@@ -1841,7 +1841,7 @@ natus::graphics::result d3d11_backend::render( natus::graphics::render_object_re
 
     //natus::log::global_t::status( natus_log_fn("render") ) ;
     
-    if( id->is_not_bid( this_t::get_bid() ) || id->is_not_valid() )
+    if( id->is_not_valid( this_t::get_bid() ) )
     {
         natus::log::global_t::error( natus_log_fn( "invalid id" ) ) ;
         return natus::graphics::result::failed ;
@@ -1852,7 +1852,8 @@ natus::graphics::result d3d11_backend::render( natus::graphics::render_object_re
         _pimpl->do_render_states( *( detail.render_states ) ) ;
     }
 
-    _pimpl->render( id->get_oid(), detail.varset, (UINT)detail.start, (UINT)detail.num_elems ) ;
+    _pimpl->render( id->get_oid( this_t::get_bid() ), 
+        detail.varset, (UINT)detail.start, (UINT)detail.num_elems ) ;
     
     return natus::graphics::result::ok ;
 }
