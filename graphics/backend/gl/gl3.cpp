@@ -1731,7 +1731,6 @@ natus::graphics::result gl3_backend::configure( natus::graphics::geometry_object
 {
     natus::graphics::id_res_t id = gconf->get_id() ;
 
-    if( id->is_not_valid( this_t::get_bid() ) )
     {
         id->set_oid( this_t::get_bid(),
             _pimpl->construct_geo( id->get_oid(this_t::get_bid() ), *gconf ) ) ;
@@ -1829,7 +1828,7 @@ natus::graphics::result gl3_backend::configure( natus::graphics::framebuffer_obj
     natus::graphics::id_res_t id = obj->get_id() ;
 
     {
-        id = natus::graphics::id_t( this_t::get_bid(), _pimpl->construct_framebuffer(
+        id->set_oid( this_t::get_bid(), _pimpl->construct_framebuffer(
             id->get_oid( this_t::get_bid() ), *obj ) ) ;
     }
 
