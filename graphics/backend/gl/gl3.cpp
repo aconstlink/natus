@@ -332,14 +332,14 @@ struct gl3_backend::pimpl
             update_state( oid, obj ) ;
         }
     }
-    
+
     template< typename T >
-    static size_t determine_oid( natus::ntd::string_cref_t name, natus::ntd::vector< T > & v ) noexcept
+    static size_t determine_oid( natus::ntd::string_cref_t name, natus::ntd::vector< T >& v ) noexcept
     {
         size_t oid = size_t( -1 ) ;
 
         {
-            auto iter = std::find_if( v.begin(), v.end(), [&] ( T const & c )
+            auto iter = std::find_if( v.begin(), v.end(), [&] ( T const& c )
             {
                 return c.name == name ;
             } ) ;
@@ -562,13 +562,6 @@ struct gl3_backend::pimpl
     // if oid == -1, the state is popped.
     void_t handle_render_state( size_t const oid, size_t const rs_id ) noexcept
     {
-        #if 0
-
-        glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-        natus::ogl::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
-
-        #endif
-
         auto new_id = std::make_pair( oid, rs_id ) ;
         auto old_id = _state_id_stack.top() ;
 

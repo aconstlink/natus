@@ -43,6 +43,8 @@ namespace natus
                 IDXGISwapChain* _pSwapChain = nullptr;
                 IDXGISwapChain1* _pSwapChain1 = nullptr;
                 ID3D11RenderTargetView* _pRenderTargetView = nullptr;
+                ID3D11Texture2D* _pDepthStencil = nullptr;
+                ID3D11DepthStencilView* _pDepthStencilView = nullptr;
 
                 d3d11_context_ptr_t _bend_ctx = nullptr ;
 
@@ -81,6 +83,7 @@ namespace natus
 
                 /// @precondition Context must be active. For debug purpose. Just clears the screen.
                 void_t clear_now( natus::math::vec4f_t const& vec ) ;
+                void_t clear_depth_stencil( void_t ) ;
 
             private:
 
@@ -129,9 +132,15 @@ namespace natus
                     return _app_context->_pd3dDevice ;
                 }
 
-                virtual void_t clear_default( natus::math::vec4f_cref_t color ) noexcept
+                // clear the backbuffer
+                virtual void_t clear_render_target_view( natus::math::vec4f_cref_t color ) noexcept
                 {
                     _app_context->clear_now( color ) ;
+                }
+
+                virtual void_t clear_depth_stencil_view( void_t ) noexcept 
+                {
+                    _app_context->clear_depth_stencil() ;
                 }
             };
 

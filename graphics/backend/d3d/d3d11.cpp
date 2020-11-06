@@ -12,6 +12,7 @@
 #include <natus/ntd/vector.hpp>
 #include <natus/ntd/string.hpp>
 #include <natus/ntd/string/split.hpp>
+#include <natus/ntd/stack.hpp>
 
 #include <d3d11.h>
 #include <d3dcompiler.h>
@@ -196,6 +197,70 @@ struct d3d11_backend::pimpl
     };
     natus_typedef( image_data ) ;
 
+    struct render_state_sets
+    {
+        struct clear_state_set
+        {
+            bool_t enable = false ;
+            natus::math::vec4f_t color ;
+            bool_t do_color = false ;
+            bool_t do_depth = false ;
+        } ;
+        clear_state_set clear_s ;
+
+        struct view_state_set
+        {
+            bool_t enable = false ;
+            natus::math::vec4ui_t vp ;
+        } ;
+        view_state_set view_s ;
+
+        struct blend_state_set
+        {
+            bool_t enable = false ;
+            //GLenum src_blend_fac ;
+            //GLenum dst_blend_fac ;
+            //GLenum blend_func ;
+        };
+        blend_state_set blend_s ;
+
+        struct depth_state_set
+        {
+            bool_t enable = false ;
+            bool_t write = false ;
+
+            ID3D11DepthStencilState* state = nullptr ;
+        } ;
+        depth_state_set depth_s ;
+
+        struct scissor_state_set
+        {
+            bool_t enable = false ;
+            natus::math::vec4ui_t rect ;
+        } ;
+        scissor_state_set scissor_s ;
+
+        struct polygon_state_set
+        {
+            bool_t enable ;
+            //GLenum cull_mode ;
+            //GLenum front_face ;
+            //GLenum fill_mode ;
+        };
+        polygon_state_set polygon_s ;
+
+        ID3D11RasterizerState * raster_state = nullptr ;
+    };
+    natus_typedef( render_state_sets ) ;
+
+    struct state_data
+    {
+        bool_t valid = false ;
+        natus::ntd::string_t name ;
+        natus::ntd::vector< render_state_sets > states ;
+    } ;
+    natus_typedef( state_data ) ;
+
     struct render_data
     {
         bool_t valid = false ;
@@ -293,6 +358,10 @@ public: // variables
 
     natus::graphics::render_state_sets_t render_states ;
 
+    typedef natus::ntd::vector< this_t::state_data_t > states_t ;
+    states_t _states ;
+    natus::ntd::stack< std::pair<size_t, size_t>, 10 > _state_id_stack ;
+
     FLOAT vp_width = FLOAT( 0 ) ;
     FLOAT vp_height = FLOAT( 0 ) ;
 
@@ -343,12 +412,41 @@ public: // functions
     {
         _ctx = ctx ;
         geo_datas.resize( 10 ) ;
+
+        {
+            auto new_states = *natus::graphics::backend_t::default_render_states() ;
+
+            natus::graphics::render_state_sets old_states = new_states ;
+            old_states.blend_s.do_blend = !new_states.blend_s.do_blend ;
+            old_states.clear_s.do_clear = !new_states.clear_s.do_clear ;
+            old_states.depth_s.do_depth_test = !new_states.depth_s.do_depth_test ;
+            old_states.polygon_s.do_culling = !new_states.polygon_s.do_culling ;
+            old_states.scissor_s.do_scissor_test = !new_states.scissor_s.do_scissor_test ;
+            old_states.view_s.do_viewport = !new_states.view_s.do_viewport ;
+
+            natus::graphics::state_object_t obj( "d3d11_default_states" ) ;
+
+            // store the invalid state at the bottom
+            // store the opposed default state at position 1
+            // so during frame begin, all default states can be
+            // restored useing those two state sets.
+            obj.add_render_state_set( old_states ) ;
+            obj.add_render_state_set( new_states ) ;
+
+            size_t const oid = this_t::construct_state( size_t( -1 ), obj ) ;
+            _state_id_stack.push( std::make_pair( oid, size_t( 0 ) ) ) ;
+            _state_id_stack.push( std::make_pair( oid, size_t( 1 ) ) ) ;
+
+            update_state( oid, obj ) ;
+        }
     }
 
     pimpl( pimpl && rhv ) noexcept
     {
         natus_move_member_ptr( _ctx, rhv ) ;
         geo_datas = std::move( rhv.geo_datas ) ;
+        _state_id_stack = std::move( rhv._state_id_stack ) ;
+        _states = std::move( rhv._states ) ;
     }
     
     ~pimpl( void_t ) 
@@ -357,6 +455,283 @@ public: // functions
         {
             natus::memory::global_t::dealloc_raw( g.vb_mem ) ;
             natus::memory::global_t::dealloc_raw( g.ib_mem ) ;
+        }
+    }
+
+    size_t construct_state( size_t oid, natus::graphics::state_object_ref_t obj ) noexcept
+    {
+        oid = determine_oid( obj.name(), _states ) ;
+
+        auto& states = _states[ oid ] ;
+
+        states.states.resize( obj.size() ) ;
+
+        // @note
+        // set all enables. Enable/Disable only possible during construction
+        // values are assigned in the update function for the render states
+        obj.for_each( [&] ( size_t const i, natus::graphics::render_state_sets_cref_t rs )
+        {
+            this_t::render_state_sets rs_ ;
+
+            rs_.view_s.enable = rs.view_s.do_viewport ;
+            rs_.blend_s.enable = rs.blend_s.do_blend ;
+            rs_.clear_s.enable = rs.clear_s.do_clear ;
+            rs_.depth_s.enable = rs.depth_s.do_depth_test ;
+            rs_.depth_s.write = rs.depth_s.do_depth_write ;
+            rs_.polygon_s.enable = rs.polygon_s.do_culling ;
+            rs_.scissor_s.enable = rs.scissor_s.do_scissor_test ;
+
+            D3D11_RASTERIZER_DESC raster_desc = { } ;
+
+            if( rs_.blend_s.enable )
+            {
+                # if 0
+                rs.blend_s.blend_func = natus::graphics::gl3::convert( rs_in.blend_s.blend_func ) ;
+                rs.blend_s.src_blend_fac = natus::graphics::gl3::convert( rs_in.blend_s.src_blend_factor ) ;
+                rs.blend_s.dst_blend_fac = natus::graphics::gl3::convert( rs_in.blend_s.dst_blend_factor ) ;
+                #endif
+        }
+            if( rs_.clear_s.enable )
+            {
+                rs_.clear_s.color = rs.clear_s.clear_color ;
+                rs_.clear_s.do_color = rs.clear_s.do_color ;
+                rs_.clear_s.do_depth = rs.clear_s.do_depth ;
+            }
+            if( rs_.view_s.enable )
+            {
+                rs_.view_s.vp = rs.view_s.vp ;
+            }
+            
+            // depth state
+            {
+                rs_.depth_s.write = rs.depth_s.do_depth_write ;
+
+                {
+                    D3D11_DEPTH_STENCIL_DESC desc = { } ;
+                    desc.DepthEnable = rs_.depth_s.enable  ? TRUE : FALSE ;
+                    desc.DepthFunc = D3D11_COMPARISON_LESS ;
+                    desc.DepthWriteMask = rs_.depth_s.write ? D3D11_DEPTH_WRITE_MASK_ALL : D3D11_DEPTH_WRITE_MASK_ZERO ;
+                    auto const res = _ctx->dev()->CreateDepthStencilState( &desc, &rs_.depth_s.state ) ;
+                    if( FAILED( res ) )
+                    {
+                        natus::log::global_t::error( "CreateDepthStencilState" ) ;
+                    }
+                }
+            }
+
+            if( rs_.polygon_s.enable )
+            {
+                if( rs.polygon_s.do_culling )
+                    raster_desc.CullMode = natus::graphics::d3d11::convert( rs.polygon_s.cm ) ;
+                else
+                    raster_desc.CullMode = D3D11_CULL_NONE ;
+                
+                raster_desc.FillMode = natus::graphics::d3d11::convert( rs.polygon_s.fm ) ;
+                
+                raster_desc.FrontCounterClockwise = rs.polygon_s.ff != natus::graphics::front_face::counter_clock_wise ;
+                {
+
+                }
+                #if 0
+                // glCullFace
+                rs.polygon_s.cull_mode = natus::graphics::gl3::convert( rs_in.polygon_s.cm ) ;
+
+                // glFrontFace
+                rs.polygon_s.front_face = natus::graphics::gl3::convert( rs_in.polygon_s.ff ) ;
+
+                // glPolygonMode
+                rs.polygon_s.fill_mode = natus::graphics::gl3::convert( rs_in.polygon_s.fm ) ;
+                #endif
+            }
+            if( rs_.scissor_s.enable )
+            {
+            }
+
+            _ctx->dev()->CreateRasterizerState( &raster_desc, &rs_.raster_state ) ;
+
+            states.states[ i ] = rs_ ;
+        } ) ;
+
+        return oid ;
+    }
+
+    // some values can be updated without newly constructing the d3d11 state
+    size_t update_state( size_t const oid, natus::graphics::state_object_ref_t obj ) noexcept
+    {
+        auto& states = _states[ oid ] ;
+
+        // @note
+        // set all values
+        obj.for_each( [&] ( size_t const i, natus::graphics::render_state_sets_cref_t rs_in )
+        {
+            this_t::render_state_sets& rs = states.states[ i ] ;
+
+            if( rs.blend_s.enable )
+            {
+            }
+            if( rs.clear_s.enable )
+            {
+            }
+            if( rs.view_s.enable )
+            {
+                rs.view_s.vp = rs_in.view_s.vp ;
+            }
+            if( rs.depth_s.enable )
+            {
+            }
+            if( rs.polygon_s.enable )
+            {
+            }
+            if( rs.scissor_s.enable )
+            {
+            }
+        } ) ;
+        return oid ;
+    }
+
+    void_t handle_render_state( render_state_sets const& new_states, render_state_sets const& old_states )
+    {
+        
+        if( new_states.depth_s.enable != old_states.depth_s.enable )
+        {
+            if( new_states.depth_s.enable )
+            {
+                _ctx->ctx()->OMSetDepthStencilState( new_states.depth_s.state, 0 ) ;
+            }
+            else
+            {
+                _ctx->ctx()->OMSetDepthStencilState( NULL,0 ) ;
+            }
+        }
+
+        #if 0
+
+        if( new_states.blend_s.enable != old_states.blend_s.enable )
+        {
+            if( new_states.blend_s.enable )
+            {
+                glEnable( GL_BLEND ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
+
+                GLenum const glsrc = new_states.blend_s.src_blend_fac ;
+                GLenum const gldst = new_states.blend_s.dst_blend_fac ;
+                glBlendFunc( glsrc, gldst ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glBlendFunc" ) ) ;
+            }
+            else
+            {
+                glDisable( GL_BLEND ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glDisable" ) ) ;
+            }
+        }
+
+        if( new_states.polygon_s.enable != old_states.polygon_s.enable )
+        {
+            if( new_states.polygon_s.enable )
+            {
+                glEnable( GL_CULL_FACE ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
+
+                glCullFace( new_states.polygon_s.cull_mode ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glCullFace" ) ) ;
+
+                glFrontFace( new_states.polygon_s.front_face ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glFrontFace" ) ) ;
+
+                glPolygonMode( GL_FRONT_AND_BACK, new_states.polygon_s.fill_mode ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glPolygonMode" ) ) ;
+            }
+            else
+            {
+                glDisable( GL_CULL_FACE ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glDisable" ) ) ;
+            }
+        }
+
+        if( new_states.scissor_s.enable != old_states.scissor_s.enable )
+        {
+            if( new_states.scissor_s.enable )
+            {
+                glEnable( GL_SCISSOR_TEST ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
+
+                glScissor(
+                    GLint( new_states.scissor_s.rect.x() ), GLint( new_states.scissor_s.rect.y() ),
+                    GLsizei( new_states.scissor_s.rect.z() ), GLsizei( new_states.scissor_s.rect.w() ) ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glScissor" ) ) ;
+            }
+            else
+            {
+                glDisable( GL_SCISSOR_TEST ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glDisable" ) ) ;
+            }
+        }
+        #endif
+
+        if( new_states.clear_s.enable != old_states.clear_s.enable )
+        {
+            if( new_states.clear_s.enable )
+            {
+                // @todo what about user created framebuffers/render targets?
+                if( new_states.clear_s.do_color )
+                    _ctx->clear_render_target_view( new_states.clear_s.color ) ;
+                if( new_states.clear_s.do_depth )
+                    _ctx->clear_depth_stencil_view() ;
+            }
+        }
+
+        if( new_states.view_s.enable != old_states.view_s.enable )
+        {
+            if( new_states.view_s.enable )
+            {
+                auto const& vp_ = new_states.view_s.vp  ;
+
+                // Setup the viewport
+                D3D11_VIEWPORT vp ;
+                vp.Width = FLOAT( vp_.z() ) ;
+                vp.Height = FLOAT( vp_.w() ) ;
+                vp.MinDepth = 0.0f ;
+                vp.MaxDepth = 1.0f ;
+                vp.TopLeftX = FLOAT( vp_.x() ) ;
+                vp.TopLeftY = FLOAT( vp_.y() ) ;
+                _ctx->ctx()->RSSetViewports( 1, &vp );
+            }
+        }
+
+        _ctx->ctx()->RSSetState( new_states.raster_state ) ;
+        
+    }
+
+    // if oid == -1, the state is popped.
+    void_t handle_render_state( size_t const oid, size_t const rs_id ) noexcept
+    {
+        auto new_id = std::make_pair( oid, rs_id ) ;
+        auto old_id = _state_id_stack.top() ;
+
+        // pop state
+        if( oid == size_t( -1 ) )
+        {
+            if( _state_id_stack.size() == 2 )
+            {
+                natus::log::global_t::error( natus_log_fn( "no more render states to pop" ) ) ;
+                return ;
+            }
+            // was active
+            old_id = _state_id_stack.pop() ;
+            // will be activated
+            new_id = _state_id_stack.top() ;
+        }
+
+        {
+            auto const& new_states = _states[ new_id.first ].states[ new_id.second ] ;
+            auto const& old_states = _states[ old_id.first ].states[ old_id.second ] ;
+
+            this_t::handle_render_state( new_states, old_states ) ;
+        }
+
+        if( oid != size_t( -1 ) )
+        {
+            _state_id_stack.push( new_id ) ;
         }
     }
 
@@ -1426,17 +1801,21 @@ public: // functions
 
     void_t begin_frame( void_t )
     {
-        // Setup the viewport
-        D3D11_VIEWPORT vp ;
-        vp.Width = ( FLOAT ) vp_width ;
-        vp.Height = ( FLOAT ) vp_height ;
-        vp.MinDepth = 0.0f ;
-        vp.MaxDepth = 1.0f ;
-        vp.TopLeftX = 0 ;
-        vp.TopLeftY = 0 ;
-        _ctx->ctx()->RSSetViewports( 1, &vp );
+        auto const ids_old = _state_id_stack[ 0 ] ;
+        auto const ids_new = _state_id_stack[ 1 ] ;
 
-        _ctx->clear_default( natus::math::vec4f_t() );
+        // set the viewport to the default new state, 
+        // so the correct viewport is set automatically.
+        {
+            natus::math::vec4ui_t vp = _states[ ids_new.first ].states[ ids_new.second ].view_s.vp ;
+            vp.z( uint_t( vp_width ) ) ;
+            vp.w( uint_t( vp_height ) ) ;
+            _states[ ids_new.first ].states[ ids_new.second ].view_s.vp = vp ;
+        }
+
+        this_t::handle_render_state(
+            _states[ ids_new.first ].states[ ids_new.second ],
+            _states[ ids_old.first ].states[ ids_old.second ] ) ;
     }
 
     void_t end_frame( void_t )
@@ -1857,11 +2236,6 @@ natus::graphics::result d3d11_backend::render( natus::graphics::render_object_re
     {
         natus::log::global_t::error( natus_log_fn( "invalid id" ) ) ;
         return natus::graphics::result::failed ;
-    }
-
-    if( detail.render_states.is_valid() )
-    {
-        _pimpl->do_render_states( *( detail.render_states ) ) ;
     }
 
     _pimpl->render( id->get_oid( this_t::get_bid() ), 

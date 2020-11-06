@@ -78,6 +78,8 @@ context::this_ref_t context::operator = ( this_rref_t rhv ) noexcept
     natus_move_member_ptr( _pSwapChain, rhv ) ;
     natus_move_member_ptr( _pSwapChain1, rhv ) ;
     natus_move_member_ptr( _pRenderTargetView, rhv ) ;
+    natus_move_member_ptr( _pDepthStencil, rhv ) ;
+    natus_move_member_ptr( _pDepthStencilView, rhv ) ;
 
     return *this ;
 }
@@ -123,7 +125,8 @@ natus::application::result context::swap( void_t )
             _pImmediateContext->OMSetRenderTargets( 0, 0, 0 );
 
             // Release all outstanding references to the swap chain's buffers.
-            _pRenderTargetView->Release();
+            _pRenderTargetView->Release() ;
+            _pDepthStencilView->Release() ;
 
             HRESULT hr;
             // Preserve the existing buffer count and format.
@@ -136,18 +139,44 @@ natus::application::result context::swap( void_t )
                 return natus::application::result::failed_d3d ;
             }
 
-            // Get buffer and create a render-target-view.
-            ID3D11Texture2D* pBuffer;
-            hr = _pSwapChain->GetBuffer( 0, __uuidof( ID3D11Texture2D ),
-                ( void** ) &pBuffer );
-            // Perform error handling here!
+            {
+                // Get buffer and create a render-target-view.
+                ID3D11Texture2D* pBuffer;
+                hr = _pSwapChain->GetBuffer( 0, __uuidof( ID3D11Texture2D ),
+                    ( void** ) &pBuffer );
+                // Perform error handling here!
 
-            hr = _pd3dDevice->CreateRenderTargetView( pBuffer, NULL,
-                &_pRenderTargetView );
-            // Perform error handling here!
-            pBuffer->Release();
+                hr = _pd3dDevice->CreateRenderTargetView( pBuffer, NULL,
+                    &_pRenderTargetView );
+                // Perform error handling here!
+                pBuffer->Release();
+            }
 
-            _pImmediateContext->OMSetRenderTargets( 1, &_pRenderTargetView, NULL );
+            {
+                // Create depth stencil texture
+                D3D11_TEXTURE2D_DESC descDepth = { };
+                descDepth.Width = width;
+                descDepth.Height = height;
+                descDepth.MipLevels = 1;
+                descDepth.ArraySize = 1;
+                descDepth.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+                descDepth.SampleDesc.Count = 1;
+                descDepth.SampleDesc.Quality = 0;
+                descDepth.Usage = D3D11_USAGE_DEFAULT;
+                descDepth.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+                descDepth.CPUAccessFlags = 0;
+                descDepth.MiscFlags = 0;
+                hr = _pd3dDevice->CreateTexture2D( &descDepth, nullptr, &_pDepthStencil );
+                if( FAILED( hr ) ) return natus::application::result::failed_d3d ;
+
+                // Create the depth stencil view
+                D3D11_DEPTH_STENCIL_VIEW_DESC descDSV = { };
+                descDSV.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+                descDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+                descDSV.Texture2D.MipSlice = 0;
+                hr = _pd3dDevice->CreateDepthStencilView( _pDepthStencil, &descDSV, &_pDepthStencilView );
+            }
+            _pImmediateContext->OMSetRenderTargets( 1, &_pRenderTargetView, _pDepthStencilView );
 
             // Set up the viewport.
             D3D11_VIEWPORT vp;
@@ -190,13 +219,17 @@ natus::application::result context::create_context( HWND hwnd )
 
 
 //***********************************************************************
-void_t context::clear_now( natus::math::vec4f_t const& /*vec*/ )
+void_t context::clear_now( natus::math::vec4f_t const& vec )
 {
-    _pImmediateContext->ClearRenderTargetView( _pRenderTargetView, DirectX::Colors::MidnightBlue );
+    // old: DirectX::Colors::MidnightBlue
+    FLOAT color[ 4 ] = { vec.x(), vec.y(), vec.z(), vec.w() } ;
+    _pImmediateContext->ClearRenderTargetView( _pRenderTargetView, color ) ;
+}
 
-    #if 0
-    natus::ogl::glClearColor( vec.x(), vec.y(), vec.z(), vec.w() ) ;
-    #endif
+//***********************************************************************
+void_t context::clear_depth_stencil( void_t ) 
+{
+    _pImmediateContext->ClearDepthStencilView( _pDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0 ) ;
 }
 
 //***********************************************************************
@@ -334,13 +367,39 @@ natus::application::result context::create_the_context( d3d_info_cref_t gli )
         // Create a render target view
         ID3D11Texture2D* pBackBuffer = nullptr;
         hr = _pSwapChain->GetBuffer( 0, __uuidof( ID3D11Texture2D ), reinterpret_cast< void** >( &pBackBuffer ) );
-        if( FAILED( hr ) ) return natus::application::result::failed_d3d ;
+        if( FAILED( hr ) )
+            return natus::application::result::failed_d3d ;
 
         hr = _pd3dDevice->CreateRenderTargetView( pBackBuffer, nullptr, &_pRenderTargetView );
         pBackBuffer->Release();
+        if( FAILED( hr ) )
+            return natus::application::result::failed_d3d ;
+
+        // Create depth stencil texture
+        D3D11_TEXTURE2D_DESC descDepth = { };
+        descDepth.Width = width;
+        descDepth.Height = height;
+        descDepth.MipLevels = 1;
+        descDepth.ArraySize = 1;
+        descDepth.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+        descDepth.SampleDesc.Count = 1;
+        descDepth.SampleDesc.Quality = 0;
+        descDepth.Usage = D3D11_USAGE_DEFAULT;
+        descDepth.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+        descDepth.CPUAccessFlags = 0;
+        descDepth.MiscFlags = 0;
+        hr = _pd3dDevice->CreateTexture2D( &descDepth, nullptr, &_pDepthStencil );
         if( FAILED( hr ) ) return natus::application::result::failed_d3d ;
 
-        _pImmediateContext->OMSetRenderTargets( 1, &_pRenderTargetView, nullptr );
+        // Create the depth stencil view
+        D3D11_DEPTH_STENCIL_VIEW_DESC descDSV = { };
+        descDSV.Format = descDepth.Format;
+        descDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+        descDSV.Texture2D.MipSlice = 0;
+        hr = _pd3dDevice->CreateDepthStencilView( _pDepthStencil, &descDSV, &_pDepthStencilView );
+        if( FAILED( hr ) ) return natus::application::result::failed_d3d ;
+
+        _pImmediateContext->OMSetRenderTargets( 1, &_pRenderTargetView, _pDepthStencilView );
 
         // Setup the viewport
         D3D11_VIEWPORT vp;
