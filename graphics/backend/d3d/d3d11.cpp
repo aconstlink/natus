@@ -1841,7 +1841,7 @@ natus::graphics::result d3d11_backend::use( natus::graphics::framebuffer_object_
 }
 
 //****
-natus::graphics::result d3d11_backend::use( natus::graphics::state_object_res_t ) noexcept 
+natus::graphics::result d3d11_backend::use( size_t const, natus::graphics::state_object_res_t ) noexcept 
 {
     return natus::graphics::result::ok ;
 }

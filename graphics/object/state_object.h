@@ -65,6 +65,11 @@ namespace natus
 
         public: // render state sets
 
+            size_t size( void_t ) const noexcept 
+            {
+                return _states.size() ;
+            }
+
             this_ref_t add_render_state_set( natus::graphics::render_state_sets_cref_t rs )
             {
                 _states.emplace_back( rs ) ;

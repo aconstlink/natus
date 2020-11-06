@@ -118,6 +118,12 @@ namespace natus
                 return true ;
             }
 
+            object_cref_t operator [] ( size_t const i ) const noexcept
+            {
+                natus_assert( _cur_pos >= i ) ;
+                return _stack[ i ] ;
+            }
+
         public:
 
             void_t bottom_to_top( for_each_funk_t funk )
