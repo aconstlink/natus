@@ -10,6 +10,7 @@
 #include <natus/memory/global.h>
 #include <natus/memory/guards/malloc_guard.hpp>
 #include <natus/ntd/vector.hpp>
+#include <natus/ntd/stack.hpp>
 #include <natus/ntd/string/split.hpp>
 
 using namespace natus::graphics ;
@@ -136,7 +137,66 @@ struct es3_backend::pimpl
     } ;
     natus_typedef( shader_data ) ;
 
-    struct render_config
+    struct render_state_sets
+    {
+        struct clear_state_set
+        {
+            bool_t enable = false ;
+            natus::math::vec4f_t color ;
+            GLenum clear_bits ;
+        } ;
+        clear_state_set clear_s ;
+
+        struct view_state_set
+        {
+            bool_t enable = false ;
+            natus::math::vec4ui_t vp ;
+        } ;
+        view_state_set view_s ;
+
+        struct blend_state_set
+        {
+            bool_t enable = false ;
+            GLenum src_blend_fac ;
+            GLenum dst_blend_fac ;
+            GLenum blend_func ;
+        };
+        blend_state_set blend_s ;
+
+        struct depth_state_set
+        {
+            bool_t enable = false ;
+            bool_t write = false ;
+        } ;
+        depth_state_set depth_s ;
+
+        struct scissor_state_set
+        {
+            bool_t enable = false ;
+            natus::math::vec4ui_t rect ;
+        } ;
+        scissor_state_set scissor_s ;
+
+        struct polygon_state_set
+        {
+            bool_t enable ;
+            GLenum cull_mode ;
+            GLenum front_face ;
+            GLenum fill_mode ;
+        };
+        polygon_state_set polygon_s ;
+    };
+    natus_typedef( render_state_sets ) ;
+
+    struct state_data
+    {
+        bool_t valid = false ;
+        natus::ntd::string_t name ;
+        natus::ntd::vector< render_state_sets > states ;
+    } ;
+    natus_typedef( state_data ) ;
+
+    struct render_data
     {
         bool_t valid = false ;
         natus::ntd::string_t name ;
@@ -169,6 +229,7 @@ struct es3_backend::pimpl
             natus::ntd::vector< uniform_texture_link > > > var_sets_texture ;
 
     };
+    natus_typedef( render_data ) ;
 
     struct image_config
     {
@@ -216,7 +277,7 @@ struct es3_backend::pimpl
     typedef natus::ntd::vector< this_t::shader_data > shaders_t ;
     shaders_t shaders ;
 
-    typedef natus::ntd::vector< this_t::render_config > rconfigs_t ;
+    typedef natus::ntd::vector< this_t::render_data > rconfigs_t ;
     rconfigs_t rconfigs ;
 
     typedef natus::ntd::vector< this_t::geo_data > geo_datas_t ;
@@ -228,6 +289,10 @@ struct es3_backend::pimpl
     typedef natus::ntd::vector< this_t::framebuffer_data_t > framebuffers_t ;
     framebuffers_t _framebuffers ;
 
+    typedef natus::ntd::vector< this_t::state_data_t > states_t ;
+    states_t _states ;
+    natus::ntd::stack< std::pair<size_t, size_t>, 10 > _state_id_stack ;
+
     GLsizei vp_width = 0 ;
     GLsizei vp_height = 0 ;
 
@@ -238,7 +303,35 @@ struct es3_backend::pimpl
 
     natus::graphics::es_context_ptr_t _ctx = nullptr ;
 
-    pimpl( natus::graphics::es_context_ptr_t ctx ) : _ctx( ctx ){}
+    pimpl( natus::graphics::es_context_ptr_t ctx ) : _ctx( ctx )
+    {
+        {
+            auto new_states = *natus::graphics::backend_t::default_render_states() ;
+
+            natus::graphics::render_state_sets old_states = new_states ;
+            old_states.blend_s.do_blend = !new_states.blend_s.do_blend ;
+            old_states.clear_s.do_clear = !new_states.clear_s.do_clear ;
+            old_states.depth_s.do_depth_test = !new_states.depth_s.do_depth_test ;
+            old_states.polygon_s.do_culling = !new_states.polygon_s.do_culling ;
+            old_states.scissor_s.do_scissor_test = !new_states.scissor_s.do_scissor_test ;
+            old_states.view_s.do_viewport = !new_states.view_s.do_viewport ;
+
+            natus::graphics::state_object_t obj( "es3_default_states" ) ;
+
+            // store the invalid state at the bottom
+            // store the opposed default state at position 1
+            // so during frame begin, all default states can be
+            // restored useing those two state sets.
+            obj.add_render_state_set( old_states ) ;
+            obj.add_render_state_set( new_states ) ;
+
+            size_t const oid = this_t::construct_state( size_t( -1 ), obj ) ;
+            _state_id_stack.push( std::make_pair( oid, size_t( 0 ) ) ) ;
+            _state_id_stack.push( std::make_pair( oid, size_t( 1 ) ) ) ;
+
+            update_state( oid, obj ) ;
+        }
+    }
 
     template< typename T >
     static size_t determine_oid( natus::ntd::string_cref_t name, natus::ntd::vector< T >& v ) noexcept
@@ -279,6 +372,224 @@ struct es3_backend::pimpl
         v[ oid ].name = name ;
 
         return oid ;
+    }
+
+    size_t construct_state( size_t oid, natus::graphics::state_object_ref_t obj ) noexcept
+    {
+        oid = determine_oid( obj.name(), _states ) ;
+
+        auto& states = _states[ oid ] ;
+
+        states.states.resize( obj.size() ) ;
+
+        // @note
+        // set all enables. Enable/Disable only possible during construction
+        // values are assigned in the update function for the render states
+        obj.for_each( [&] ( size_t const i, natus::graphics::render_state_sets_cref_t rs )
+        {
+            this_t::render_state_sets rs_ ;
+
+            rs_.view_s.enable = rs.view_s.do_viewport ;
+            rs_.blend_s.enable = rs.blend_s.do_blend ;
+            rs_.clear_s.enable = rs.clear_s.do_clear ;
+            rs_.depth_s.enable = rs.depth_s.do_depth_test ;
+            rs_.depth_s.write = rs.depth_s.do_depth_write ;
+            rs_.polygon_s.enable = rs.polygon_s.do_culling ;
+            rs_.scissor_s.enable = rs.scissor_s.do_scissor_test ;
+
+            states.states[ i ] = rs_ ;
+        } ) ;
+
+        return oid ;
+    }
+
+    size_t update_state( size_t const oid, natus::graphics::state_object_ref_t obj ) noexcept
+    {
+        auto& states = _states[ oid ] ;
+
+        // @note
+        // set all values
+        obj.for_each( [&] ( size_t const i, natus::graphics::render_state_sets_cref_t rs_in )
+        {
+            this_t::render_state_sets& rs = states.states[ i ] ;
+
+            if( rs.blend_s.enable )
+            {
+                rs.blend_s.blend_func = natus::graphics::gl3::convert( rs_in.blend_s.blend_func ) ;
+                rs.blend_s.src_blend_fac = natus::graphics::gl3::convert( rs_in.blend_s.src_blend_factor ) ;
+                rs.blend_s.dst_blend_fac = natus::graphics::gl3::convert( rs_in.blend_s.dst_blend_factor ) ;
+            }
+            if( rs.clear_s.enable )
+            {
+                rs.clear_s.color = rs_in.clear_s.clear_color ;
+                rs.clear_s.clear_bits =
+                    ( rs_in.clear_s.do_color ? GL_COLOR_BUFFER_BIT : 0 ) |
+                    ( rs_in.clear_s.do_depth ? GL_DEPTH_BUFFER_BIT : 0 ) ;
+            }
+            if( rs.view_s.enable )
+            {
+                rs.view_s.vp = rs_in.view_s.vp ;
+            }
+            if( rs.depth_s.enable )
+            {
+                rs.depth_s.write = rs_in.depth_s.do_depth_write ;
+            }
+            if( rs.polygon_s.enable )
+            {
+                // glCullFace
+                rs.polygon_s.cull_mode = natus::graphics::gl3::convert( rs_in.polygon_s.cm ) ;
+
+                // glFrontFace
+                rs.polygon_s.front_face = natus::graphics::gl3::convert( rs_in.polygon_s.ff ) ;
+
+                // glPolygonMode
+                rs.polygon_s.fill_mode = natus::graphics::gl3::convert( rs_in.polygon_s.fm ) ;
+            }
+            if( rs.scissor_s.enable )
+            {
+            }
+        } ) ;
+        return oid ;
+    }
+
+    void_t handle_render_state( render_state_sets const& new_states, render_state_sets const& old_states )
+    {
+        if( new_states.depth_s.enable != old_states.depth_s.enable )
+        {
+            if( new_states.depth_s.enable )
+            {
+                glEnable( GL_DEPTH_TEST );
+                natus::ogl::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
+
+                glDepthMask( GL_TRUE );
+                natus::ogl::error::check_and_log( natus_log_fn( "glDepthMask" ) ) ;
+
+                glDepthFunc( GL_LESS );
+                natus::ogl::error::check_and_log( natus_log_fn( "glDepthFunc" ) ) ;
+            }
+            else
+            {
+                glDisable( GL_DEPTH_TEST );
+                natus::ogl::error::check_and_log( natus_log_fn( "glDisable( GL_DEPTH_TEST )" ) ) ;
+            }
+        }
+
+        if( new_states.clear_s.enable != old_states.clear_s.enable )
+        {
+            if( new_states.clear_s.enable )
+            {
+                glClearColor( new_states.clear_s.color.x(), new_states.clear_s.color.y(),
+                    new_states.clear_s.color.z(), new_states.clear_s.color.w() ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glClearColor" ) ) ;
+
+                glClear( new_states.clear_s.clear_bits );
+                natus::ogl::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
+            }
+        }
+
+        if( new_states.blend_s.enable != old_states.blend_s.enable )
+        {
+            if( new_states.blend_s.enable )
+            {
+                glEnable( GL_BLEND ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
+
+                GLenum const glsrc = new_states.blend_s.src_blend_fac ;
+                GLenum const gldst = new_states.blend_s.dst_blend_fac ;
+                glBlendFunc( glsrc, gldst ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glBlendFunc" ) ) ;
+            }
+            else
+            {
+                glDisable( GL_BLEND ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glDisable" ) ) ;
+            }
+        }
+
+        if( new_states.polygon_s.enable != old_states.polygon_s.enable )
+        {
+            if( new_states.polygon_s.enable )
+            {
+                glEnable( GL_CULL_FACE ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
+
+                glCullFace( new_states.polygon_s.cull_mode ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glCullFace" ) ) ;
+
+                glFrontFace( new_states.polygon_s.front_face ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glFrontFace" ) ) ;
+
+                glPolygonMode( GL_FRONT_AND_BACK, new_states.polygon_s.fill_mode ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glPolygonMode" ) ) ;
+            }
+            else
+            {
+                glDisable( GL_CULL_FACE ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glDisable" ) ) ;
+            }
+        }
+
+        if( new_states.scissor_s.enable != old_states.scissor_s.enable )
+        {
+            if( new_states.scissor_s.enable )
+            {
+                glEnable( GL_SCISSOR_TEST ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
+
+                glScissor(
+                    GLint( new_states.scissor_s.rect.x() ), GLint( new_states.scissor_s.rect.y() ),
+                    GLsizei( new_states.scissor_s.rect.z() ), GLsizei( new_states.scissor_s.rect.w() ) ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glScissor" ) ) ;
+            }
+            else
+            {
+                glDisable( GL_SCISSOR_TEST ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glDisable" ) ) ;
+            }
+        }
+
+        if( new_states.view_s.enable != old_states.view_s.enable )
+        {
+            if( new_states.view_s.enable )
+            {
+                auto const& vp = new_states.view_s.vp  ;
+                glViewport( GLint( vp.x() ), GLint( vp.y() ), GLsizei( vp.z() ), GLsizei( vp.w() ) ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glViewport" ) ) ;
+            }
+        }
+    }
+
+    // if oid == -1, the state is popped.
+    void_t handle_render_state( size_t const oid, size_t const rs_id ) noexcept
+    {
+        auto new_id = std::make_pair( oid, rs_id ) ;
+        auto old_id = _state_id_stack.top() ;
+
+        // pop state
+        if( oid == size_t( -1 ) )
+        {
+            if( _state_id_stack.size() == 2 )
+            {
+                natus::log::global_t::error( natus_log_fn( "no more render states to pop" ) ) ;
+                return ;
+            }
+            // was active
+            old_id = _state_id_stack.pop() ;
+            // will be activated
+            new_id = _state_id_stack.top() ;
+        }
+
+        {
+            auto const& new_states = _states[ new_id.first ].states[ new_id.second ] ;
+            auto const& old_states = _states[ old_id.first ].states[ old_id.second ] ;
+
+            this_t::handle_render_state( new_states, old_states ) ;
+        }
+
+        if( oid != size_t( -1 ) )
+        {
+            _state_id_stack.push( new_id ) ;
+        }
     }
 
     size_t construct_framebuffer( size_t oid, natus::graphics::framebuffer_object_ref_t obj ) noexcept
@@ -1255,13 +1566,13 @@ struct es3_backend::pimpl
         return true ;
     }
 
-    bool_t connect( this_t::render_config & config, natus::graphics::variable_set_res_t vs )
+    bool_t connect( this_t::render_data & config, natus::graphics::variable_set_res_t vs )
     {
         auto item_data = ::std::make_pair( vs,
-            natus::ntd::vector< this_t::render_config::uniform_variable_link >() ) ;
+            natus::ntd::vector< this_t::render_data::uniform_variable_link >() ) ;
 
         auto item_tex = ::std::make_pair( vs,
-            natus::ntd::vector< this_t::render_config::uniform_texture_link >() ) ;
+            natus::ntd::vector< this_t::render_data::uniform_texture_link >() ) ;
 
         this_t::shader_data_ref_t shd = shaders[ config.shd_id ] ;
 
@@ -1281,7 +1592,7 @@ struct es3_backend::pimpl
                     continue ;
                 }
                 
-                this_t::render_config::uniform_variable_link link ;
+                this_t::render_data::uniform_variable_link link ;
                 link.uniform_id = id++ ;
                 link.var = var ;
 
@@ -1312,7 +1623,7 @@ struct es3_backend::pimpl
                     continue ;
                 }
 
-                this_t::render_config::uniform_texture_link link ;
+                this_t::render_data::uniform_texture_link link ;
                 link.uniform_id = id++ ;
                 link.tex_id = img_configs[ i ].tex_id ;
                 link.img_id = i ;
@@ -1329,7 +1640,7 @@ struct es3_backend::pimpl
     bool_t render( size_t const id, size_t const varset_id = size_t(0), GLsizei const start_element = GLsizei(0), 
         GLsizei const num_elements = GLsizei(-1) )
     {
-        this_t::render_config & config = rconfigs[ id ] ;
+        this_t::render_data & config = rconfigs[ id ] ;
         this_t::shader_data& sconfig = shaders[ config.shd_id ] ;
         this_t::geo_data& gconfig = geo_datas[ config.geo_id ] ;
 
@@ -1671,8 +1982,25 @@ natus::graphics::result es3_backend::configure( natus::graphics::framebuffer_obj
 }
 
 //***
-natus::graphics::result es3_backend::configure( natus::graphics::state_object_res_t ) noexcept
+natus::graphics::result es3_backend::configure( natus::graphics::state_object_res_t obj ) noexcept
 {
+    if( !obj.is_valid() || obj->name().empty() )
+    {
+        natus::log::global_t::error( natus_log_fn( "Object must be valid and requires a name" ) ) ;
+        return natus::graphics::result::invalid_argument ;
+    }
+
+    natus::graphics::id_res_t id = obj->get_id() ;
+
+    {
+        id->set_oid( this_t::get_bid(), _pimpl->construct_state(
+            id->get_oid( this_t::get_bid() ), *obj ) ) ;
+    }
+
+    {
+
+    }
+
     return natus::graphics::result::ok ;
 }
 
@@ -1740,8 +2068,25 @@ natus::graphics::result es3_backend::use( natus::graphics::framebuffer_object_re
 }
 
 //****
-natus::graphics::result es3_backend::use( natus::graphics::state_object_res_t ) noexcept 
+natus::graphics::result es3_backend::use( size_t const sid, natus::graphics::state_object_res_t obj ) noexcept 
 {
+    if( !obj.is_valid() )
+    {
+        //_pimpl->deactivate_framebuffer() ;
+        return natus::graphics::result::ok ;
+    }
+
+    natus::graphics::id_res_t id = obj->get_id() ;
+
+    if( id->is_not_valid( this_t::get_bid() ) )
+    {
+        _pimpl->deactivate_framebuffer() ;
+        return natus::graphics::result::ok ;
+    }
+
+    size_t const oid = id->get_oid( this_t::get_bid() ) ;
+    _pimpl->handle_render_state( oid, sid ) ;
+
     return natus::graphics::result::ok ;
 }
 
@@ -1756,11 +2101,6 @@ natus::graphics::result es3_backend::render( natus::graphics::render_object_res_
     {
         natus::log::global_t::error( natus_log_fn( "invalid id" ) ) ;
         return natus::graphics::result::failed ;
-    }
-
-    if( detail.render_states.is_valid() )
-    {
-        _pimpl->set_render_states( *( detail.render_states ) ) ;
     }
 
     _pimpl->render( id->get_oid( this_t::get_bid()), detail.varset, (GLsizei)detail.start, (GLsizei)detail.num_elems ) ;
