@@ -112,6 +112,20 @@ namespace natus
             {
                 return detail::convert_blend_factor_gl[ size_t( bf ) ] ;
             }
+            static GLenum convert( natus::graphics::blend_function const bf ) noexcept
+            {
+                switch( bf )
+                {
+                case natus::graphics::blend_function::add: return GL_FUNC_ADD ;
+                case natus::graphics::blend_function::sub: return GL_FUNC_SUBTRACT ;
+                case natus::graphics::blend_function::reverse_sub: return GL_FUNC_REVERSE_SUBTRACT ;
+                case natus::graphics::blend_function::min: return GL_MIN ;
+                case natus::graphics::blend_function::max: return GL_MAX ;
+                default: break ;
+                }
+
+                return GL_ZERO ;
+            }
         }
 
         namespace es3
@@ -297,6 +311,45 @@ namespace natus
                     return width * height * 4 * 4 ;
                 case natus::graphics::color_target_type::rgba_uint_8: 
                     return width * height * 4 * 1 ;
+                default: break;
+                }
+                return GL_NONE ;
+            }
+        }
+
+        namespace es3
+        {
+            static GLenum convert( natus::graphics::cull_mode const cm ) noexcept
+            {
+                switch( cm )
+                {
+                case natus::graphics::cull_mode::back: return GL_FRONT ;
+                case natus::graphics::cull_mode::front: return GL_BACK ;
+                case natus::graphics::cull_mode::none: return GL_NONE ;
+                default: break;
+                }
+                return GL_NONE ;
+            }
+
+
+            static GLenum convert( natus::graphics::fill_mode const fm ) noexcept
+            {
+                switch( fm )
+                {
+                //case natus::graphics::fill_mode::fill: return GL_FILL ;
+                //case natus::graphics::fill_mode::point: return GL_POINT ;
+                //case natus::graphics::fill_mode::line: return GL_LINE ;
+                default: break;
+                }
+                return GL_NONE ;
+            }
+
+            static GLenum convert( natus::graphics::front_face const ff ) noexcept
+            {
+                switch( ff )
+                {
+                case natus::graphics::front_face::clock_wise: return GL_CW ;
+                case natus::graphics::front_face::counter_clock_wise: return GL_CCW ;
                 default: break;
                 }
                 return GL_NONE ;

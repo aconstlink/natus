@@ -415,9 +415,9 @@ struct es3_backend::pimpl
 
             if( rs.blend_s.enable )
             {
-                rs.blend_s.blend_func = natus::graphics::gl3::convert( rs_in.blend_s.blend_func ) ;
-                rs.blend_s.src_blend_fac = natus::graphics::gl3::convert( rs_in.blend_s.src_blend_factor ) ;
-                rs.blend_s.dst_blend_fac = natus::graphics::gl3::convert( rs_in.blend_s.dst_blend_factor ) ;
+                rs.blend_s.blend_func = natus::graphics::es3::convert( rs_in.blend_s.blend_func ) ;
+                rs.blend_s.src_blend_fac = natus::graphics::es3::convert( rs_in.blend_s.src_blend_factor ) ;
+                rs.blend_s.dst_blend_fac = natus::graphics::es3::convert( rs_in.blend_s.dst_blend_factor ) ;
             }
             if( rs.clear_s.enable )
             {
@@ -437,13 +437,13 @@ struct es3_backend::pimpl
             if( rs.polygon_s.enable )
             {
                 // glCullFace
-                rs.polygon_s.cull_mode = natus::graphics::gl3::convert( rs_in.polygon_s.cm ) ;
+                rs.polygon_s.cull_mode = natus::graphics::es3::convert( rs_in.polygon_s.cm ) ;
 
                 // glFrontFace
-                rs.polygon_s.front_face = natus::graphics::gl3::convert( rs_in.polygon_s.ff ) ;
+                rs.polygon_s.front_face = natus::graphics::es3::convert( rs_in.polygon_s.ff ) ;
 
                 // glPolygonMode
-                rs.polygon_s.fill_mode = natus::graphics::gl3::convert( rs_in.polygon_s.fm ) ;
+                rs.polygon_s.fill_mode = natus::graphics::es3::convert( rs_in.polygon_s.fm ) ;
             }
             if( rs.scissor_s.enable )
             {
@@ -459,18 +459,18 @@ struct es3_backend::pimpl
             if( new_states.depth_s.enable )
             {
                 glEnable( GL_DEPTH_TEST );
-                natus::ogl::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
+                natus::es::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
 
                 glDepthMask( GL_TRUE );
-                natus::ogl::error::check_and_log( natus_log_fn( "glDepthMask" ) ) ;
+                natus::es::error::check_and_log( natus_log_fn( "glDepthMask" ) ) ;
 
                 glDepthFunc( GL_LESS );
-                natus::ogl::error::check_and_log( natus_log_fn( "glDepthFunc" ) ) ;
+                natus::es::error::check_and_log( natus_log_fn( "glDepthFunc" ) ) ;
             }
             else
             {
                 glDisable( GL_DEPTH_TEST );
-                natus::ogl::error::check_and_log( natus_log_fn( "glDisable( GL_DEPTH_TEST )" ) ) ;
+                natus::es::error::check_and_log( natus_log_fn( "glDisable( GL_DEPTH_TEST )" ) ) ;
             }
         }
 
@@ -480,10 +480,10 @@ struct es3_backend::pimpl
             {
                 glClearColor( new_states.clear_s.color.x(), new_states.clear_s.color.y(),
                     new_states.clear_s.color.z(), new_states.clear_s.color.w() ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glClearColor" ) ) ;
+                natus::es::error::check_and_log( natus_log_fn( "glClearColor" ) ) ;
 
                 glClear( new_states.clear_s.clear_bits );
-                natus::ogl::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
+                natus::es::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
             }
         }
 
@@ -492,17 +492,17 @@ struct es3_backend::pimpl
             if( new_states.blend_s.enable )
             {
                 glEnable( GL_BLEND ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
+                natus::es::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
 
                 GLenum const glsrc = new_states.blend_s.src_blend_fac ;
                 GLenum const gldst = new_states.blend_s.dst_blend_fac ;
                 glBlendFunc( glsrc, gldst ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glBlendFunc" ) ) ;
+                natus::es::error::check_and_log( natus_log_fn( "glBlendFunc" ) ) ;
             }
             else
             {
                 glDisable( GL_BLEND ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glDisable" ) ) ;
+                natus::es::error::check_and_log( natus_log_fn( "glDisable" ) ) ;
             }
         }
 
@@ -511,21 +511,21 @@ struct es3_backend::pimpl
             if( new_states.polygon_s.enable )
             {
                 glEnable( GL_CULL_FACE ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
+                natus::es::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
 
                 glCullFace( new_states.polygon_s.cull_mode ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glCullFace" ) ) ;
+                natus::es::error::check_and_log( natus_log_fn( "glCullFace" ) ) ;
 
                 glFrontFace( new_states.polygon_s.front_face ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glFrontFace" ) ) ;
+                natus::es::error::check_and_log( natus_log_fn( "glFrontFace" ) ) ;
 
-                glPolygonMode( GL_FRONT_AND_BACK, new_states.polygon_s.fill_mode ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glPolygonMode" ) ) ;
+                //glPolygonMode( GL_FRONT_AND_BACK, new_states.polygon_s.fill_mode ) ;
+                //natus::es::error::check_and_log( natus_log_fn( "glPolygonMode" ) ) ;
             }
             else
             {
                 glDisable( GL_CULL_FACE ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glDisable" ) ) ;
+                natus::es::error::check_and_log( natus_log_fn( "glDisable" ) ) ;
             }
         }
 
@@ -534,17 +534,17 @@ struct es3_backend::pimpl
             if( new_states.scissor_s.enable )
             {
                 glEnable( GL_SCISSOR_TEST ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
+                natus::es::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
 
                 glScissor(
                     GLint( new_states.scissor_s.rect.x() ), GLint( new_states.scissor_s.rect.y() ),
                     GLsizei( new_states.scissor_s.rect.z() ), GLsizei( new_states.scissor_s.rect.w() ) ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glScissor" ) ) ;
+                natus::es::error::check_and_log( natus_log_fn( "glScissor" ) ) ;
             }
             else
             {
                 glDisable( GL_SCISSOR_TEST ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glDisable" ) ) ;
+                natus::es::error::check_and_log( natus_log_fn( "glDisable" ) ) ;
             }
         }
 
@@ -554,7 +554,7 @@ struct es3_backend::pimpl
             {
                 auto const& vp = new_states.view_s.vp  ;
                 glViewport( GLint( vp.x() ), GLint( vp.y() ), GLsizei( vp.z() ), GLsizei( vp.w() ) ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glViewport" ) ) ;
+                natus::es::error::check_and_log( natus_log_fn( "glViewport" ) ) ;
             }
         }
     }
@@ -1809,17 +1809,21 @@ struct es3_backend::pimpl
 
     void_t begin_frame( void_t ) 
     {
-        glClearColor( 0.1f, 0.1f, 0.1f, 1.0f ) ;
-        natus::es::error::check_and_log( natus_log_fn( "glClearColor" ) ) ;
+        auto const ids_old = _state_id_stack[0] ;
+        auto const ids_new = _state_id_stack[1] ;
 
-        glClear( GL_COLOR_BUFFER_BIT ) ;
-        natus::es::error::check_and_log( natus_log_fn( "glClear" ) ) ;
-        
-        // reset render states
-        this_t::set_render_states( *natus::graphics::backend_t::default_render_states() ) ;
+        // set the viewport to the default new state, 
+        // so the correct viewport is set automatically.
+        {
+            natus::math::vec4ui_t vp = _states[ ids_new.first ].states[ ids_new.second ].view_s.vp ;
+            vp.z( uint_t( vp_width ) ) ;
+            vp.w( uint_t( vp_height ) ) ;
+            _states[ ids_new.first ].states[ ids_new.second ].view_s.vp = vp ;
+        }
 
-        glViewport( 0, 0, vp_width, vp_height ) ;
-        natus::es::error::check_and_log( natus_log_fn( "glViewport" ) ) ;
+        this_t::handle_render_state( 
+            _states[ ids_new.first ].states[ ids_new.second ],
+            _states[ ids_old.first ].states[ ids_old.second ] ) ;
     }
 
     void_t end_frame( void_t ) 
