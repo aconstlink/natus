@@ -258,19 +258,10 @@ struct es3_backend::pimpl
             GLuint( -1 ), GLuint( -1 ), GLuint( -1 ), GLuint( -1 ),
             GLuint( -1 ), GLuint( -1 ), GLuint( -1 ), GLuint( -1 ) } ;
 
+        GLuint depth = GLuint(-1) ;
         void_ptr_t mem_ptr = nullptr ;
 
         natus::math::vec2ui_t dims ;
-
-        struct color_target
-        {
-            //
-        };
-
-        struct depth_target
-        {
-            // 
-        };
     };
     natus_typedef( framebuffer_data ) ;
 
@@ -634,6 +625,7 @@ struct es3_backend::pimpl
 
         size_t const nt = obj.get_num_color_targets() ;
         auto const ctt = obj.get_color_target() ;
+        auto const dst = obj.get_depth_target() ;
         natus::math::vec2ui_t dims = obj.get_dims() ;
 
         // fix dims
@@ -706,16 +698,16 @@ struct es3_backend::pimpl
         if( dst != natus::graphics::depth_stencil_target_type::unknown )
         {
             glDeleteTextures( GLsizei( 1 ), &fb.depth ) ;
-            natus::ogl::error::check_and_log( natus_log_fn( "glDeleteTextures" ) ) ;
+            natus::es::error::check_and_log( natus_log_fn( "glDeleteTextures" ) ) ;
 
             glGenTextures( GLsizei( 1 ), &fb.depth ) ;
-            natus::ogl::error::check_and_log( natus_log_fn( "glGenTextures" ) ) ;
+            natus::es::error::check_and_log( natus_log_fn( "glGenTextures" ) ) ;
 
             {
                 GLuint const tid = fb.depth ;
 
                 glBindTexture( GL_TEXTURE_2D, tid ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glBindTexture" ) ) ;
+                natus::es::error::check_and_log( natus_log_fn( "glBindTexture" ) ) ;
 
                 GLenum const target = GL_TEXTURE_2D ;
                 GLint const level = 0 ;
@@ -734,7 +726,7 @@ struct es3_backend::pimpl
                 void_cptr_t data = nullptr ;
 
                 glTexImage2D( target, level, internal_format, width, height, border, format, type, data ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glTexImage2D" ) ) ;
+                natus::es::error::check_and_log( natus_log_fn( "glTexImage2D" ) ) ;
             }
 
             // attach
@@ -742,7 +734,7 @@ struct es3_backend::pimpl
                 GLuint const tid = fb.depth ;
                 GLenum const att = natus::graphics::es3::to_gl_attachment( dst ) ;
                 glFramebufferTexture2D( GL_FRAMEBUFFER, att, GL_TEXTURE_2D, tid, 0 ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glFramebufferTexture2D" ) ) ;
+                natus::es::error::check_and_log( natus_log_fn( "glFramebufferTexture2D" ) ) ;
             }
         }
 
