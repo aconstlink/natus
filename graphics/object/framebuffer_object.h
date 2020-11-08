@@ -52,7 +52,7 @@ namespace natus
             this_ref_t set_target( natus::graphics::color_target_type const t, size_t const n = 1 ) noexcept
             {
                 _ctt = t ;
-                _targets = n ;
+                _targets = std::min( n, size_t( 8 ) ) ;
                 return *this ;
             }
 

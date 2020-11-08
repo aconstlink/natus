@@ -84,6 +84,7 @@ namespace natus
                 /// @precondition Context must be active. For debug purpose. Just clears the screen.
                 void_t clear_now( natus::math::vec4f_t const& vec ) ;
                 void_t clear_depth_stencil( void_t ) ;
+                void_t activate_render_target( void_t ) ;
 
             private:
 
@@ -130,6 +131,11 @@ namespace natus
                 virtual ID3D11Device * dev( void_t ) noexcept 
                 {
                     return _app_context->_pd3dDevice ;
+                }
+
+                virtual void_t activate_framebuffer( void_t ) noexcept 
+                {
+                    return _app_context->activate_render_target() ;
                 }
 
                 // clear the backbuffer

@@ -119,6 +119,9 @@ natus::application::result context::swap( void_t )
         DXGI_SWAP_CHAIN_DESC desc ;
         _pSwapChain->GetDesc( &desc ) ;
 
+        if( width == 0 || height == 0 ) 
+            return natus::application::result::ok ;
+
         if( desc.BufferDesc.Width != width ||
             desc.BufferDesc.Height != height )
         {
@@ -230,6 +233,12 @@ void_t context::clear_now( natus::math::vec4f_t const& vec )
 void_t context::clear_depth_stencil( void_t ) 
 {
     _pImmediateContext->ClearDepthStencilView( _pDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0 ) ;
+}
+
+//***********************************************************************
+void_t context::activate_render_target( void_t ) 
+{
+    _pImmediateContext->OMSetRenderTargets( 1, &_pRenderTargetView, _pDepthStencilView );
 }
 
 //***********************************************************************

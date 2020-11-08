@@ -394,6 +394,29 @@ namespace natus
                 return D3D11_FILL_SOLID ;
             }
 
+            static DXGI_FORMAT convert( color_target_type const ctt ) noexcept
+            {
+                switch( ctt )
+                {
+                case natus::graphics::color_target_type::rgba_float_32: return DXGI_FORMAT_R32G32B32A32_FLOAT ;
+                case natus::graphics::color_target_type::rgba_uint_8: return DXGI_FORMAT_R8G8B8A8_UNORM ;
+                default: break ;
+                }
+                return DXGI_FORMAT_UNKNOWN ;
+            }
+
+            static DXGI_FORMAT convert( depth_stencil_target_type const dst ) noexcept
+            {
+                switch( dst )
+                {
+                case natus::graphics::depth_stencil_target_type::depth32 : 
+                    return DXGI_FORMAT_D32_FLOAT ;
+                case natus::graphics::depth_stencil_target_type::depth24_stencil8: 
+                    return DXGI_FORMAT_D24_UNORM_S8_UINT ;
+                default: break ;
+                }
+                return DXGI_FORMAT_UNKNOWN ;
+            }
         }
     }
 }

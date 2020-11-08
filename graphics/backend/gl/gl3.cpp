@@ -471,6 +471,9 @@ struct gl3_backend::pimpl
             {
                 glDisable( GL_DEPTH_TEST );
                 natus::ogl::error::check_and_log( natus_log_fn( "glDisable( GL_DEPTH_TEST )" ) ) ;
+
+                glDepthMask( GL_FALSE );
+                natus::ogl::error::check_and_log( natus_log_fn( "glDepthMask" ) ) ;
             }
         }
 

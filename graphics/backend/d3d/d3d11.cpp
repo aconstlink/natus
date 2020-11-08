@@ -32,8 +32,12 @@ public:
     guard( void_t ) noexcept {}
     ~guard( void_t ) noexcept
     {
-
         if( _ptr != nullptr ) _ptr->Release() ;
+    }
+
+    operator T* ( void_t ) noexcept
+    {
+        return _ptr ;
     }
 
     operator T** ( void_t ) noexcept
@@ -49,6 +53,13 @@ public:
     T* operator -> ( void_t ) noexcept
     {
         return _ptr ;
+    }
+
+    T* move_out( void_t ) noexcept 
+    {
+        T* ret = _ptr ;
+        _ptr = nullptr ;
+        return ret ;
     }
 } ;
 
@@ -267,8 +278,8 @@ struct d3d11_backend::pimpl
 
         natus::ntd::string_t name ;
 
-        geo_data* geo = nullptr ;
-        shader_data* shaders_ptr = nullptr ;
+        size_t geo_id = size_t( -1 ) ;
+        size_t shd_id = size_t( -1 ) ;
 
         // the layout requires information about the layout elements' type
         // in order to determine the proper d3d enumeration
@@ -339,6 +350,45 @@ struct d3d11_backend::pimpl
     };
     natus_typedef( render_data ) ;
 
+    struct framebuffer_data
+    {
+        bool_t valid = false ;
+        natus::ntd::string_t name ;
+        size_t num_color = 0 ;
+
+        FLOAT width = 0.0f ;
+        FLOAT height = 0.0f ;
+
+        // 8 color targets + 1 depth stencil
+        size_t image_ids[ 9 ] = {
+            size_t( -1 ), size_t( -1 ), size_t( -1 ), size_t( -1 ),
+            size_t( -1 ), size_t( -1 ), size_t( -1 ), size_t( -1 ), 
+            size_t( -1 )} ;
+
+        ID3D11RenderTargetView * rt_view[ 8 ] = 
+            { nullptr, nullptr, nullptr, nullptr, 
+                nullptr, nullptr, nullptr, nullptr } ;
+
+        ID3D11DepthStencilView * ds_view = nullptr ;
+
+        #if 0
+
+        GLuint gl_id = GLuint( -1 ) ;
+
+        size_t nt = 0 ;
+        GLuint colors[ 8 ] = {
+            GLuint( -1 ), GLuint( -1 ), GLuint( -1 ), GLuint( -1 ),
+            GLuint( -1 ), GLuint( -1 ), GLuint( -1 ), GLuint( -1 ) } ;
+
+        GLuint depth = GLuint( -1 ) ;
+
+        void_ptr_t mem_ptr = nullptr ;
+
+        natus::math::vec2ui_t dims ;
+        #endif
+    };
+    natus_typedef( framebuffer_data ) ;
+
 public: // variables
 
     natus::graphics::backend_type const bt = natus::graphics::backend_type::d3d11 ;
@@ -355,6 +405,9 @@ public: // variables
 
     typedef natus::ntd::vector< this_t::image_data > image_datas_t ;
     image_datas_t images ;
+
+    typedef natus::ntd::vector< this_t::framebuffer_data > framebuffer_datas_t ;
+    framebuffer_datas_t _framebuffers ;
 
     natus::graphics::render_state_sets_t render_states ;
 
@@ -429,7 +482,7 @@ public: // functions
             // store the invalid state at the bottom
             // store the opposed default state at position 1
             // so during frame begin, all default states can be
-            // restored useing those two state sets.
+            // restored using those two state sets.
             obj.add_render_state_set( old_states ) ;
             obj.add_render_state_set( new_states ) ;
 
@@ -733,6 +786,250 @@ public: // functions
         {
             _state_id_stack.push( new_id ) ;
         }
+    }
+
+    size_t construct_framebuffer( size_t oid, natus::graphics::framebuffer_object_ref_t obj ) noexcept
+    {
+        oid = determine_oid( obj.name(), _framebuffers ) ;
+        auto & fb = _framebuffers[ oid ] ;
+
+        ID3D11Device * dev = _ctx->dev() ;
+
+        // colors
+        {
+            for( size_t i=0; i<fb.num_color; ++i )
+            {
+                auto*& view = fb.rt_view[ i ] ;
+                if( view != nullptr )
+                {
+                    view->Release() ;
+                    view = nullptr ;
+                }
+            }
+            // release images
+            for( size_t i = 0; i < fb.num_color; ++i )
+            {
+                if( fb.image_ids[ i ] != size_t( -1 ) )
+                {
+                    images[ fb.image_ids[ i ] ].view->Release() ;
+                    images[ fb.image_ids[ i ] ].texture->Release() ;
+                    images[ fb.image_ids[ i ] ].sampler->Release() ;
+
+                    images[ fb.image_ids[ i ] ].view = nullptr  ;
+                    images[ fb.image_ids[ i ] ].texture = nullptr ;
+                    images[ fb.image_ids[ i ] ].sampler = nullptr ;
+                }
+            }
+
+            size_t const nt = obj.get_num_color_targets() ;
+            auto const ctt = obj.get_color_target() ;
+            auto const dst = obj.get_depth_target();
+
+            for( size_t i = 0; i < nt; ++i )
+            {
+                // sampler
+                guard< ID3D11SamplerState > smp ;
+                {
+                    D3D11_SAMPLER_DESC sampDesc = { } ;
+                    sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR ;
+                    sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP ;
+                    sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP ;
+                    sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP ;
+                    sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER ;
+                    sampDesc.MinLOD = 0;
+                    sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+                    auto const hr = dev->CreateSamplerState( &sampDesc, smp ) ;
+                    if( FAILED( hr ) )
+                    {
+                        natus::log::global_t::error( natus_log_fn( "CreateSamplerState" ) ) ;
+                        continue ;
+                    }
+                }
+
+                // texture
+                guard< ID3D11Texture2D > tex ;
+                {
+                    auto const dims = obj.get_dims() ;
+                    size_t const width = UINT( dims.x() ) ;
+                    size_t const height = UINT( dims.y() ) ;
+                    
+                    D3D11_TEXTURE2D_DESC desc = { } ;
+                    desc.Width = static_cast< UINT >( width ) ;
+                    desc.Height = static_cast< UINT >( height ) ;
+                    desc.MipLevels = static_cast< UINT >( 1 ) ;
+                    desc.ArraySize = static_cast< UINT >( 1 ) ;
+                    desc.Format = natus::graphics::d3d11::convert( ctt ) ;
+                    desc.SampleDesc.Count = 1 ;
+                    desc.SampleDesc.Quality = 0 ;
+                    desc.Usage = D3D11_USAGE_DEFAULT ;
+                    desc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE ;
+                    desc.CPUAccessFlags = 0 ;
+                    desc.MiscFlags = 0 ;
+
+                    // create the texture object
+                    {
+                        auto const hr = dev->CreateTexture2D( &desc, nullptr, tex ) ;
+                        if( FAILED( hr ) )
+                        {
+                            natus::log::global_t::error( natus_log_fn( "CreateTexture2D" ) ) ;
+                            continue ;
+                        }
+                    }
+                }
+
+                // shader resource view
+                guard< ID3D11ShaderResourceView > srv ;
+                {
+                    D3D11_SHADER_RESOURCE_VIEW_DESC res_desc = { } ;
+                    res_desc.Format = natus::graphics::d3d11::convert( ctt ) ;
+                    res_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D ;
+                    res_desc.Texture2D.MostDetailedMip = 0 ;
+                    res_desc.Texture2D.MipLevels = UINT( 1 ) ;
+
+                    auto const hr = dev->CreateShaderResourceView( tex, &res_desc, srv ) ;
+                    if( FAILED( hr ) )
+                    {
+                        natus::log::global_t::error( natus_log_fn( "CreateShaderResourceView for texture : [" + 
+                            obj.name() + "]" ) ) ;
+                        continue ;
+                    }
+                }
+
+                // render target view
+                guard< ID3D11RenderTargetView > view ;
+                {
+                    D3D11_RENDER_TARGET_VIEW_DESC desc = { } ;
+                    desc.Format = natus::graphics::d3d11::convert( ctt ) ;
+                    desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D ;
+                    desc.Texture2D.MipSlice = 0 ;
+
+                    auto const res = _ctx->dev()->CreateRenderTargetView( tex, &desc, view ) ;
+                    if( FAILED( res ) )
+                    {
+                        natus::log::global_t::error( natus_log_fn( "CreateDepthStencilView" ) ) ;
+                        continue ;
+                    }
+                }
+
+                // store data
+                {
+                    size_t const iid = fb.image_ids[ i ] == size_t( -1 ) ?
+                        determine_oid( obj.name() + "." + std::to_string( i ), images ) : fb.image_ids[ i ] ;
+
+                    // fill the image so shader variable
+                    // lookup can find the render target
+                    // for binding to a texture variable
+                    {
+                        fb.image_ids[ i ] = iid ;
+                        images[ iid ].name = obj.name() + "." + std::to_string( i ) ;
+                        images[ iid ].sampler = smp.move_out() ;
+                        images[ iid ].texture = tex.move_out() ;
+                        images[ iid ].valid = true ;
+                        images[ iid ].view = srv.move_out() ;
+                    }
+
+                    {
+                        auto const dims = obj.get_dims() ;
+                        fb.width = FLOAT( dims.x() ) ;
+                        fb.height = FLOAT( dims.y() ) ;
+                    }
+
+                    fb.num_color = nt ;
+                    fb.rt_view[ i ] = view.move_out() ;
+
+                    
+                }
+            }
+        }
+
+        // depth stencil
+        #if 0
+        {
+            // texture2d
+
+            if( fb.ds_view != nullptr ) 
+            {
+                fb.ds_view->Release() ;
+                fb.ds_view = nullptr ;
+            }
+
+            ID3D11Texture2D * buffer ;
+            D3D11_DEPTH_STENCIL_VIEW_DESC desc = { } ;
+
+            auto const res =_ctx->dev()->CreateDepthStencilView( buffer, &desc, &fb.ds_view ) ;
+            if( FAILED( res ) )
+            {
+                natus::log::global_t::error( natus_log_fn( "CreateDepthStencilView" ) ) ;
+            }
+        }
+        #endif
+
+        return oid ;
+    }
+
+    bool_t activate_framebuffer( size_t const oid )
+    {
+        framebuffer_data_ref_t fb = _framebuffers[ oid ] ;
+
+        _ctx->ctx()->OMSetRenderTargets( UINT( fb.num_color ), fb.rt_view, nullptr ) ;
+
+        // Setup the viewport
+        D3D11_VIEWPORT vp ;
+        vp.Width = fb.width ;
+        vp.Height = fb.height ;
+        vp.MinDepth = 0.0f ;
+        vp.MaxDepth = 1.0f ;
+        vp.TopLeftX = FLOAT( 0 ) ;
+        vp.TopLeftY = FLOAT( 0 ) ;
+        _ctx->ctx()->RSSetViewports( 1, &vp );
+
+        #if 0
+        framebuffer_data_ref_t fb = _framebuffers[ oid ] ;
+
+        // bind
+        {
+            glBindFramebuffer( GL_FRAMEBUFFER, fb.gl_id ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glGenFramebuffers" ) ) ;
+        }
+
+        // setup color
+        {
+            GLenum attachments[ 15 ] ;
+            size_t const num_color = fb.nt ;
+
+            for( size_t i = 0; i < num_color; ++i )
+            {
+                attachments[ i ] = GLenum( size_t( GL_COLOR_ATTACHMENT0 ) + i ) ;
+            }
+
+            glDrawBuffers( GLsizei( num_color ), attachments ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glGenFramebuffers" ) ) ;
+        }
+
+        // there is only one dimension at the moment
+        {
+            glViewport( 0, 0, GLsizei( fb.dims.x() ), GLsizei( fb.dims.y() ) ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glViewport" ) ) ;
+        }
+        #endif
+        return true ;
+    }
+
+    void_t deactivate_framebuffer( void_t )
+    {
+        _ctx->activate_framebuffer() ;
+        
+        // Setup the viewport
+        D3D11_VIEWPORT vp ;
+        vp.Width = vp_width ;
+        vp.Height = vp_height ;
+        vp.MinDepth = 0.0f ;
+        vp.MaxDepth = 1.0f ;
+        vp.TopLeftX = FLOAT( 0 ) ;
+        vp.TopLeftY = FLOAT( 0 ) ;
+        _ctx->ctx()->RSSetViewports( 1, &vp );
+
     }
 
     size_t construct_geo( size_t oid, natus::graphics::geometry_object_ref_t obj )
@@ -1210,7 +1507,8 @@ public: // functions
     bool_t update( size_t const id, natus::graphics::render_object_ref_t rc )
     {
         auto& rd = renders[ id ] ;
-        rd.geo = nullptr ;
+        rd.geo_id = size_t( -1 ) ;
+        rd.shd_id = size_t( -1 ) ;
 
         // find geometry
         {
@@ -1226,7 +1524,7 @@ public: // functions
                 return false ;
             }
 
-            rd.geo = &geo_datas[ std::distance( geo_datas.begin(), iter ) ] ;
+            rd.geo_id = std::distance( geo_datas.begin(), iter ) ;
         }
 
         // find shader
@@ -1243,26 +1541,28 @@ public: // functions
                 return false ;
             }
 
-            rd.shaders_ptr = &shaders[ std::distance( shaders.begin(), iter ) ] ;
+            rd.shd_id = std::distance( shaders.begin(), iter ) ;
         }
 
         // may happen if shaders did not compile properly the first time.
-        if( rd.shaders_ptr == nullptr ||
-            rd.shaders_ptr->vs_blob == nullptr )
+        if( rd.shd_id == size_t(-1) || shaders[ rd.shd_id ].vs_blob == nullptr )
         {
+            natus::log::global_t::warning( natus_log_fn(
+                "something strange happened to render_config [" + rc.name() + "]" ) ) ;
             return false ;
         }
+
         
         // for binding attributes, the shader and the geometry is required.
         {
             size_t i = 0 ; 
-            this_t::shader_data_ref_t shd = *rd.shaders_ptr ;
+            this_t::shader_data_ref_t shd = shaders[ rd.shd_id ] ;
             UINT offset = 0 ;
             for( auto const & b : shd.vertex_inputs )
             {
                 char_cptr_t name = natus::graphics::d3d11::vertex_binding_to_semantic( b.va ).c_str() ;
                 UINT const semantic_index = 0 ;
-                DXGI_FORMAT const fmt = rd.geo->get_format_from_element( b.va ) ;
+                DXGI_FORMAT const fmt = geo_datas[rd.geo_id].get_format_from_element( b.va ) ;
                 UINT input_slot = 0 ;
                 UINT aligned_byte_offset = offset ;
                 D3D11_INPUT_CLASSIFICATION const iclass = D3D11_INPUT_PER_VERTEX_DATA ;
@@ -1271,7 +1571,7 @@ public: // functions
                 rd.layout[ i++ ] = { name, semantic_index, fmt, input_slot, 
                     aligned_byte_offset, iclass, instance_data_step_rate } ;
 
-                offset += rd.geo->get_sib( b.va ) ;
+                offset += geo_datas[rd.geo_id].get_sib( b.va ) ;
             }
 
             UINT const num_elements = UINT( i ) ;
@@ -1341,7 +1641,7 @@ public: // functions
 
         // constant buffer mapping
         {
-            this_t::shader_data_ref_t shd = *rd.shaders_ptr ;
+            this_t::shader_data_ref_t shd = shaders[ rd.shd_id ] ;
             rc.for_each( [&] ( size_t const /*i*/, natus::graphics::variable_set_res_t vs )
             {
                 {
@@ -1433,7 +1733,7 @@ public: // functions
 
         // texture variable mapping
         {
-            this_t::shader_data_ref_t shd = *rd.shaders_ptr ;
+            this_t::shader_data_ref_t shd = shaders[ rd.shd_id ] ;
             rc.for_each( [&] ( size_t const /*i*/, natus::graphics::variable_set_res_t vs )
             {
                 this_t::render_data_t::image_variables_t ivs ;
@@ -1504,7 +1804,7 @@ public: // functions
             auto const hr = dev->CreateSamplerState( &sampDesc, &img.sampler );
             if( FAILED( hr ) )
             {
-                natus::log::global_t::error( natus_log_fn( "D3D11_BIND_CONSTANT_BUFFER" ) ) ;
+                natus::log::global_t::error( natus_log_fn( "CreateSamplerState" ) ) ;
             }
         }
 
@@ -1572,17 +1872,20 @@ public: // functions
         UINT const num_elements = UINT( -1 ) )
     {
         this_t::render_data_ref_t rnd = renders[ id ] ;
-        this_t::shader_data_cref_t shd = *rnd.shaders_ptr ;
-        this_t::geo_data_ref_t geo = *rnd.geo ;
-     
-        if( rnd.shaders_ptr == nullptr )
+
+        if( rnd.shd_id == size_t( -1 ) )
         {
             natus::log::global_t::error( natus_log_fn( "shader invalid. First shader compilation failed probably." ) ) ;
             return false ;
         }
 
+        
+        this_t::shader_data_cref_t shd = shaders[ rnd.shd_id ] ;
+        this_t::geo_data_ref_t geo = geo_datas[ rnd.geo_id ] ;
+
         ID3D11DeviceContext * ctx = _ctx->ctx() ;
 
+        // vertex shader variables
         for( auto & cb : rnd.var_sets_data[ varset_id ].second )
         {
             size_t offset = 0 ;
@@ -1611,6 +1914,7 @@ public: // functions
             ctx->VSSetConstantBuffers( cb.slot, 1, &cb.ptr ) ;
         }
 
+        // pixel shader variables
         for( auto& cb : rnd.var_sets_data_ps[ varset_id ].second )
         {
             size_t offset = 0 ;
@@ -2158,8 +2462,21 @@ natus::graphics::result d3d11_backend::configure( natus::graphics::image_object_
 }
 
 //***
-natus::graphics::result d3d11_backend::configure( natus::graphics::framebuffer_object_res_t ) noexcept 
+natus::graphics::result d3d11_backend::configure( natus::graphics::framebuffer_object_res_t obj ) noexcept 
 {
+    if( !obj.is_valid() || obj->name().empty() )
+    {
+        natus::log::global_t::error( natus_log_fn( "Object must be valid and requires a name" ) ) ;
+        return natus::graphics::result::invalid_argument ;
+    }
+
+    natus::graphics::id_res_t id = obj->get_id() ;
+
+    {
+        id->set_oid( this_t::get_bid(), _pimpl->construct_framebuffer(
+            id->get_oid( this_t::get_bid() ), *obj ) ) ;
+    }
+
     return natus::graphics::result::ok ;
 }
 
@@ -2214,8 +2531,26 @@ natus::graphics::result d3d11_backend::update( natus::graphics::geometry_object_
 }
 
 //****
-natus::graphics::result d3d11_backend::use( natus::graphics::framebuffer_object_res_t ) noexcept 
+natus::graphics::result d3d11_backend::use( natus::graphics::framebuffer_object_res_t obj ) noexcept 
 {
+    if( !obj.is_valid() )
+    {
+        _pimpl->deactivate_framebuffer() ;
+        return natus::graphics::result::ok ;
+    }
+
+    natus::graphics::id_res_t id = obj->get_id() ;
+
+    if( id->is_not_valid( this_t::get_bid() ) )
+    {
+        _pimpl->deactivate_framebuffer() ;
+        return natus::graphics::result::ok ;
+    }
+
+    size_t const oid = id->get_oid( this_t::get_bid() ) ;
+    auto const res = _pimpl->activate_framebuffer( oid ) ;
+    if( !res ) return natus::graphics::result::failed ;
+
     return natus::graphics::result::ok ;
 }
 
