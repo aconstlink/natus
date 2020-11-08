@@ -454,27 +454,32 @@ struct es3_backend::pimpl
 
     void_t handle_render_state( render_state_sets const& new_states, render_state_sets const& old_states )
     {
-        if( new_states.depth_s.enable != old_states.depth_s.enable )
         {
+            if( new_states.depth_s.enable != old_states.depth_s.enable )
+            {
+                if( new_states.depth_s.enable )
+                {
+                    glEnable( GL_DEPTH_TEST );
+                    natus::es::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
+
+                    glDepthMask( GL_TRUE );
+                    natus::es::error::check_and_log( natus_log_fn( "glDepthMask" ) ) ;
+                }
+                else
+                {
+                    glDisable( GL_DEPTH_TEST );
+                    natus::es::error::check_and_log( natus_log_fn( "glDisable( GL_DEPTH_TEST )" ) ) ;
+                }
+            }
+
             if( new_states.depth_s.enable )
             {
-                glEnable( GL_DEPTH_TEST );
-                natus::es::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
-
-                glDepthMask( GL_TRUE );
-                natus::es::error::check_and_log( natus_log_fn( "glDepthMask" ) ) ;
-
                 glDepthFunc( GL_LESS );
                 natus::es::error::check_and_log( natus_log_fn( "glDepthFunc" ) ) ;
             }
-            else
-            {
-                glDisable( GL_DEPTH_TEST );
-                natus::es::error::check_and_log( natus_log_fn( "glDisable( GL_DEPTH_TEST )" ) ) ;
-            }
         }
-
-        if( new_states.clear_s.enable != old_states.clear_s.enable )
+        
+        // clear always if true.
         {
             if( new_states.clear_s.enable )
             {
@@ -487,32 +492,49 @@ struct es3_backend::pimpl
             }
         }
 
-        if( new_states.blend_s.enable != old_states.blend_s.enable )
+        // blend mode
         {
+            if( new_states.blend_s.enable != old_states.blend_s.enable )
+            {
+                if( new_states.blend_s.enable )
+                {
+                    glEnable( GL_BLEND ) ;
+                    natus::es::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
+                }
+                else
+                {
+                    glDisable( GL_BLEND ) ;
+                    natus::es::error::check_and_log( natus_log_fn( "glDisable" ) ) ;
+                }
+            }
+
             if( new_states.blend_s.enable )
             {
-                glEnable( GL_BLEND ) ;
-                natus::es::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
-
                 GLenum const glsrc = new_states.blend_s.src_blend_fac ;
                 GLenum const gldst = new_states.blend_s.dst_blend_fac ;
                 glBlendFunc( glsrc, gldst ) ;
                 natus::es::error::check_and_log( natus_log_fn( "glBlendFunc" ) ) ;
             }
-            else
-            {
-                glDisable( GL_BLEND ) ;
-                natus::es::error::check_and_log( natus_log_fn( "glDisable" ) ) ;
-            }
         }
 
-        if( new_states.polygon_s.enable != old_states.polygon_s.enable )
+        // polygon mode
         {
+            if( new_states.polygon_s.enable != old_states.polygon_s.enable )
+            {
+                if( new_states.polygon_s.enable )
+                {
+                    glEnable( GL_CULL_FACE ) ;
+                    natus::es::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
+                }
+                else
+                {
+                    glDisable( GL_CULL_FACE ) ;
+                    natus::es::error::check_and_log( natus_log_fn( "glDisable" ) ) ;
+                }
+            }
+
             if( new_states.polygon_s.enable )
             {
-                glEnable( GL_CULL_FACE ) ;
-                natus::es::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
-
                 glCullFace( new_states.polygon_s.cull_mode ) ;
                 natus::es::error::check_and_log( natus_log_fn( "glCullFace" ) ) ;
 
@@ -522,11 +544,6 @@ struct es3_backend::pimpl
                 //glPolygonMode( GL_FRONT_AND_BACK, new_states.polygon_s.fill_mode ) ;
                 //natus::es::error::check_and_log( natus_log_fn( "glPolygonMode" ) ) ;
             }
-            else
-            {
-                glDisable( GL_CULL_FACE ) ;
-                natus::es::error::check_and_log( natus_log_fn( "glDisable" ) ) ;
-            }
         }
 
         if( new_states.scissor_s.enable != old_states.scissor_s.enable )
@@ -535,11 +552,6 @@ struct es3_backend::pimpl
             {
                 glEnable( GL_SCISSOR_TEST ) ;
                 natus::es::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
-
-                glScissor(
-                    GLint( new_states.scissor_s.rect.x() ), GLint( new_states.scissor_s.rect.y() ),
-                    GLsizei( new_states.scissor_s.rect.z() ), GLsizei( new_states.scissor_s.rect.w() ) ) ;
-                natus::es::error::check_and_log( natus_log_fn( "glScissor" ) ) ;
             }
             else
             {
@@ -548,7 +560,15 @@ struct es3_backend::pimpl
             }
         }
 
-        if( new_states.view_s.enable != old_states.view_s.enable )
+        if( new_states.scissor_s.enable )
+        {
+            glScissor(
+                GLint( new_states.scissor_s.rect.x() ), GLint( new_states.scissor_s.rect.y() ),
+                GLsizei( new_states.scissor_s.rect.z() ), GLsizei( new_states.scissor_s.rect.w() ) ) ;
+            natus::es::error::check_and_log( natus_log_fn( "glScissor" ) ) ;
+        }
+
+        // always set the viewport if enabled
         {
             if( new_states.view_s.enable )
             {
@@ -2002,7 +2022,7 @@ natus::graphics::result es3_backend::configure( natus::graphics::state_object_re
     }
 
     {
-
+        _pimpl->update_state( id->get_oid( this_t::get_bid() ), *obj ) ;
     }
 
     return natus::graphics::result::ok ;
@@ -2076,7 +2096,7 @@ natus::graphics::result es3_backend::use( size_t const sid, natus::graphics::sta
 {
     if( !obj.is_valid() )
     {
-        //_pimpl->deactivate_framebuffer() ;
+        _pimpl->handle_render_state( size_t( -1 ), size_t( -1 ) ) ;
         return natus::graphics::result::ok ;
     }
 
@@ -2084,7 +2104,7 @@ natus::graphics::result es3_backend::use( size_t const sid, natus::graphics::sta
 
     if( id->is_not_valid( this_t::get_bid() ) )
     {
-        _pimpl->deactivate_framebuffer() ;
+        _pimpl->handle_render_state( size_t( -1 ), size_t( -1 ) ) ;
         return natus::graphics::result::ok ;
     }
 

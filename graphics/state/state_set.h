@@ -97,13 +97,14 @@ namespace natus
 
             render_state_sets( void_t ) 
             {
-                clear_s.do_clear = true ;
-                clear_s.do_color = true ;
-                clear_s.do_depth = true ;
+                clear_s.do_clear = false ;
+                clear_s.do_color = false ;
+                clear_s.do_depth = false ;
                 clear_s.clear_color = natus::math::vec4f_t( 0.4f, 0.1f, 0.2f, 1.0f ) ;
 
-                view_s.do_viewport = true ;
-                depth_s.do_depth_test = true ;
+                view_s.do_viewport = false ;
+                depth_s.do_depth_test = false ;
+                depth_s.do_depth_write = false ;
                 
                 polygon_s.do_culling = true ;
                 polygon_s.cm = natus::graphics::cull_mode::back ;
