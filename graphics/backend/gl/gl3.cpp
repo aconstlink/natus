@@ -456,7 +456,7 @@ struct gl3_backend::pimpl
     {
         // depth test
         {
-            if( new_states.depth_s.enable != old_states.depth_s.enable )
+            //if( new_states.depth_s.enable != old_states.depth_s.enable )
             {
                 if( new_states.depth_s.enable )
                 {
