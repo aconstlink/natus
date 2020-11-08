@@ -785,6 +785,28 @@ struct es3_backend::pimpl
             }
         }
 
+        // store depth/stencil
+        {
+            size_t const id = img_configs.size() ;
+            img_configs.resize( img_configs.size() + 1 ) ;
+
+            {
+                size_t const idx = id + 0 ;
+                img_configs[ idx ].name = fb.name + ".depth" ;
+                img_configs[ idx ].tex_id = fb.depth ;
+
+                for( size_t j = 0; j < ( size_t ) natus::graphics::texture_wrap_mode::size; ++j )
+                {
+                    img_configs[ idx ].wrap_types[ j ] = GL_REPEAT ;
+                }
+
+                for( size_t j = 0; j < ( size_t ) natus::graphics::texture_filter_mode::size; ++j )
+                {
+                    img_configs[ idx ].filter_types[ j ] = GL_NEAREST ;
+                }
+            }
+        }
+
         return oid ;
     }
 
