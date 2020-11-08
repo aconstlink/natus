@@ -651,7 +651,6 @@ struct gl3_backend::pimpl
         }
 
         // construct color textures
-        // with memory
         {
             glDeleteTextures( GLsizei( fb.nt ), fb.colors ) ;
             natus::ogl::error::check_and_log( natus_log_fn( "glDeleteTextures" ) ) ;
@@ -716,10 +715,10 @@ struct gl3_backend::pimpl
                 GLint const level = 0 ;
                 GLsizei const width = dims.x() ;
                 GLsizei const height = dims.y() ;
-                GLenum const format = GL_DEPTH_COMPONENT;// natus::graphics::gl3::to_gl_format( dst ) ;
-                GLenum const type = GL_FLOAT;// natus::graphics::gl3::to_gl_type( dst ) ;
+                GLenum const format = natus::graphics::gl3::to_gl_format( dst ) ;
+                GLenum const type = natus::graphics::gl3::to_gl_type( dst ) ;
                 GLint const border = 0 ;
-                GLint const internal_format = GL_DEPTH_COMPONENT;// natus::graphics::gl3::to_gl_format( dst ) ;
+                GLint const internal_format = natus::graphics::gl3::to_gl_format( dst ) ;
 
                 // maybe required for memory allocation
                 // at the moment, render targets do not have system memory.
@@ -735,15 +734,7 @@ struct gl3_backend::pimpl
             // attach
             {
                 GLuint const tid = fb.depth ;
-                GLenum const att = GL_DEPTH_ATTACHMENT ;
-                glFramebufferTexture2D( GL_FRAMEBUFFER, att, GL_TEXTURE_2D, tid, 0 ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glFramebufferTexture2D" ) ) ;
-            }
-
-            if( dst == natus::graphics::depth_stencil_target_type::depth24_stencil8 )
-            {
-                GLuint const tid = fb.depth ;
-                GLenum const att = GL_STENCIL_ATTACHMENT ;
+                GLenum const att = natus::graphics::gl3::to_gl_attachment(dst) ;
                 glFramebufferTexture2D( GL_FRAMEBUFFER, att, GL_TEXTURE_2D, tid, 0 ) ;
                 natus::ogl::error::check_and_log( natus_log_fn( "glFramebufferTexture2D" ) ) ;
             }

@@ -643,7 +643,6 @@ struct es3_backend::pimpl
         }
 
         // construct textures
-        // with memory
         {
             glDeleteTextures( GLsizei( fb.nt ), fb.colors ) ;
             natus::es::error::check_and_log( natus_log_fn( "glDeleteTextures" ) ) ;
@@ -678,31 +677,74 @@ struct es3_backend::pimpl
                 glTexImage2D( target, level, internal_format, width, height, border, format, type, data ) ;
                 natus::es::error::check_and_log( natus_log_fn( "glTexImage2D" ) ) ;
             }
-        }
 
-        // Attach
-        for( size_t i = 0; i < nt; ++i )
-        {
-            GLuint const tid = fb.colors[ i ] ;
-            GLenum const att = GLenum( size_t( GL_COLOR_ATTACHMENT0 ) + i ) ;
-            glFramebufferTexture2D( GL_FRAMEBUFFER, att, GL_TEXTURE_2D, tid, 0 ) ;
-            natus::es::error::check_and_log( natus_log_fn( "glFramebufferTexture2D" ) ) ;
-        }
-
-        // setup color
-        {
-            GLenum attachments[ 15 ] ;
-            size_t const num_color = nt ;
-
-            for( size_t i = 0; i < num_color; ++i )
+            // Attach
+            for( size_t i = 0; i < nt; ++i )
             {
-                attachments[ i ] = GLenum( size_t( GL_COLOR_ATTACHMENT0 ) + i ) ;
+                GLuint const tid = fb.colors[ i ] ;
+                GLenum const att = GLenum( size_t( GL_COLOR_ATTACHMENT0 ) + i ) ;
+                glFramebufferTexture2D( GL_FRAMEBUFFER, att, GL_TEXTURE_2D, tid, 0 ) ;
+                natus::es::error::check_and_log( natus_log_fn( "glFramebufferTexture2D" ) ) ;
             }
 
-            glDrawBuffers( GLsizei( num_color ), attachments ) ;
-            natus::es::error::check_and_log( natus_log_fn( "glGenFramebuffers" ) ) ;
+            // setup color
+            {
+                GLenum attachments[ 15 ] ;
+                size_t const num_color = nt ;
+
+                for( size_t i = 0; i < num_color; ++i )
+                {
+                    attachments[ i ] = GLenum( size_t( GL_COLOR_ATTACHMENT0 ) + i ) ;
+                }
+
+                glDrawBuffers( GLsizei( num_color ), attachments ) ;
+                natus::es::error::check_and_log( natus_log_fn( "glGenFramebuffers" ) ) ;
+            }
         }
 
+        // depth/stencil
+        if( dst != natus::graphics::depth_stencil_target_type::unknown )
+        {
+            glDeleteTextures( GLsizei( 1 ), &fb.depth ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glDeleteTextures" ) ) ;
+
+            glGenTextures( GLsizei( 1 ), &fb.depth ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glGenTextures" ) ) ;
+
+            {
+                GLuint const tid = fb.depth ;
+
+                glBindTexture( GL_TEXTURE_2D, tid ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glBindTexture" ) ) ;
+
+                GLenum const target = GL_TEXTURE_2D ;
+                GLint const level = 0 ;
+                GLsizei const width = dims.x() ;
+                GLsizei const height = dims.y() ;
+                GLenum const format = natus::graphics::es3::to_gl_format( dst ) ;
+                GLenum const type = natus::graphics::es3::to_gl_type( dst ) ;
+                GLint const border = 0 ;
+                GLint const internal_format = natus::graphics::es3::to_gl_format( dst ) ;
+
+                // maybe required for memory allocation
+                // at the moment, render targets do not have system memory.
+                #if 0
+                size_t const sib = natus::graphics::es3::calc_sib( dims.x(), dims.y(), ctt ) ;
+                #endif
+                void_cptr_t data = nullptr ;
+
+                glTexImage2D( target, level, internal_format, width, height, border, format, type, data ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glTexImage2D" ) ) ;
+            }
+
+            // attach
+            {
+                GLuint const tid = fb.depth ;
+                GLenum const att = natus::graphics::es3::to_gl_attachment( dst ) ;
+                glFramebufferTexture2D( GL_FRAMEBUFFER, att, GL_TEXTURE_2D, tid, 0 ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glFramebufferTexture2D" ) ) ;
+            }
+        }
 
         GLenum status = 0 ;
         // validate

@@ -312,12 +312,23 @@ namespace natus
                 return GL_NONE ;
             }
 
+            static GLenum to_gl_attachment( depth_stencil_target_type const t ) noexcept
+            {
+                switch( t )
+                {
+                case natus::graphics::depth_stencil_target_type::depth32: return GL_DEPTH_ATTACHMENT ;
+                case natus::graphics::depth_stencil_target_type::depth24_stencil8: return GL_DEPTH_STENCIL_ATTACHMENT ;
+                default: break;
+                }
+                return GL_NONE ;
+            }
+
             static GLenum to_gl_type( depth_stencil_target_type const t ) noexcept
             {
                 switch( t )
                 {
                 case natus::graphics::depth_stencil_target_type::depth32 : return GL_FLOAT ;
-                case natus::graphics::depth_stencil_target_type::depth24_stencil8: return GL_FLOAT ;
+                case natus::graphics::depth_stencil_target_type::depth24_stencil8: return GL_UNSIGNED_INT_24_8 ;
                 default: break;
                 }
                 return GL_NONE ;

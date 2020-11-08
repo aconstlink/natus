@@ -737,7 +737,7 @@ public: // functions
                 if( _cur_fb_active != size_t( -1 ) )
                 {
                     auto* view = _framebuffers[ _cur_fb_active ].ds_view  ;
-                    //_ctx->ctx()->ClearDepthStencilView( view, D3D11_CLEAR_DEPTH, 1.0f, 0 ) ;
+                    if( view != nullptr ) _ctx->ctx()->ClearDepthStencilView( view, D3D11_CLEAR_DEPTH, 1.0f, 0 ) ;
                 }
                 else
                 {
@@ -921,7 +921,7 @@ public: // functions
                     auto const res = _ctx->dev()->CreateRenderTargetView( tex, &desc, view ) ;
                     if( FAILED( res ) )
                     {
-                        natus::log::global_t::error( natus_log_fn( "CreateDepthStencilView" ) ) ;
+                        natus::log::global_t::error( natus_log_fn( "CreateRenderTargetView" ) ) ;
                         continue ;
                     }
                 }
@@ -958,26 +958,141 @@ public: // functions
         }
 
         // depth stencil
-        #if 0
         {
-            // texture2d
-
-            if( fb.ds_view != nullptr ) 
+            if( fb.ds_view != nullptr )
             {
                 fb.ds_view->Release() ;
                 fb.ds_view = nullptr ;
             }
 
-            ID3D11Texture2D * buffer ;
-            D3D11_DEPTH_STENCIL_VIEW_DESC desc = { } ;
-
-            auto const res =_ctx->dev()->CreateDepthStencilView( buffer, &desc, &fb.ds_view ) ;
-            if( FAILED( res ) )
+            // release images
+            if( fb.image_ids[ fb.num_color ] != size_t( -1 ) )
             {
-                natus::log::global_t::error( natus_log_fn( "CreateDepthStencilView" ) ) ;
+                images[ fb.image_ids[ fb.num_color ] ].view->Release() ;
+                images[ fb.image_ids[ fb.num_color ] ].texture->Release() ;
+                images[ fb.image_ids[ fb.num_color ] ].sampler->Release() ;
+
+                images[ fb.image_ids[ fb.num_color ] ].view = nullptr  ;
+                images[ fb.image_ids[ fb.num_color ] ].texture = nullptr ;
+                images[ fb.image_ids[ fb.num_color ] ].sampler = nullptr ;
+            }
+            
+            auto const dst = obj.get_depth_target();
+            
+            {
+                // sampler
+                guard< ID3D11SamplerState > smp ;
+                {
+                    D3D11_SAMPLER_DESC sampDesc = { } ;
+                    sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR ;
+                    sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP ;
+                    sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP ;
+                    sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP ;
+                    sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER ;
+                    sampDesc.MinLOD = 0 ;
+                    sampDesc.MaxLOD = D3D11_FLOAT32_MAX ;
+
+                    auto const hr = dev->CreateSamplerState( &sampDesc, smp ) ;
+                    if( FAILED( hr ) )
+                    {
+                        natus::log::global_t::error( natus_log_fn( "CreateSamplerState" ) ) ;
+                        return oid ;
+                    }
+                }
+
+                // texture
+                guard< ID3D11Texture2D > tex ;
+                {
+                    auto const dims = obj.get_dims() ;
+                    size_t const width = UINT( dims.x() ) ;
+                    size_t const height = UINT( dims.y() ) ;
+
+                    D3D11_TEXTURE2D_DESC desc = { } ;
+                    desc.Width = static_cast< UINT >( width ) ;
+                    desc.Height = static_cast< UINT >( height ) ;
+                    desc.MipLevels = static_cast< UINT >( 1 ) ;
+                    desc.ArraySize = static_cast< UINT >( 1 ) ;
+                    desc.Format = natus::graphics::d3d11::convert_texture( dst ) ;
+                    desc.SampleDesc.Count = 1 ;
+                    desc.SampleDesc.Quality = 0 ;
+                    desc.Usage = D3D11_USAGE_DEFAULT ;
+                    desc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE ;
+                    desc.CPUAccessFlags = 0 ;
+                    desc.MiscFlags = 0 ;
+
+                    // create the texture object
+                    {
+                        auto const hr = dev->CreateTexture2D( &desc, nullptr, tex ) ;
+                        if( FAILED( hr ) )
+                        {
+                            natus::log::global_t::error( natus_log_fn( "CreateTexture2D" ) ) ;
+                            return oid ;
+                        }
+                    }
+                }
+
+                // shader resource view
+                guard< ID3D11ShaderResourceView > srv ;
+                {
+                    D3D11_SHADER_RESOURCE_VIEW_DESC res_desc = { } ;
+                    res_desc.Format = natus::graphics::d3d11::convert_shader_resource( dst ) ;
+                    res_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D ;
+                    res_desc.Texture2D.MostDetailedMip = 0 ;
+                    res_desc.Texture2D.MipLevels = UINT( 1 ) ;
+
+                    auto const hr = dev->CreateShaderResourceView( tex, &res_desc, srv ) ;
+                    if( FAILED( hr ) )
+                    {
+                        natus::log::global_t::error( natus_log_fn( "CreateShaderResourceView for texture : [" +
+                            obj.name() + "]" ) ) ;
+                        return oid ;
+                    }
+                }
+
+                // render target view
+                guard< ID3D11DepthStencilView > view ;
+                {
+                    D3D11_DEPTH_STENCIL_VIEW_DESC desc = { } ;
+                    desc.Format = natus::graphics::d3d11::convert_depth_stencil_view( dst ) ;
+                    desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D ;
+                    desc.Texture2D.MipSlice = 0 ;
+
+                    auto const res = _ctx->dev()->CreateDepthStencilView( tex, &desc, view ) ;
+                    if( FAILED( res ) )
+                    {
+                        natus::log::global_t::error( natus_log_fn( "CreateDepthStencilView" ) ) ;
+                        return oid ;
+                    }
+                }
+
+                // store data
+                {
+                    size_t const i = obj.get_num_color_targets() ;
+                    size_t const iid = fb.image_ids[ i ] == size_t( -1 ) ?
+                        determine_oid( obj.name() + ".depth", images ) : fb.image_ids[ i ] ;
+
+                    // fill the image so shader variable
+                    // lookup can find the render target
+                    // for binding to a texture variable
+                    {
+                        fb.image_ids[ i ] = iid ;
+                        images[ iid ].name = obj.name() + ".depth" ;
+                        images[ iid ].sampler = smp.move_out() ;
+                        images[ iid ].texture = tex.move_out() ;
+                        images[ iid ].valid = true ;
+                        images[ iid ].view = srv.move_out() ;
+                    }
+
+                    {
+                        auto const dims = obj.get_dims() ;
+                        fb.width = FLOAT( dims.x() ) ;
+                        fb.height = FLOAT( dims.y() ) ;
+                    }
+
+                    fb.ds_view = view.move_out() ;
+                }
             }
         }
-        #endif
 
         return oid ;
     }
@@ -985,8 +1100,8 @@ public: // functions
     bool_t activate_framebuffer( size_t const oid )
     {
         framebuffer_data_ref_t fb = _framebuffers[ oid ] ;
-
-        _ctx->ctx()->OMSetRenderTargets( UINT( fb.num_color ), fb.rt_view, nullptr ) ;
+        
+        _ctx->ctx()->OMSetRenderTargets( UINT( fb.num_color ), fb.rt_view, fb.ds_view ) ;
 
         // Setup the viewport
         D3D11_VIEWPORT vp ;

@@ -405,13 +405,39 @@ namespace natus
                 return DXGI_FORMAT_UNKNOWN ;
             }
 
-            static DXGI_FORMAT convert( depth_stencil_target_type const dst ) noexcept
+            static DXGI_FORMAT convert_texture( depth_stencil_target_type const dst ) noexcept
+            {
+                switch( dst )
+                {
+                case natus::graphics::depth_stencil_target_type::depth32:
+                    return DXGI_FORMAT_R32_TYPELESS ;
+                case natus::graphics::depth_stencil_target_type::depth24_stencil8:
+                    return DXGI_FORMAT_R24G8_TYPELESS ;
+                default: break ;
+                }
+                return DXGI_FORMAT_UNKNOWN ;
+            }
+
+            static DXGI_FORMAT convert_shader_resource( depth_stencil_target_type const dst ) noexcept
             {
                 switch( dst )
                 {
                 case natus::graphics::depth_stencil_target_type::depth32 : 
-                    return DXGI_FORMAT_D32_FLOAT ;
+                    return DXGI_FORMAT_R32_FLOAT ;
                 case natus::graphics::depth_stencil_target_type::depth24_stencil8: 
+                    return DXGI_FORMAT_R24_UNORM_X8_TYPELESS ;
+                default: break ;
+                }
+                return DXGI_FORMAT_UNKNOWN ;
+            }
+
+            static DXGI_FORMAT convert_depth_stencil_view( depth_stencil_target_type const dst ) noexcept
+            {
+                switch( dst )
+                {
+                case natus::graphics::depth_stencil_target_type::depth32:
+                    return DXGI_FORMAT_D32_FLOAT ;
+                case natus::graphics::depth_stencil_target_type::depth24_stencil8:
                     return DXGI_FORMAT_D24_UNORM_S8_UINT ;
                 default: break ;
                 }
