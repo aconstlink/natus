@@ -408,6 +408,7 @@ public: // variables
 
     typedef natus::ntd::vector< this_t::framebuffer_data > framebuffer_datas_t ;
     framebuffer_datas_t _framebuffers ;
+    size_t _cur_fb_active = size_t( -1 ) ;
 
     natus::graphics::render_state_sets_t render_states ;
 
@@ -644,19 +645,6 @@ public: // functions
 
     void_t handle_render_state( render_state_sets const& new_states, render_state_sets const& old_states )
     {
-        
-        if( new_states.depth_s.enable != old_states.depth_s.enable )
-        {
-            if( new_states.depth_s.enable )
-            {
-                _ctx->ctx()->OMSetDepthStencilState( new_states.depth_s.state, 0 ) ;
-            }
-            else
-            {
-                _ctx->ctx()->OMSetDepthStencilState( NULL,0 ) ;
-            }
-        }
-
         #if 0
 
         if( new_states.blend_s.enable != old_states.blend_s.enable )
@@ -721,37 +709,63 @@ public: // functions
         }
         #endif
 
-        if( new_states.clear_s.enable != old_states.clear_s.enable )
+        // clear state
+        if( new_states.clear_s.enable )
         {
-            if( new_states.clear_s.enable )
+            // @todo what about user created framebuffers/render targets?
+            if( new_states.clear_s.do_color )
             {
-                // @todo what about user created framebuffers/render targets?
-                if( new_states.clear_s.do_color )
+                if( _cur_fb_active != size_t( -1 ) )
+                {
+                    auto const& vec = new_states.clear_s.color ;
+                    // old: DirectX::Colors::MidnightBlue
+                    FLOAT color[ 4 ] = { vec.x(), vec.y(), vec.z(), vec.w() } ;
+                    for( size_t i = 0; i < _framebuffers[ _cur_fb_active ].num_color; ++i )
+                    {
+                        auto* view = _framebuffers[ _cur_fb_active ].rt_view[ i ] ;
+                        _ctx->ctx()->ClearRenderTargetView( view, color ) ;
+                    }
+                }
+                else
+                {
                     _ctx->clear_render_target_view( new_states.clear_s.color ) ;
-                if( new_states.clear_s.do_depth )
-                    _ctx->clear_depth_stencil_view() ;
+                }
             }
-        }
 
-        if( new_states.view_s.enable != old_states.view_s.enable )
-        {
-            if( new_states.view_s.enable )
+            if( new_states.clear_s.do_depth )
             {
-                auto const& vp_ = new_states.view_s.vp  ;
-
-                // Setup the viewport
-                D3D11_VIEWPORT vp ;
-                vp.Width = FLOAT( vp_.z() ) ;
-                vp.Height = FLOAT( vp_.w() ) ;
-                vp.MinDepth = 0.0f ;
-                vp.MaxDepth = 1.0f ;
-                vp.TopLeftX = FLOAT( vp_.x() ) ;
-                vp.TopLeftY = FLOAT( vp_.y() ) ;
-                _ctx->ctx()->RSSetViewports( 1, &vp );
+                if( _cur_fb_active != size_t( -1 ) )
+                {
+                    auto* view = _framebuffers[ _cur_fb_active ].ds_view  ;
+                    //_ctx->ctx()->ClearDepthStencilView( view, D3D11_CLEAR_DEPTH, 1.0f, 0 ) ;
+                }
+                else
+                {
+                    _ctx->clear_depth_stencil_view() ;
+                }
             }
         }
 
-        _ctx->ctx()->RSSetState( new_states.raster_state ) ;
+        //  viewport
+        if( new_states.view_s.enable )
+        {
+            auto const& vp_ = new_states.view_s.vp  ;
+
+            // Setup the viewport
+            D3D11_VIEWPORT vp ;
+            vp.Width = FLOAT( vp_.z() ) ;
+            vp.Height = FLOAT( vp_.w() ) ;
+            vp.MinDepth = 0.0f ;
+            vp.MaxDepth = 1.0f ;
+            vp.TopLeftX = FLOAT( vp_.x() ) ;
+            vp.TopLeftY = FLOAT( vp_.y() ) ;
+            _ctx->ctx()->RSSetViewports( 1, &vp );
+        }
+
+        {
+            _ctx->ctx()->OMSetDepthStencilState( new_states.depth_s.state, 0 ) ;
+            _ctx->ctx()->RSSetState( new_states.raster_state ) ;
+        }
         
     }
 
@@ -983,36 +997,9 @@ public: // functions
         vp.TopLeftX = FLOAT( 0 ) ;
         vp.TopLeftY = FLOAT( 0 ) ;
         _ctx->ctx()->RSSetViewports( 1, &vp );
+        
+        _cur_fb_active = oid ;
 
-        #if 0
-        framebuffer_data_ref_t fb = _framebuffers[ oid ] ;
-
-        // bind
-        {
-            glBindFramebuffer( GL_FRAMEBUFFER, fb.gl_id ) ;
-            natus::ogl::error::check_and_log( natus_log_fn( "glGenFramebuffers" ) ) ;
-        }
-
-        // setup color
-        {
-            GLenum attachments[ 15 ] ;
-            size_t const num_color = fb.nt ;
-
-            for( size_t i = 0; i < num_color; ++i )
-            {
-                attachments[ i ] = GLenum( size_t( GL_COLOR_ATTACHMENT0 ) + i ) ;
-            }
-
-            glDrawBuffers( GLsizei( num_color ), attachments ) ;
-            natus::ogl::error::check_and_log( natus_log_fn( "glGenFramebuffers" ) ) ;
-        }
-
-        // there is only one dimension at the moment
-        {
-            glViewport( 0, 0, GLsizei( fb.dims.x() ), GLsizei( fb.dims.y() ) ) ;
-            natus::ogl::error::check_and_log( natus_log_fn( "glViewport" ) ) ;
-        }
-        #endif
         return true ;
     }
 
@@ -1029,6 +1016,8 @@ public: // functions
         vp.TopLeftX = FLOAT( 0 ) ;
         vp.TopLeftY = FLOAT( 0 ) ;
         _ctx->ctx()->RSSetViewports( 1, &vp );
+
+        _cur_fb_active = size_t( -1 ) ;
 
     }
 
@@ -2115,6 +2104,7 @@ public: // functions
             vp.z( uint_t( vp_width ) ) ;
             vp.w( uint_t( vp_height ) ) ;
             _states[ ids_new.first ].states[ ids_new.second ].view_s.vp = vp ;
+            _states[ ids_new.first ].states[ ids_new.second ].view_s.enable = true ;
         }
 
         this_t::handle_render_state(
@@ -2481,8 +2471,25 @@ natus::graphics::result d3d11_backend::configure( natus::graphics::framebuffer_o
 }
 
 //***
-natus::graphics::result d3d11_backend::configure( natus::graphics::state_object_res_t ) noexcept
+natus::graphics::result d3d11_backend::configure( natus::graphics::state_object_res_t obj ) noexcept
 {
+    if( !obj.is_valid() || obj->name().empty() )
+    {
+        natus::log::global_t::error( natus_log_fn( "Object must be valid and requires a name" ) ) ;
+        return natus::graphics::result::invalid_argument ;
+    }
+
+    natus::graphics::id_res_t id = obj->get_id() ;
+
+    {
+        id->set_oid( this_t::get_bid(), _pimpl->construct_state(
+            id->get_oid( this_t::get_bid() ), *obj ) ) ;
+    }
+
+    {
+        _pimpl->update_state( id->get_oid( this_t::get_bid() ), *obj ) ;
+    }
+
     return natus::graphics::result::ok ;
 }
 
@@ -2555,8 +2562,25 @@ natus::graphics::result d3d11_backend::use( natus::graphics::framebuffer_object_
 }
 
 //****
-natus::graphics::result d3d11_backend::use( size_t const, natus::graphics::state_object_res_t ) noexcept 
+natus::graphics::result d3d11_backend::use( size_t const sid, natus::graphics::state_object_res_t obj ) noexcept 
 {
+    if( !obj.is_valid() )
+    {
+        _pimpl->handle_render_state( size_t( -1 ), size_t( -1 ) ) ;
+        return natus::graphics::result::ok ;
+    }
+
+    natus::graphics::id_res_t id = obj->get_id() ;
+
+    if( id->is_not_valid( this_t::get_bid() ) )
+    {
+        _pimpl->handle_render_state( size_t( -1 ), size_t( -1 ) ) ;
+        return natus::graphics::result::ok ;
+    }
+
+    size_t const oid = id->get_oid( this_t::get_bid() ) ;
+    _pimpl->handle_render_state( oid, sid ) ;
+
     return natus::graphics::result::ok ;
 }
 
