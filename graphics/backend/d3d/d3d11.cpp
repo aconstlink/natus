@@ -1004,10 +1004,23 @@ public: // functions
         return oid ;
     }
 
-    bool_t activate_framebuffer( size_t const oid )
+    bool_t activate_framebuffer( size_t const oid, bool_t const clear_color, bool_t const clear_depth, bool_t const )
     {
         framebuffer_data_ref_t fb = _framebuffers[ oid ] ;
         
+        if( clear_color )
+        {
+            auto const color = _state_stack.top().rss.clear_s.ss.clear_color ;
+            FLOAT const dxcolor[ 4 ] = { color.x(), color.y(), color.z(), color.w() } ;
+            for( size_t i=0; i<fb.num_color; ++i )
+                _ctx->ctx()->ClearRenderTargetView( fb.rt_view[ i ], dxcolor ) ;
+        }
+
+        if( clear_depth && fb.ds_view != nullptr )
+        {
+            _ctx->ctx()->ClearDepthStencilView( fb.ds_view, D3D11_CLEAR_DEPTH, 1.0f, 0 ) ;
+        }
+
         _ctx->ctx()->OMSetRenderTargets( UINT( fb.num_color ), fb.rt_view, fb.ds_view ) ;
 
         // Setup the viewport
@@ -1995,13 +2008,6 @@ public: // functions
 
     void_t begin_frame( void_t )
     {
-        {
-            natus::math::vec4f_t const color( DirectX::Colors::MidnightBlue.f[ 0 ], DirectX::Colors::MidnightBlue.f[ 1 ], DirectX::Colors::MidnightBlue.f[ 2 ], DirectX::Colors::MidnightBlue.f[ 3 ] ) ;
-
-            _ctx->clear_render_target_view( color ) ;
-            _ctx->clear_depth_stencil_view() ;
-        }
-
         // set the viewport to the default new state, 
         // so the correct viewport is set automatically.
         {
@@ -2018,6 +2024,13 @@ public: // functions
                 _state_stack.push( rss ) ;
                 this_t::handle_render_state( rss ) ;
             }
+        }
+
+        {
+            natus::math::vec4f_t const color = _state_stack.top().rss.clear_s.ss.clear_color ;
+
+            _ctx->clear_render_target_view( color ) ;
+            _ctx->clear_depth_stencil_view() ;
         }
     }
 
@@ -2444,7 +2457,8 @@ natus::graphics::result d3d11_backend::update( natus::graphics::geometry_object_
 }
 
 //****
-natus::graphics::result d3d11_backend::use( natus::graphics::framebuffer_object_res_t obj ) noexcept 
+natus::graphics::result d3d11_backend::use( natus::graphics::framebuffer_object_res_t obj, bool_t const clear_color,
+    bool_t const clear_depth, bool_t const clear_stencil ) noexcept
 {
     if( !obj.is_valid() )
     {
@@ -2461,7 +2475,7 @@ natus::graphics::result d3d11_backend::use( natus::graphics::framebuffer_object_
     }
 
     size_t const oid = id->get_oid( this_t::get_bid() ) ;
-    auto const res = _pimpl->activate_framebuffer( oid ) ;
+    auto const res = _pimpl->activate_framebuffer( oid, clear_color, clear_depth, clear_stencil ) ;
     if( !res ) return natus::graphics::result::failed ;
 
     return natus::graphics::result::ok ;

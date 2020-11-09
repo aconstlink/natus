@@ -667,7 +667,7 @@ struct gl3_backend::pimpl
         return oid ;
     }
 
-    bool_t activate_framebuffer( size_t const oid )
+    bool_t activate_framebuffer( size_t const oid, bool_t const clear_color, bool_t const clear_depth, bool_t const )
     {
         framebuffer_data_ref_t fb = _framebuffers[ oid ] ;
 
@@ -697,6 +697,21 @@ struct gl3_backend::pimpl
             natus::ogl::error::check_and_log( natus_log_fn( "glViewport" ) ) ;
         }
 
+        {
+            // do clear the frame
+            {
+                natus::math::vec4f_t const color = _state_stack.top().clear_s.ss.clear_color ;
+                glClearColor( color.x(), color.y(), color.z(), color.w() ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glClearColor" ) ) ;
+
+                GLbitfield const color_bit = clear_color ? GL_COLOR_BUFFER_BIT : 0 ;
+                GLbitfield const depth_bit = clear_depth ? GL_DEPTH_BUFFER_BIT : 0 ;
+
+                glClear( color_bit | depth_bit ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
+            }
+        }
+
         return true ;
     }
 
@@ -714,8 +729,8 @@ struct gl3_backend::pimpl
             natus::ogl::error::check_and_log( natus_log_fn( "glViewport" ) ) ;
         }
 
-        glDisable( GL_DEPTH_TEST );
-        natus::ogl::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
+        //glDisable( GL_DEPTH_TEST );
+        //natus::ogl::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
     }
 
     size_t construct_shader_config( size_t oid,
@@ -1754,19 +1769,6 @@ struct gl3_backend::pimpl
 
     void_t begin_frame( void_t ) 
     {
-        // do clear the frame
-        {
-            natus::math::vec4f_t const clear_color( 0.4f, 0.1f, 0.5f, 1.0f ) ;
-            glClearColor( clear_color.x(), clear_color.y(), clear_color.z(), clear_color.w() ) ;
-            natus::ogl::error::check_and_log( natus_log_fn( "glClearColor" ) ) ;
-
-            GLbitfield const color = GL_COLOR_BUFFER_BIT ;
-            GLbitfield const depth = GL_DEPTH_BUFFER_BIT ;
-
-            glClear( color | depth ) ;
-            natus::ogl::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
-        }
-
         // set default render states
         {
             auto const ids_new = std::make_pair( size_t( 0 ), size_t( 0 ) ) ;
@@ -1781,6 +1783,19 @@ struct gl3_backend::pimpl
             }
 
             _state_stack.push( _states[ ids_new.first ].states[ ids_new.second ] ) ;
+        }
+
+        // do clear the frame
+        {
+            natus::math::vec4f_t const clear_color = _state_stack.top().clear_s.ss.clear_color ;
+            glClearColor( clear_color.x(), clear_color.y(), clear_color.z(), clear_color.w() ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glClearColor" ) ) ;
+
+            GLbitfield const color = GL_COLOR_BUFFER_BIT ;
+            GLbitfield const depth = GL_DEPTH_BUFFER_BIT ;
+
+            glClear( color | depth ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
         }
     }
 
@@ -2008,7 +2023,8 @@ natus::graphics::result gl3_backend::update( natus::graphics::geometry_object_re
 }
 
 //****
-natus::graphics::result gl3_backend::use( natus::graphics::framebuffer_object_res_t obj ) noexcept 
+natus::graphics::result gl3_backend::use( natus::graphics::framebuffer_object_res_t obj, bool_t const clear_color,
+    bool_t const clear_depth, bool_t const clear_stencil ) noexcept
 {
     if( !obj.is_valid() )
     {
@@ -2025,7 +2041,7 @@ natus::graphics::result gl3_backend::use( natus::graphics::framebuffer_object_re
     }
 
     size_t const oid = id->get_oid( this_t::get_bid() ) ;
-    auto const res = _pimpl->activate_framebuffer( oid ) ;
+    auto const res = _pimpl->activate_framebuffer( oid, clear_color, clear_depth, clear_stencil ) ;
     if( !res ) return natus::graphics::result::failed ;
 
     return natus::graphics::result::ok ;

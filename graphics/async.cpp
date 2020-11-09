@@ -143,7 +143,8 @@ async::this_ref_t async::update( natus::graphics::geometry_object_res_t gs,
 }
 
 //****
-async::this_ref_t async::use( natus::graphics::framebuffer_object_res_t fb, 
+async::this_ref_t async::use( natus::graphics::framebuffer_object_res_t fb, bool_t const clear_color,
+    bool_t const clear_depth, bool_t const clear_stencil,
     natus::graphics::result_res_t res ) noexcept 
 {
     {
@@ -151,7 +152,7 @@ async::this_ref_t async::use( natus::graphics::framebuffer_object_res_t fb,
 
         _runtimes.push_back( [=] ( natus::graphics::backend_ptr_t be ) mutable
         {
-            auto const ires = be->use( std::move( fb ) ) ;
+            auto const ires = be->use( std::move( fb ), clear_color, clear_depth, clear_stencil ) ;
             if( res.is_valid() ) *res = ires ;
         } ) ;
     }

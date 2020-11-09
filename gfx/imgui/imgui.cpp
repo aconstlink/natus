@@ -435,7 +435,7 @@ void_t imgui::render( natus::graphics::async_view_t async )
                 }
 
                 {
-                    async.use( natus::graphics::state_object_res_t() ) ;
+                    async.use( natus::graphics::state_object_t() ) ;
                 }
             }
 

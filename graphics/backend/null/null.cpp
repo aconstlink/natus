@@ -66,7 +66,8 @@ natus::graphics::result null_backend::update( natus::graphics::geometry_object_r
 }
 
 //****
-natus::graphics::result null_backend::use( natus::graphics::framebuffer_object_res_t ) noexcept 
+natus::graphics::result null_backend::use( natus::graphics::framebuffer_object_res_t, bool_t const,
+    bool_t const, bool_t const ) noexcept
 {
     return natus::graphics::result::ok ;
 }

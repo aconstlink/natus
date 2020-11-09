@@ -38,7 +38,6 @@ namespace natus
 
         struct clear_states
         {
-            bool_t do_activate = false ;
             natus::math::vec4f_t clear_color = natus::math::vec4f_t( 0.4f, 0.1f, 0.2f, 1.0f ) ;
             bool_t do_color_clear = false ;
             bool_t do_depth_clear = false ;
@@ -120,6 +119,7 @@ namespace natus
         {
             natus_this_typedefs( render_state_sets ) ;
 
+            clear_states_set_t clear_s ;
             viewport_states_set_t view_s ;
             blend_states_set_t blend_s ;
             depth_states_set_t depth_s ;
