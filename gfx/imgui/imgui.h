@@ -39,7 +39,7 @@ namespace natus
             natus::graphics::image_object_res_t _ic ;
 
             natus::ntd::vector< natus::graphics::variable_set_res_t > _vars ;
-            natus::ntd::vector< natus::graphics::render_state_sets_res_t > _render_states ;
+            natus::graphics::state_object_res_t  _render_states ;
 
             uint_t _width = 0 ;
             uint_t _height = 0 ;

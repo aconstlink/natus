@@ -159,14 +159,14 @@ async::this_ref_t async::use( natus::graphics::framebuffer_object_res_t fb,
 }
 
 //****
-async::this_ref_t async::use( size_t const sid, natus::graphics::state_object_res_t s, 
+async::this_ref_t async::use( natus::graphics::state_object_res_t s, size_t const sid, bool_t const push, 
     natus::graphics::result_res_t res ) noexcept 
 {
     natus::concurrent::lock_guard_t lk( _runtimes_mtx ) ;
 
     _runtimes.push_back( [=] ( natus::graphics::backend_ptr_t be ) mutable
     {
-        auto const ires = be->use( sid, std::move( s ) ) ;
+        auto const ires = be->use( std::move( s ), sid, push ) ;
         if( res.is_valid() ) *res = ires ;
     } ) ;
     return *this ;

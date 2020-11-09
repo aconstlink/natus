@@ -12,7 +12,8 @@ namespace natus
     {
         struct clear_state_set
         {
-            bool_t do_clear = false ;
+            bool_t do_change = false ;
+            bool_t do_activate = false ;
             natus::math::vec4f_t clear_color = natus::math::vec4f_t( 0.0f ) ;
             bool_t do_color = false ;
             bool_t do_depth = false ;
@@ -20,8 +21,8 @@ namespace natus
 
         struct blend_state_set
         {
-            // blend active
-            bool_t do_blend = false ;
+            bool_t do_change = false ;
+            bool_t do_activate = false ;
             blend_factor src_blend_factor = natus::graphics::blend_factor::one ;
             blend_factor dst_blend_factor = natus::graphics::blend_factor::zero ;
             blend_function blend_func = natus::graphics::blend_function::add ;
@@ -46,7 +47,8 @@ namespace natus
 
         struct depth_state_set
         {
-            bool_t do_depth_test = false ;
+            bool_t do_change = false ;
+            bool_t do_activate = false ;
             bool_t do_depth_write = true ;
 
             // depth buffer test func
@@ -54,18 +56,21 @@ namespace natus
 
         struct stencil_state_set
         {
+            bool_t do_change = false ;
             // missing
         };
 
         struct scissor_state_set
         {
-            bool_t do_scissor_test = false ;
+            bool_t do_change = false ;
+            bool_t do_activate = false ;
             natus::math::vec4ui_t rect ;
         };
 
         struct polygon_state_set
         {
-            bool_t do_culling = false ;
+            bool_t do_change = false ;
+            bool_t do_activate = false ;
 
             cull_mode cm = natus::graphics::cull_mode::back ;
             front_face ff = natus::graphics::front_face::clock_wise ;
@@ -74,7 +79,8 @@ namespace natus
 
         struct viewport_state_set
         {
-            bool_t do_viewport = false ;
+            bool_t do_change = false ;
+            bool_t do_activate = false ;
 
             // x, y, width, height
             natus::math::vec4ui_t vp ;
@@ -97,16 +103,16 @@ namespace natus
 
             render_state_sets( void_t ) 
             {
-                clear_s.do_clear = false ;
+                clear_s.do_activate = false ;
                 clear_s.do_color = false ;
                 clear_s.do_depth = false ;
                 clear_s.clear_color = natus::math::vec4f_t( 0.4f, 0.1f, 0.2f, 1.0f ) ;
 
-                view_s.do_viewport = false ;
-                depth_s.do_depth_test = false ;
+                view_s.do_activate = false ;
+                depth_s.do_activate = false ;
                 depth_s.do_depth_write = false ;
                 
-                polygon_s.do_culling = true ;
+                polygon_s.do_activate = false ;
                 polygon_s.cm = natus::graphics::cull_mode::back ;
                 polygon_s.ff = natus::graphics::front_face::clock_wise ;
                 polygon_s.fm = natus::graphics::fill_mode::fill ;

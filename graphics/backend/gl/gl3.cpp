@@ -145,6 +145,7 @@ struct gl3_backend::pimpl
     {
         struct clear_state_set
         {
+            bool_t change = false ;
             bool_t enable = false ;
             natus::math::vec4f_t color ;
             GLenum clear_bits ;
@@ -153,6 +154,7 @@ struct gl3_backend::pimpl
 
         struct view_state_set
         {
+            bool_t change = false ;
             bool_t enable = false ;
             natus::math::vec4ui_t vp ;
         } ;
@@ -160,6 +162,7 @@ struct gl3_backend::pimpl
 
         struct blend_state_set
         {
+            bool_t change = false ;
             bool_t enable = false ;
             GLenum src_blend_fac ;
             GLenum dst_blend_fac ;
@@ -169,6 +172,7 @@ struct gl3_backend::pimpl
 
         struct depth_state_set
         {
+            bool_t change = false ;
             bool_t enable = false ;
             bool_t write = false ;
         } ;
@@ -176,6 +180,7 @@ struct gl3_backend::pimpl
 
         struct scissor_state_set
         {
+            bool_t change = false ;
             bool_t enable = false ;
             natus::math::vec4ui_t rect ;
         } ;
@@ -183,6 +188,7 @@ struct gl3_backend::pimpl
 
         struct polygon_state_set
         {
+            bool_t change = false ;
             bool_t enable ;
             GLenum cull_mode ;
             GLenum front_face ;
@@ -309,12 +315,19 @@ struct gl3_backend::pimpl
             auto new_states = *natus::graphics::backend_t::default_render_states() ;
 
             natus::graphics::render_state_sets old_states = new_states ;
-            old_states.blend_s.do_blend = !new_states.blend_s.do_blend ;
-            old_states.clear_s.do_clear = !new_states.clear_s.do_clear ;
-            old_states.depth_s.do_depth_test = !new_states.depth_s.do_depth_test ;
-            old_states.polygon_s.do_culling = !new_states.polygon_s.do_culling ;
-            old_states.scissor_s.do_scissor_test = !new_states.scissor_s.do_scissor_test ;
-            old_states.view_s.do_viewport = !new_states.view_s.do_viewport ;
+            old_states.blend_s.do_change = !new_states.blend_s.do_change ;
+            old_states.clear_s.do_change = !new_states.clear_s.do_change ;
+            old_states.depth_s.do_change = !new_states.depth_s.do_change ;
+            old_states.polygon_s.do_change = !new_states.polygon_s.do_change ;
+            old_states.scissor_s.do_change = !new_states.scissor_s.do_change ;
+            old_states.view_s.do_change = !new_states.view_s.do_change ;
+
+            old_states.blend_s.do_activate = !new_states.blend_s.do_activate ;
+            old_states.clear_s.do_activate = !new_states.clear_s.do_activate ;
+            old_states.depth_s.do_activate = !new_states.depth_s.do_activate ;
+            old_states.polygon_s.do_activate = !new_states.polygon_s.do_activate ;
+            old_states.scissor_s.do_activate = !new_states.scissor_s.do_activate ;
+            old_states.view_s.do_activate = !new_states.view_s.do_activate ;
             
             natus::graphics::state_object_t obj( "gl3_default_states" ) ;
             
@@ -389,14 +402,12 @@ struct gl3_backend::pimpl
         {
             this_t::render_state_sets rs_ ;
 
-            rs_.view_s.enable = rs.view_s.do_viewport ;
-            rs_.blend_s.enable = rs.blend_s.do_blend ;
-            rs_.clear_s.enable = rs.clear_s.do_clear ;
-            rs_.depth_s.enable = rs.depth_s.do_depth_test ;
-            rs_.depth_s.write = rs.depth_s.do_depth_write ;
-            rs_.polygon_s.enable = rs.polygon_s.do_culling ;
-            rs_.scissor_s.enable = rs.scissor_s.do_scissor_test ;
-            
+            rs_.view_s.change = rs.view_s.do_change ;
+            rs_.blend_s.change = rs.blend_s.do_change ;
+            rs_.clear_s.change = rs.clear_s.do_change ;
+            rs_.depth_s.change = rs.depth_s.do_change ;
+            rs_.polygon_s.change = rs.polygon_s.do_change  ;
+            rs_.scissor_s.change = rs.scissor_s.do_change ;
             states.states[ i ] = rs_ ;
         } ) ;
 
@@ -409,54 +420,64 @@ struct gl3_backend::pimpl
 
         // @note
         // set all values
-        obj.for_each( [&] ( size_t const i, natus::graphics::render_state_sets_cref_t rs_in )
+        obj.for_each( [&] ( size_t const i, natus::graphics::render_state_sets_cref_t rs )
         {
-            this_t::render_state_sets & rs = states.states[i] ;
+            this_t::render_state_sets & rs_ = states.states[i] ;
 
-            if( rs.blend_s.enable )
+            if( rs_.blend_s.change )
             {
-                rs.blend_s.blend_func = natus::graphics::gl3::convert( rs_in.blend_s.blend_func ) ;
-                rs.blend_s.src_blend_fac = natus::graphics::gl3::convert( rs_in.blend_s.src_blend_factor ) ;
-                rs.blend_s.dst_blend_fac = natus::graphics::gl3::convert( rs_in.blend_s.dst_blend_factor  ) ;
+                rs_.blend_s.enable = rs.blend_s.do_activate ;
+                rs_.blend_s.blend_func = natus::graphics::gl3::convert( rs.blend_s.blend_func ) ;
+                rs_.blend_s.src_blend_fac = natus::graphics::gl3::convert( rs.blend_s.src_blend_factor ) ;
+                rs_.blend_s.dst_blend_fac = natus::graphics::gl3::convert( rs.blend_s.dst_blend_factor  ) ;
             }
-            if( rs.clear_s.enable )
+            if( rs_.clear_s.change )
             {
-                rs.clear_s.color = rs_in.clear_s.clear_color ;
-                rs.clear_s.clear_bits =
-                    ( rs_in.clear_s.do_color ? GL_COLOR_BUFFER_BIT : 0 ) |
-                    ( rs_in.clear_s.do_depth ? GL_DEPTH_BUFFER_BIT : 0 ) ;
+                rs_.clear_s.enable = rs.clear_s.do_activate ;
+                rs_.clear_s.color = rs.clear_s.clear_color ;
+                rs_.clear_s.clear_bits =
+                    ( rs.clear_s.do_color ? GL_COLOR_BUFFER_BIT : 0 ) |
+                    ( rs.clear_s.do_depth ? GL_DEPTH_BUFFER_BIT : 0 ) ;
             }
-            if( rs.view_s.enable )
+            if( rs_.view_s.change )
             {
-                rs.view_s.vp = rs_in.view_s.vp ;
+                rs_.view_s.enable = rs.view_s.do_activate ;
+                rs_.view_s.vp = rs.view_s.vp ;
             }
-            if( rs.depth_s.enable )
+            if( rs_.depth_s.change )
             {
-                rs.depth_s.write = rs_in.depth_s.do_depth_write ;
+                rs_.depth_s.write = rs.depth_s.do_depth_write ;
+                rs_.depth_s.enable = rs.depth_s.do_activate ;
+                rs_.depth_s.write = rs.depth_s.do_depth_write ;
             }
-            if( rs.polygon_s.enable )
+            if( rs_.polygon_s.change )
             {
+                rs_.polygon_s.enable = rs.polygon_s.do_activate ;
+
                 // glCullFace
-                rs.polygon_s.cull_mode = natus::graphics::gl3::convert( rs_in.polygon_s.cm ) ;
+                rs_.polygon_s.cull_mode = natus::graphics::gl3::convert( rs.polygon_s.cm ) ;
 
                 // glFrontFace
-                rs.polygon_s.front_face = natus::graphics::gl3::convert( rs_in.polygon_s.ff ) ;
+                rs_.polygon_s.front_face = natus::graphics::gl3::convert( rs.polygon_s.ff ) ;
 
                 // glPolygonMode
-                rs.polygon_s.fill_mode = natus::graphics::gl3::convert( rs_in.polygon_s.fm ) ;
+                rs_.polygon_s.fill_mode = natus::graphics::gl3::convert( rs.polygon_s.fm ) ;
             }
-            if( rs.scissor_s.enable )
+            if( rs_.scissor_s.change )
             {
+                rs_.scissor_s.enable = rs.scissor_s.do_activate ;
             }
         } ) ;
         return oid ;
     }
 
-    void_t handle_render_state( render_state_sets const & new_states, render_state_sets const & old_states )
+    // @param new_state states to be activated
+    // @param old_state states that were just activated
+    void_t handle_render_state( render_state_sets const & new_states, render_state_sets const & old_states, bool_t const revert = false )
     {
         // depth test
         {
-            //if( new_states.depth_s.enable != old_states.depth_s.enable )
+            if( new_states.depth_s.change )
             {
                 if( new_states.depth_s.enable )
                 {
@@ -465,6 +486,9 @@ struct gl3_backend::pimpl
 
                     glDepthMask( GL_TRUE );
                     natus::ogl::error::check_and_log( natus_log_fn( "glDepthMask" ) ) ;
+
+                    glDepthFunc( GL_LESS ) ;
+                    natus::ogl::error::check_and_log( natus_log_fn( "glDepthFunc" ) ) ;
                 }
                 else
                 {
@@ -475,30 +499,55 @@ struct gl3_backend::pimpl
                     natus::ogl::error::check_and_log( natus_log_fn( "glDepthMask" ) ) ;
                 }
             }
-
-            if( new_states.depth_s.enable )
+            // the new states do not change, so the old stats need to be reverted.
+            else if( revert )
             {
-                glDepthFunc( GL_LESS ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glDepthFunc" ) ) ;
+                if( old_states.depth_s.change )
+                {
+                    if( old_states.depth_s.enable )
+                    {
+                        glDisable( GL_DEPTH_TEST ) ;
+                        natus::ogl::error::check_and_log( natus_log_fn( "glDisable( GL_DEPTH_TEST )" ) ) ;
+
+                        glDepthMask( GL_FALSE ) ;
+                        natus::ogl::error::check_and_log( natus_log_fn( "glDepthMask" ) ) ;
+
+                        glDepthFunc( GL_LESS ) ;
+                        natus::ogl::error::check_and_log( natus_log_fn( "glDepthFunc" ) ) ;
+                    }
+                    else
+                    {
+                        glEnable( GL_DEPTH_TEST );
+                        natus::ogl::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
+
+                        glDepthMask( GL_TRUE );
+                        natus::ogl::error::check_and_log( natus_log_fn( "glDepthMask" ) ) ;
+                    }
+                }
             }
+
+            
         }
 
         // clear always if true.
         {
-            if( new_states.clear_s.enable )
+            if( new_states.clear_s.change && !revert )
             {
-                glClearColor( new_states.clear_s.color.x(), new_states.clear_s.color.y(),
-                    new_states.clear_s.color.z(), new_states.clear_s.color.w() ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glClearColor" ) ) ;
+                if( new_states.clear_s.enable )
+                {
+                    glClearColor( new_states.clear_s.color.x(), new_states.clear_s.color.y(),
+                        new_states.clear_s.color.z(), new_states.clear_s.color.w() ) ;
+                    natus::ogl::error::check_and_log( natus_log_fn( "glClearColor" ) ) ;
 
-                glClear( new_states.clear_s.clear_bits );
-                natus::ogl::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
+                    glClear( new_states.clear_s.clear_bits );
+                    natus::ogl::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
+                }
             }
         }
 
         // blend mode
         {
-            if( new_states.blend_s.enable != old_states.blend_s.enable )
+            if( new_states.blend_s.change )
             {
                 if( new_states.blend_s.enable )
                 {
@@ -510,20 +559,20 @@ struct gl3_backend::pimpl
                     glDisable( GL_BLEND ) ;
                     natus::ogl::error::check_and_log( natus_log_fn( "glDisable" ) ) ;
                 }
-            }
 
-            if( new_states.blend_s.enable )
-            {
-                GLenum const glsrc = new_states.blend_s.src_blend_fac ;
-                GLenum const gldst = new_states.blend_s.dst_blend_fac ;
-                glBlendFunc( glsrc, gldst ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glBlendFunc" ) ) ;
+                if( new_states.blend_s.enable )
+                {
+                    GLenum const glsrc = new_states.blend_s.src_blend_fac ;
+                    GLenum const gldst = new_states.blend_s.dst_blend_fac ;
+                    glBlendFunc( glsrc, gldst ) ;
+                    natus::ogl::error::check_and_log( natus_log_fn( "glBlendFunc" ) ) ;
+                }
             }
         }
 
         // polygon mode
         {
-            if( new_states.polygon_s.enable != old_states.polygon_s.enable )
+            if( new_states.polygon_s.change )
             {
                 if( new_states.polygon_s.enable )
                 {
@@ -535,24 +584,24 @@ struct gl3_backend::pimpl
                     glDisable( GL_CULL_FACE ) ;
                     natus::ogl::error::check_and_log( natus_log_fn( "glDisable" ) ) ;
                 }
-            }
 
-            if( new_states.polygon_s.enable )
-            {
-                glCullFace( new_states.polygon_s.cull_mode ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glCullFace" ) ) ;
+                if( new_states.polygon_s.enable )
+                {
+                    glCullFace( new_states.polygon_s.cull_mode ) ;
+                    natus::ogl::error::check_and_log( natus_log_fn( "glCullFace" ) ) ;
 
-                glFrontFace( new_states.polygon_s.front_face ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glFrontFace" ) ) ;
+                    glFrontFace( new_states.polygon_s.front_face ) ;
+                    natus::ogl::error::check_and_log( natus_log_fn( "glFrontFace" ) ) ;
 
-                glPolygonMode( GL_FRONT_AND_BACK, new_states.polygon_s.fill_mode ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glPolygonMode" ) ) ;
+                    glPolygonMode( GL_FRONT_AND_BACK, new_states.polygon_s.fill_mode ) ;
+                    natus::ogl::error::check_and_log( natus_log_fn( "glPolygonMode" ) ) ;
+                }
             }
         }
 
         // scissor
         {
-            if( new_states.scissor_s.enable != old_states.scissor_s.enable )
+            if( new_states.scissor_s.change )
             {
                 if( new_states.scissor_s.enable )
                 {
@@ -564,24 +613,27 @@ struct gl3_backend::pimpl
                     glDisable( GL_SCISSOR_TEST ) ;
                     natus::ogl::error::check_and_log( natus_log_fn( "glDisable" ) ) ;
                 }
-            }
 
-            if( new_states.scissor_s.enable )
-            {
-                glScissor(
-                    GLint( new_states.scissor_s.rect.x() ), GLint( new_states.scissor_s.rect.y() ),
-                    GLsizei( new_states.scissor_s.rect.z() ), GLsizei( new_states.scissor_s.rect.w() ) ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glScissor" ) ) ;
+                if( new_states.scissor_s.enable )
+                {
+                    glScissor(
+                        GLint( new_states.scissor_s.rect.x() ), GLint( new_states.scissor_s.rect.y() ),
+                        GLsizei( new_states.scissor_s.rect.z() ), GLsizei( new_states.scissor_s.rect.w() ) ) ;
+                    natus::ogl::error::check_and_log( natus_log_fn( "glScissor" ) ) ;
+                }
             }
         }
 
         // always set the viewport if enabled
         {
-            if( new_states.view_s.enable )
+            if( new_states.view_s.change )
             {
-                auto const & vp = new_states.view_s.vp  ;
-                glViewport( GLint( vp.x() ), GLint( vp.y() ), GLsizei( vp.z() ), GLsizei( vp.w() ) ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glViewport" ) ) ;
+                if( new_states.view_s.enable )
+                {
+                    auto const& vp = new_states.view_s.vp  ;
+                    glViewport( GLint( vp.x() ), GLint( vp.y() ), GLsizei( vp.z() ), GLsizei( vp.w() ) ) ;
+                    natus::ogl::error::check_and_log( natus_log_fn( "glViewport" ) ) ;
+                }
             }
         }
     }
@@ -610,7 +662,7 @@ struct gl3_backend::pimpl
             auto const & new_states = _states[ new_id.first ].states[ new_id.second ] ;
             auto const & old_states = _states[ old_id.first ].states[ old_id.second ] ;
 
-            this_t::handle_render_state( new_states, old_states ) ;
+            this_t::handle_render_state( new_states, old_states, oid == size_t(-1) ) ;
         }
 
         if( oid != size_t( -1 ) )
@@ -1911,6 +1963,7 @@ struct gl3_backend::pimpl
             vp.w( uint_t( vp_height ) ) ;
             _states[ ids_new.first ].states[ ids_new.second ].view_s.vp = vp ;
             _states[ ids_new.first ].states[ ids_new.second ].view_s.enable = true ;
+            _states[ ids_new.first ].states[ ids_new.second ].view_s.change = true ;
         }
 
         this_t::handle_render_state( 
@@ -2168,7 +2221,7 @@ natus::graphics::result gl3_backend::use( natus::graphics::framebuffer_object_re
 }
 
 //****
-natus::graphics::result gl3_backend::use( size_t const sid, natus::graphics::state_object_res_t obj ) noexcept 
+natus::graphics::result gl3_backend::use( natus::graphics::state_object_res_t obj, size_t const sid, bool_t const ) noexcept 
 {
     if( !obj.is_valid() )
     {

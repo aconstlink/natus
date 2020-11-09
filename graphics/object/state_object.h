@@ -70,6 +70,20 @@ namespace natus
                 return _states.size() ;
             }
 
+            this_ref_t resize( size_t const s ) noexcept
+            {
+                _states.resize( s ) ;
+                return *this ;
+            }
+
+            this_ref_t set_render_states_set( size_t const n, natus::graphics::render_state_sets_cref_t s )
+            {
+                _states[ n ] = s ;
+                return *this ;
+            }
+
+            
+
             this_ref_t add_render_state_set( natus::graphics::render_state_sets_cref_t rs )
             {
                 _states.emplace_back( rs ) ;
@@ -85,6 +99,15 @@ namespace natus
                 {
                     funk( i++, v ) ;
                 }
+            }
+
+            typedef std::function< void_t ( natus::graphics::render_state_sets_ref_t ) > access_render_state_funk_t ;
+
+            this_ref_t access_render_state( size_t const i, access_render_state_funk_t funk )
+            {
+                if( i >= _states.size() ) return *this ;
+                funk( _states[ i ] ) ;
+                return *this ;
             }
 
         public:

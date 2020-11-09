@@ -69,6 +69,10 @@ void_t imgui::init( natus::graphics::async_view_t async )
         async.configure( _gc ) ;
     }
 
+    {
+        _render_states = natus::graphics::state_object_t("system.imgui") ;
+    }
+
     // shader config
     {
         natus::graphics::shader_object_t sc( "natus.gfx.imgui" ) ;
@@ -254,7 +258,7 @@ void_t imgui::init( natus::graphics::async_view_t async )
 
         rc.add_variable_set( _vars[0] ) ;
 
-        _rc = ::std::move( rc ) ;
+        _rc = std::move( rc ) ;
         async.configure( _rc ) ;
      }
 
@@ -311,10 +315,34 @@ void_t imgui::render( natus::graphics::async_view_t async )
         _gc->vertex_buffer().resize( draw_data->TotalVtxCount ) ;
         _gc->index_buffer().resize( draw_data->TotalIdxCount ) ;
 
-        _render_states.resize( size ) ;
-        for( auto& rs : _render_states )
         {
-            rs = natus::graphics::render_state_sets_t() ;
+            _render_states->resize( size ) ;
+            natus::graphics::render_state_sets_t rss ;
+
+            rss.depth_s.do_change = true ;
+            rss.depth_s.do_activate = false ;
+            rss.depth_s.do_depth_write = false ;
+            
+            rss.polygon_s.do_change = true ;
+            rss.polygon_s.do_activate = false ;
+            rss.polygon_s.ff = natus::graphics::front_face::counter_clock_wise ;
+            rss.polygon_s.cm = natus::graphics::cull_mode::back ;
+            rss.polygon_s.fm = natus::graphics::fill_mode::fill ;
+            
+            rss.scissor_s.do_change = true ;
+            rss.scissor_s.do_activate = false ;
+            
+            rss.blend_s.do_change = true ;
+            rss.blend_s.do_activate = true ;
+            rss.blend_s.src_blend_factor = natus::graphics::blend_factor::src_alpha ;
+            rss.blend_s.dst_blend_factor = natus::graphics::blend_factor::one_minus_src_alpha ;
+
+            for( size_t i=0; i<_render_states->size(); ++i )
+            {
+                _render_states->set_render_states_set( i, rss ) ;
+            }
+
+            async.configure( _render_states ) ;
         }
     }
 
@@ -384,29 +412,31 @@ void_t imgui::render( natus::graphics::async_view_t async )
 
             if( clip_rect.x < fb_width && clip_rect.y < fb_height && clip_rect.z >= 0.0f && clip_rect.w >= 0.0f )
             {
+                // change scissor
                 {
-                    natus::graphics::scissor_state_set ss ;
-                    ss.do_scissor_test = true ;
-                    ss.rect = natus::math::vec4ui_t( ( uint_t ) clip_rect.x, ( uint_t ) ( fb_height - clip_rect.w ), ( uint_t ) ( clip_rect.z - clip_rect.x ), ( uint_t ) ( clip_rect.w - clip_rect.y ) ) ;
-                    _render_states[ rs_id ]->scissor_s = ss ;
+                    _render_states->access_render_state( rs_id,
+                        [&] ( natus::graphics::render_state_sets_ref_t sets )
+                    {
+                        sets.scissor_s.rect = natus::math::vec4ui_t( ( uint_t ) clip_rect.x, ( uint_t ) ( fb_height - clip_rect.w ), ( uint_t ) ( clip_rect.z - clip_rect.x ), ( uint_t ) ( clip_rect.w - clip_rect.y ) ) ;
+                    } ) ;
                 }
 
                 {
-                    natus::graphics::blend_state_set bs ;
-                    bs.do_blend = true ;
-                    bs.src_blend_factor = natus::graphics::blend_factor::src_alpha ;
-                    bs.dst_blend_factor = natus::graphics::blend_factor::one_minus_src_alpha ;
-                    _render_states[ rs_id ]->blend_s = bs ;
+                    async.use( _render_states, rs_id ) ;
                 }
 
-                
-                natus::graphics::backend_t::render_detail_t rd ;
-                rd.num_elems = pcmd->ElemCount ;
-                rd.start = offset ;
-                
-                rd.varset = size_t( pcmd->TextureId ) ;
-                rd.render_states = _render_states[ rs_id ] ;
-                async.render( _rc, rd ) ;
+                // do rendering
+                {
+                    natus::graphics::backend_t::render_detail_t rd ;
+                    rd.num_elems = pcmd->ElemCount ;
+                    rd.start = offset ;
+                    rd.varset = size_t( pcmd->TextureId ) ;
+                    async.render( _rc, rd ) ;
+                }
+
+                {
+                    async.use( natus::graphics::state_object_res_t() ) ;
+                }
             }
 
             offset += pcmd->ElemCount ;
