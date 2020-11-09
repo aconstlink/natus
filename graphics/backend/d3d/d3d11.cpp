@@ -475,88 +475,6 @@ public: // functions
         obj.for_each( [&] ( size_t const i, natus::graphics::render_state_sets_cref_t rs )
         {
             states.states[ i ] = rs ;
-
-            #if 0
-            this_t::render_state_sets rs_ ;
-
-            rs_.view_s.change = rs.view_s.do_change ;
-            rs_.blend_s.change = rs.blend_s.do_change ;
-            rs_.clear_s.change = rs.clear_s.do_change ;
-            rs_.depth_s.change = rs.depth_s.do_change ;
-            rs_.polygon_s.change = rs.polygon_s.do_change  ;
-            rs_.scissor_s.change = rs.scissor_s.do_change ;
-
-            D3D11_RASTERIZER_DESC raster_desc = { } ;
-
-            if( rs_.blend_s.change )
-            {
-                rs_.blend_s.enable = rs.blend_s.do_activate ;
-                # if 0
-                rs.blend_s.blend_func = natus::graphics::gl3::convert( rs_in.blend_s.blend_func ) ;
-                rs.blend_s.src_blend_fac = natus::graphics::gl3::convert( rs_in.blend_s.src_blend_factor ) ;
-                rs.blend_s.dst_blend_fac = natus::graphics::gl3::convert( rs_in.blend_s.dst_blend_factor ) ;
-                #endif
-            }
-
-            if( rs_.clear_s.change )
-            {
-                rs_.clear_s.enable = rs.clear_s.do_activate ;
-                rs_.clear_s.color = rs.clear_s.clear_color ;
-                rs_.clear_s.do_color = rs.clear_s.do_color ;
-                rs_.clear_s.do_depth = rs.clear_s.do_depth ;
-            }
-
-            if( rs_.view_s.change )
-            {
-                rs_.view_s.enable = rs.view_s.do_activate ;
-                rs_.view_s.vp = rs.view_s.vp ;
-            }
-            
-            // depth state
-            if( rs_.depth_s.change )
-            {
-                rs_.depth_s.enable = rs.depth_s.do_activate ;
-                rs_.depth_s.write = rs.depth_s.do_depth_write ;
-
-                {
-                    D3D11_DEPTH_STENCIL_DESC desc = { } ;
-                    desc.DepthEnable = rs_.depth_s.enable  ? TRUE : FALSE ;
-                    desc.DepthFunc = D3D11_COMPARISON_LESS ;
-                    desc.DepthWriteMask = rs_.depth_s.write ? D3D11_DEPTH_WRITE_MASK_ALL : D3D11_DEPTH_WRITE_MASK_ZERO ;
-                    auto const res = _ctx->dev()->CreateDepthStencilState( &desc, &rs_.depth_s.state ) ;
-                    if( FAILED( res ) )
-                    {
-                        natus::log::global_t::error( "CreateDepthStencilState" ) ;
-                    }
-                }
-            }
-
-            if( rs_.polygon_s.change )
-            {
-                rs_.polygon_s.enable = rs.polygon_s.do_activate ;
-
-                if( rs_.polygon_s.enable )
-                    raster_desc.CullMode = natus::graphics::d3d11::convert( rs.polygon_s.cm ) ;
-                else
-                    raster_desc.CullMode = D3D11_CULL_NONE ;
-                
-                raster_desc.FillMode = natus::graphics::d3d11::convert( rs.polygon_s.fm ) ;
-                
-                raster_desc.FrontCounterClockwise = rs.polygon_s.ff != natus::graphics::front_face::counter_clock_wise ;
-                {
-
-                }
-            }
-
-            if( rs_.scissor_s.change )
-            {
-                rs_.scissor_s.enable = rs.scissor_s.do_activate ;
-            }
-
-            _ctx->dev()->CreateRasterizerState( &raster_desc, &rs_.raster_state ) ;
-
-            states.states[ i ] = rs_ ;
-            #endif
         } ) ;
 
         return oid ;
@@ -651,16 +569,18 @@ public: // functions
 
             if( new_states.rss.scissor_s.do_change )
             {
-                //raster_desc.ScissorEnable = new_states.rss.scissor_s.ss.do_activate ;
+                raster_desc.ScissorEnable = new_states.rss.scissor_s.ss.do_activate ;
                 if( new_states.rss.scissor_s.ss.do_activate )
                 {
+                    LONG const h = _state_stack.top().rss.view_s.ss.vp.w() ;
+
                     D3D11_RECT rect ;
                     rect.left = new_states.rss.scissor_s.ss.rect.x() ;
                     rect.right = new_states.rss.scissor_s.ss.rect.x() + new_states.rss.scissor_s.ss.rect.z() ;
-                    rect.top = new_states.rss.scissor_s.ss.rect.y() ;
-                    rect.bottom = new_states.rss.scissor_s.ss.rect.w() + new_states.rss.scissor_s.ss.rect.y() ;
+                    rect.top = h - (new_states.rss.scissor_s.ss.rect.y()+new_states.rss.scissor_s.ss.rect.w()) ;
+                    rect.bottom = rect.top + new_states.rss.scissor_s.ss.rect.w() ;
 
-                    //_ctx->ctx()->RSSetScissorRects( 1, &rect ) ;
+                    _ctx->ctx()->RSSetScissorRects( 1, &rect ) ;
                 }
             }
             auto const res = _ctx->dev()->CreateRasterizerState( &raster_desc, &new_states.raster_state ) ;
