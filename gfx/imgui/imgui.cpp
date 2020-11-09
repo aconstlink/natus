@@ -320,22 +320,22 @@ void_t imgui::render( natus::graphics::async_view_t async )
             natus::graphics::render_state_sets_t rss ;
 
             rss.depth_s.do_change = true ;
-            rss.depth_s.do_activate = false ;
-            rss.depth_s.do_depth_write = false ;
+            rss.depth_s.ss.do_activate = false ;
+            rss.depth_s.ss.do_depth_write = false ;
             
             rss.polygon_s.do_change = true ;
-            rss.polygon_s.do_activate = false ;
-            rss.polygon_s.ff = natus::graphics::front_face::counter_clock_wise ;
-            rss.polygon_s.cm = natus::graphics::cull_mode::back ;
-            rss.polygon_s.fm = natus::graphics::fill_mode::fill ;
+            rss.polygon_s.ss.do_activate = false ;
+            rss.polygon_s.ss.ff = natus::graphics::front_face::counter_clock_wise ;
+            rss.polygon_s.ss.cm = natus::graphics::cull_mode::back ;
+            rss.polygon_s.ss.fm = natus::graphics::fill_mode::fill ;
             
             rss.scissor_s.do_change = true ;
-            rss.scissor_s.do_activate = false ;
+            rss.scissor_s.ss.do_activate = true ;
             
             rss.blend_s.do_change = true ;
-            rss.blend_s.do_activate = true ;
-            rss.blend_s.src_blend_factor = natus::graphics::blend_factor::src_alpha ;
-            rss.blend_s.dst_blend_factor = natus::graphics::blend_factor::one_minus_src_alpha ;
+            rss.blend_s.ss.do_activate = true ;
+            rss.blend_s.ss.src_blend_factor = natus::graphics::blend_factor::src_alpha ;
+            rss.blend_s.ss.dst_blend_factor = natus::graphics::blend_factor::one_minus_src_alpha ;
 
             for( size_t i=0; i<_render_states->size(); ++i )
             {
@@ -417,12 +417,12 @@ void_t imgui::render( natus::graphics::async_view_t async )
                     _render_states->access_render_state( rs_id,
                         [&] ( natus::graphics::render_state_sets_ref_t sets )
                     {
-                        sets.scissor_s.rect = natus::math::vec4ui_t( ( uint_t ) clip_rect.x, ( uint_t ) ( fb_height - clip_rect.w ), ( uint_t ) ( clip_rect.z - clip_rect.x ), ( uint_t ) ( clip_rect.w - clip_rect.y ) ) ;
+                        sets.scissor_s.ss.rect = natus::math::vec4ui_t( ( uint_t ) clip_rect.x, ( uint_t ) ( fb_height - clip_rect.w ), ( uint_t ) ( clip_rect.z - clip_rect.x ), ( uint_t ) ( clip_rect.w - clip_rect.y ) ) ;
                     } ) ;
                 }
 
                 {
-                    async.use( _render_states, rs_id ) ;
+                    async.use( _render_states, rs_id, false ) ;
                 }
 
                 // do rendering

@@ -474,37 +474,13 @@ public: // functions
         geo_datas.resize( 10 ) ;
 
         {
-            auto new_states = *natus::graphics::backend_t::default_render_states() ;
-
-            natus::graphics::render_state_sets old_states = new_states ;
-            old_states.blend_s.do_change = !new_states.blend_s.do_change ;
-            old_states.clear_s.do_change = !new_states.clear_s.do_change ;
-            old_states.depth_s.do_change = !new_states.depth_s.do_change ;
-            old_states.polygon_s.do_change = !new_states.polygon_s.do_change ;
-            old_states.scissor_s.do_change = !new_states.scissor_s.do_change ;
-            old_states.view_s.do_change = !new_states.view_s.do_change ;
-
-            old_states.blend_s.do_activate = !new_states.blend_s.do_activate ;
-            old_states.clear_s.do_activate = !new_states.clear_s.do_activate ;
-            old_states.depth_s.do_activate = !new_states.depth_s.do_activate ;
-            old_states.polygon_s.do_activate = !new_states.polygon_s.do_activate ;
-            old_states.scissor_s.do_activate = !new_states.scissor_s.do_activate ;
-            old_states.view_s.do_activate = !new_states.view_s.do_activate ;
-
             natus::graphics::state_object_t obj( "d3d11_default_states" ) ;
-
-            // store the invalid state at the bottom
-            // store the opposed default state at position 1
-            // so during frame begin, all default states can be
-            // restored using those two state sets.
-            obj.add_render_state_set( old_states ) ;
+            auto new_states = *natus::graphics::backend_t::default_render_states() ;
+            new_states.view_s.do_change = true ;
+            new_states.view_s.ss.do_activate = true ;
             obj.add_render_state_set( new_states ) ;
 
             size_t const oid = this_t::construct_state( size_t( -1 ), obj ) ;
-            _state_id_stack.push( std::make_pair( oid, size_t( 0 ) ) ) ;
-            _state_id_stack.push( std::make_pair( oid, size_t( 1 ) ) ) ;
-
-            update_state( oid, obj ) ;
         }
     }
 
@@ -538,6 +514,7 @@ public: // functions
         // values are assigned in the update function for the render states
         obj.for_each( [&] ( size_t const i, natus::graphics::render_state_sets_cref_t rs )
         {
+            #if 0
             this_t::render_state_sets rs_ ;
 
             rs_.view_s.change = rs.view_s.do_change ;
@@ -617,42 +594,9 @@ public: // functions
             _ctx->dev()->CreateRasterizerState( &raster_desc, &rs_.raster_state ) ;
 
             states.states[ i ] = rs_ ;
+            #endif
         } ) ;
 
-        return oid ;
-    }
-
-    // some values can be updated without newly constructing the d3d11 state
-    size_t update_state( size_t const oid, natus::graphics::state_object_ref_t obj ) noexcept
-    {
-        auto& states = _states[ oid ] ;
-
-        // @note
-        // set all values
-        obj.for_each( [&] ( size_t const i, natus::graphics::render_state_sets_cref_t rs_in )
-        {
-            this_t::render_state_sets& rs = states.states[ i ] ;
-
-            if( rs.blend_s.enable )
-            {
-            }
-            if( rs.clear_s.enable )
-            {
-            }
-            if( rs.view_s.enable )
-            {
-                rs.view_s.vp = rs_in.view_s.vp ;
-            }
-            if( rs.depth_s.enable )
-            {
-            }
-            if( rs.polygon_s.enable )
-            {
-            }
-            if( rs.scissor_s.enable )
-            {
-            }
-        } ) ;
         return oid ;
     }
 
@@ -2596,10 +2540,6 @@ natus::graphics::result d3d11_backend::configure( natus::graphics::state_object_
     {
         id->set_oid( this_t::get_bid(), _pimpl->construct_state(
             id->get_oid( this_t::get_bid() ), *obj ) ) ;
-    }
-
-    {
-        _pimpl->update_state( id->get_oid( this_t::get_bid() ), *obj ) ;
     }
 
     return natus::graphics::result::ok ;
