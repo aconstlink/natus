@@ -449,6 +449,7 @@ public: // functions
         geo_datas = std::move( rhv.geo_datas ) ;
         _state_stack = std::move( rhv._state_stack ) ;
         _states = std::move( rhv._states ) ;
+        images = std::move( rhv.images ) ;
     }
     
     ~pimpl( void_t ) 
@@ -1647,6 +1648,10 @@ public: // functions
                 vsd.second.clear() ;
             }
             rd.var_sets_data_ps.clear() ;
+        }
+
+        {
+            rd.var_sets_imgs_ps.clear() ;
         }
 
         // constant buffer mapping
