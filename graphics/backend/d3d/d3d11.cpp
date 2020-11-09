@@ -17,6 +17,7 @@
 #include <d3d11.h>
 #include <d3dcompiler.h>
 #include <d3d11shader.h>
+#include <directxcolors.h>
 
 using namespace natus::graphics ;
 
@@ -210,63 +211,10 @@ struct d3d11_backend::pimpl
 
     struct render_state_sets
     {
-        struct clear_state_set
-        {
-            bool_t change = false ;
-            bool_t enable = false ;
-            natus::math::vec4f_t color ;
-            bool_t do_color = false ;
-            bool_t do_depth = false ;
-        } ;
-        clear_state_set clear_s ;
-
-        struct view_state_set
-        {
-            bool_t change = false ;
-            bool_t enable = false ;
-            natus::math::vec4ui_t vp ;
-        } ;
-        view_state_set view_s ;
-
-        struct blend_state_set
-        {
-            bool_t change = false ;
-            bool_t enable = false ;
-            //GLenum src_blend_fac ;
-            //GLenum dst_blend_fac ;
-            //GLenum blend_func ;
-        };
-        blend_state_set blend_s ;
-
-        struct depth_state_set
-        {
-            bool_t change = false ;
-            bool_t enable = false ;
-            bool_t write = false ;
-
-            ID3D11DepthStencilState* state = nullptr ;
-        } ;
-        depth_state_set depth_s ;
-
-        struct scissor_state_set
-        {
-            bool_t change = false ;
-            bool_t enable = false ;
-            natus::math::vec4ui_t rect ;
-        } ;
-        scissor_state_set scissor_s ;
-
-        struct polygon_state_set
-        {
-            bool_t change = false ;
-            bool_t enable ;
-            //GLenum cull_mode ;
-            //GLenum front_face ;
-            //GLenum fill_mode ;
-        };
-        polygon_state_set polygon_s ;
-
+        natus::graphics::render_state_sets_t rss ;
+        ID3D11DepthStencilState* depth_stencil_state = nullptr ;
         ID3D11RasterizerState * raster_state = nullptr ;
+        ID3D11BlendState* blend_state = nullptr ;
     };
     natus_typedef( render_state_sets ) ;
 
@@ -274,7 +222,7 @@ struct d3d11_backend::pimpl
     {
         bool_t valid = false ;
         natus::ntd::string_t name ;
-        natus::ntd::vector< render_state_sets > states ;
+        natus::ntd::vector< natus::graphics::render_state_sets_t > states ;
     } ;
     natus_typedef( state_data ) ;
 
@@ -420,7 +368,8 @@ public: // variables
 
     typedef natus::ntd::vector< this_t::state_data_t > states_t ;
     states_t _states ;
-    natus::ntd::stack< std::pair<size_t, size_t>, 10 > _state_id_stack ;
+
+    natus::ntd::stack< this_t::render_state_sets, 10 > _state_stack ;
 
     FLOAT vp_width = FLOAT( 0 ) ;
     FLOAT vp_height = FLOAT( 0 ) ;
@@ -475,9 +424,19 @@ public: // functions
 
         {
             natus::graphics::state_object_t obj( "d3d11_default_states" ) ;
+
             auto new_states = *natus::graphics::backend_t::default_render_states() ;
+
             new_states.view_s.do_change = true ;
             new_states.view_s.ss.do_activate = true ;
+            new_states.scissor_s.do_change = true ;
+            new_states.scissor_s.ss.do_activate = false ;
+            new_states.blend_s.do_change = true ;
+            new_states.blend_s.ss.do_activate = false ;
+            new_states.polygon_s.do_change = true ;
+            new_states.polygon_s.ss.do_activate = true ;
+            new_states.depth_s.do_change = true ;
+
             obj.add_render_state_set( new_states ) ;
 
             size_t const oid = this_t::construct_state( size_t( -1 ), obj ) ;
@@ -488,7 +447,7 @@ public: // functions
     {
         natus_move_member_ptr( _ctx, rhv ) ;
         geo_datas = std::move( rhv.geo_datas ) ;
-        _state_id_stack = std::move( rhv._state_id_stack ) ;
+        _state_stack = std::move( rhv._state_stack ) ;
         _states = std::move( rhv._states ) ;
     }
     
@@ -514,6 +473,8 @@ public: // functions
         // values are assigned in the update function for the render states
         obj.for_each( [&] ( size_t const i, natus::graphics::render_state_sets_cref_t rs )
         {
+            states.states[ i ] = rs ;
+
             #if 0
             this_t::render_state_sets rs_ ;
 
@@ -600,127 +561,113 @@ public: // functions
         return oid ;
     }
 
-    void_t handle_render_state( render_state_sets const& new_states, render_state_sets const& old_states )
+    void_t handle_render_state( this_t::render_state_sets & new_states )
     {
-        #if 0
-
-        if( new_states.blend_s.enable != old_states.blend_s.enable )
-        {
-            if( new_states.blend_s.enable )
-            {
-                glEnable( GL_BLEND ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
-
-                GLenum const glsrc = new_states.blend_s.src_blend_fac ;
-                GLenum const gldst = new_states.blend_s.dst_blend_fac ;
-                glBlendFunc( glsrc, gldst ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glBlendFunc" ) ) ;
-            }
-            else
-            {
-                glDisable( GL_BLEND ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glDisable" ) ) ;
-            }
-        }
-
-        if( new_states.polygon_s.enable != old_states.polygon_s.enable )
-        {
-            if( new_states.polygon_s.enable )
-            {
-                glEnable( GL_CULL_FACE ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
-
-                glCullFace( new_states.polygon_s.cull_mode ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glCullFace" ) ) ;
-
-                glFrontFace( new_states.polygon_s.front_face ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glFrontFace" ) ) ;
-
-                glPolygonMode( GL_FRONT_AND_BACK, new_states.polygon_s.fill_mode ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glPolygonMode" ) ) ;
-            }
-            else
-            {
-                glDisable( GL_CULL_FACE ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glDisable" ) ) ;
-            }
-        }
-
-        if( new_states.scissor_s.enable != old_states.scissor_s.enable )
-        {
-            if( new_states.scissor_s.enable )
-            {
-                glEnable( GL_SCISSOR_TEST ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
-
-                glScissor(
-                    GLint( new_states.scissor_s.rect.x() ), GLint( new_states.scissor_s.rect.y() ),
-                    GLsizei( new_states.scissor_s.rect.z() ), GLsizei( new_states.scissor_s.rect.w() ) ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glScissor" ) ) ;
-            }
-            else
-            {
-                glDisable( GL_SCISSOR_TEST ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glDisable" ) ) ;
-            }
-        }
-        #endif
-
-        // clear state
-        if( new_states.clear_s.enable )
-        {
-            // @todo what about user created framebuffers/render targets?
-            if( new_states.clear_s.do_color )
-            {
-                if( _cur_fb_active != size_t( -1 ) )
-                {
-                    auto const& vec = new_states.clear_s.color ;
-                    // old: DirectX::Colors::MidnightBlue
-                    FLOAT color[ 4 ] = { vec.x(), vec.y(), vec.z(), vec.w() } ;
-                    for( size_t i = 0; i < _framebuffers[ _cur_fb_active ].num_color; ++i )
-                    {
-                        auto* view = _framebuffers[ _cur_fb_active ].rt_view[ i ] ;
-                        _ctx->ctx()->ClearRenderTargetView( view, color ) ;
-                    }
-                }
-                else
-                {
-                    _ctx->clear_render_target_view( new_states.clear_s.color ) ;
-                }
-            }
-
-            if( new_states.clear_s.do_depth )
-            {
-                if( _cur_fb_active != size_t( -1 ) )
-                {
-                    auto* view = _framebuffers[ _cur_fb_active ].ds_view  ;
-                    if( view != nullptr ) _ctx->ctx()->ClearDepthStencilView( view, D3D11_CLEAR_DEPTH, 1.0f, 0 ) ;
-                }
-                else
-                {
-                    _ctx->clear_depth_stencil_view() ;
-                }
-            }
-        }
-
         //  viewport
-        if( new_states.view_s.enable )
+        if( new_states.rss.view_s.do_change )
         {
-            auto const& vp_ = new_states.view_s.vp  ;
+            if( new_states.rss.view_s.ss.do_activate )
+            {
+                auto const& vp_ = new_states.rss.view_s.ss.vp  ;
 
-            // Setup the viewport
-            D3D11_VIEWPORT vp ;
-            vp.Width = FLOAT( vp_.z() ) ;
-            vp.Height = FLOAT( vp_.w() ) ;
-            vp.MinDepth = 0.0f ;
-            vp.MaxDepth = 1.0f ;
-            vp.TopLeftX = FLOAT( vp_.x() ) ;
-            vp.TopLeftY = FLOAT( vp_.y() ) ;
-            _ctx->ctx()->RSSetViewports( 1, &vp );
+                // Setup the viewport
+                D3D11_VIEWPORT vp ;
+                vp.Width = FLOAT( vp_.z() ) ;
+                vp.Height = FLOAT( vp_.w() ) ;
+                vp.MinDepth = 0.0f ;
+                vp.MaxDepth = 1.0f ;
+                vp.TopLeftX = FLOAT( vp_.x() ) ;
+                vp.TopLeftY = FLOAT( vp_.y() ) ;
+                _ctx->ctx()->RSSetViewports( 1, &vp ) ;
+            }
         }
 
+        if( new_states.rss.depth_s.do_change )
         {
-            _ctx->ctx()->OMSetDepthStencilState( new_states.depth_s.state, 0 ) ;
+            D3D11_DEPTH_STENCIL_DESC desc = { } ;
+            desc.DepthEnable = new_states.rss.depth_s.ss.do_activate ? TRUE : FALSE ;
+            desc.DepthFunc = D3D11_COMPARISON_LESS ;
+            desc.DepthWriteMask = new_states.rss.depth_s.ss.do_depth_write ? D3D11_DEPTH_WRITE_MASK_ALL : D3D11_DEPTH_WRITE_MASK_ZERO ;
+
+            auto const res = _ctx->dev()->CreateDepthStencilState( &desc, &new_states.depth_stencil_state ) ;
+            if( FAILED( res ) )
+            {
+                natus::log::global_t::error( "CreateDepthStencilState" ) ;
+            }
+
+            _ctx->ctx()->OMSetDepthStencilState( new_states.depth_stencil_state, 0 ) ;
+        }
+
+        // blend
+        {
+            D3D11_BLEND_DESC desc = { } ;
+
+            desc.RenderTarget[ 0 ].SrcBlend = D3D11_BLEND_SRC_ALPHA;
+            desc.RenderTarget[ 0 ].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+            desc.RenderTarget[ 0 ].BlendOp = D3D11_BLEND_OP_ADD;
+            desc.RenderTarget[ 0 ].SrcBlendAlpha = D3D11_BLEND_ONE;
+            desc.RenderTarget[ 0 ].DestBlendAlpha = D3D11_BLEND_ZERO;
+            desc.RenderTarget[ 0 ].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+            desc.RenderTarget[ 0 ].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+
+            if( new_states.rss.blend_s.do_change )
+            {
+                desc.RenderTarget[ 0 ].BlendEnable = new_states.rss.blend_s.ss.do_activate ;
+
+                desc.RenderTarget[ 0 ].SrcBlend = natus::graphics::d3d11::convert( 
+                    new_states.rss.blend_s.ss.src_blend_factor ) ;
+                desc.RenderTarget[ 0 ].DestBlend = natus::graphics::d3d11::convert( 
+                    new_states.rss.blend_s.ss.dst_blend_factor ) ;
+                desc.RenderTarget[ 0 ].BlendOp = natus::graphics::d3d11::convert( 
+                    new_states.rss.blend_s.ss.blend_func ) ;
+
+                desc.RenderTarget[ 0 ].SrcBlendAlpha = D3D11_BLEND_ONE ;
+                desc.RenderTarget[ 0 ].DestBlendAlpha = D3D11_BLEND_ZERO ;
+                desc.RenderTarget[ 0 ].BlendOpAlpha = D3D11_BLEND_OP_ADD ;
+
+                auto const res = _ctx->dev()->CreateBlendState( &desc, &new_states.blend_state ) ;
+                if( SUCCEEDED( res ) )
+                {
+                    _ctx->ctx()->OMSetBlendState( new_states.blend_state, 0, 0xffffffff );
+                }
+            }
+        }
+        // rasterizer state conglomerate
+        {
+            D3D11_RASTERIZER_DESC raster_desc = { } ;
+
+            if( new_states.rss.polygon_s.do_change )
+            {
+                if( new_states.rss.polygon_s.ss.do_activate )
+                    raster_desc.CullMode = natus::graphics::d3d11::convert( new_states.rss.polygon_s.ss.cm ) ;
+                else
+                    raster_desc.CullMode = D3D11_CULL_NONE ;
+
+                raster_desc.FillMode = natus::graphics::d3d11::convert( new_states.rss.polygon_s.ss.fm ) ;
+
+                raster_desc.FrontCounterClockwise = new_states.rss.polygon_s.ss.ff != natus::graphics::front_face::counter_clock_wise ;
+            }
+
+            if( new_states.rss.scissor_s.do_change )
+            {
+                //raster_desc.ScissorEnable = new_states.rss.scissor_s.ss.do_activate ;
+                if( new_states.rss.scissor_s.ss.do_activate )
+                {
+                    D3D11_RECT rect ;
+                    rect.left = new_states.rss.scissor_s.ss.rect.x() ;
+                    rect.right = new_states.rss.scissor_s.ss.rect.x() + new_states.rss.scissor_s.ss.rect.z() ;
+                    rect.top = new_states.rss.scissor_s.ss.rect.y() ;
+                    rect.bottom = new_states.rss.scissor_s.ss.rect.w() + new_states.rss.scissor_s.ss.rect.y() ;
+
+                    //_ctx->ctx()->RSSetScissorRects( 1, &rect ) ;
+                }
+            }
+            auto const res = _ctx->dev()->CreateRasterizerState( &raster_desc, &new_states.raster_state ) ;
+            if( FAILED( res ) )
+            {
+                natus::log::global_t::error( "CreateRasterizerState" ) ;
+            }
+
             _ctx->ctx()->RSSetState( new_states.raster_state ) ;
         }
         
@@ -730,32 +677,34 @@ public: // functions
     void_t handle_render_state( size_t const oid, size_t const rs_id ) noexcept
     {
         auto new_id = std::make_pair( oid, rs_id ) ;
-        auto old_id = _state_id_stack.top() ;
 
         // pop state
         if( oid == size_t( -1 ) )
         {
-            if( _state_id_stack.size() == 2 )
+            if( _state_stack.size() == 1 )
             {
                 natus::log::global_t::error( natus_log_fn( "no more render states to pop" ) ) ;
                 return ;
             }
-            // was active
-            old_id = _state_id_stack.pop() ;
-            // will be activated
-            new_id = _state_id_stack.top() ;
+            auto old = _state_stack.pop() ;
+            if( old.depth_stencil_state != nullptr )
+                old.depth_stencil_state->Release() ;
+            if( old.raster_state != nullptr )
+                old.raster_state->Release() ;
+            if( old.blend_state != nullptr )
+                old.blend_state->Release() ;
+        }
+        else
+        {
+            this_t::render_state_sets rss ;
+            rss.rss = _state_stack.top().rss + _states[ new_id.first ].states[ new_id.second ] ;
+            _state_stack.push( rss ) ;
         }
 
         {
-            auto const& new_states = _states[ new_id.first ].states[ new_id.second ] ;
-            auto const& old_states = _states[ old_id.first ].states[ old_id.second ] ;
-
-            this_t::handle_render_state( new_states, old_states ) ;
-        }
-
-        if( oid != size_t( -1 ) )
-        {
-            _state_id_stack.push( new_id ) ;
+            this_t::render_state_sets_t rss = _state_stack.top() ;
+            this_t::handle_render_state( rss ) ;
+            _state_stack.push( rss ) ;
         }
     }
 
@@ -2039,137 +1988,37 @@ public: // functions
         return true ;
     }
 
-    #if 0
-    void_t do_render_states( natus::graphics::render_state_sets_in_t rs, ID3D11BlendState* d3drs = nullptr,
-        ID3D11RasterizerState* d3draster_state = nullptr )
-    {
-        // blend
-        {
-            D3D11_BLEND_DESC desc = { } ;
-
-            desc.RenderTarget[ 0 ].SrcBlend = D3D11_BLEND_SRC_ALPHA;
-            desc.RenderTarget[ 0 ].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
-            desc.RenderTarget[ 0 ].BlendOp = D3D11_BLEND_OP_ADD;
-            desc.RenderTarget[ 0 ].SrcBlendAlpha = D3D11_BLEND_ONE;
-            desc.RenderTarget[ 0 ].DestBlendAlpha = D3D11_BLEND_ZERO;
-            desc.RenderTarget[ 0 ].BlendOpAlpha = D3D11_BLEND_OP_ADD;
-            desc.RenderTarget[ 0 ].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-
-            if( render_states.blend_s.do_blend != rs.blend_s.do_blend )
-            {
-                if( rs.blend_s.do_blend )
-                {
-                    desc.RenderTarget[ 0 ].BlendEnable = true ;
-
-                    desc.RenderTarget[ 0 ].SrcBlend = natus::graphics::d3d11::convert( rs.blend_s.src_blend_factor ) ;
-                    desc.RenderTarget[ 0 ].DestBlend = natus::graphics::d3d11::convert( rs.blend_s.dst_blend_factor ) ;
-                    desc.RenderTarget[ 0 ].BlendOp = natus::graphics::d3d11::convert( rs.blend_s.blend_func ) ;
-
-                    desc.RenderTarget[ 0 ].SrcBlendAlpha = D3D11_BLEND_ONE ;
-                    desc.RenderTarget[ 0 ].DestBlendAlpha = D3D11_BLEND_ZERO ;
-                    desc.RenderTarget[ 0 ].BlendOpAlpha = D3D11_BLEND_OP_ADD ;
-                }
-                else
-                {
-                    desc.RenderTarget[ 0 ].BlendEnable = false ;
-                }
-
-                ID3D11BlendState* old = nullptr ;
-                UINT mask ;
-                _ctx->ctx()->OMGetBlendState( &old, 0, &mask ) ;
-
-                if( d3drs != nullptr )
-                {
-                    _ctx->ctx()->OMSetBlendState( d3drs, 0, 0xffffffff );
-                }
-                else
-                {
-                    auto const res = _ctx->dev()->CreateBlendState( &desc, &d3drs ) ;
-                    if( SUCCEEDED( res ) )
-                    {
-                        _ctx->ctx()->OMSetBlendState( d3drs, 0, 0xffffffff );
-                        d3drs->Release() ;
-                    }
-                }
-
-                if( old != nullptr )
-                {
-                    _ctx->ctx()->OMSetBlendState( old, 0, mask ) ;
-                }
-            }
-        }
-
-        // scissor/culling
-        {
-            D3D11_RASTERIZER_DESC desc = { } ;
-            
-            if( !rs.polygon_s.do_culling )
-            {
-                desc.CullMode = D3D11_CULL_NONE ;
-                desc.FillMode = D3D11_FILL_SOLID ;
-            }
-            else
-            {
-                desc.CullMode = natus::graphics::d3d11::convert( rs.polygon_s.cm ) ;
-                desc.FillMode = natus::graphics::d3d11::convert( rs.polygon_s.fm ) ;
-            }
-
-            bool_t const created = d3draster_state == nullptr ;
-            if( d3draster_state == nullptr )
-            {
-                auto const res = _ctx->dev()->CreateRasterizerState( &desc, &d3draster_state ) ;
-                if( FAILED( res ) )
-                {
-                    natus::log::global_t::error( natus_log_fn("CreateRasterizerState") ) ;
-                }
-            }
-
-            desc.ScissorEnable = rs.scissor_s.do_scissor_test ;
-
-            if( rs.scissor_s.do_scissor_test )
-            {
-                D3D11_RECT rect ;
-                rect.left = rs.scissor_s.rect.x() ;
-                rect.right = rs.scissor_s.rect.x() + rs.scissor_s.rect.z() ;
-                rect.top = rs.scissor_s.rect.y() ;
-                rect.bottom = rs.scissor_s.rect.y() + rs.scissor_s.rect.w() ;
-
-                _ctx->ctx()->RSSetScissorRects( 1, &rect ) ;
-            }
-
-            if( d3draster_state )
-            {
-                _ctx->ctx()->RSSetState( d3draster_state ) ;
-            }
-
-            if( created ) d3draster_state->Release() ;
-        }        
-    }
-
-    #endif
-
     void_t begin_frame( void_t )
     {
-        auto const ids_old = _state_id_stack[ 0 ] ;
-        auto const ids_new = _state_id_stack[ 1 ] ;
+        {
+            natus::math::vec4f_t const color( DirectX::Colors::MidnightBlue.f[ 0 ], DirectX::Colors::MidnightBlue.f[ 1 ], DirectX::Colors::MidnightBlue.f[ 2 ], DirectX::Colors::MidnightBlue.f[ 3 ] ) ;
+
+            _ctx->clear_render_target_view( color ) ;
+            _ctx->clear_depth_stencil_view() ;
+        }
 
         // set the viewport to the default new state, 
         // so the correct viewport is set automatically.
         {
-            natus::math::vec4ui_t vp = _states[ ids_new.first ].states[ ids_new.second ].view_s.vp ;
+            auto const ids_new = std::make_pair( size_t( 0 ), size_t( 0 ) ) ;
+
+            natus::math::vec4ui_t vp = _states[ ids_new.first ].states[ ids_new.second ].view_s.ss.vp ;
             vp.z( uint_t( vp_width ) ) ;
             vp.w( uint_t( vp_height ) ) ;
-            _states[ ids_new.first ].states[ ids_new.second ].view_s.vp = vp ;
-            _states[ ids_new.first ].states[ ids_new.second ].view_s.enable = true ;
-        }
+            _states[ ids_new.first ].states[ ids_new.second ].view_s.ss.vp = vp ;
 
-        this_t::handle_render_state(
-            _states[ ids_new.first ].states[ ids_new.second ],
-            _states[ ids_old.first ].states[ ids_old.second ] ) ;
+            {
+                this_t::render_state_sets rss ;
+                rss.rss = _states[ ids_new.first ].states[ ids_new.second ] ;
+                _state_stack.push( rss ) ;
+                this_t::handle_render_state( rss ) ;
+            }
+        }
     }
 
     void_t end_frame( void_t )
     {
+        this_t::handle_render_state( size_t( -1 ), size_t( -1 ) ) ;
     }
 
     natus::ntd::string_t remove_unwanded_characters( natus::ntd::string_cref_t code_in ) const noexcept
