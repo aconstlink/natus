@@ -134,8 +134,10 @@ namespace natus
                 natus::nsl::generateable_t _genable ;
 
                 // not vertex attributes, only varyings
-                natus::ntd::map< natus::ntd::string_t, natus::ntd::string_t > _ins ;
                 natus::ntd::map< natus::ntd::string_t, natus::ntd::string_t > _outs ;
+
+                natus::ntd::map< natus::ntd::string_t, natus::ntd::string_t > _ps_ins ;
+                natus::ntd::map< natus::ntd::string_t, natus::ntd::string_t > _ps_outs ;
 
             public:
 
@@ -183,13 +185,27 @@ namespace natus
 
                                     if( s_type == natus::nsl::shader_type::vertex_shader && v.flow_qualifier == "out" )
                                     {
-                                        var.name = "var_" + v.name ;
-                                        _outs[ v.name ] = var.name ;
+                                        if( v.binding == "position" )
+                                        {
+                                            var.name = "gl_Position" ;
+                                            _outs[ v.name ] = var.name ;
+                                        }
+                                        else
+                                        {
+                                            var.name = "var_" + v.name ;
+                                            _outs[ v.name ] = var.name ;
+                                        }
+                                        
                                     }
                                     else if( s_type == natus::nsl::shader_type::pixel_shader && v.flow_qualifier == "in" )
                                     {
                                         var.name = "var_" + v.name  ;
-                                        _ins[ v.name ] = var.name ;
+                                        _ps_ins[ v.name ] = var.name ;
+                                    }
+                                    else if( s_type == natus::nsl::shader_type::pixel_shader && v.flow_qualifier == "out" )
+                                    {
+                                        var.name = "out_" + v.name  ;
+                                        _ps_outs[ v.name ] = var.name ;
                                     }
                                     else
                                     {
@@ -209,7 +225,8 @@ namespace natus
                             ret.shaders.emplace_back( std::move( shd ) ) ;
                         }
                     }
-                    _ins.clear() ;
+                    _ps_ins.clear() ;
+                    _ps_outs.clear() ;
                     _outs.clear() ;
 
                     return std::move( ret ) ;
@@ -293,7 +310,7 @@ namespace natus
                                 name = flow + "_" + name ;
 
                             if( flow == "in" && s.type == "pixel_shader" )
-                                name = _ins[ v.name ] ;
+                                name = _ps_ins[ v.name ] ;
                             else if( flow == "out" && s.type == "vertex_shader" )
                                 name = _outs[ v.name ] ;
                             
@@ -378,14 +395,36 @@ namespace natus
                                     p0 = shd.find( "in.", p0 + 3 ) ;
                                 }
                             }
-                            {
-                                natus::ntd::string_t const repl = s.type != "vertex_shader" ? "out_" : "var_" ;
 
-                                size_t p0 = shd.find( "out." ) ;
-                                while( p0 != std::string::npos )
+                            if( s.type == "vertex_shader" )
+                            {
+                                for( auto const& v : s.variables )
                                 {
-                                    shd.replace( p0, 4, repl ) ;
-                                    p0 = shd.find( "out.", p0 + 4 ) ;
+                                    if( v.flow_qualifier != "out" ) continue ;
+
+                                    natus::ntd::string_t const n = "out." + v.name ;
+                                    size_t p0 = shd.find( n ) ;
+                                    while( p0 != std::string::npos )
+                                    {
+                                        shd.replace( p0, n.size(), _outs[ v.name ] ) ;
+                                        p0 = shd.find( n ) ;
+                                    }
+                                }
+                            }
+
+                            if( s.type == "pixel_shader" )
+                            {
+                                for( auto const & v : s.variables )
+                                {
+                                    if( v.flow_qualifier != "out" ) continue ;
+
+                                    natus::ntd::string_t const n = "out." + v.name ;
+                                    size_t p0 = shd.find( n ) ;
+                                    while( p0 != std::string::npos )
+                                    {
+                                        shd.replace( p0, n.size(), _ps_outs[ v.name ] ) ;
+                                        p0 = shd.find( n ) ;
+                                    }
                                 }
                             }
                         }

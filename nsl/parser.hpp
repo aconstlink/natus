@@ -371,18 +371,9 @@ namespace natus
 
                         // symbol/function name/signature
                         {
-                            auto iter = std::find( shd.versions.begin(), shd.versions.end(), "glsl" ) ;
-                            if( iter != shd.versions.end() )
-                            {
-                                auto const token = this_t::tokenize( shd.fragments[ 0 ] ) ;
-                                s.sig = natus::nsl::glsl::function_signature_analyser( token ).process() ;
-                                s.sym_long += s.sig.name ;
-                            }
-                            else
-                            {
-                                natus::log::global_t::warning("[nsl:parser] : Only GLSL supported but found [" + *iter + "]" ) ;
-                                continue ;
-                            }
+                            auto const token = this_t::tokenize( shd.fragments[ 0 ] ) ;
+                            s.sig = natus::nsl::glsl::function_signature_analyser( token ).process() ;
+                            s.sym_long += s.sig.name ;
                         }
 
                         // this symbol depending on
