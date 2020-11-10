@@ -149,13 +149,9 @@ namespace natus
                     auto iter = frags.begin() ;
                     while( iter != frags.end() )
                     {
-                        for( auto iter2 = iter->versions.begin(); iter2 != iter->versions.end(); ++iter2 )
+                        if( iter->version == natus::nsl::language_class::glsl )
                         {
-                            if( *iter2 == "glsl" ) 
-                            {
-                                _genable.frags.emplace_back( *iter ) ;
-                                break ;
-                            }
+                            _genable.frags.emplace_back( *iter ) ;
                         }
                         ++iter ;
                     }

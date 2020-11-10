@@ -395,7 +395,7 @@ namespace natus
                                 }
                             }
                             s.fragments = shd.fragments ;
-                            s.versions = { version } ;
+                            s.version = natus::nsl::to_language_class( version ) ;
                             cur_lib.fragments.emplace_back( std::move( s ) ) ;
                         }
                         

@@ -4,6 +4,20 @@ namespace natus
 {
     namespace nsl
     {
+        enum class language_class
+        {
+            unknown,
+            glsl,
+            hlsl
+        };
+
+        static language_class to_language_class( natus::ntd::string_cref_t s ) noexcept
+        {
+            if( s == "glsl" ) return language_class::glsl ;
+            else if( s == "hlsl" ) return language_class::hlsl ;
+            return language_class::unknown ;
+        }
+
         enum class api_type
         {
             gl3,

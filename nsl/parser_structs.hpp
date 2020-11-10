@@ -3,6 +3,7 @@
 
 #include "typedefs.h"
 #include "symbol.hpp"
+#include "enums.hpp"
 
 #include <natus/ntd/vector.hpp>
 
@@ -113,7 +114,7 @@ namespace natus
             {
                 struct fragment
                 {
-                    natus::ntd::vector< natus::ntd::string_t > versions ;
+                    natus::nsl::language_class version ;
                     natus::ntd::vector< natus::ntd::string_t > fragments ;
 
                     struct signature
@@ -150,7 +151,7 @@ namespace natus
                     bool_t operator == ( fragment const & other ) const 
                     {
                         if( sym_long != other.sym_long ) return false ;
-                        if( versions[ 0 ] != other.versions[ 0 ] ) return false ;
+                        if( version != version ) return false ;
                         return sig == other.sig ;
                     }
                 };
