@@ -15,16 +15,16 @@ namespace natus
 {
     namespace nsl
     {
-        namespace glsl
+        namespace hlsl
         {
             namespace detail
             {
-                static const natus::ntd::vector< natus::ntd::string_t > glsl_types = {
+                static const natus::ntd::vector< natus::ntd::string_t > hlsl_types = {
                     "void", "bool", "int", "uint", "float", "double",
-                    "vec2", "vec3", "vec4", "mat2", "mat3", "mat4",
-                    "dvec2", "dvec3", "dvec4", "dmat2", "dmat3", "dmat4",
-                    "sampler1D", "sampler2D", "sampler3D",
-                    "isampler1D", "isampler2D", "isampler3D",
+                    "float2", "float3", "float4", "matrix", "float2x2", "float3x3", "float4x4",
+                    "double2", "double3", "double4", "double2x2", "double3x3", "double4x4"//,
+                    /*"Texture1D", "Texture2D", "Texture3D",*/
+                    /*"isampler1D", "isampler2D", "isampler3D",
                     "uisampler1D", "uisampler2D", "uisampler3D",
                     "image1D", "image2D", "image3D",
                     "iimage1D", "iimage2D", "iimage3D",
@@ -32,12 +32,12 @@ namespace natus
                     "sampler2DRect", "image2DRect"
                     "samplerBuffer", "imageBuffer",
                     "isamplerBuffer", "iimageBuffer",
-                    "sampler1DShadow", "sampler2DShadow"
+                    "sampler1DShadow", "sampler2DShadow"*/
                 } ;
 
                 bool_t is_type( natus::ntd::string_cref_t s ) noexcept
                 {
-                    for( auto const& t : glsl_types )
+                    for( auto const& t : hlsl_types )
                     {
                         if( t == s ) return true ;
                     }
@@ -53,9 +53,9 @@ namespace natus
 
                 natus::ntd::vector< natus::ntd::string_t > _tokens ;
 
-            public: 
+            public:
 
-                function_signature_analyser( natus::ntd::vector< natus::ntd::string_t > const & tokens ) noexcept
+                function_signature_analyser( natus::ntd::vector< natus::ntd::string_t > const& tokens ) noexcept
                 {
                     _tokens = tokens ;
                 }
@@ -83,7 +83,7 @@ namespace natus
                             {
                                 size_t const n = arg_types.size() ;
 
-                                for( auto const & str : arg_ )
+                                for( auto const& str : arg_ )
                                 {
                                     if( detail::is_type( str ) )
                                     {
@@ -105,7 +105,7 @@ namespace natus
                             arg_types[ 0 ] = "void" ;
                     }
 
-                    
+
                     // name and return type
                     {
                         if( std::distance( _tokens.begin(), iter_open ) >= 2 )
@@ -142,27 +142,9 @@ namespace natus
             public:
 
                 generator( void_t ) noexcept {}
-                generator( natus::nsl::generateable_rref_t gen ) noexcept : _genable( std::move( gen ) ) 
-                {
-                    auto frags = std::move( _genable.frags ) ;
-
-                    auto iter = frags.begin() ;
-                    while( iter != frags.end() )
-                    {
-                        for( auto iter2 = iter->versions.begin(); iter2 != iter->versions.end(); ++iter2 )
-                        {
-                            if( *iter2 == "glsl" ) 
-                            {
-                                _genable.frags.emplace_back( *iter ) ;
-                                break ;
-                            }
-                        }
-                        ++iter ;
-                    }
-
-                }
-                generator( this_cref_t rhv ) noexcept : _genable( rhv._genable ){}
-                generator( this_rref_t rhv ) noexcept : _genable( std::move(rhv._genable) ){}
+                generator( natus::nsl::generateable_rref_t gen ) noexcept : _genable( std::move( gen ) ) {}
+                generator( this_cref_t rhv ) noexcept : _genable( rhv._genable ) {}
+                generator( this_rref_t rhv ) noexcept : _genable( std::move( rhv._genable ) ) {}
                 ~generator( void_t ) {}
 
             public:
@@ -174,7 +156,7 @@ namespace natus
 
                     natus::nsl::generated_code_t::shader_t shd ;
                     {
-                        for( auto const & s : _genable.config.shaders )
+                        for( auto const& s : _genable.config.shaders )
                         {
                             natus::nsl::shader_type s_type = natus::nsl::shader_type::unknown ;
 
@@ -182,7 +164,7 @@ namespace natus
                             {
                                 s_type = natus::nsl::shader_type::vertex_shader ;
                             }
-                            else if( s.type == "pixel_shader" ) 
+                            else if( s.type == "pixel_shader" )
                             {
                                 s_type = natus::nsl::shader_type::pixel_shader ;
                             }
@@ -194,7 +176,7 @@ namespace natus
                             }
                             shd.type = s_type ;
 
-                            for( auto const & v : s.variables )
+                            for( auto const& v : s.variables )
                             {
                                 natus::nsl::generated_code_t::variable_t var ;
 
@@ -213,7 +195,7 @@ namespace natus
                                             var.name = "var_" + v.name ;
                                             _outs[ v.name ] = var.name ;
                                         }
-                                        
+
                                     }
                                     else if( s_type == natus::nsl::shader_type::pixel_shader && v.flow_qualifier == "in" )
                                     {
@@ -230,7 +212,7 @@ namespace natus
                                         var.name = ( flow == "in" || flow == "out" ) ? flow + "_" + v.name : v.name ;
                                     }
                                 }
-                                
+
                                 if( v.binding.empty() || v.flow_qualifier == "out" ) continue ;
 
                                 var.binding = v.binding ;
@@ -255,12 +237,12 @@ namespace natus
                     natus::nsl::generated_code_t::code code ;
 
                     std::stringstream text ;
-                    
+
                     // 1. glsl stuff at the front
                     {
                         switch( type )
                         {
-                        case natus::nsl::api_type::gl3: 
+                        case natus::nsl::api_type::gl3:
                             text << "#version 130" << std::endl << std::endl ;
                             break ;
                         case natus::nsl::api_type::es3:
@@ -277,7 +259,7 @@ namespace natus
                     // the prototype help with not having to sort funk definitions
                     {
                         text << "// Declarations // " << std::endl ;
-                        for( auto const & f : _genable.frags )
+                        for( auto const& f : _genable.frags )
                         {
                             text << f.sig.return_type << " " ;
                             text << f.sym_long.expand( "_" ) << " ( " ;
@@ -291,11 +273,11 @@ namespace natus
                     // 3. make all functions with replaced symbols
                     {
                         text << "// Definitions // " << std::endl ;
-                        for( auto const & f : _genable.frags )
+                        for( auto const& f : _genable.frags )
                         {
                             // start by replacing the function names' symbol itself
                             {
-                                auto const & frag = f.fragments[ 0 ] ;
+                                auto const& frag = f.fragments[ 0 ] ;
 
                                 auto const p0 = frag.find( f.sig.name ) ;
                                 if( p0 == std::string::npos ) continue ;
@@ -304,9 +286,9 @@ namespace natus
                             }
 
                             // then lets go over every symbol in the code
-                            for( size_t i=1; i<f.fragments.size(); ++i )
+                            for( size_t i = 1; i < f.fragments.size(); ++i )
                             {
-                                text << f.fragments[i] ;
+                                text << f.fragments[ i ] ;
                             }
                             text << std::endl ;
                         }
@@ -316,7 +298,7 @@ namespace natus
                     // 4. make all glsl uniforms from shader variables
                     {
                         text << "// Uniforms and in/out // " << std::endl ;
-                        for( auto const & v : s.variables )
+                        for( auto const& v : s.variables )
                         {
                             if( v.flow_qualifier == "out" && v.binding == "position" ) continue ;
 
@@ -331,7 +313,7 @@ namespace natus
                                 name = _ps_ins[ v.name ] ;
                             else if( flow == "out" && s.type == "vertex_shader" )
                                 name = _outs[ v.name ] ;
-                            
+
 
                             // do some regex replacements
                             {
@@ -346,18 +328,18 @@ namespace natus
                     // 5. insert main/shader from config
                     {
                         text << "// The shader // " << std::endl ;
-                        for( auto const & c : s.codes )
+                        for( auto const& c : s.codes )
                         {
                             if( c.versions[ 0 ] != "glsl" ) continue ;
-                                
-                            for( auto const & l : c.lines )
+
+                            for( auto const& l : c.lines )
                             {
                                 text << l << std::endl ;
                             }
                         }
                     }
 
-                        
+
                     // 6. post over the code and replace all dependencies and in/out
                     {
                         auto shd = text.str() ;
@@ -432,7 +414,7 @@ namespace natus
 
                             if( s.type == "pixel_shader" )
                             {
-                                for( auto const & v : s.variables )
+                                for( auto const& v : s.variables )
                                 {
                                     if( v.flow_qualifier != "out" ) continue ;
 
@@ -446,7 +428,7 @@ namespace natus
                                 }
                             }
                         }
-                            
+
                         code.shader = shd ;
                     }
 
@@ -454,7 +436,7 @@ namespace natus
 
                     //ret.emplace_back( std::move( code ) ) ;
                     return std::move( code ) ;
-                    
+
                 }
             };
             natus_typedef( generator ) ;

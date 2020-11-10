@@ -17,6 +17,7 @@ set( sources
     "dependency_resolver.hpp"
 
     "api/glsl.hpp"
+    "api/hlsl.hpp"
 
     "parser_structs.hpp"
     "ast/nodes.hpp"
