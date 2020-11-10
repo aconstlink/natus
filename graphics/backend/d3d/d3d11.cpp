@@ -1831,6 +1831,12 @@ public: // functions
         this_t::shader_data_cref_t shd = shaders[ rnd.shd_id ] ;
         this_t::geo_data_ref_t geo = geo_datas[ rnd.geo_id ] ;
 
+        if( shd.vs == nullptr )
+        {
+            natus::log::global_t::error( natus_log_fn( "shader missing" ) ) ;
+            return false ;
+        }
+
         ID3D11DeviceContext * ctx = _ctx->ctx() ;
 
         // vertex shader variables
