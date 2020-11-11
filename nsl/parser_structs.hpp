@@ -81,7 +81,7 @@ namespace natus
                 {
                     struct variable
                     {
-                        natus::ntd::string_t flow_qualifier ;
+                        natus::nsl::flow_qualifier fq ;
                         natus::ntd::string_t type ;
                         natus::ntd::string_t name ;
                         natus::ntd::string_t binding ;
@@ -92,7 +92,7 @@ namespace natus
 
                     struct code
                     {
-                        natus::ntd::vector< natus::ntd::string_t > versions ;
+                        natus::nsl::language_class version ;
                         natus::ntd::vector< natus::ntd::string_t > lines ;
                     };
                     natus_typedef( code ) ;
@@ -100,7 +100,7 @@ namespace natus
 
                     symbols_t deps ;
 
-                    natus::ntd::string_t type ;
+                    shader_type type ;
                 };
                 natus_typedef( shader ) ;
                 natus::ntd::vector< shader > shaders ;

@@ -1,10 +1,8 @@
 
 #pragma once
 
-#include "typedefs.h"
-#include "enums.hpp"
-#include "symbol.hpp"
-#include "parser_structs.hpp"
+#include "api/glsl/generator.hpp"
+//#include "api/hlsl.hpp"
 
 #include <natus/ntd/vector.hpp>
 
@@ -12,56 +10,87 @@ namespace natus
 {
     namespace nsl
     {
-        struct generateable
+        // generator using api specific generators
+        // to generate the source code
+        class generator
         {
-            natus::nsl::symbols_t missing ;
-            natus::nsl::post_parse::library_t::variables_t vars ;
-            natus::nsl::post_parse::library_t::fragments_t frags ;
-            natus::nsl::post_parse::config_t config ;
-        };
-        natus_typedef( generateable ) ;
+            natus_this_typedefs( generator ) ;
 
-        struct generated_code
-        {
-            // for possible later observation like bindings
-            natus::nsl::generateable_t rres ;
+        private:
 
-            struct variable
+            natus::nsl::generatable_t _genable ;
+
+        public:
+
+            generator( void_t ) noexcept {}
+            generator( natus::nsl::generatable_rref_t gen ) noexcept : _genable( std::move( gen ) ) {}
+            generator( this_cref_t rhv ) noexcept : _genable( rhv._genable ) {}
+            generator( this_rref_t rhv ) noexcept : _genable( std::move( rhv._genable ) ) {}
+            ~generator( void_t ) {}
+
+        public: 
+
+            natus::nsl::generated_code_t generate( void_t ) noexcept
             {
-                natus::ntd::string_t name ;
-                natus::ntd::string_t binding ;
-            };
-            natus_typedef( variable ) ;
+                natus::nsl::generated_code_t ret ;
 
-            struct code
-            {
-                natus::nsl::api_type api ;
-                natus::ntd::string_t shader ;
-            };
-            natus_typedef( code ) ;
-
-            struct shader
-            {
-                natus::nsl::shader_type type ;
-                natus::ntd::vector< variable > variables ;
-                natus::ntd::vector< code > codes ;
-            };
-            natus_typedef( shader ) ;
-            natus::ntd::vector< shader_t > shaders ;
-
-            typedef std::function< void_t ( natus::nsl::shader_type, code_cref_t ) > for_each_code_t ;
-            void_t sorted_by_api_type( natus::nsl::api_type const t,  for_each_code_t funk ) const noexcept
-            {
-                for( auto const & s : shaders )
+                natus::nsl::variable_mappings_t mappings ;
+                
+                natus::nsl::generated_code_t::shader_t shd ;
                 {
-                    for( auto const& c : s.codes )
+                    for( auto const& s : _genable.config.shaders )
                     {
-                        if( c.api == t ) funk( s.type, c ) ;
+                        natus::nsl::shader_type const s_type = s.type ;
+
+                        if( s_type == natus::nsl::shader_type::unknown )
+                        {
+                            natus::log::global_t::warning( "[generator] : unknown shader type" ) ;
+                            continue;
+                        }
+
+                        for( auto const& v : s.variables )
+                        {
+                            natus::nsl::variable_mapping_t vm ;
+                            vm.st = s_type ;
+
+                            // everything is var first
+                            natus::ntd::string_t flow = "var" ;
+
+                            if( v.fq == natus::nsl::flow_qualifier::global )
+                            {
+                                flow = "u" ;
+                            }
+                            else if( s.type == natus::nsl::shader_type::vertex_shader && 
+                                v.fq == natus::nsl::flow_qualifier::in )
+                            {
+                                flow = "in" ;
+                            }
+                            else if( s.type == natus::nsl::shader_type::pixel_shader &&
+                                v.fq == natus::nsl::flow_qualifier::out )
+                            {
+                                flow = "out" ;
+                            }
+                            vm.new_name = flow + "_" + v.name ;
+                            vm.old_name = v.name ;
+                            vm.binding = v.binding ;
+                            vm.fq = v.fq ;
+                            mappings.emplace_back( std::move( vm ) ) ;
+                        }
                     }
                 }
-                
+
+                // glsl 
+                {
+                    ret.shaders = natus::nsl::glsl::generator_t().generate( _genable, mappings ) ;
+                }
+
+                // hlsl
+                {
+                }
+
+                return std::move( ret ) ;
             }
         };
-        natus_typedef( generated_code ) ;
+        natus_typedef( generator ) ;
     }
 }

@@ -13,11 +13,14 @@ set( sources
     "typedefs.h"
     "symbol_table.hpp"
     "generator.hpp"
+    "generator_structs.hpp"
     "symbol.hpp"
     "dependency_resolver.hpp"
 
-    "api/glsl.hpp"
-    "api/hlsl.hpp"
+    "api/glsl/generator.hpp"
+    "api/glsl/function_signature_analyser.hpp"
+    "api/hlsl/function_signature_analyser.hpp"
+    "api/hlsl/generator.hpp"
 
     "parser_structs.hpp"
     "ast/nodes.hpp"

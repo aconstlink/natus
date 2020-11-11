@@ -3,6 +3,7 @@
 #include "database.hpp"
 #include "generator.hpp"
 #include "parser_structs.hpp"
+#include "generator_structs.hpp"
 
 namespace natus
 {
@@ -17,9 +18,9 @@ namespace natus
 
         public:
 
-            natus::nsl::generateable_t resolve( natus::nsl::database_res_t db, natus::nsl::symbol_cref_t sym ) noexcept
+            natus::nsl::generatable_t resolve( natus::nsl::database_res_t db, natus::nsl::symbol_cref_t sym ) noexcept
             {
-                natus::nsl::generateable_t res ;
+                natus::nsl::generatable_t res ;
                 natus::nsl::symbols_t syms( { sym } ) ;
 
                 {

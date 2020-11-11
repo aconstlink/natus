@@ -7,8 +7,8 @@
 #include "ast.hpp"
 #include "symbol_table.hpp"
 #include "parser_structs.hpp"
-#include "api/glsl.hpp"
-#include "api/hlsl.hpp"
+#include "api/glsl/function_signature_analyser.hpp"
+#include "api/hlsl/function_signature_analyser.hpp"
 
 #include <natus/log/global.h>
 #include <natus/ntd/vector.hpp>
@@ -214,31 +214,34 @@ namespace natus
                     for( auto const & shd : cnf.shaders )
                     {
                         shader s ;
-                        s.type = shd.type ;
+                        s.type = natus::nsl::to_shader_type( shd.type ) ;
 
                         for( auto const & cd : shd.codes ) 
                         {
-                            code c_ ;
-                            c_.lines = cd.lines ;
-                            c_.versions = cd.versions ;
-
-                            // this symbol depending on
+                            for( auto const & version : cd.versions )
                             {
-                                for( auto const& f : cd.lines )
-                                {
-                                    s.deps = natus::nsl::symbol_t::merge(
-                                        std::move( s.deps ), natus::nsl::symbol_t::find_all_symbols( "nsl.", f ) ) ;
-                                }
-                            }
+                                code c_ ;
+                                c_.lines = cd.lines ;
+                                c_.version = natus::nsl::to_language_class( version ) ;
 
-                            s.codes.emplace_back( std::move( c_ ) ) ;
+                                // this symbol depending on
+                                {
+                                    for( auto const& f : cd.lines )
+                                    {
+                                        s.deps = natus::nsl::symbol_t::merge(
+                                            std::move( s.deps ), natus::nsl::symbol_t::find_all_symbols( "nsl.", f ) ) ;
+                                    }
+                                }
+
+                                s.codes.emplace_back( std::move( c_ ) ) ;
+                            }
                         }
 
                         for( auto const & var : shd.variables )
                         {
                             variable v ;
                             v.binding = var.binding ;
-                            v.flow_qualifier = var.flow_qualifier ;
+                            v.fq = natus::nsl::to_flow_qualifier( var.flow_qualifier ) ;
                             v.line = var.line ;
                             v.name = var.name ;
                             v.type = var.type ;
@@ -361,6 +364,7 @@ namespace natus
                     // dissect shaders
                     // - for referenceable symbols like functions
                     // - for dependable symbols like function or variables
+                    // - also flattens by language class
                     for( auto& shd : lib.shaders )
                     {
                         for( auto const & version : shd.versions )

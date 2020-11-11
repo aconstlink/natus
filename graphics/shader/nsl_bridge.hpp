@@ -3,8 +3,7 @@
 
 #include "../typedefs.h"
 #include "../object/shader_object.h"
-
-#include <natus/nsl/generator.hpp>
+#include <natus/nsl/generator_structs.hpp>
 
 namespace natus
 {
@@ -128,8 +127,11 @@ namespace natus
                 
                 // code
                 {
-                    natus::ntd::vector< natus::nsl::api_type > const types = {
-                        natus::nsl::api_type::es3, natus::nsl::api_type::gl3 } ;
+                    natus::ntd::vector< natus::nsl::api_type > const types = 
+                    {
+                        natus::nsl::api_type::es3, natus::nsl::api_type::gl3,
+                        natus::nsl::api_type::d3d11 
+                    } ;
 
                     for( auto const & t : types )
                     {
@@ -143,6 +145,9 @@ namespace natus
                             break ;
                         case natus::nsl::api_type::es3:
                             bt = natus::graphics::backend_type::es3 ;
+                            break ;
+                        case natus::nsl::api_type::d3d11:
+                            bt = natus::graphics::backend_type::d3d11 ;
                             break ;
                         default:
                             break;
