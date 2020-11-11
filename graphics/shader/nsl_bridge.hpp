@@ -36,7 +36,9 @@ namespace natus
 
                                     if( p0 != std::string::npos )
                                     {
-                                        auto const res = v.binding.substr( p0 + natus::ntd::string_t("texcoord").size() ) ;
+                                        auto res = v.binding.substr( p0 + natus::ntd::string_t("texcoord").size() ) ;     
+                                        if( res.size() == 0 ) res = "0" ;
+
                                         if( res.size() == 1 )
                                         {
                                             natus::graphics::vertex_attribute va
@@ -66,7 +68,8 @@ namespace natus
 
                                     if( p0 != std::string::npos )
                                     {
-                                        auto const res = v.binding.substr( p0 ) ;
+                                        auto res = v.binding.substr( p0 ) ;
+                                        if( res.size() == 0 ) res = "0" ;
                                         if( res.size() == 1 )
                                         {
                                             natus::graphics::vertex_attribute va

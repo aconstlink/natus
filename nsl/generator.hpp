@@ -2,7 +2,7 @@
 #pragma once
 
 #include "api/glsl/generator.hpp"
-//#include "api/hlsl.hpp"
+#include "api/hlsl/generator.hpp"
 
 #include <natus/ntd/vector.hpp>
 
@@ -54,23 +54,23 @@ namespace natus
                             vm.st = s_type ;
 
                             // everything is var first
-                            natus::ntd::string_t flow = "var" ;
+                            natus::ntd::string_t flow = "var_" ;
 
                             if( v.fq == natus::nsl::flow_qualifier::global )
                             {
-                                flow = "u" ;
+                                flow = "" ;
                             }
                             else if( s.type == natus::nsl::shader_type::vertex_shader && 
                                 v.fq == natus::nsl::flow_qualifier::in )
                             {
-                                flow = "in" ;
+                                flow = "in_" ;
                             }
                             else if( s.type == natus::nsl::shader_type::pixel_shader &&
                                 v.fq == natus::nsl::flow_qualifier::out )
                             {
-                                flow = "out" ;
+                                flow = "out_" ;
                             }
-                            vm.new_name = flow + "_" + v.name ;
+                            vm.new_name = flow + v.name ;
                             vm.old_name = v.name ;
                             vm.binding = v.binding ;
                             vm.fq = v.fq ;
@@ -79,14 +79,26 @@ namespace natus
                     }
                 }
 
+                natus::nsl::generated_code_t::shaders_t shaders ;
                 // glsl 
                 {
-                    ret.shaders = natus::nsl::glsl::generator_t().generate( _genable, mappings ) ;
+                    auto const shds = natus::nsl::glsl::generator_t().generate( _genable, mappings ) ;
+                    for( auto shd : shds )
+                    {
+                        shaders.emplace_back( shd ) ;
+                    }
                 }
 
                 // hlsl
                 {
+                    auto const shds = natus::nsl::hlsl::generator_t().generate( _genable, mappings ) ;
+                    for( auto shd : shds )
+                    {
+                        shaders.emplace_back( shd ) ;
+                    }
                 }
+
+                ret.shaders = std::move( shaders ) ;
 
                 return std::move( ret ) ;
             }

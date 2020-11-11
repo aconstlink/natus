@@ -21,6 +21,10 @@ namespace natus
             {
                 natus_this_typedefs( generator ) ;
 
+            private:
+
+                
+
             public:
 
                 generator( void_t ) noexcept {}
@@ -81,8 +85,6 @@ namespace natus
 
                             shd.codes.emplace_back( this_t::generate( genable, s, var_map, natus::nsl::api_type::es3 ) ) ;
                             shd.codes.emplace_back( this_t::generate( genable, s, var_map, natus::nsl::api_type::gl3 ) ) ;
-
-                            //ret.shaders.emplace_back( std::move( shd ) ) ;
                         }
 
                         ret.emplace_back( std::move( shd ) ) ;
@@ -251,6 +253,8 @@ namespace natus
 
                             for( auto const& v : var_mappings )
                             {
+                                if( v.st != s.type ) continue ;
+
                                 natus::ntd::string_t flow ;
 
                                 if( v.fq == natus::nsl::flow_qualifier::in )
