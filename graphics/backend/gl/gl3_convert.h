@@ -354,8 +354,8 @@ namespace natus
             {
                 switch( cm )
                 {
-                case natus::graphics::cull_mode::back: return GL_FRONT ;
-                case natus::graphics::cull_mode::front: return GL_BACK ;
+                case natus::graphics::cull_mode::back: return GL_BACK ;
+                case natus::graphics::cull_mode::front: return GL_FRONT ;
                 case natus::graphics::cull_mode::none: return GL_NONE ;
                 default: break;
                 }

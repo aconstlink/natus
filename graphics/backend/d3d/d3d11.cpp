@@ -564,7 +564,7 @@ public: // functions
 
                 raster_desc.FillMode = natus::graphics::d3d11::convert( new_states.rss.polygon_s.ss.fm ) ;
 
-                raster_desc.FrontCounterClockwise = new_states.rss.polygon_s.ss.ff != natus::graphics::front_face::counter_clock_wise ;
+                raster_desc.FrontCounterClockwise = new_states.rss.polygon_s.ss.ff == natus::graphics::front_face::counter_clock_wise ;
             }
 
             if( new_states.rss.scissor_s.do_change )
