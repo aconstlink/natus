@@ -156,6 +156,8 @@ namespace natus
                         text << "// Declarations // " << std::endl ;
                         for( auto const & f : genable.frags )
                         {
+                            if( f.version != natus::nsl::language_class::glsl ) continue ;
+
                             text << f.sig.return_type << " " ;
                             text << f.sym_long.expand( "_" ) << " ( " ;
                             for( auto const& a : f.sig.args ) text << a + ", " ;
@@ -308,59 +310,8 @@ namespace natus
                                         p0 = shd.find( repl, p0 + 3 ) ;
                                     }
                                 }
-
                             }
-
                         }
-                        {
-                            #if 0
-                            {
-                                natus::ntd::string_t const repl = 
-                                    s.type != natus::nsl::shader_type::pixel_shader ? "in_" : "var_" ;
-
-                                size_t p0 = shd.find( "in." ) ;
-                                while( p0 != std::string::npos )
-                                {
-                                    shd.replace( p0, 3, repl ) ;
-                                    p0 = shd.find( "in.", p0 + 3 ) ;
-                                }
-                            }
-
-                            
-                            if( s.type == natus::nsl::shader_type::vertex_shader )
-                            {
-                                for( auto const& v : s.variables )
-                                {
-                                    if( v.fq != natus::nsl::flow_qualifier::out ) continue ;
-
-                                    natus::ntd::string_t const n = "out." + v.name ;
-                                    size_t p0 = shd.find( n ) ;
-                                    while( p0 != std::string::npos )
-                                    {
-                                        shd.replace( p0, n.size(), _outs[ v.name ] ) ;
-                                        p0 = shd.find( n ) ;
-                                    }
-                                }
-                            }
-
-                            if( s.type == natus::nsl::shader_type::pixel_shader )
-                            {
-                                for( auto const & v : s.variables )
-                                {
-                                    if( v.fq != natus::nsl::flow_qualifier::out ) continue ;
-
-                                    natus::ntd::string_t const n = "out." + v.name ;
-                                    size_t p0 = shd.find( n ) ;
-                                    while( p0 != std::string::npos )
-                                    {
-                                        shd.replace( p0, n.size(), _ps_outs[ v.name ] ) ;
-                                        p0 = shd.find( n ) ;
-                                    }
-                                }
-                            }
-                            #endif
-                        }
-                            
                         code.shader = shd ;
                     }
 

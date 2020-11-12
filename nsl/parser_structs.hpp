@@ -151,7 +151,7 @@ namespace natus
                     bool_t operator == ( fragment const & other ) const 
                     {
                         if( sym_long != other.sym_long ) return false ;
-                        if( version != version ) return false ;
+                        if( version != other.version ) return false ;
                         return sig == other.sig ;
                     }
                 };
