@@ -23,7 +23,41 @@ namespace natus
 
             private:
 
-                
+                static natus::ntd::string_t map_variable_type( natus::nsl::type_cref_t type ) noexcept
+                {
+                    typedef std::pair< natus::nsl::type_t, natus::ntd::string_t > mapping_t ;
+                    static mapping_t const __mappings[] =
+                    {
+                        mapping_t( natus::nsl::type_t(), "unknown" ),
+                        mapping_t( natus::nsl::type_t::as_float(), "float" ),
+                        mapping_t( natus::nsl::type_t::as_vec2(), "vec2" ),
+                        mapping_t( natus::nsl::type_t::as_vec3(), "vec3" ),
+                        mapping_t( natus::nsl::type_t::as_vec4(), "vec4" ),
+                        mapping_t( natus::nsl::type_t::as_mat2(), "mat2" ),
+                        mapping_t( natus::nsl::type_t::as_mat3(), "mat3" ),
+                        mapping_t( natus::nsl::type_t::as_mat4(), "mat4" ),
+                        mapping_t( natus::nsl::type_t::as_tex1d(), "sampler1D" ),
+                        mapping_t( natus::nsl::type_t::as_tex2d(), "sampler2D" )
+                    } ;
+
+                    for( auto const& m : __mappings ) if( m.first == type ) return m.second ;
+
+                    return __mappings[ 0 ].second ;
+                }
+
+                static natus::ntd::string_cref_t to_texture_type( natus::nsl::type_cref_t t ) noexcept
+                {
+                    typedef std::pair< natus::nsl::type_ext, natus::ntd::string_t > __mapping_t ; 
+
+                    static __mapping_t const __mappings[] = { 
+                        __mapping_t( natus::nsl::type_ext::unknown, "unknown" ), 
+                        __mapping_t( natus::nsl::type_ext::texture_1d, "sampler1D" ), 
+                        __mapping_t( natus::nsl::type_ext::texture_2d, "sampler2D" )
+                    } ;
+                    
+                    for( auto const& m : __mappings ) if( m.first == t.ext ) return m.second ;
+                    return __mappings[ 0 ].second ;
+                }
 
             public:
 
@@ -48,7 +82,7 @@ namespace natus
                         {
                             if( var.fq == natus::nsl::flow_qualifier::out &&
                                 var.st == natus::nsl::shader_type::vertex_shader &&
-                                var.binding == "position" )
+                                var.binding == natus::nsl::binding::position )
                             {
                                 var.new_name = "gl_Position" ;
                             }
@@ -163,10 +197,12 @@ namespace natus
                         text << "// Uniforms and in/out // " << std::endl ;
                         for( auto const & v : s.variables )
                         {
-                            if( v.fq == natus::nsl::flow_qualifier::out && v.binding == "position" ) continue ;
+                            if( v.fq == natus::nsl::flow_qualifier::out && 
+                                v.binding == natus::nsl::binding::position ) continue ;
                             
                             natus::ntd::string_t name = v.name ;
-                            natus::ntd::string_t type_ = v.type ;
+                            natus::ntd::string_t const type_ = this_t::map_variable_type( v.type ) ;
+                            
 
                             size_t const idx = natus::nsl::find_by( var_mappings, v.name, v.binding, v.fq, s.type ) ;
                             if( idx != size_t(-1) )
@@ -176,7 +212,8 @@ namespace natus
 
                             // do some regex replacements
                             {
-                                type_ = std::regex_replace( type_, std::regex( "tex([1-3]+)d" ), "sampler$1D" ) ;
+                                //type_ = std::regex_replace( type_, std::regex( "tex([1-3]+)d" ), "sampler$1D" ) ;
+                                
                             }
 
                             {

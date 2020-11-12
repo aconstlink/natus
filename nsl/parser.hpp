@@ -240,11 +240,11 @@ namespace natus
                         for( auto const & var : shd.variables )
                         {
                             variable v ;
-                            v.binding = var.binding ;
+                            v.binding = natus::nsl::to_binding( var.binding ) ;
                             v.fq = natus::nsl::to_flow_qualifier( var.flow_qualifier ) ;
                             v.line = var.line ;
                             v.name = var.name ;
-                            v.type = var.type ;
+                            v.type = natus::nsl::to_type( var.type ) ;
                             s.variables.emplace_back( std::move( v ) ) ;
                         }
                         c.shaders.emplace_back( std::move( s ) ) ;
@@ -418,7 +418,7 @@ namespace natus
                             v.sym_long += var.name ;
                             v.name = var.name ;
                             v.line = var.line ;
-                            v.type = var.type ;
+                            v.type = natus::nsl::to_type( var.type ) ;
                             v.value = var.value ;
                             cur_lib.variables.emplace_back( v ) ;
                         }

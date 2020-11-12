@@ -13,14 +13,14 @@ namespace natus
         {
             natus::ntd::string_t new_name ;
             natus::ntd::string_t old_name ;
-            natus::ntd::string_t binding ;
+            natus::nsl::binding binding ;
             natus::nsl::flow_qualifier fq ;
             natus::nsl::shader_type st ;
         };
         natus_typedef( variable_mapping ) ;
         natus_typedefs( natus::ntd::vector< variable_mapping_t >, variable_mappings ) ;
 
-        static size_t find_by( variable_mappings_cref_t mappings, natus::ntd::string_cref_t name, natus::ntd::string_cref_t binding, natus::nsl::flow_qualifier const fq, natus::nsl::shader_type const st ) noexcept
+        static size_t find_by( variable_mappings_cref_t mappings, natus::ntd::string_cref_t name, natus::nsl::binding binding, natus::nsl::flow_qualifier const fq, natus::nsl::shader_type const st ) noexcept
         {
             auto iter = std::find_if( mappings.begin(), mappings.end(), [&] ( variable_mapping_cref_t v ) 
             { 
@@ -46,7 +46,7 @@ namespace natus
             struct variable
             {
                 natus::ntd::string_t name ;
-                natus::ntd::string_t binding ;
+                natus::nsl::binding binding ;
                 natus::nsl::flow_qualifier fq ;
             };
             natus_typedef( variable ) ;

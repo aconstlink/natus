@@ -82,9 +82,9 @@ namespace natus
                     struct variable
                     {
                         natus::nsl::flow_qualifier fq ;
-                        natus::ntd::string_t type ;
+                        natus::nsl::type_t type ;
                         natus::ntd::string_t name ;
-                        natus::ntd::string_t binding ;
+                        natus::nsl::binding binding ;
                         natus::ntd::string_t line ;
                     };
                     natus_typedef( variable ) ;
@@ -163,7 +163,7 @@ namespace natus
                 {
                     natus::nsl::symbol_t sym_long ;
 
-                    natus::ntd::string_t type ;
+                    natus::nsl::type_t type ;
                     natus::ntd::string_t name ;
                     natus::ntd::string_t value ;
                     natus::ntd::string_t line ;

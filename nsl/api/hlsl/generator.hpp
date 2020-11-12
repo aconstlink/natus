@@ -34,76 +34,77 @@ namespace natus
 
             public:
                 
-                static natus::ntd::string_t map_variable_type( natus::ntd::string_cref_t type ) noexcept
+                static natus::ntd::string_t map_variable_type( natus::nsl::type_cref_t type ) noexcept
                 {
-                    typedef std::pair< natus::ntd::string_t, natus::ntd::string_t > mapping_t ;
-                    static mapping_t const __mappings[] = 
-                    { 
-                        mapping_t("float", "float"), mapping_t("vec2", "float2"), mapping_t("vec3", "float3"),
-                        mapping_t("vec4", "float4"), mapping_t("mat2", "float2x2"),mapping_t("mat3", "float3x3"),
-                        mapping_t("mat4", "float4x4"), mapping_t("tex2d", "Texture2D")
+                    typedef std::pair< natus::nsl::type_t, natus::ntd::string_t > mapping_t ;
+                    static mapping_t const __mappings[] =
+                    {
+                        mapping_t( natus::nsl::type_t(), "unknown" ),
+                        mapping_t( natus::nsl::type_t::as_float(), "float" ),
+                        mapping_t( natus::nsl::type_t::as_vec2(), "float2" ),
+                        mapping_t( natus::nsl::type_t::as_vec3(), "float3" ),
+                        mapping_t( natus::nsl::type_t::as_vec4(), "float4" ),
+                        mapping_t( natus::nsl::type_t::as_mat2(), "float2x2" ),
+                        mapping_t( natus::nsl::type_t::as_mat3(), "float3x3" ),
+                        mapping_t( natus::nsl::type_t::as_mat4(), "float4x4" ),
+                        mapping_t( natus::nsl::type_t::as_tex1d(), "Texture1D" ),
+                        mapping_t( natus::nsl::type_t::as_tex2d(), "Texture2D" )
                     } ;
 
-                    for( auto const & m : __mappings )
-                    {
-                        if( m.first == type ) return m.second ;
-                    }
-                    return type ;
+                    for( auto const & m : __mappings ) if( m.first == type ) return m.second ;
+                    
+                    return __mappings[0].second ;
                 }
 
                 static natus::ntd::string_t map_variable_binding( natus::nsl::shader_type const st,
-                    natus::nsl::flow_qualifier const fq, natus::ntd::string_cref_t binding ) noexcept
+                    natus::nsl::flow_qualifier const fq, natus::nsl::binding binding ) noexcept
                 {
-                    typedef std::pair< natus::ntd::string_t, natus::ntd::string_t > mapping_t ;
+                    typedef std::pair< natus::nsl::binding, natus::ntd::string_t > mapping_t ;
                     static mapping_t const __mappings[] =
                     {
-                        mapping_t( "normal", "NORMAL" ),
+                        mapping_t( natus::nsl::binding::normal, "NORMAL" ),
 
-                        mapping_t( "color", "COLOR0" ),
-                        mapping_t( "color0", "COLOR0" ),
-                        mapping_t( "color1", "COLOR1" ),
-                        mapping_t( "color2", "COLOR2" ),
-                        mapping_t( "color3", "COLOR3" ),
-                        mapping_t( "color4", "COLOR4" ),
-                        mapping_t( "color5", "COLOR5" ),
-                        mapping_t( "color6", "COLOR6" ),
-                        mapping_t( "color7", "COLOR7" ),
-                        mapping_t( "color8", "COLOR8" ),
-
-                        mapping_t( "texcoord", "TEXCOORD0" ),
-                        mapping_t( "texcoord0", "TEXCOORD0" ),
-                        mapping_t( "texcoord1", "TEXCOORD1" ),
-                        mapping_t( "texcoord2", "TEXCOORD2" ),
-                        mapping_t( "texcoord3", "TEXCOORD3" ),
-                        mapping_t( "texcoord4", "TEXCOORD4" ),
-                        mapping_t( "texcoord5", "TEXCOORD5" ),
-                        mapping_t( "texcoord6", "TEXCOORD6" ),
-                        mapping_t( "texcoord7", "TEXCOORD7" ),
-                        mapping_t( "texcoord8", "TEXCOORD8" )
+                        mapping_t( natus::nsl::binding::color0, "COLOR0" ),
+                        mapping_t( natus::nsl::binding::color1, "COLOR1" ),
+                        mapping_t( natus::nsl::binding::color2, "COLOR2" ),
+                        mapping_t( natus::nsl::binding::color3, "COLOR3" ),
+                        mapping_t( natus::nsl::binding::color4, "COLOR4" ),
+                        mapping_t( natus::nsl::binding::color5, "COLOR5" ),
+                        mapping_t( natus::nsl::binding::color6, "COLOR6" ),
+                        mapping_t( natus::nsl::binding::color7, "COLOR7" ),
+                        
+                        mapping_t( natus::nsl::binding::texcoord0, "TEXCOORD0" ),
+                        mapping_t( natus::nsl::binding::texcoord1, "TEXCOORD1" ),
+                        mapping_t( natus::nsl::binding::texcoord2, "TEXCOORD2" ),
+                        mapping_t( natus::nsl::binding::texcoord3, "TEXCOORD3" ),
+                        mapping_t( natus::nsl::binding::texcoord4, "TEXCOORD4" ),
+                        mapping_t( natus::nsl::binding::texcoord5, "TEXCOORD5" ),
+                        mapping_t( natus::nsl::binding::texcoord6, "TEXCOORD6" ),
+                        mapping_t( natus::nsl::binding::texcoord7, "TEXCOORD7" )
                     } ;
 
                     static mapping_t const __mrt[] =
                     {
-                        mapping_t( "color", "SV_TARGET0" ),
-                        mapping_t( "color0", "SV_TARGET0" ),
-                        mapping_t( "color1", "SV_TARGET1" ),
-                        mapping_t( "color2", "SV_TARGET2" ),
-                        mapping_t( "color3", "SV_TARGET3" ),
+                        mapping_t( natus::nsl::binding::color0, "SV_TARGET0" ),
+                        mapping_t( natus::nsl::binding::color1, "SV_TARGET1" ),
+                        mapping_t( natus::nsl::binding::color2, "SV_TARGET2" ),
+                        mapping_t( natus::nsl::binding::color3, "SV_TARGET3" ),
+                        mapping_t( natus::nsl::binding::color4, "SV_TARGET4" )
                     } ;
 
-                    if( fq == natus::nsl::flow_qualifier::in && binding == "position" ) return "POSITION" ;
-                    if( fq == natus::nsl::flow_qualifier::out && binding == "position" ) return "SV_POSITION" ;
+                    if( fq == natus::nsl::flow_qualifier::in && binding == natus::nsl::binding::position ) 
+                        return "POSITION" ;
+                    if( fq == natus::nsl::flow_qualifier::out && binding == natus::nsl::binding::position ) 
+                        return "SV_POSITION" ;
                     
                     // check render targets first
                     {
-                        size_t const pos = binding.find( "color" ) ;
-                        if( fq == natus::nsl::flow_qualifier::out && st == natus::nsl::shader_type::pixel_shader && 
-                            pos != std::string::npos )
+                        if( fq == natus::nsl::flow_qualifier::out && 
+                            st == natus::nsl::shader_type::pixel_shader && 
+                            natus::nsl::is_color( binding ) )
                         {
-                            for( auto const& m : __mappings )
-                            {
-                                if( m.first == binding ) return m.second ;
-                            }
+                            for( auto const& m : __mappings ) if( m.first == binding ) return m.second ;
+                            
                         }
                     }
 
@@ -129,7 +130,7 @@ namespace natus
                         {
                             if( var.fq == natus::nsl::flow_qualifier::out &&
                                 var.st == natus::nsl::shader_type::vertex_shader &&
-                                var.binding == "position" )
+                                var.binding == natus::nsl::binding::position )
                             {
                                 var.new_name = "gl_Position" ;
                             }
@@ -220,7 +221,8 @@ namespace natus
                                     v.fq == natus::nsl::flow_qualifier::in ) ) continue ;
 
                             natus::ntd::string_t const type_ = this_t::map_variable_type( v.type ) ;
-                            natus::ntd::string_t const binding_ = this_t::map_variable_binding( s.type, v.fq, v.binding ) ;
+                            natus::ntd::string_t const binding_ = this_t::map_variable_binding( 
+                                s.type, v.fq, v.binding ) ;
                             text << type_ << " " << v.name << " : " << binding_ << " ;" << std::endl ;
                         }
                         text << "}" << std::endl << std::endl ;

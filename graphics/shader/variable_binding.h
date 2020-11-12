@@ -10,6 +10,8 @@ namespace natus
         enum class binding_point
         {
             undefined,
+            object_matrix,
+            world_matrix,
             projection_matrix,  // mat4()
             view_matrix,        // mat4()
             camera_matrix,      // mat3()
