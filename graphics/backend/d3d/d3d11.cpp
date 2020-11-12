@@ -625,7 +625,6 @@ public: // functions
         {
             this_t::render_state_sets_t rss = _state_stack.top() ;
             this_t::handle_render_state( rss ) ;
-            _state_stack.push( rss ) ;
         }
     }
 
