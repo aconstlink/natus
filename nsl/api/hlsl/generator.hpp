@@ -33,7 +33,7 @@ namespace natus
                 ~generator( void_t ) {}
 
             public:
-
+                
                 static natus::ntd::string_t map_variable_type( natus::ntd::string_cref_t type ) noexcept
                 {
                     typedef std::pair< natus::ntd::string_t, natus::ntd::string_t > mapping_t ;
@@ -205,7 +205,7 @@ namespace natus
                             natus::ntd::string_t const binding_ = this_t::map_variable_binding( s.type, v.fq, v.binding ) ;
                             text << type_ << " " << v.name << " : " << binding_ << " ;" << std::endl ;
                         }
-                        text << "}" << std::endl ;
+                        text << "}" << std::endl << std::endl ;
                     }
 
                     // varying stage-to-stage variables
@@ -223,7 +223,7 @@ namespace natus
                             natus::ntd::string_t const binding_ = this_t::map_variable_binding( s.type, v.fq, v.binding ) ;
                             text << type_ << " " << v.name << " : " << binding_ << " ;" << std::endl ;
                         }
-                        text << "}" << std::endl ;
+                        text << "}" << std::endl << std::endl ;
                     }
 
 
