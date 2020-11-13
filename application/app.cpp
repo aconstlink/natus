@@ -299,7 +299,7 @@ bool_t app::platform_update( void_t )
                 _windows[ 0 ].imgui->begin() ;
                 _windows[ 0 ].imgui->execute( [&] ( ImGuiContext* ctx )
                 {
-                    if( this->on_tool( _windows[0].imgui ) != natus::application::result::no_imgui )
+                    if( this->on_tool( natus::gfx::imgui_view_t( _windows[0].imgui ) ) != natus::application::result::no_imgui )
                     {
                         _windows[ 0 ].imgui->update( _dev_ascii ) ;
                         _windows[ 0 ].imgui->update( _dev_mouse ) ;

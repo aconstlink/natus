@@ -193,7 +193,7 @@ namespace natus
             virtual natus::application::result on_event( window_id_t const, this_t::window_event_info_in_t ) 
             { return natus::application::result::ok ; }
 
-            virtual natus::application::result on_tool( natus::gfx::imgui_res_t ) 
+            virtual natus::application::result on_tool( natus::gfx::imgui_view_t ) 
             { return natus::application::result::no_imgui ;  }
 
         protected:

@@ -86,5 +86,38 @@ namespace natus
             void_t do_default_imgui_init( void_t ) ;
         };
         natus_res_typedef( imgui ) ;
+
+        class imgui_view
+        {
+            natus_this_typedefs( imgui_view ) ;
+
+        private:
+
+            imgui_res_t _imres ;
+
+        public:
+
+            imgui_view( imgui_res_t im ) : _imres( im )
+            {}
+
+            imgui_view( this_cref_t rhv ) noexcept
+            {
+                _imres = rhv._imres ;
+            }
+
+            imgui_view( this_rref_t rhv ) noexcept
+            {
+                _imres = std::move( rhv._imres ) ;
+            }
+
+        public:
+
+            ImTextureID texture( natus::ntd::string_in_t s ) noexcept 
+            {
+                return _imres->texture( s ) ;
+            }
+
+        };
+        natus_typedef( imgui_view ) ;
     }
 }
