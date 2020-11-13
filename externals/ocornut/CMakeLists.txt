@@ -5,7 +5,7 @@ if( MSVC )
 endif()
 
 set( INCLUDES 
-  "imgui/imconfig.h"
+  "imconfig.h"
   "imgui/imgui.h"
   "imgui/imgui_internal.h"
   "imgui/imstb_rectpack.h"
@@ -25,10 +25,17 @@ set( SOURCES
 
 add_library( imgui ${NATUS_LIBRARY_BUILD_TYPE} ${SOURCES} )
 
+# fix the dll-hell. The self provided imconfig.h 
+# sets the IMGUI_API properly for dll export/import
+target_compile_definitions( imgui 
+  PUBLIC -DIMGUI_USER_CONFIG="../imconfig.h"
+  PUBLIC -DIMGUI_DISABLE_INCLUDE_IMCONFIG_H
+)
+
 if( NATUS_LIBRARY_BUILD_SHARED )
   target_compile_options( imgui
     PRIVATE -DNATUS_IMGUI_EXPORT 
-    INTERFACE -DNATUS_IMGUI_IMPORT )    
+    INTERFACE -DNATUS_IMGUI_IMPORT )
 endif()
 
 set_target_properties( imgui PROPERTIES LINKER_LANGUAGE CXX )
