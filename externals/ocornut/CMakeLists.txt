@@ -23,7 +23,13 @@ set( SOURCES
 
 #add_definitions( -DIMGUI_DEFINE_MATH_OPERATORS )
 
-add_library( imgui STATIC ${SOURCES} )
+add_library( imgui ${NATUS_LIBRARY_BUILD_TYPE} ${SOURCES} )
+
+if( NATUS_LIBRARY_BUILD_SHARED )
+  target_compile_options( imgui
+    PRIVATE -DNATUS_IMGUI_EXPORT 
+    INTERFACE -DNATUS_IMGUI_IMPORT )    
+endif()
 
 set_target_properties( imgui PROPERTIES LINKER_LANGUAGE CXX )
 set_target_properties( imgui PROPERTIES FOLDER "natus/externals" )

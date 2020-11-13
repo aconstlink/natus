@@ -43,6 +43,7 @@ void_t imgui::execute( exec_funk_t funk )
 void_t imgui::init( natus::graphics::async_view_t async ) 
 {    
     _ctx = ImGui::CreateContext() ;
+    ImGui::SetCurrentContext( _ctx ) ;
 
     // geometry
     {
@@ -273,10 +274,14 @@ void_t imgui::init( natus::graphics::async_view_t async )
 }
 
 //***
-void_t imgui::begin( void_t ) 
+void_t imgui::begin( void_t ) noexcept
 {
-    ImGui::SetCurrentContext( _ctx ) ;
     ImGui::NewFrame() ;
+}
+
+void_t imgui::end( void_t ) noexcept
+{
+    ImGui::EndFrame() ;
 }
 
 //***

@@ -26,6 +26,9 @@
 #include <natus/graphics/async.h>
 #include <natus/graphics/backend/null/null.h>
 
+#include <natus/device/global.h>
+#include <natus/device/layouts/three_mouse.hpp>
+
 #include <natus/audio/backend/oal/oal.h>
 
 using namespace natus::application ;
@@ -172,6 +175,8 @@ app::window_async_t app::create_window(
     }
     
     natus::graphics::async_res_t async = pwi.async ;
+    pwi.imgui = natus::gfx::imgui_res_t( natus::gfx::imgui_t() ) ;
+    pwi.imgui->init( natus::graphics::async_view_t( async ) ) ;
 
     bool_ptr_t run = natus::memory::global_t::alloc<bool_t>(
         natus_log_fn( "bool for render thread while") ) ;
@@ -236,7 +241,7 @@ app::window_async_t app::create_window(
     
 
     return this_t::window_async_t( this_t::window_view_t( _windows.size()-1, msg_send, gfx_msg_send ), 
-        natus::graphics::async_view_t( ::std::move( async ), _access ) ) ;
+        natus::graphics::async_view_t( ::std::move( async ) ) ) ;
 }
 
 //***
@@ -281,14 +286,76 @@ bool_t app::platform_update( void_t )
         this->on_audio( dat ) ;
         this_t::after_audio() ;
     }
-    
+
     if( this_t::before_render() )
     {
-        this_t::render_data_t dat ;
-        this->on_graphics( dat ) ;
-        this_t::after_render() ;
+        // do the tool ui only if rendering is possible
+        if( this_t::before_tool() )
+        {
+            if( _windows.size() != 0 )
+            {
+                bool_t render = false ;
+                
+                _windows[ 0 ].imgui->begin() ;
+                _windows[ 0 ].imgui->execute( [&] ( ImGuiContext* ctx )
+                {
+                    if( this->on_tool( _windows[0].imgui ) != natus::application::result::no_imgui )
+                    {
+                        _windows[ 0 ].imgui->update( _dev_ascii ) ;
+                        _windows[ 0 ].imgui->update( _dev_mouse ) ;
+                        render = true ;
+                    }
+                } ) ;
+                _windows[ 0 ].imgui->end() ;
+
+                if( render ) _windows[ 0 ].imgui->render( _windows[ 0 ].async ) ;
+                
+            }
+            this_t::after_tool() ;
+        }
+
+        // do the actual rendering of the app
+        {
+            this_t::render_data_t dat ;
+            this->on_graphics( dat ) ;
+            this_t::after_render() ;
+        }
     }
 
+    return true ;
+}
+
+//***
+bool_t app::before_tool( void_t ) noexcept
+{
+    natus::device::global_t::system()->search( [&] ( natus::device::idevice_res_t dev_in )
+    {
+        if( natus::device::three_device_res_t::castable( dev_in ) )
+        {
+            _dev_mouse = dev_in ;
+        }
+        else if( natus::device::ascii_device_res_t::castable( dev_in ) )
+        {
+            _dev_ascii = dev_in ;
+        }
+    } ) ;
+
+    if( !_dev_mouse.is_valid() )
+    {
+        return false ;
+    }
+
+    if( !_dev_ascii.is_valid() )
+    {
+        return false ;
+    }
+
+    return true ;
+}
+
+//***
+bool_t app::after_tool( void_t ) noexcept
+{
     return true ;
 }
 
@@ -311,6 +378,11 @@ bool_t app::before_update( void_t )
                 {
                     wi.width = sv.resize_msg.w ;
                     wi.height = sv.resize_msg.h ;
+
+                    natus::gfx::imgui_t::window_data_t wd ;
+                    wd.width = int_t( wi.width ) ;
+                    wd.height = int_t( wi.height ) ;
+                    pwi.imgui->update( wd ) ;
                 }
 
                 this_t::window_event_info_t wei ;

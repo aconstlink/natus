@@ -9,8 +9,13 @@
 #include "platform/platform_window.h"
 #include "platform/gfx_context.h"
 
+#include <natus/device/device.hpp>
+#include <natus/device/layouts/ascii_keyboard.hpp>
+#include <natus/device/layouts/three_mouse.hpp>
+
 #include <natus/audio/async.h>
 #include <natus/graphics/async.h>
+#include <natus/gfx/imgui/imgui.h>
 #include <natus/concurrent/typedefs.h>
 
 namespace natus
@@ -99,18 +104,20 @@ namespace natus
                 natus::application::window_message_receiver_res_t msg_send ;
                 natus::application::window_message_receiver_res_t gfx_send ;
                 natus::graphics::async_res_t async ;
+                natus::gfx::imgui_res_t imgui ;
                 window_info_t wi ;
                 bool_ptr_t run ;
                 per_window_info( void_t ) {}
                 per_window_info( this_cref_t ) = delete ;
                 per_window_info( this_rref_t rhv )
                 {
-                    rnd_thread = ::std::move( rhv.rnd_thread ) ;
-                    wnd = ::std::move( rhv.wnd ) ;
-                    async = ::std::move( rhv.async ) ;
-                    wi = ::std::move( rhv.wi ) ;
-                    msg_recv = ::std::move( rhv.msg_recv ) ;
-                    msg_send = ::std::move( rhv.msg_send ) ;
+                    imgui = std::move( rhv.imgui ) ;
+                    rnd_thread = std::move( rhv.rnd_thread ) ;
+                    wnd = std::move( rhv.wnd ) ;
+                    async = std::move( rhv.async ) ;
+                    wi = std::move( rhv.wi ) ;
+                    msg_recv = std::move( rhv.msg_recv ) ;
+                    msg_send = std::move( rhv.msg_send ) ;
                     natus_move_member_ptr( run, rhv ) ;
                 }
                 ~per_window_info( void_t ) {}
@@ -153,6 +160,11 @@ namespace natus
             size_t _render_count = 0 ;
             size_t _audio_count = 0 ;
 
+        private:
+
+            natus::device::three_device_res_t _dev_mouse ;
+            natus::device::ascii_device_res_t _dev_ascii ;
+
         public:
 
             app( void_t ) ;
@@ -180,6 +192,9 @@ namespace natus
 
             virtual natus::application::result on_event( window_id_t const, this_t::window_event_info_in_t ) 
             { return natus::application::result::ok ; }
+
+            virtual natus::application::result on_tool( natus::gfx::imgui_res_t ) 
+            { return natus::application::result::no_imgui ;  }
 
         protected:
 
@@ -246,6 +261,8 @@ namespace natus
             bool_t after_render( void_t ) ;
             bool_t before_audio( void_t ) ;
             bool_t after_audio( void_t ) ;
+            bool_t before_tool( void_t ) noexcept ;
+            bool_t after_tool( void_t ) noexcept ;
 
         private:
 

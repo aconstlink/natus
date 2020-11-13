@@ -24,7 +24,7 @@ namespace natus
 
         private:
 
-            ImGuiContext* _ctx ;
+            ImGuiContext* _ctx = nullptr ;
 
             struct vertex 
             { 
@@ -57,7 +57,8 @@ namespace natus
             ~imgui( void_t ) ;
 
             void_t init( natus::graphics::async_view_t ) ;
-            void_t begin( void_t ) ;
+            void_t begin( void_t ) noexcept ;
+            void_t end( void_t ) noexcept ;
             void_t render( natus::graphics::async_view_t ) ;
 
             typedef ::std::function< void_t ( ImGuiContext* ) > exec_funk_t ;
