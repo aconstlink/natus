@@ -289,17 +289,22 @@ bool_t app::platform_update( void_t )
 
     if( this_t::before_render() )
     {
+        // do the actual rendering of the app
+        
+        this_t::render_data_t dat ;
+        this->on_graphics( dat ) ;
+
         // do the tool ui only if rendering is possible
         if( this_t::before_tool() )
         {
             if( _windows.size() != 0 )
             {
                 bool_t render = false ;
-                
+
                 _windows[ 0 ].imgui->begin() ;
                 _windows[ 0 ].imgui->execute( [&] ( ImGuiContext* ctx )
                 {
-                    if( this->on_tool( natus::gfx::imgui_view_t( _windows[0].imgui ) ) != natus::application::result::no_imgui )
+                    if( this->on_tool( natus::gfx::imgui_view_t( _windows[ 0 ].imgui ) ) != natus::application::result::no_imgui )
                     {
                         _windows[ 0 ].imgui->update( _dev_ascii ) ;
                         _windows[ 0 ].imgui->update( _dev_mouse ) ;
@@ -309,17 +314,12 @@ bool_t app::platform_update( void_t )
                 _windows[ 0 ].imgui->end() ;
 
                 if( render ) _windows[ 0 ].imgui->render( _windows[ 0 ].async ) ;
-                
+
             }
             this_t::after_tool() ;
         }
 
-        // do the actual rendering of the app
-        {
-            this_t::render_data_t dat ;
-            this->on_graphics( dat ) ;
-            this_t::after_render() ;
-        }
+        this_t::after_render() ;
     }
 
     return true ;
