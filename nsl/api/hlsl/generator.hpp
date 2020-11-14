@@ -355,6 +355,7 @@ namespace natus
                         {
                             if( c.version != natus::nsl::language_class::hlsl ) continue ;
 
+                            size_t curlies = 0 ;
                             bool_t in_main = false ;
                             for( auto iter = c.lines.begin(); iter != c.lines.end(); ++iter )
                             {
@@ -372,13 +373,18 @@ namespace natus
                                         text << "{" << std::endl ; ++iter ;
                                         text << output_name << " output = (" << output_name << ")0 ; " << std::endl ;
                                     }
+                                    curlies++ ;
                                     in_main = true ;
                                 }
                                 else
                                 {
-                                    if( in_main && *iter == "}" )
+                                    if( in_main && *iter == "{" ) curlies++ ;
+                                    else if( in_main && *iter == "}" ) curlies--  ;
+
+                                    if( in_main && curlies == 0 )
                                     {
                                         text << "return output ;" << std::endl ;
+                                        in_main = false ;
                                     }
                                     text << *iter << std::endl ;
                                 }

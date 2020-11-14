@@ -39,6 +39,11 @@ namespace natus
 
         public:
 
+            natus::nsl::post_parse::document_t process( natus::ntd::string_cref_t file ) noexcept
+            {
+                return this_t::process( natus::ntd::string_t( file ) ) ;
+            }
+
             // produces a statement list of all statements in the file
             natus::nsl::post_parse::document_t process( natus::ntd::string_rref_t file ) noexcept
             {

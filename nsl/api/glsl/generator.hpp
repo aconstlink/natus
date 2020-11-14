@@ -150,6 +150,24 @@ namespace natus
                         }
                     }
 
+                    // add extensions for pixel shader
+                    if( s.type == natus::nsl::shader_type::pixel_shader )
+                    {
+                        size_t num_color = 0 ;
+                        for( auto const & var : s.variables )
+                        {
+                            num_color += natus::nsl::is_color( var.binding ) ? 1 : 0 ;
+                        }
+
+                        // mrt requires extensions for glsl 130
+                        if( num_color > 1 && type == natus::nsl::api_type::gl3 )
+                        {
+                            text << 
+                                "#extension GL_ARB_separate_shader_objects : enable" << std::endl <<
+                                "#extension GL_ARB_explicit_attrib_location : enable" << std::endl << std::endl ;
+                        }
+                    }
+
                     // 2. make prototypes declarations from function signatures
                     // the prototype help with not having to sort funk definitions
                     {
@@ -196,6 +214,13 @@ namespace natus
 
                     // 4. make all glsl uniforms from shader variables
                     {
+                        size_t num_color = 0 ;
+                        for( auto const& var : s.variables )
+                        {
+                            num_color += natus::nsl::is_color( var.binding ) ? 1 : 0 ;
+                        }
+
+                        size_t layloc_id = 0 ;
                         text << "// Uniforms and in/out // " << std::endl ;
                         for( auto const & v : s.variables )
                         {
@@ -215,15 +240,21 @@ namespace natus
                             // do some regex replacements
                             {
                                 //type_ = std::regex_replace( type_, std::regex( "tex([1-3]+)d" ), "sampler$1D" ) ;
-                                
                             }
 
+                            natus::ntd::string_t layloc ;
+
+                            if( v.fq == natus::nsl::flow_qualifier::out && 
+                                s.type == natus::nsl::shader_type::pixel_shader &&
+                                num_color > 1 )
                             {
-                                natus::ntd::string_t flow = v.fq == natus::nsl::flow_qualifier::global ? 
-                                    "uniform" : natus::nsl::to_string( v.fq ) ;
-                                
-                                text << flow << " " << type_ << " " << name << " ; " << std::endl ;
+                                layloc = "layout( location = " + std::to_string( layloc_id++ ) + " ) " ;
                             }
+
+                            natus::ntd::string_t const flow = v.fq == natus::nsl::flow_qualifier::global ?
+                                "uniform" : natus::nsl::to_string( v.fq ) ;
+
+                            text << layloc << flow << " " << type_ << " " << name << " ; " << std::endl ;
                         }
                         text << std::endl ;
                     }
