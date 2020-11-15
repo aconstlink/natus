@@ -277,7 +277,7 @@ struct es3_backend::pimpl
 
             obj.add_render_state_set( new_states ) ;
 
-            size_t const oid = this_t::construct_state( size_t( -1 ), obj ) ;
+            /*size_t const oid =*/ this_t::construct_state( size_t( -1 ), obj ) ;
         }
     }
 
@@ -1268,13 +1268,13 @@ struct es3_backend::pimpl
 
             // remove this render data id from the old geometry
             if( config.geo_id != size_t( -1 ) )
-                geo_configs[ config.geo_id ].remove_render_data_id( id ) ;
+                geo_datas[ config.geo_id ].remove_render_data_id( id ) ;
 
-            config.geo_id = std::distance( geo_configs.begin(), iter ) ;
+            config.geo_id = std::distance( geo_datas.begin(), iter ) ;
 
             // add this render data id to the new geometry
             if( config.geo_id != size_t( -1 ) )
-                geo_configs[ config.geo_id ].add_render_data_id( id ) ;
+                geo_datas[ config.geo_id ].add_render_data_id( id ) ;
 
         }
 

@@ -286,7 +286,7 @@ struct gl3_backend::pimpl
 
             obj.add_render_state_set( new_states ) ;
 
-            size_t const oid = this_t::construct_state( size_t( -1 ), obj ) ;
+            /*size_t const oid =*/ this_t::construct_state( size_t( -1 ), obj ) ;
         }
     }
 
@@ -352,7 +352,7 @@ struct gl3_backend::pimpl
 
     // @param new_state states to be activated
     // @param old_state states that were just activated
-    void_t handle_render_state( natus::graphics::render_state_sets_cref_t new_states, bool_t const revert = false )
+    void_t handle_render_state( natus::graphics::render_state_sets_cref_t new_states, bool_t const = false )
     {
         // depth test
         {

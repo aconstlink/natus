@@ -17,6 +17,18 @@ namespace natus
             bool_t do_change = false ;
             T ss ;
 
+            state_set( void_t ) {}
+            state_set( this_cref_t rhv ) noexcept 
+            {
+                do_change = rhv.do_change ;
+                ss = rhv.ss ;
+            }
+            state_set( this_rref_t rhv ) noexcept 
+            {
+                do_change = rhv.do_change ;
+                ss = std::move( rhv.ss ) ;
+            }
+
             this_ref_t operator = ( this_cref_t rhv ) noexcept
             {
                 do_change = rhv.do_change ;
@@ -32,7 +44,7 @@ namespace natus
 
             this_t operator + ( this_cref_t rhv ) const noexcept
             {
-                return rhv.do_change ? rhv : *this ;
+                return rhv.do_change ? rhv : this_t( *this ) ;
             }
         };
 
@@ -139,6 +151,16 @@ namespace natus
                 scissor_s = rhv.scissor_s ;
             }
 
+            render_state_sets( this_rref_t rhv ) noexcept
+            {
+                view_s = std::move( rhv.view_s ) ;
+                blend_s = std::move( rhv.blend_s ) ;
+                depth_s = std::move( rhv.depth_s ) ;
+                stencil_s = std::move( rhv.stencil_s ) ;
+                polygon_s = std::move( rhv.polygon_s ) ;
+                scissor_s = std::move( rhv.scissor_s ) ;
+            }
+
             this_ref_t operator = ( this_cref_t rhv ) noexcept
             {
                 view_s = rhv.view_s ;
@@ -177,7 +199,7 @@ namespace natus
                 ret.polygon_s = this_t::polygon_s + rhv.polygon_s ;
                 ret.scissor_s = this_t::scissor_s + rhv.scissor_s ;
 
-                return std::move( ret ) ;
+                return this_t( std::move( ret ) ) ;
             }
         };
         natus_res_typedef( render_state_sets ) ;
