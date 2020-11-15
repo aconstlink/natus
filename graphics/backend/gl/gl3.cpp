@@ -60,6 +60,21 @@ struct gl3_backend::pimpl
         GLenum ib_type ;
         size_t ib_elem_sib = 0  ;
         GLenum pt ;
+
+        // for geo reconfig - render data ids
+        natus::ntd::vector< size_t > rd_ids ;
+        void_t remove_render_data_id( size_t const rid ) noexcept
+        {
+            if( rid == size_t( -1 ) ) return ;
+            for( auto & id : rd_ids ) if( id == rid ) { id = size_t( -1 ) ; break ; }
+        }
+
+        void_t add_render_data_id( size_t const rid ) noexcept
+        {
+            if( rid == size_t( -1 ) ) return ;
+            for( auto& id : rd_ids ) if( id == size_t( -1 ) ) { id = rid ; return ; }
+            rd_ids.push_back( rid ) ;
+        }
     };
     natus_typedef( geo_data ) ;
 
@@ -1119,14 +1134,7 @@ struct gl3_backend::pimpl
 
             natus::ogl::error::check_and_log( natus_log_fn( "glVertexAttribPointer" ) ) ;
         }
-
-        // unbind everything
-        {
-            glBindVertexArray( 0 ) ;
-            glBindBuffer( GL_ARRAY_BUFFER, 0 ) ;
-            glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 ) ;
-            natus::ogl::error::check_and_log( natus_log_fn( "unbind" ) ) ;
-        }
+      
         return true ;
     }
 
@@ -1348,7 +1356,15 @@ struct gl3_backend::pimpl
                 return false ;
             }
 
+            // remove this render data id from the old geometry
+            if( config.geo_id != size_t( -1 ) ) 
+                geo_configs[ config.geo_id ].remove_render_data_id( id ) ;
+
             config.geo_id = std::distance( geo_configs.begin(), iter ) ;
+
+            // add this render data id to the new geometry
+            if( config.geo_id != size_t( -1 ) )
+                geo_configs[ config.geo_id ].add_render_data_id( id ) ;
         }
 
         // find shader
@@ -1456,12 +1472,17 @@ struct gl3_backend::pimpl
         return oid ;
     }
 
-    bool_t update( size_t const id, natus::graphics::geometry_object_res_t geo )
+    bool_t update( size_t const id, natus::graphics::geometry_object_res_t geo, bool_t const is_config = false )
     {
         auto& config = geo_configs[ id ] ;
 
+        // disable vertex array so the buffer ids do not get overwritten
         {
-            //#error "set all these new values"
+            glBindVertexArray( 0 ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glBindVertexArray" ) ) ;
+        }
+
+        {
             config.num_elements_ib = geo->index_buffer().get_num_elements() ;
             config.num_elements_vb = geo->vertex_buffer().get_num_elements() ;
             config.ib_elem_sib = geo->index_buffer().get_element_sib() ;
@@ -1480,7 +1501,7 @@ struct gl3_backend::pimpl
         // what about mapped memory?
         {
             GLuint const sib = GLuint( geo->vertex_buffer().get_sib() ) ;
-            if( sib > config.sib_vb )
+            if( is_config || sib > config.sib_vb )
             {
                 glBufferData( GL_ARRAY_BUFFER, sib,
                     geo->vertex_buffer().data(), GL_STATIC_DRAW ) ;
@@ -1512,7 +1533,7 @@ struct gl3_backend::pimpl
         // what about mapped memory?
         {
             GLuint const sib = GLuint( geo->index_buffer().get_sib() ) ;
-            if( sib > config.sib_ib )
+            if( is_config || sib > config.sib_ib )
             {
                 glBufferData( GL_ELEMENT_ARRAY_BUFFER, sib,
                     geo->index_buffer().data(), GL_STATIC_DRAW ) ;
@@ -1527,10 +1548,24 @@ struct gl3_backend::pimpl
             }
         }
 
+        if( is_config )
+        {
+            for( auto const & rid : config.rd_ids )
+            {
+                if( rid == size_t( -1 ) ) continue ;
+                if( rconfigs[ rid ].shd_id == size_t( -1 ) ) continue ;
+                // @todo it should be required to rebind vertex data to attributes
+                // if the vertex layout changes.
+                //this_t::bind_attributes( shaders[ rconfigs[ rid ].shd_id ], config ) ;
+            }
+        }
+
         return true ;
     }
 
-    bool_t update( size_t const id, natus::graphics::image_object_ref_t confin )
+    // @param is_config used to determine recreating the texture on the gpu side.
+    //          This param should be true if an image is configured or re-configured.
+    bool_t update( size_t const id, natus::graphics::image_object_ref_t confin, bool_t const is_config = false )
     {
         this_t::image_config& config = img_configs[ id ] ;
 
@@ -1561,7 +1596,7 @@ struct gl3_backend::pimpl
             natus::ogl::error::check_and_log( natus_log_fn( "glPixelStorei" ) ) ;
         }
 
-        if( sib == 0 || config.sib < sib )
+        if( is_config || ( sib == 0 || config.sib < sib ) )
         {
             GLint const border = 0 ;
             GLint const internal_format = natus::graphics::gl3::convert_to_gl_format( confin.image().get_image_format(), confin.image().get_image_element_type() ) ;
@@ -1764,6 +1799,7 @@ struct gl3_backend::pimpl
                 natus::ogl::error::check_and_log( natus_log_fn( "glDrawArrays" ) ) ;
             }
         }
+
         return true ;
     }
 
@@ -1865,7 +1901,7 @@ natus::graphics::result gl3_backend::configure( natus::graphics::geometry_object
     }
 
     {
-        auto const res = _pimpl->update( id->get_oid( this_t::get_bid() ), gconf ) ;
+        auto const res = _pimpl->update( id->get_oid( this_t::get_bid() ), gconf, true ) ;
         if( natus::core::is_not( res ) )
         {
             return natus::graphics::result::failed ;
@@ -1934,7 +1970,7 @@ natus::graphics::result gl3_backend::configure( natus::graphics::image_object_re
     size_t const oid = id->get_oid( this_t::get_bid() ) ;
 
     {
-        auto const res = _pimpl->update( oid, *config ) ;
+        auto const res = _pimpl->update( oid, *config, true ) ;
         if( natus::core::is_not( res ) )
         {
             return natus::graphics::result::failed ;
