@@ -12,6 +12,10 @@ namespace natus
         {
             natus_this_typedefs( database ) ;
 
+        public:
+
+            natus_typedefs( natus::ntd::vector< natus::nsl::symbol_t >, symbols ) ;
+
         private:
 
             mutable natus::concurrent::mrsw_t _ac ;
@@ -20,8 +24,6 @@ namespace natus
 
             natus::nsl::post_parse::library_t::variables_t _vars ;
             natus::nsl::post_parse::library_t::fragments_t _fragments ;
-            
-            
 
             #if 0
             template< typename T >
@@ -65,9 +67,14 @@ namespace natus
             }
 
         public:
-
-
+            
             void_t insert( natus::nsl::post_parse::document_rref_t doc ) noexcept
+            {
+                this_t::symbols_t tmp ;
+                this_t::insert( std::move( doc), tmp ) ;
+            }
+
+            void_t insert( natus::nsl::post_parse::document_rref_t doc, symbols_out_t changed_configs ) noexcept
             {
                 natus::concurrent::mrsw_t::writer_lock_t lk( _ac ) ;
 
@@ -78,26 +85,85 @@ namespace natus
                     if( iter != _configs.end() ) 
                     {
                         *iter = c ;
-                        return ;
+                    }
+                    else
+                    {
+                        _configs.emplace_back( c ) ;
                     }
                     
-                    _configs.emplace_back( c ) ;
+                    changed_configs.emplace_back( natus::nsl::symbol_t( c.name ) ) ;
                 }
+
+                symbols_t frags ;
+                symbols_t vars ;
 
                 for( auto const & l : doc.libraries )
                 {
                     for( auto const & f : l.fragments )
                     {
                         auto iter = std::find( _fragments.begin(), _fragments.end(), f ) ;
-                        if( iter != _fragments.end() ) continue ;
-                        _fragments.emplace_back( f ) ;
+                        if( iter != _fragments.end() ) 
+                        {
+                            *iter = f ;
+                        }
+                        else
+                        {
+                            _fragments.emplace_back( f ) ;
+                        }
+
+                        frags.emplace_back( f.sym_long ) ;
                     }
 
                     for( auto const & v : l.variables )
                     {
                         auto iter = std::find( _vars.begin(), _vars.end(), v ) ;
-                        if( iter != _vars.end() ) continue ;
-                        _vars.emplace_back( v ) ;
+                        if( iter != _vars.end() ) 
+                        {
+                            *iter = v ;
+                        }
+                        else
+                        {
+                            _vars.emplace_back( v ) ;
+                        }
+
+                        vars.emplace_back( v.sym_long ) ;
+                    }
+                }
+
+                // check fragment dependencies
+                {
+                    auto frags2 = std::move( frags ) ;
+                    while( !frags2.empty() )
+                    {
+                        for( auto const& s : frags2 )
+                        {
+                            for( auto const& f : _fragments )
+                            {
+                                auto const iter = std::find( f.deps.begin(), f.deps.end(), s ) ;
+                                if( iter == f.deps.end() ) continue ;
+
+                                frags.emplace_back( f.sym_long ) ;
+                            }
+
+                            for( auto const& c : _configs )
+                            {
+                                for( auto const& shd : c.shaders )
+                                {
+                                    auto const iter = std::find( shd.deps.begin(), shd.deps.end(), s ) ;
+                                    if( iter == shd.deps.end() ) continue ;
+
+                                    changed_configs.emplace_back( natus::nsl::symbol_t( c.name ) ) ;
+                                }
+                            }
+                        }
+                        frags2 = std::move( frags ) ;
+                    }
+                }
+
+                // check variable dependencies
+                {
+                    for( auto const& s : vars )
+                    {
                     }
                 }
             }
