@@ -89,6 +89,8 @@ struct gl3_backend::pimpl
         GLuint ps_id = GLuint( -1 ) ;
         GLuint pg_id = GLuint( -1 ) ;
 
+        bool_t is_compilation_ok = false ;
+
         struct vertex_input_binding
         {
             natus::graphics::vertex_attribute va ;
@@ -1321,10 +1323,17 @@ struct gl3_backend::pimpl
                 auto const res = sc.shader_set( this_t::bt, ss ) ;
                 if( res )
                 {
-                    this_t::compile_shader( sconfig.vs_id, ss.vertex_shader().code() ) ;
-                    this_t::compile_shader( sconfig.gs_id, ss.geometry_shader().code() ) ;
-                    this_t::compile_shader( sconfig.ps_id, ss.pixel_shader().code() ) ;
-                    this_t::link( sconfig.pg_id ) ;
+                    auto const r1 = this_t::compile_shader( sconfig.vs_id, ss.vertex_shader().code() ) ;
+                    auto const r2 = this_t::compile_shader( sconfig.gs_id, ss.geometry_shader().code() ) ;
+                    auto const r3 = this_t::compile_shader( sconfig.ps_id, ss.pixel_shader().code() ) ;
+                    auto const r4 = this_t::link( sconfig.pg_id ) ;
+                    if( !(r1 && r2 && r3 && r4) )
+                    {
+                        sconfig.is_compilation_ok = false ;
+                        return false ;
+                    }
+                    sconfig.is_compilation_ok = true ;
+                    natus::log::global_t::status( "[GL3] : Compilation Successful : [" + sconfig.name + "]" ) ;
                 }
             }
         }
@@ -1712,6 +1721,8 @@ struct gl3_backend::pimpl
         this_t::shader_data & sconfig = shaders[ config.shd_id ] ;
         this_t::geo_data & gconfig = geo_configs[ config.geo_id ] ;
 
+        if( !sconfig.is_compilation_ok )
+            return false ;
         {
             glBindVertexArray( gconfig.va_id ) ;
             if( natus::ogl::error::check_and_log( natus_log_fn( "glBindVertexArray" ) ) )

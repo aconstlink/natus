@@ -75,8 +75,12 @@ namespace natus
                 {
                     auto iter = std::find_if( _configs.begin(), _configs.end(), 
                         [&] ( natus::nsl::post_parse::config_cref_t c1 ) { return c1.name == c.name ; } ) ;
-                    if( iter != _configs.end() ) continue ;
-
+                    if( iter != _configs.end() ) 
+                    {
+                        *iter = c ;
+                        return ;
+                    }
+                    
                     _configs.emplace_back( c ) ;
                 }
 
