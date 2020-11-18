@@ -269,7 +269,7 @@ namespace natus
 
                 // current library
                 natus::nsl::parse::library_t lib ;
-
+                
                 bool_t in_shader = false ;
 
                 // 1. coarsely find and differentiate shaders and variables 
@@ -288,66 +288,55 @@ namespace natus
                         libs.emplace_back( std::move( lib ) ) ;
                         lib.names = names ;
                     }
-                    else if( token[0] == "open" && token[1] == "shader" )
+                    // nsl shader / variable
+                    else
                     {
-                        in_shader = true ;
-
-                        natus::nsl::parse::library_t::shader shd ;
-                        
-                        for( size_t t = 2; t < token.size(); ++t ) shd.versions.emplace_back( token[ t ] ) ;
-
-                        if( shd.versions.empty() )
-                            shd.versions.emplace_back( "version_missing" ) ;
-
-                        while( true )
-                        {
-                            if( this_t::tokenize( ss[++i] )[ 0 ] == "close" ) break ;
-                            shd.fragments.emplace_back( ss[ i ] ) ;
-                        }
-                        --i ;
-
-                        // split shader with multiple symbols in multiple shaders
+                        // is function
+                        if( token.back() != ";" && ss[i+1] == "{" )
                         {
                             size_t level = 0 ;
-                            natus::nsl::parse::library_t::shader shd2 = shd ;
-                            shd2.fragments.clear() ;
-
-                            for( auto iter = shd.fragments.begin(); iter != shd.fragments.end(); ++iter )
+                            size_t const beg = i ;
+                            while( ++i != ss.size() )
                             {
-                                shd2.fragments.emplace_back( *iter ) ;
+                                if( ss[ i ] == "{" ) ++level ;
+                                else if( ss[ i ] == "}" ) --level ;
 
-                                if( *iter == "{" && level++ == 0 )
-                                {}
+                                if( level == 0 ) break ;
+                            } 
 
-                                if( *iter == "}" && --level == 0 )
+                            // make shader per function symbol 
+                            {
+                                natus::nsl::parse::library_t::shader shd ;
+                                shd.versions.emplace_back( "nsl" ) ;
+                                for( size_t j = beg; j <= i; ++j )
                                 {
-                                    lib.shaders.emplace_back( std::move( shd2 ) ) ;
-                                    shd2.versions = shd.versions ;
-                                    shd2.fragments.clear() ;
+                                    shd.fragments.emplace_back( ss[ j ] ) ;
                                 }
+                                lib.shaders.emplace_back( std::move( shd ) ) ;
                             }
                         }
-                    }
-                    else if( token[0] == "close" && token[1] == "shader" )
-                    {
-                        in_shader = false ;
-                    }
-                    else if( token.size() > 4 && !in_shader )
-                    {
-                        natus::nsl::parse::library_t::variable v ;
-
-                        v.type = token[ 0 ] ;
-                        v.name = token[ 1 ] ;
-                        v.line = ss[i] ;
-
-                        auto iter = std::find( token.begin(), token.end(), "=" ) ;
-                        while( ++iter != token.end() && *iter != ";" )
+                        // must be a variable
+                        else if( token.size() > 4 )
                         {
-                            v.value += *(iter) + " " ;
-                        }
-                        if( v.value.size() > 0 ) v.value = v.value.substr( 0, v.value.size() - 1 ) ;
+                            natus::nsl::parse::library_t::variable v ;
 
-                        lib.variables.emplace_back( std::move( v ) ) ;
+                            v.type = token[ 0 ] ;
+                            v.name = token[ 1 ] ;
+                            v.line = ss[ i ] ;
+
+                            auto iter = std::find( token.begin(), token.end(), "=" ) ;
+                            while( ++iter != token.end() && *iter != ";" )
+                            {
+                                v.value += *( iter ) +" " ;
+                            }
+                            if( v.value.size() > 0 ) v.value = v.value.substr( 0, v.value.size() - 1 ) ;
+
+                            lib.variables.emplace_back( std::move( v ) ) ;
+                        }
+                        else
+                        {
+                            // should be error I guess.
+                        }
                     }
                 }
                 

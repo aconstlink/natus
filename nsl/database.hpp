@@ -1,6 +1,7 @@
 #pragma once
 
 #include "typedefs.h"
+#include "parser_structs.hpp"
 
 #include <natus/concurrent/mrsw.hpp>
 
