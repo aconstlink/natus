@@ -119,9 +119,16 @@ namespace natus
 
                     struct signature
                     {
-                        natus::ntd::string_t return_type ;
+                        struct arg
+                        {
+                            natus::nsl::type_t type ;
+                            natus::ntd::string_t name ;
+                        };
+                        natus_typedef( arg ) ;
+
+                        natus::nsl::type_t return_type ;
                         natus::ntd::string_t name ;
-                        natus::ntd::vector< natus::ntd::string_t > args ;
+                        natus::ntd::vector< arg_t > args ;
 
                         bool_t operator == ( signature const & rhv ) const 
                         {
@@ -136,7 +143,7 @@ namespace natus
 
                             for( size_t i = 0; i < args.size(); ++i )
                             {
-                                if( args[ i ] != rhv.args[ i ] ) return true ;
+                                if( args[ i ].type != rhv.args[ i ].type ) return true ;
                             }
                             return false ;
                         }

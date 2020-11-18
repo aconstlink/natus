@@ -176,9 +176,10 @@ namespace natus
                         {
                             if( f.version != natus::nsl::language_class::glsl ) continue ;
 
-                            text << f.sig.return_type << " " ;
+                            text << "FIX_HERE" << " " ;// f.sig.return_type << " " ;
                             text << f.sym_long.expand( "_" ) << " ( " ;
-                            for( auto const& a : f.sig.args ) text << a + ", " ;
+                            //for( auto const& a : f.sig.args ) text << a + ", " ;
+                            text << "FIX_HERE" << " " ;
                             text.seekp( -2, std::ios_base::end ) ;
                             text << " ) ; " << std::endl ;
                         }

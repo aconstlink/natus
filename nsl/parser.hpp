@@ -7,8 +7,7 @@
 #include "ast.hpp"
 #include "symbol_table.hpp"
 #include "parser_structs.hpp"
-#include "api/glsl/function_signature_analyser.hpp"
-#include "api/hlsl/function_signature_analyser.hpp"
+#include "function_signature_analyser.hpp"
 
 #include <natus/log/global.h>
 #include <natus/ntd/vector.hpp>
@@ -266,10 +265,13 @@ namespace natus
 
                 natus::ntd::vector< natus::ntd::string_t > names ;
                 natus::nsl::parse::libraries_t libs ;
+                natus::ntd::stack< natus::nsl::parse::library_t, 10 > libs_stack ;
 
                 // current library
                 natus::nsl::parse::library_t lib ;
-                
+
+                size_t level = size_t( 0 ) ;
+
                 bool_t in_shader = false ;
 
                 // 1. coarsely find and differentiate shaders and variables 
@@ -279,14 +281,22 @@ namespace natus
                     
                     if( token[0] == "open" && token[1] == "library" )
                     {
+                        libs_stack.push( lib ) ;
+
+                        lib = natus::nsl::parse::library_t() ;
                         names.emplace_back( token[ 2 ] ) ;
                         lib.names = names ;
+
+                        ++level ;
                     }
                     else if( token[0] == "close" && token[1] == "library" )
                     {
-                        names.pop_back() ;
+                        --level ;
                         libs.emplace_back( std::move( lib ) ) ;
-                        lib.names = names ;
+                        
+                        lib = libs_stack.pop() ;
+
+                        names.pop_back() ;
                     }
                     // nsl shader / variable
                     else
@@ -361,41 +371,30 @@ namespace natus
                     // - also flattens by language class
                     for( auto& shd : lib.shaders )
                     {
-                        for( auto const & version : shd.versions )
+                        fragment s ;
+
                         {
-                            fragment s ;
-
-                            {
-                                s.sym_long = "nsl" ;
-                                for( auto const& n : lib.names ) s.sym_long += n  ;
-                            }
-
-                            // symbol/function name/signature
-                            if( version == "glsl" )
-                            {
-                                auto const token = this_t::tokenize( shd.fragments[ 0 ] ) ;
-                                s.sig = natus::nsl::glsl::function_signature_analyser( token ).process() ;
-                                s.sym_long += s.sig.name ;
-                            }
-                            else if( version == "hlsl" )
-                            {
-                                auto const token = this_t::tokenize( shd.fragments[ 0 ] ) ;
-                                s.sig = natus::nsl::hlsl::function_signature_analyser( token ).process() ;
-                                s.sym_long += s.sig.name ;
-                            }
-
-                            // this symbol depending on
-                            {
-                                for( auto const& f : shd.fragments )
-                                {
-                                    s.deps = natus::nsl::symbol_t::merge(
-                                        std::move( s.deps ), natus::nsl::symbol_t::find_all_symbols( "nsl.", f ) ) ;
-                                }
-                            }
-                            s.fragments = shd.fragments ;
-                            s.version = natus::nsl::to_language_class( version ) ;
-                            cur_lib.fragments.emplace_back( std::move( s ) ) ;
+                            s.sym_long = "nsl" ;
+                            for( auto const& n : lib.names ) s.sym_long += n  ;
                         }
+
+                        // symbol/function name/signature
+                        {
+                            auto const token = this_t::tokenize( shd.fragments[ 0 ] ) ;
+                            s.sig = natus::nsl::function_signature_analyser( token ).process() ;
+                            s.sym_long += s.sig.name ;
+                        }
+                        // this symbol depending on
+                        {
+                            for( auto const& f : shd.fragments )
+                            {
+                                s.deps = natus::nsl::symbol_t::merge(
+                                    std::move( s.deps ), natus::nsl::symbol_t::find_all_symbols( "nsl.", f ) ) ;
+                            }
+                        }
+                        s.fragments = shd.fragments ;
+                        s.version = natus::nsl::to_language_class( "nsl" ) ;
+                        cur_lib.fragments.emplace_back( std::move( s ) ) ;
                         
                     }
 

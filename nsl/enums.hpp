@@ -4,16 +4,19 @@ namespace natus
 {
     namespace nsl
     {
+        //@obsolete nsl will be the only possibility
         enum class language_class
         {
             unknown,
-            glsl,
-            hlsl
+            nsl,
+            glsl, //@obsolete
+            hlsl //@obsolete
         };
 
         static language_class to_language_class( natus::ntd::string_cref_t s ) noexcept
         {
-            if( s == "glsl" ) return language_class::glsl ;
+            if( s == "nsl" ) return language_class::nsl ;
+            else if( s == "glsl" ) return language_class::glsl ;
             else if( s == "hlsl" ) return language_class::hlsl ;
             return language_class::unknown ;
         }
@@ -178,6 +181,7 @@ namespace natus
             type_ext ext = type_ext::unknown ;
 
             type( void_t ) noexcept {}
+
             type( type_base const tb, type_struct const ts, type_ext const te ) noexcept : 
                 base( tb), struc( ts), ext( te ){}
             type( this_cref_t rhv ) noexcept
@@ -195,6 +199,11 @@ namespace natus
             bool_t operator == ( this_cref_t t ) const noexcept
             {
                 return base == t.base && struc == t.struc && ext == t.ext ;
+            }
+
+            bool_t operator != ( this_cref_t t ) const noexcept
+            {
+                return !this_t::operator == ( t ) ;
             }
 
             bool_t is_texture( void_t ) const noexcept 
