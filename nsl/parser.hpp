@@ -666,6 +666,13 @@ namespace natus
                             iter = statements.erase( iter ) ;
                             if( *( --iter ) == "{" ) --iter ;
                         }
+
+                        // lets use this opportunity to remove empty lines.
+                        if( iter->empty() )
+                        {
+                            iter = statements.erase( iter ) ;
+                            if( iter != statements.begin() ) --iter ;
+                        }
                     }
                 }
 
@@ -686,6 +693,15 @@ namespace natus
                         auto iter_last = iter - 1 ;
 
                         if( iter_next == iter_last ) continue ;
+
+                        // do not insert spaces inbetween operator combos
+                        // like +=, -=, <=...
+                        if( *iter_next == '=' ) 
+                        { 
+                            iter = ++s.insert( iter, ' ' ) ;
+                            iter = s.insert( iter + 2, ' ' ) ; 
+                            continue ; 
+                        }
 
                         // in front
                         if( *iter != *iter_last ) iter = ++s.insert( iter, ' ' ) ;
