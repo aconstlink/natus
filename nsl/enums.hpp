@@ -301,5 +301,23 @@ namespace natus
 
             return natus::nsl::type_t() ;
         }
+
+        enum class build_in
+        {
+            unknown,
+            pulse,
+            step,
+            texture,
+            num_build_ins
+        };
+
+        static build_in to_build_in( natus::ntd::string_cref_t s ) noexcept
+        {
+            if( s == "pulse" ) return natus::nsl::build_in::pulse ;
+            else if( s == "step" ) return natus::nsl::build_in::step ;
+            else if( s == "texture" ) return natus::nsl::build_in::texture ;
+
+            return natus::nsl::build_in::unknown ;
+        }
     }
 }

@@ -16,12 +16,102 @@ namespace natus
     {
         namespace glsl
         {
+            namespace detail
+            {
+                static natus::ntd::string_t const __build_in_defs[] =
+                {
+                    "",
+                    "float pulse( float a, float b, float x ){return step( a, x ) - step( b, x ) ;} \n",
+                    "",
+                    ""
+                };
+
+                static natus::ntd::string_t convert_to_definition( natus::nsl::build_in const bi ) noexcept
+                {
+                    return __build_in_defs[ size_t( bi ) ] ;
+                }
+            }
+
             // the glsl backend code generator
             class generator
             {
                 natus_this_typedefs( generator ) ;
 
             private:
+
+                static natus::ntd::string_t generate_build_in_defintions( natus::ntd::string_cref_t code ) noexcept
+                {
+                    bool_t used_buildin[ size_t( natus::nsl::build_in::num_build_ins ) ] ;
+                    for( size_t i = 0; i < size_t( natus::nsl::build_in::num_build_ins ); ++i ) 
+                        used_buildin[ i ] = false ;
+
+                    // check buildin exists
+                    {
+                        natus::ntd::string_t last_string ;
+
+                        size_t p0 = 0 ;
+                        size_t p1 = code.find_first_of( ' ' ) ;
+                        while( p1 != std::string::npos )
+                        {
+                            auto const dist = p1 - p0 ;
+                            auto token = code.substr( p0, dist ) ;
+
+                            if( token == "(" )
+                            {
+                                natus::nsl::build_in const bi = natus::nsl::to_build_in( last_string ) ;
+                                if( bi != natus::nsl::build_in::unknown )
+                                {
+                                    used_buildin[ size_t( bi ) ] = true ;
+                                }
+                            }
+                            last_string = token ;
+
+                            p0 = p1 + 1 ;
+                            p1 = code.find_first_of( ' ', p0 ) ;
+                        }
+                    }
+                    
+                    natus::ntd::string_t defs ;
+
+                    // add building definition for return
+                    {
+                        for( size_t i = 0; i < size_t( natus::nsl::build_in::num_build_ins ); ++i )
+                        {
+                            if( used_buildin[ i ] ) defs += detail::convert_to_definition( natus::nsl::build_in( i ) ) ;
+                        }
+                    }
+
+                    return std::move( defs ) ;
+                }
+
+                static natus::ntd::string_t replace_buildin_symbols( natus::ntd::string_t code ) noexcept
+                {
+                    natus::ntd::string_t last_token ;
+
+                    size_t p0 = 0 ;
+                    size_t p1 = code.find_first_of( ' ' ) ;
+                    while( p1 != std::string::npos )
+                    {
+                        auto const dist = p1 - p0 ;
+
+                        auto token = code.substr( p0, dist ) ;
+                        if( token == "(" )
+                        {
+                            if( last_token == "texture" )
+                            {
+                                code.replace( p0 - last_token.size() - 1, last_token.size(), 
+                                    "texture" ) ;
+                            }
+                        }
+                        
+                        last_token = token ;
+                        
+                        p0 = p1 + 1 ;
+                        p1 = code.find_first_of( ' ', p0 ) ;
+                    }
+
+                    return std::move( code ) ;
+                }
 
                 static natus::ntd::string_t map_variable_type( natus::nsl::type_cref_t type ) noexcept
                 {
@@ -57,6 +147,27 @@ namespace natus
                     
                     for( auto const& m : __mappings ) if( m.first == t.ext ) return m.second ;
                     return __mappings[ 0 ].second ;
+                }
+
+                static natus::ntd::string_t replace_types( natus::ntd::string_t code ) noexcept
+                {
+                    size_t p0 = 0 ;
+                    size_t p1 = code.find_first_of( ' ' ) ;
+                    while( p1 != std::string::npos )
+                    {
+                        auto const dist = p1 - p0 ;
+
+                        auto token = code.substr( p0, dist ) ;
+                        natus::nsl::type_t const t = natus::nsl::to_type( token ) ;
+                        if( t.base != natus::nsl::type_base::unknown )
+                        {
+                            code.replace( p0, dist, this_t::map_variable_type( t ) ) ;
+                        }
+                        p0 = p1 + 1 ;
+                        p1 = code.find_first_of( ' ', p0 ) ;
+                    }
+
+                    return std::move( code ) ;
                 }
 
             public:
@@ -174,16 +285,47 @@ namespace natus
                         text << "// Declarations // " << std::endl ;
                         for( auto const & f : genable.frags )
                         {
-                            if( f.version != natus::nsl::language_class::glsl ) continue ;
-
-                            text << "FIX_HERE" << " " ;// f.sig.return_type << " " ;
+                            text << this_t::map_variable_type( f.sig.return_type ) << " " ;
                             text << f.sym_long.expand( "_" ) << " ( " ;
-                            //for( auto const& a : f.sig.args ) text << a + ", " ;
-                            text << "FIX_HERE" << " " ;
+                            for( auto const& a : f.sig.args )
+                            {
+                                text << this_t::map_variable_type( f.sig.return_type ) + ", " ;
+                            }
+                            
                             text.seekp( -2, std::ios_base::end ) ;
                             text << " ) ; " << std::endl ;
                         }
                         text << std::endl ;
+                    }
+
+                    // 3. print non-glsl buildin funcitons
+                    {
+                        text << "// Buildin Definitions // " << std::endl ;
+
+                        natus::ntd::vector< natus::ntd::string_t > merged ;
+                        for( auto const& f : genable.frags )
+                        {
+                            for( size_t i = 1; i < f.fragments.size(); ++i )
+                            {
+                                merged.emplace_back( f.fragments[ i ] ) ;
+                            }
+                        }
+
+                        for( auto const& s : genable.config.shaders )
+                        {
+                            for( auto const & c : s.codes )
+                            {
+                                for( auto const & l : c.lines )
+                                {
+                                    merged.emplace_back( l ) ;
+                                }
+                            }
+                        }
+
+                        for( auto const& s : merged )
+                        {
+                            text << this_t::generate_build_in_defintions( s ) ;
+                        }
                     }
 
                     // 3. make all functions with replaced symbols
@@ -191,11 +333,9 @@ namespace natus
                         text << "// Definitions // " << std::endl ;
                         for( auto const & f : genable.frags )
                         {
-                            if( f.version != natus::nsl::language_class::glsl ) continue ;
-
                             // start by replacing the function names' symbol itself
                             {
-                                auto const & frag = f.fragments[ 0 ] ;
+                                auto frag = this_t::replace_types( f.fragments[ 0 ] ) ;
 
                                 auto const p0 = frag.find( f.sig.name ) ;
                                 if( p0 == std::string::npos ) continue ;
@@ -206,7 +346,7 @@ namespace natus
                             // then lets go over every symbol in the code
                             for( size_t i=1; i<f.fragments.size(); ++i )
                             {
-                                text << f.fragments[i] ;
+                                text << this_t::replace_types( f.fragments[ i ] ) ;
                             }
                             text << std::endl ;
                         }
@@ -265,15 +405,23 @@ namespace natus
                         text << "// The shader // " << std::endl ;
                         for( auto const & c : s.codes )
                         {
-                            if( c.version != natus::nsl::language_class::glsl ) continue ;
-
                             for( auto const & l : c.lines )
                             {
-                                text << l << std::endl ;
+                                text << this_t::replace_types( l ) << std::endl ;
                             }
                         }
                     }
 
+                    // 6. rename buildin symbols
+                    {
+                        for( auto & c : s.codes )
+                        {
+                            for( auto & l : c.lines )
+                            {
+                                this_t::replace_buildin_symbols( l ) ;
+                            }
+                        }
+                    }
                         
                     // 6. post over the code and replace all dependencies and in/out
                     {

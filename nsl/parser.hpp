@@ -137,13 +137,12 @@ namespace natus
                         natus::nsl::parse::config_t::shader s ;
                         s.type = token[ 1 ] ;
 
-                        natus::nsl::parse::config_t::code cod ;
-                        bool_t in_shader = false ;
+                        
                         while( true )
                         {
                             token = this_t::tokenize( *++iter ) ;
 
-                            if( token.back() == ";" && !in_shader )
+                            if( token.back() == ";" )
                             {
                                 natus::nsl::parse::config_t::variable v ;
                                 v.line = *iter ;
@@ -164,26 +163,27 @@ namespace natus
                                 
                                 continue ;
                             }
-
-                            else if( token[0] == "open" && token[1] == "shader" )
+                            // this should be a function
+                            else if( *( iter + 1 ) == "{" )
                             {
-                                in_shader = true ;
-                                cod.lines.clear() ;
+                                natus::nsl::parse::config_t::code cod ;
+                                cod.versions.emplace_back( "nsl" ) ;
+
+                                size_t ilevel = 0 ;
                                 
+                                while( true )
+                                {
+                                    if( *iter == "{" ) ++ilevel ;
+                                    else if( *iter == "}" ) --ilevel ;
 
-                                for( size_t i = 2; i < token.size(); ++i )
-                                    cod.versions.emplace_back( token[ i ] ) ;
-                            }
+                                    if( *iter == "}" && ilevel == 0 )
+                                        break ;
 
-                            else if( token[ 0 ] == "close" && token[ 1 ] == "shader" )
-                            {
-                                in_shader = false ;
-                                s.codes.emplace_back( std::move( cod ) ) ;
-                            }
-
-                            else if( in_shader )
-                            {
+                                    cod.lines.emplace_back( *iter++ ) ;
+                                }
                                 cod.lines.emplace_back( *iter ) ;
+                                
+                                s.codes.emplace_back( std::move( cod ) ) ;
                             }
 
                             if( token[ 0 ] == "close" && token[ 1 ] == s.type )
@@ -511,12 +511,20 @@ namespace natus
                     {
                         if( *iter == "(" )
                         {
+                            size_t level = 0 ;
                             auto iter2 = --iter + 1 ;
-                            while( *iter2 != ")" )
+                            do
                             {
+                                if( *iter2 == "(" ) ++level ;
+                                else if( *iter2 == ")" ) --level ;
+                                
+                                if( level == 0 ) break ;
+
                                 *iter += " " + *iter2 ;
                                 iter2 = ss.erase( iter2 ) ;
-                            }
+                                
+                            } while( true ) ;
+
                             *iter += " )" ;
                             iter2 = ss.erase( iter2 ) ;
 
@@ -533,6 +541,18 @@ namespace natus
                         {
                             iter = --ss.erase( iter ) ;
                             *iter += " ;" ;
+                        }
+                    }
+                }
+
+                // 3. merge ) and next line
+                {
+                    for( auto iter = ss.begin(); iter != ss.end(); ++iter )
+                    {
+                        if( (*iter).back() == ')' && *(iter + 1) != "{" )
+                        {
+                            *iter += " " + *(iter+1) ;
+                            iter = ss.erase( ++iter ) ;
                         }
                     }
                 }
