@@ -195,8 +195,6 @@ namespace natus
                         text << "// Declarations // " << std::endl ;
                         for( auto const& f : genable.frags )
                         {
-                            if( f.version != natus::nsl::language_class::hlsl ) continue ;
-
                             text << "FIX_HERE" << " " ; // f.sig.return_type << " " ;
                             text << f.sym_long.expand( "_" ) << " ( " ;
                             size_t i = 0 ;
@@ -213,8 +211,6 @@ namespace natus
                         text << "// Definitions // " << std::endl ;
                         for( auto const& f : genable.frags )
                         {
-                            if( f.version != natus::nsl::language_class::hlsl ) continue ;
-
                             // start by replacing the function names' symbol itself
                             {
                                 auto const& frag = f.fragments[ 0 ] ;

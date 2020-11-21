@@ -7,7 +7,7 @@
 #include "ast.hpp"
 #include "symbol_table.hpp"
 #include "parser_structs.hpp"
-#include "function_signature_analyser.hpp"
+#include "function_declaration_analyser.hpp"
 
 #include <natus/log/global.h>
 #include <natus/ntd/vector.hpp>
@@ -68,6 +68,7 @@ namespace natus
 
                 {
                     auto s1 = filter_library_statements( statements_t( statements ) ) ;
+                    s1 = this_t::transform_code( std::move( s1 ) ) ;
                     doc.libraries = analyse_libraries( std::move( s1 ) ) ;
                 }
                 {
@@ -316,13 +317,13 @@ namespace natus
 
                             // make shader per function symbol 
                             {
-                                natus::nsl::parse::library_t::shader shd ;
-                                shd.versions.emplace_back( "nsl" ) ;
-                                for( size_t j = beg; j <= i; ++j )
+                                natus::nsl::parse::library_t::lib_function shd ;
+                                shd.sig = ss[ beg ] ;
+                                for( size_t j = beg+2; j < i; ++j )
                                 {
-                                    shd.fragments.emplace_back( ss[ j ] ) ;
+                                    shd.body.emplace_back( ss[ j ] ) ;
                                 }
-                                lib.shaders.emplace_back( std::move( shd ) ) ;
+                                lib.functions.emplace_back( std::move( shd ) ) ;
                             }
                         }
                         // must be a variable
@@ -353,6 +354,111 @@ namespace natus
                 return std::move( libs ) ;
             }
 
+            natus::nsl::parse::libraries_rref_t transform_code( natus::nsl::parse::libraries_rref_t libs ) const
+            {
+                // operators
+                // * / + - = 
+                // *= /= += -= 
+                // < > 
+                // <= >= != ==
+                // << >> 
+                // { } ( ) , ; .
+
+                struct repl
+                {
+                    natus::ntd::string_t what ;
+                    natus::ntd::string_t with ;
+                };
+
+                natus::ntd::vector< repl > repls = { 
+                    { "*", "mul" },
+                    { "/", "div" },
+                    { "+", "add" },
+                    { "-", "sub" },
+                    //{ ">>", "rs" },
+                    //{ "<<", "ls" },
+                } ;
+
+                auto is_stop = [&] ( char const t, size_t const l )
+                {
+                    if( l == size_t( -1 ) )  return true ;
+                    if( l != 0 ) return false ;
+                    if( t == '*' || t == '/' || t == '+' || t == '-' || 
+                        t == '=' || t == ';' || t == ',' || t == '>' || t == '<' ) return true ;
+                    return false ;
+                } ;
+
+                for( auto& l : libs )
+                {
+                    for( auto& f : l.functions )
+                    {
+                        for( auto const& r : repls )
+                        {
+                            for( auto& line : f.body )
+                            {
+                                size_t off = 0 ;
+                                while( true )
+                                {
+                                    size_t const p0 = line.find_first_of( r.what, off ) ;
+                                    if( p0 == std::string::npos ) break ;
+
+                                    natus::ntd::string_t arg0, arg1 ;
+                                    
+                                    size_t beg = 0 ;
+                                    size_t end = 0 ;
+
+                                    // arg 0, left of what
+                                    {
+                                        size_t level = 0 ;
+                                        size_t const cut = p0 - 1 ;
+                                        size_t p1 = p0 ;
+                                        while( --p1 != size_t(-1) )
+                                        {
+                                            if( line[ p1 ] == ')' ) ++level ;
+                                            else if( line[ p1 ] == '(' ) --level ;
+
+                                            if( is_stop( line[ p1 ], level ) ) break ;
+                                        }
+                                        arg0 = line.substr( p1+2, (cut) - (p1+2) ) ;
+                                        beg = p1 + 2 ;
+                                    }
+
+                                    // arg1, right of what
+                                    {
+                                        size_t level = 0 ;
+                                        size_t const cut = p0 + 2 ;
+
+                                        size_t p1 = p0 ;
+                                        while( ++p1 != line.size() )
+                                        {
+                                            if( line[ p1 ] == '(' ) ++level ;
+                                            else if( line[ p1 ] == ')' ) --level ;
+
+                                            if( is_stop( line[ p1 ], level ) ) break ;
+                                        }
+                                        arg1 = line.substr( cut, (p1-1) - cut ) ;
+                                        end = p1 ;
+                                    }
+
+                                    line = line.replace( beg, end - beg, 
+                                        r.with + " ( " + arg0 + " , " + arg1 + " ) " ) ;
+
+                                    // find another
+                                    off = p0 + 1 ;
+                                }
+                            }
+
+                            for( auto iter = f.body.begin(); iter != f.body.end(); ++iter )
+                            {
+
+                            }
+                        }
+                    }
+                }
+
+                return std::move( libs ) ;
+            }
+
             natus::nsl::post_parse::libraries_t analyse_libraries( natus::nsl::parse::libraries_rref_t libs ) const noexcept
             {
                 natus::nsl::post_parse::libraries_t lib_ret ;
@@ -369,7 +475,7 @@ namespace natus
                     // - for referenceable symbols like functions
                     // - for dependable symbols like function or variables
                     // - also flattens by language class
-                    for( auto& shd : lib.shaders )
+                    for( auto& shd : lib.functions )
                     {
                         fragment s ;
 
@@ -380,22 +486,95 @@ namespace natus
 
                         // symbol/function name/signature
                         {
-                            auto const token = this_t::tokenize( shd.fragments[ 0 ] ) ;
-                            s.sig = natus::nsl::function_signature_analyser( token ).process() ;
+                            auto const token = this_t::tokenize( shd.sig ) ;
+                            s.sig = natus::nsl::function_declaration_analyser( token ).process() ;
                             s.sym_long += s.sig.name ;
                         }
+
                         // this symbol depending on
                         {
-                            for( auto const& f : shd.fragments )
+                            for( auto const& f : shd.body )
                             {
                                 s.deps = natus::nsl::symbol_t::merge(
                                     std::move( s.deps ), natus::nsl::symbol_t::find_all_symbols( "nsl.", f ) ) ;
                             }
                         }
-                        s.fragments = shd.fragments ;
-                        s.version = natus::nsl::to_language_class( "nsl" ) ;
+
+                        #if 0
+                        // find all depending function symbols
+                        {
+                            using dep_signature_t = natus::nsl::post_parse::library_t::fragment_t::dep_signature_t ;
+                            for( size_t i=1; i<shd.fragments.size(); ++i )
+                            {
+                                auto const& f = shd.fragments[ i ] ;
+
+                                auto token = this_t::tokenize( f ) ;
+                                for( auto iter = token.begin(); iter < token.end(); ++iter )
+                                {
+                                    if( *iter != "(" ) continue ;
+
+                                    dep_signature_t ds ;
+
+                                    // previous symbol must be name
+                                    {
+                                        auto iter_prev = iter - 1 ;
+
+                                        if( iter_prev->find( '+' ) != std::string::npos ) continue ;
+                                        if( iter_prev->find( '-' ) != std::string::npos ) continue ;
+                                        if( iter_prev->find( '*' ) != std::string::npos ) continue ;
+                                        if( iter_prev->find( '/' ) != std::string::npos ) continue ;
+                                        if( iter_prev->find( '=' ) != std::string::npos ) continue ;
+                                        if( iter_prev->find( '<' ) != std::string::npos ) continue ;
+                                        if( iter_prev->find( '>' ) != std::string::npos ) continue ;
+                                        if( iter_prev->find( "if" ) != std::string::npos ) continue ;
+                                        if( iter_prev->find( "for" ) != std::string::npos ) continue ;
+                                        if( iter_prev->find( "while" ) != std::string::npos ) continue ;
+                                        if( iter_prev->find( ',' ) != std::string::npos ) continue ;
+                                        if( iter_prev->find( '(' ) != std::string::npos ) continue ;
+                                        if( iter_prev->find( ')' ) != std::string::npos ) continue ;
+                                        ds.name = *iter_prev ;
+                                    }
+
+                                    // find end and all arg
+                                    {
+                                        size_t level = 0 ;
+
+                                        auto beg = ++iter ;
+                                        while( true )
+                                        {
+                                            if( *iter == "(" ) ++level ;
+                                            else if( *iter == ")" && level != 0 ) --level ;
+                                            else if( (*iter == "," && level == 0 ) || (*iter == ")" && level == 0) )
+                                            {
+                                                natus::ntd::string_t arg ;
+                                                while( beg != iter )
+                                                {
+                                                    arg += *beg++ ;
+                                                }
+                                                ++beg ;
+                                                
+                                                {
+                                                    dep_signature_t sig_arg ;
+                                                    sig_arg.name = arg ;
+                                                    ds.args.emplace_back( std::move( sig_arg ) ) ;
+                                                }
+
+                                                if( *iter == ")" ) break ;
+                                            }
+
+                                            ++iter ;
+                                        }
+                                        
+                                    }
+                                    
+                                }
+                                
+                            }
+                        }
+                        #endif
+
+                        s.fragments = shd.body ;
                         cur_lib.fragments.emplace_back( std::move( s ) ) ;
-                        
                     }
 
                     // process variable symbols
@@ -541,6 +720,12 @@ namespace natus
                         {
                             iter = --ss.erase( iter ) ;
                             *iter += " ;" ;
+
+                            while( *( iter - 1 ) != "{" && ( iter - 1 )->find( ';' ) == std::string::npos )
+                            {
+                                *( iter - 1 ) += " " + *iter ;
+                                iter = ss.erase( iter ) ;
+                            }
                         }
                     }
                 }

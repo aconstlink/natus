@@ -20,6 +20,7 @@ namespace natus
             {
                 static natus::ntd::string_t const __build_in_defs[] =
                 {
+                    "MUL_MISSING_HERE"
                     "",
                     "float pulse( float a, float b, float x ){return step( a, x ) - step( b, x ) ;} \n",
                     "",

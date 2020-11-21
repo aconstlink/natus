@@ -305,6 +305,7 @@ namespace natus
         enum class build_in
         {
             unknown,
+            mul,
             pulse,
             step,
             texture,
@@ -313,7 +314,8 @@ namespace natus
 
         static build_in to_build_in( natus::ntd::string_cref_t s ) noexcept
         {
-            if( s == "pulse" ) return natus::nsl::build_in::pulse ;
+            if( s == "mul" ) return natus::nsl::build_in::mul ;
+            else if( s == "pulse" ) return natus::nsl::build_in::pulse ;
             else if( s == "step" ) return natus::nsl::build_in::step ;
             else if( s == "texture" ) return natus::nsl::build_in::texture ;
 

@@ -51,12 +51,12 @@ namespace natus
 
             struct library
             {
-                struct shader
+                struct lib_function
                 {
-                    natus::ntd::vector< natus::ntd::string_t > versions ;
-                    natus::ntd::vector< natus::ntd::string_t > fragments ;
+                    natus::ntd::string_t sig ;
+                    natus::ntd::vector< natus::ntd::string_t > body ;
                 };
-                natus::ntd::vector< shader > shaders ;
+                natus::ntd::vector< lib_function > functions ;
                 
                 struct variable
                 {
@@ -114,9 +114,9 @@ namespace natus
             {
                 struct fragment
                 {
-                    natus::nsl::language_class version ;
                     natus::ntd::vector< natus::ntd::string_t > fragments ;
 
+                    // the fragments function signature
                     struct signature
                     {
                         struct arg
@@ -153,12 +153,20 @@ namespace natus
 
                     symbols_t deps ;
 
+                    // the signature of all used function symbols in the fragment
+                    struct dep_signature
+                    {
+                        natus::ntd::string_t name ;
+                        natus::ntd::vector< dep_signature > args ;
+                    };
+                    natus_typedef( dep_signature ) ;
+                    natus::ntd::vector< dep_signature > dep_sigs ;
+
                     natus::nsl::symbol_t sym_long ;
 
                     bool_t operator == ( fragment const & other ) const 
                     {
                         if( sym_long != other.sym_long ) return false ;
-                        if( version != other.version ) return false ;
                         return sig == other.sig ;
                     }
                 };

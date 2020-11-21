@@ -16,6 +16,7 @@ set( sources
     "generator_structs.hpp"
     "symbol.hpp"
     "dependency_resolver.hpp"
+    "function_declaration_analyser.hpp"
     "function_signature_analyser.hpp"
 
     "api/glsl/generator.hpp"
