@@ -372,13 +372,13 @@ namespace natus
                 };
 
                 natus::ntd::vector< repl > repls = { 
-                    //{ "=", "a" },
-                    { "+=", "aa" },
-                    { "-=", "sa" },
-                    { "*=", "ma" },
-                    { "/=", "da" },
-                    { "<=", "lt" },
-                    { ">=", "gt" },
+                    //{ "=", "a" }, // declaration need to be handled first. float_t c = ...
+                    { "+=", "aass" },
+                    { "-=", "sass" },
+                    { "*=", "mass" },
+                    { "/=", "dass" },
+                    { "<=", "leq" },
+                    { ">=", "geq" },
                     { "*", "mul" },
                     { "/", "div" },
                     { "+", "add" },
@@ -425,6 +425,7 @@ namespace natus
 
                                     if( is_stop( line[ p1 ], level ) ) break ;
                                 }
+                                // if the beginning is hit, there is one position missing.
                                 if( p1 == size_t( -1 ) ) --p1 ;
                                 arg0 = line.substr( p1 + 2, ( cut ) -( p1 + 2 ) ) ;
                                 beg = p1 + 2 ;
