@@ -375,8 +375,8 @@ namespace natus
                     { "/", "div" },
                     { "+", "add" },
                     { "-", "sub" },
-                    //{ ">>", "rs" },
-                    //{ "<<", "ls" },
+                    { ">>", "rs" },
+                    { "<<", "ls" }
                 } ;
 
                 auto is_stop = [&] ( char const t, size_t const l )
@@ -426,9 +426,9 @@ namespace natus
                                     // arg1, right of what
                                     {
                                         size_t level = 0 ;
-                                        size_t const cut = p0 + 2 ;
+                                        size_t const cut = p0 + r.what.size() + 1 ;
 
-                                        size_t p1 = p0 ;
+                                        size_t p1 = p0 + r.what.size() - 1 ;
                                         while( ++p1 != line.size() )
                                         {
                                             if( line[ p1 ] == '(' ) ++level ;
