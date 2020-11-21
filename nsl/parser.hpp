@@ -59,6 +59,7 @@ namespace natus
                 auto statements = this_t::replace_open_close( this_t::scan( std::move( file ) ) ) ;
                 
                 statements = this_t::repackage( std::move( statements ) ) ;
+                statements = this_t::replace_operators( std::move( statements ) ) ;
 
                 // with the statements we can do:
                 // 1. sanity checks here possible
@@ -68,7 +69,7 @@ namespace natus
 
                 {
                     auto s1 = filter_library_statements( statements_t( statements ) ) ;
-                    s1 = this_t::transform_code( std::move( s1 ) ) ;
+                    
                     doc.libraries = analyse_libraries( std::move( s1 ) ) ;
                 }
                 {
@@ -354,7 +355,7 @@ namespace natus
                 return std::move( libs ) ;
             }
 
-            natus::nsl::parse::libraries_rref_t transform_code( natus::nsl::parse::libraries_rref_t libs ) const
+            statements_t replace_operators( statements_rref_t ss ) const
             {
                 // operators
                 // * / + - = 
@@ -371,12 +372,21 @@ namespace natus
                 };
 
                 natus::ntd::vector< repl > repls = { 
+                    //{ "=", "a" },
+                    { "+=", "aa" },
+                    { "-=", "sa" },
+                    { "*=", "ma" },
+                    { "/=", "da" },
+                    { "<=", "lt" },
+                    { ">=", "gt" },
                     { "*", "mul" },
                     { "/", "div" },
                     { "+", "add" },
                     { "-", "sub" },
                     { ">>", "rs" },
-                    { "<<", "ls" }
+                    { "<<", "ls" },
+                    { "<", "lt" },
+                    { ">", "gt" }
                 } ;
 
                 auto is_stop = [&] ( char const t, size_t const l )
@@ -388,75 +398,66 @@ namespace natus
                     return false ;
                 } ;
 
-                for( auto& l : libs )
+                for( auto const& r : repls )
                 {
-                    for( auto& f : l.functions )
+                    for( auto& line : ss )
                     {
-                        for( auto const& r : repls )
+                        size_t off = 0 ;
+                        while( true )
                         {
-                            for( auto& line : f.body )
+                            size_t const p0 = line.find( r.what, off ) ;
+                            if( p0 == std::string::npos ) break ;
+
+                            natus::ntd::string_t arg0, arg1 ;
+
+                            size_t beg = 0 ;
+                            size_t end = 0 ;
+
+                            // arg 0, left of what
                             {
-                                size_t off = 0 ;
-                                while( true )
+                                size_t level = 0 ;
+                                size_t const cut = p0 - 1 ;
+                                size_t p1 = p0 ;
+                                while( --p1 != size_t( -1 ) )
                                 {
-                                    size_t const p0 = line.find_first_of( r.what, off ) ;
-                                    if( p0 == std::string::npos ) break ;
+                                    if( line[ p1 ] == ')' ) ++level ;
+                                    else if( line[ p1 ] == '(' ) --level ;
 
-                                    natus::ntd::string_t arg0, arg1 ;
-                                    
-                                    size_t beg = 0 ;
-                                    size_t end = 0 ;
-
-                                    // arg 0, left of what
-                                    {
-                                        size_t level = 0 ;
-                                        size_t const cut = p0 - 1 ;
-                                        size_t p1 = p0 ;
-                                        while( --p1 != size_t(-1) )
-                                        {
-                                            if( line[ p1 ] == ')' ) ++level ;
-                                            else if( line[ p1 ] == '(' ) --level ;
-
-                                            if( is_stop( line[ p1 ], level ) ) break ;
-                                        }
-                                        arg0 = line.substr( p1+2, (cut) - (p1+2) ) ;
-                                        beg = p1 + 2 ;
-                                    }
-
-                                    // arg1, right of what
-                                    {
-                                        size_t level = 0 ;
-                                        size_t const cut = p0 + r.what.size() + 1 ;
-
-                                        size_t p1 = p0 + r.what.size() - 1 ;
-                                        while( ++p1 != line.size() )
-                                        {
-                                            if( line[ p1 ] == '(' ) ++level ;
-                                            else if( line[ p1 ] == ')' ) --level ;
-
-                                            if( is_stop( line[ p1 ], level ) ) break ;
-                                        }
-                                        arg1 = line.substr( cut, (p1-1) - cut ) ;
-                                        end = p1 ;
-                                    }
-
-                                    line = line.replace( beg, end - beg, 
-                                        r.with + " ( " + arg0 + " , " + arg1 + " ) " ) ;
-
-                                    // find another
-                                    off = p0 + 1 ;
+                                    if( is_stop( line[ p1 ], level ) ) break ;
                                 }
+                                if( p1 == size_t( -1 ) ) --p1 ;
+                                arg0 = line.substr( p1 + 2, ( cut ) -( p1 + 2 ) ) ;
+                                beg = p1 + 2 ;
                             }
 
-                            for( auto iter = f.body.begin(); iter != f.body.end(); ++iter )
+                            // arg1, right of what
                             {
+                                size_t level = 0 ;
+                                size_t const cut = p0 + r.what.size() + 1 ;
 
+                                size_t p1 = p0 + r.what.size() - 1 ;
+                                while( ++p1 != line.size() )
+                                {
+                                    if( line[ p1 ] == '(' ) ++level ;
+                                    else if( line[ p1 ] == ')' ) --level ;
+
+                                    if( is_stop( line[ p1 ], level ) ) break ;
+                                }
+                                arg1 = line.substr( cut, ( p1 - 1 ) - cut ) ;
+                                end = p1 ;
                             }
+
+                            line = line.replace( beg, end - beg,
+                                r.with + " ( " + arg0 + " , " + arg1 + " ) " ) ;
+
+                            // find another
+                            off = p0 + 1 ;
                         }
                     }
+
                 }
 
-                return std::move( libs ) ;
+                return std::move( ss ) ;
             }
 
             natus::nsl::post_parse::libraries_t analyse_libraries( natus::nsl::parse::libraries_rref_t libs ) const noexcept
@@ -721,7 +722,10 @@ namespace natus
                             iter = --ss.erase( iter ) ;
                             *iter += " ;" ;
 
-                            while( *( iter - 1 ) != "{" && ( iter - 1 )->find( ';' ) == std::string::npos )
+                            while( *( iter - 1 ) != "{" && 
+                                *( iter - 1 ) != "}" &&
+                                ( iter - 1 )->find( ';' ) == std::string::npos &&
+                                ( iter - 1 )->find( "open library" ) == std::string::npos )
                             {
                                 *( iter - 1 ) += " " + *iter ;
                                 iter = ss.erase( iter ) ;
