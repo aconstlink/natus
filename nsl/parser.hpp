@@ -364,98 +364,130 @@ namespace natus
                 // <= >= != ==
                 // << >> 
                 // { } ( ) , ; .
-
+                
                 struct repl
                 {
                     natus::ntd::string_t what ;
                     natus::ntd::string_t with ;
                 };
 
-                natus::ntd::vector< repl > repls = { 
-                    //{ "=", "a" }, // declaration need to be handled first. float_t c = ...
-                    { "+=", "aass" },
-                    { "-=", "sass" },
-                    { "*=", "mass" },
-                    { "/=", "dass" },
-                    { "<=", "leq" },
-                    { ">=", "geq" },
-                    { "*", "mul" },
-                    { "/", "div" },
-                    { "+", "add" },
-                    { "-", "sub" },
-                    { ">>", "rs" },
-                    { "<<", "ls" },
-                    { "<", "lt" },
-                    { ">", "gt" }
-                } ;
-
-                auto is_stop = [&] ( char const t, size_t const l )
+                typedef std::function< bool_t ( char const t, size_t const l ) > is_stop_t ;
+                auto do_replacement = [] ( natus::ntd::string_ref_t line, repl const & r, is_stop_t is_stop )
                 {
-                    if( l == size_t( -1 ) )  return true ;
-                    if( l != 0 ) return false ;
-                    if( t == '*' || t == '/' || t == '+' || t == '-' || 
-                        t == '=' || t == ';' || t == ',' || t == '>' || t == '<' ) return true ;
-                    return false ;
-                } ;
-
-                for( auto const& r : repls )
-                {
-                    for( auto& line : ss )
+                    size_t off = 0 ;
+                    while( true )
                     {
-                        size_t off = 0 ;
-                        while( true )
+                        size_t const p0 = line.find( r.what, off ) ;
+                        if( p0 == std::string::npos ) break ;
+
+                        natus::ntd::string_t arg0, arg1 ;
+
+                        size_t beg = 0 ;
+                        size_t end = 0 ;
+
+                        // arg 0, left of what
                         {
-                            size_t const p0 = line.find( r.what, off ) ;
-                            if( p0 == std::string::npos ) break ;
-
-                            natus::ntd::string_t arg0, arg1 ;
-
-                            size_t beg = 0 ;
-                            size_t end = 0 ;
-
-                            // arg 0, left of what
+                            size_t level = 0 ;
+                            size_t const cut = p0 - 1 ;
+                            size_t p1 = p0 ;
+                            while( --p1 != size_t( -1 ) )
                             {
-                                size_t level = 0 ;
-                                size_t const cut = p0 - 1 ;
-                                size_t p1 = p0 ;
-                                while( --p1 != size_t( -1 ) )
-                                {
-                                    if( line[ p1 ] == ')' ) ++level ;
-                                    else if( line[ p1 ] == '(' ) --level ;
+                                if( line[ p1 ] == ')' ) ++level ;
+                                else if( line[ p1 ] == '(' ) --level ;
 
-                                    if( is_stop( line[ p1 ], level ) ) break ;
-                                }
-                                // if the beginning is hit, there is one position missing.
-                                if( p1 == size_t( -1 ) ) --p1 ;
-                                arg0 = line.substr( p1 + 2, ( cut ) -( p1 + 2 ) ) ;
-                                beg = p1 + 2 ;
+                                if( is_stop( line[ p1 ], level ) ) break ;
                             }
+                            // if the beginning is hit, there is one position missing.
+                            if( p1 == size_t( -1 ) ) --p1 ;
+                            arg0 = line.substr( p1 + 2, ( cut ) -( p1 + 2 ) ) ;
+                            beg = p1 + 2 ;
+                        }
 
-                            // arg1, right of what
+                        // arg1, right of what
+                        {
+                            size_t level = 0 ;
+                            size_t const cut = p0 + r.what.size() + 1 ;
+
+                            size_t p1 = p0 + r.what.size() - 1 ;
+                            while( ++p1 != line.size() )
                             {
-                                size_t level = 0 ;
-                                size_t const cut = p0 + r.what.size() + 1 ;
+                                if( line[ p1 ] == '(' ) ++level ;
+                                else if( line[ p1 ] == ')' ) --level ;
 
-                                size_t p1 = p0 + r.what.size() - 1 ;
-                                while( ++p1 != line.size() )
-                                {
-                                    if( line[ p1 ] == '(' ) ++level ;
-                                    else if( line[ p1 ] == ')' ) --level ;
-
-                                    if( is_stop( line[ p1 ], level ) ) break ;
-                                }
-                                arg1 = line.substr( cut, ( p1 - 1 ) - cut ) ;
-                                end = p1 ;
+                                if( is_stop( line[ p1 ], level ) ) break ;
                             }
+                            arg1 = line.substr( cut, ( p1 - 1 ) - cut ) ;
+                            end = p1 ;
+                        }
 
-                            line = line.replace( beg, end - beg,
-                                r.with + " ( " + arg0 + " , " + arg1 + " ) " ) ;
+                        line = line.replace( beg, end - beg,
+                            r.with + " ( " + arg0 + " , " + arg1 + " ) " ) ;
 
-                            // find another
-                            off = p0 + 1 ;
+                        // find another
+                        off = p0 + 1 ;
+                    }
+                } ;
+
+                // replacing operators #1
+                {
+                    natus::ntd::vector< repl > repls = 
+                    {
+                        //{ "=", "ass" }, // declaration need to be handled first. float_t c = ...
+                        { "*=", "mass" },
+                        { "/=", "dass" },
+                        { "+=", "aass" },
+                        { "-=", "sass" },
+                        { "<=", "leq" },
+                        { ">=", "geq" }
+                    } ;
+
+                    auto is_stop = [&] ( char const t, size_t const l )
+                    {
+                        if( l == size_t( -1 ) )  return true ;
+                        if( l != 0 ) return false ;
+                        if( t == ';' || t == ',' ) return true ;
+                        return false ;
+                    } ;
+
+                    for( auto const& r : repls )
+                    {
+                        for( auto& line : ss )
+                        {
+                            do_replacement( line, r, is_stop ) ;
                         }
                     }
+                }
 
+                // replacing operators #2
+                {
+                    natus::ntd::vector< repl > repls = 
+                    {
+                        { "*", "mul" },
+                        { "/", "div" },
+                        { "+", "add" },
+                        { "-", "sub" },
+                        { ">>", "rs" },
+                        { "<<", "ls" },
+                        { "<", "lt" },
+                        { ">", "gt" }
+                    } ;
+
+                    auto is_stop = [&] ( char const t, size_t const l )
+                    {
+                        if( l == size_t( -1 ) )  return true ;
+                        if( l != 0 ) return false ;
+                        if( t == '*' || t == '/' || t == '+' || t == '-' ||
+                            t == '=' || t == ';' || t == ',' || t == '>' || t == '<' ) return true ;
+                        return false ;
+                    } ;
+
+                    for( auto const& r : repls )
+                    {
+                        for( auto& line : ss )
+                        {
+                            do_replacement( line, r, is_stop ) ;
+                        }
+                    }
                 }
 
                 return std::move( ss ) ;
