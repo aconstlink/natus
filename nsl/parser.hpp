@@ -917,7 +917,8 @@ namespace natus
             {
                 for( auto iter = s.begin(); iter != s.end(); ++iter )
                 {
-                    if( *iter == '+' || *iter == '-' || *iter == '<' || *iter == '>' || *iter == '/' )
+                    if( *iter == '+' || *iter == '-' || *iter == '*' || *iter == '/' || 
+                        *iter == '<' || *iter == '>' || *iter == '/' )
                     {
                         auto iter_next = iter + 1 ;
                         auto iter_last = iter - 1 ;
