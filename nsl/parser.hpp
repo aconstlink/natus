@@ -433,10 +433,10 @@ namespace natus
                     natus::ntd::vector< repl > repls = 
                     {
                         //{ "=", "ass" }, // declaration need to be handled first. float_t c = ...
-                        { "*=", "mass" },
-                        { "/=", "dass" },
-                        { "+=", "aass" },
-                        { "-=", "sass" },
+                        { "*=", "mul_asg" },
+                        { "/=", "div_asg" },
+                        { "+=", "add_asg" },
+                        { "-=", "sub_asg" },
                         { "<=", "leq" },
                         { ">=", "geq" }
                     } ;
