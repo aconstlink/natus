@@ -81,5 +81,49 @@ namespace natus
             }
         };
         natus_typedef( generated_code ) ;
+
+        struct repl_sym
+        {
+            natus::ntd::string_t what ;
+            std::function< natus::ntd::string_t ( natus::ntd::vector< natus::ntd::string_t > const& ) > repl ;
+        } ;
+        natus_typedef( repl_sym ) ;
+        natus_typedefs( natus::ntd::vector< repl_sym >, repl_syms ) ;
+
+        static natus::ntd::string_t perform_repl( natus::ntd::string_t s, repl_syms_cref_t repls ) noexcept
+        {
+            for( auto const& repl : repls )
+            {
+                size_t p0 = s.find( repl.what ) ;
+                while( p0 != std::string::npos )
+                {
+                    if( (s[p0-1] != ' ') || (s[p0+repl.what.size()] != ' ') ) 
+                    {
+                        p0 = s.find( repl.what, p0 + repl.what.size() ) ;
+                        continue ;
+                    }
+
+                    natus::ntd::vector< natus::ntd::string_t > args ;
+
+                    size_t level = 0 ;
+                    size_t beg = p0 + repl.what.size() + 3 ;
+                    for( size_t i = beg; i < s.size(); ++i )
+                    {
+                        if( level == 0 && s[ i ] == ',' ||
+                            level == 0 && s[ i ] == ')' )
+                        {
+                            args.emplace_back( s.substr( beg, ( i - 1 ) - beg ) ) ;
+                            beg = i + 2 ;
+                        }
+
+                        if( s[ i ] == '(' ) ++level ;
+                        else if( s[ i ] == ')' ) --level ;
+                        if( level == size_t( -1 ) ) break ;
+                    }
+                    p0 = s.replace( p0, ( --beg ) - p0, repl.repl( args ) ).find( repl.what ) ;
+                }
+            }
+            return std::move( s ) ;
+        }
     }
 }

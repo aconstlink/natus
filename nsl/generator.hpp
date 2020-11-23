@@ -88,7 +88,7 @@ namespace natus
                         shaders.emplace_back( shd ) ;
                     }
                 }
-
+                #if 0
                 // hlsl
                 {
                     auto const shds = natus::nsl::hlsl::generator_t().generate( _genable, mappings ) ;
@@ -97,7 +97,7 @@ namespace natus
                         shaders.emplace_back( shd ) ;
                     }
                 }
-
+                #endif
                 ret.shaders = std::move( shaders ) ;
 
                 return std::move( ret ) ;

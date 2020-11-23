@@ -10,7 +10,7 @@ namespace natus
     {
         class function_declaration_analyser
         {
-            using signature_t = natus::nsl::post_parse::library_t::fragment_t::signature_t ;
+            using signature_t = natus::nsl::signature_t ;
 
             natus::nsl::type_t return_type ;
             natus::ntd::string_t name ;
@@ -25,7 +25,7 @@ namespace natus
                 _tokens = tokens ;
             }
 
-            natus::nsl::post_parse::library_t::fragment_t::signature_t process( void_t ) noexcept
+            natus::nsl::signature_t process( void_t ) noexcept
             {
                 
                 signature_t s ;

@@ -14,6 +14,7 @@
 #include <natus/ntd/stack.hpp>
 
 #include <algorithm>
+#include <regex>
 
 namespace natus
 {
@@ -59,6 +60,7 @@ namespace natus
                 auto statements = this_t::replace_open_close( this_t::scan( std::move( file ) ) ) ;
                 
                 statements = this_t::repackage( std::move( statements ) ) ;
+                statements = this_t::replace_numbers( std::move( statements ) ) ;
                 statements = this_t::replace_operators( std::move( statements ) ) ;
 
                 // with the statements we can do:
@@ -69,7 +71,6 @@ namespace natus
 
                 {
                     auto s1 = filter_library_statements( statements_t( statements ) ) ;
-                    
                     doc.libraries = analyse_libraries( std::move( s1 ) ) ;
                 }
                 {
@@ -353,6 +354,17 @@ namespace natus
                 }
                 
                 return std::move( libs ) ;
+            }
+
+            statements_t replace_numbers( statements_rref_t ss ) const
+            {
+                for( auto & s : ss )
+                {
+                    s = std::regex_replace( s, std::regex( " ([0-9]+) "), " num_int ( $1 ) " ) ;
+                    s = std::regex_replace( s, std::regex( " ([0-9]+)u+ "), " num_uint ( $1 ) " ) ;
+                    s = std::regex_replace( s, std::regex( " ([0-9]+)\\.([0-9]+)f? "), " num_float ( $1 , $2 ) " ) ;
+                }
+                return std::move( ss ) ;
             }
 
             statements_t replace_operators( statements_rref_t ss ) const
@@ -758,7 +770,7 @@ namespace natus
                             while( *( iter - 1 ) != "{" && 
                                 *( iter - 1 ) != "}" &&
                                 ( iter - 1 )->find( ';' ) == std::string::npos &&
-                                ( iter - 1 )->find( "open library" ) == std::string::npos )
+                                ( iter - 1 )->find( "open " ) == std::string::npos )
                             {
                                 *( iter - 1 ) += " " + *iter ;
                                 iter = ss.erase( iter ) ;

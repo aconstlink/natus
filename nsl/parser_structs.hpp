@@ -116,40 +116,8 @@ namespace natus
                 {
                     natus::ntd::vector< natus::ntd::string_t > fragments ;
 
-                    // the fragments function signature
-                    struct signature
-                    {
-                        struct arg
-                        {
-                            natus::nsl::type_t type ;
-                            natus::ntd::string_t name ;
-                        };
-                        natus_typedef( arg ) ;
-
-                        natus::nsl::type_t return_type ;
-                        natus::ntd::string_t name ;
-                        natus::ntd::vector< arg_t > args ;
-
-                        bool_t operator == ( signature const & rhv ) const 
-                        {
-                            return !( *this != rhv ) ;
-                        }
-
-                        bool_t operator != ( signature const& rhv ) const
-                        {
-                            if( return_type != rhv.return_type ) return true ;
-                            if( name != rhv.name ) return true ;
-                            if( args.size() != rhv.args.size() ) return true ;
-
-                            for( size_t i = 0; i < args.size(); ++i )
-                            {
-                                if( args[ i ].type != rhv.args[ i ].type ) return true ;
-                            }
-                            return false ;
-                        }
-                    };
-                    natus_typedef( signature ) ;
-                    signature_t sig ;
+                    
+                    natus::nsl::signature_t sig ;
 
                     symbols_t deps ;
 
