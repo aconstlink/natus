@@ -67,6 +67,22 @@ namespace natus
                                 return  "( step ( " + args[ 0 ] + " , " + args[ 2 ] + " ) - " +
                                         "step ( " + args[ 1 ] + " , " + args[ 2 ] + " ) )" ;
                             }
+                        },
+                        {
+                            natus::ntd::string_t( "lt" ),
+                            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+                            {
+                                if( args.size() != 2 ) return "lt ( INVALID_ARGS ) " ;
+                                return args[ 0 ] + " < " + args[ 1 ] ;
+                            }
+                        },
+                        {
+                            natus::ntd::string_t( "gt" ),
+                            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+                            {
+                                if( args.size() != 2 ) return "gt ( INVALID_ARGS ) " ;
+                                return args[ 0 ] + " > " + args[ 1 ] ;
+                            }
                         }
                     } ;
 
