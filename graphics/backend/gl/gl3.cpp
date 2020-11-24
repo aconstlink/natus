@@ -183,6 +183,8 @@ struct gl3_backend::pimpl
             natus::graphics::ivariable_ptr_t var ;
         };
 
+        natus::ntd::vector< natus::graphics::variable_set_res_t > var_sets ;
+
         // user provided variable set
         natus::ntd::vector< std::pair<
             natus::graphics::variable_set_res_t,
@@ -1298,6 +1300,7 @@ struct gl3_backend::pimpl
             rconfigs[ oid ].name = obj.name() ;
             rconfigs[ oid ].var_sets_data.clear() ;
             rconfigs[ oid ].var_sets_texture.clear() ;
+            rconfigs[ oid ].var_sets.clear() ;
         }
 
         return oid ;
@@ -1341,6 +1344,22 @@ struct gl3_backend::pimpl
         {
             this_t::post_link_attributes( sconfig ) ;
             this_t::post_link_uniforms( sconfig ) ;
+        }
+
+        {
+            for( size_t i=0; i<rconfigs.size(); ++i )
+            {
+                auto & rd = rconfigs[i] ;
+
+                if( rd.shd_id != id ) continue ;
+                
+                rd.var_sets_data.clear() ;
+                rd.var_sets_texture.clear() ;
+
+                auto vs = std::move( rd.var_sets ) ;
+                for( auto& item : vs )
+                    this_t::connect( rd, item ) ;
+            }
         }
 
         return true ;
@@ -1707,7 +1726,7 @@ struct gl3_backend::pimpl
                 }
             }
         }
-
+        config.var_sets.emplace_back( vs ) ;
         config.var_sets_data.emplace_back( item_data ) ;
         config.var_sets_texture.emplace_back( item_tex ) ;
 
