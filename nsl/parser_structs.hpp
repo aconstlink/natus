@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include "api.h"
 #include "typedefs.h"
 #include "symbol.hpp"
 #include "enums.hpp"
@@ -173,7 +174,7 @@ namespace natus
             natus_typedef( library ) ;
             natus_typedefs( natus::ntd::vector< library_t >, libraries ) ;
 
-            struct document
+            struct NATUS_NSL_API document
             {
                 configs_t configs ;
                 libraries_t libraries ;

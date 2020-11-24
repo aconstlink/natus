@@ -1,7 +1,7 @@
 #pragma once
 
 #include "database.hpp"
-#include "generator.hpp"
+#include "generator.h"
 #include "parser_structs.hpp"
 #include "generator_structs.hpp"
 

@@ -6,7 +6,7 @@
 #include <natus/graphics/texture/image.hpp>
 #include <natus/math/vector/vector4.hpp>
 
-#include <natus/nsl/parser.hpp>
+#include <natus/nsl/parser.h>
 #include <natus/graphics/shader/nsl_bridge.hpp>
 
 using namespace natus::format ;

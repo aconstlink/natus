@@ -8,30 +8,26 @@ set( sources
 
     "database.hpp"
     "monitor.hpp"
-    "parser.hpp"
-    "ast.hpp"
+    "parser.h"
+    "parser.cpp"
     "typedefs.h"
     "symbol_table.hpp"
-    "generator.hpp"
+    "generator.h"
+    "generator.cpp"
     "generator_structs.hpp"
     "symbol.hpp"
     "dependency_resolver.hpp"
     "function_declaration_analyser.hpp"
     "function_signature_analyser.hpp"
 
-    "api/glsl/generator.hpp"
+    "api/glsl/generator.h"
+    "api/glsl/generator.cpp"
     "api/glsl/function_signature_analyser.hpp"
     "api/hlsl/function_signature_analyser.hpp"
-    "api/hlsl/generator.hpp"
+    "api/hlsl/generator.h"
+    "api/hlsl/generator.cpp"
 
     "parser_structs.hpp"
-    "ast/nodes.hpp"
-    "ast/interfaces.hpp"
-    "ast/components.hpp"
-    "ast/visitors/visitor.hpp"
-    "ast/visitors/gl3_generator.hpp"
-    "ast/visitors/es3_generator.hpp"
-    "ast/visitors/version_generator.hpp"
     )
 
 natus_vs_src_dir( sources )
