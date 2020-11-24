@@ -7,14 +7,14 @@
 #include "ast.hpp"
 #include "symbol_table.hpp"
 #include "parser_structs.hpp"
-#include "api/glsl/function_signature_analyser.hpp"
-#include "api/hlsl/function_signature_analyser.hpp"
+#include "function_declaration_analyser.hpp"
 
 #include <natus/log/global.h>
 #include <natus/ntd/vector.hpp>
 #include <natus/ntd/stack.hpp>
 
 #include <algorithm>
+#include <regex>
 
 namespace natus
 {
@@ -60,6 +60,8 @@ namespace natus
                 auto statements = this_t::replace_open_close( this_t::scan( std::move( file ) ) ) ;
                 
                 statements = this_t::repackage( std::move( statements ) ) ;
+                statements = this_t::replace_numbers( std::move( statements ) ) ;
+                statements = this_t::replace_operators( std::move( statements ) ) ;
 
                 // with the statements we can do:
                 // 1. sanity checks here possible
@@ -138,13 +140,12 @@ namespace natus
                         natus::nsl::parse::config_t::shader s ;
                         s.type = token[ 1 ] ;
 
-                        natus::nsl::parse::config_t::code cod ;
-                        bool_t in_shader = false ;
+                        
                         while( true )
                         {
                             token = this_t::tokenize( *++iter ) ;
 
-                            if( token.back() == ";" && !in_shader )
+                            if( token.back() == ";" )
                             {
                                 natus::nsl::parse::config_t::variable v ;
                                 v.line = *iter ;
@@ -165,26 +166,27 @@ namespace natus
                                 
                                 continue ;
                             }
-
-                            else if( token[0] == "open" && token[1] == "shader" )
+                            // this should be a function
+                            else if( *( iter + 1 ) == "{" )
                             {
-                                in_shader = true ;
-                                cod.lines.clear() ;
+                                natus::nsl::parse::config_t::code cod ;
+                                cod.versions.emplace_back( "nsl" ) ;
+
+                                size_t ilevel = 0 ;
                                 
+                                while( true )
+                                {
+                                    if( *iter == "{" ) ++ilevel ;
+                                    else if( *iter == "}" ) --ilevel ;
 
-                                for( size_t i = 2; i < token.size(); ++i )
-                                    cod.versions.emplace_back( token[ i ] ) ;
-                            }
+                                    if( *iter == "}" && ilevel == 0 )
+                                        break ;
 
-                            else if( token[ 0 ] == "close" && token[ 1 ] == "shader" )
-                            {
-                                in_shader = false ;
-                                s.codes.emplace_back( std::move( cod ) ) ;
-                            }
-
-                            else if( in_shader )
-                            {
+                                    cod.lines.emplace_back( *iter++ ) ;
+                                }
                                 cod.lines.emplace_back( *iter ) ;
+                                
+                                s.codes.emplace_back( std::move( cod ) ) ;
                             }
 
                             if( token[ 0 ] == "close" && token[ 1 ] == s.type )
@@ -266,9 +268,12 @@ namespace natus
 
                 natus::ntd::vector< natus::ntd::string_t > names ;
                 natus::nsl::parse::libraries_t libs ;
+                natus::ntd::stack< natus::nsl::parse::library_t, 10 > libs_stack ;
 
                 // current library
                 natus::nsl::parse::library_t lib ;
+
+                size_t level = size_t( 0 ) ;
 
                 bool_t in_shader = false ;
 
@@ -279,79 +284,260 @@ namespace natus
                     
                     if( token[0] == "open" && token[1] == "library" )
                     {
+                        libs_stack.push( lib ) ;
+
+                        lib = natus::nsl::parse::library_t() ;
                         names.emplace_back( token[ 2 ] ) ;
                         lib.names = names ;
+
+                        ++level ;
                     }
                     else if( token[0] == "close" && token[1] == "library" )
                     {
-                        names.pop_back() ;
+                        --level ;
                         libs.emplace_back( std::move( lib ) ) ;
-                        lib.names = names ;
-                    }
-                    else if( token[0] == "open" && token[1] == "shader" )
-                    {
-                        in_shader = true ;
-
-                        natus::nsl::parse::library_t::shader shd ;
                         
-                        for( size_t t = 2; t < token.size(); ++t ) shd.versions.emplace_back( token[ t ] ) ;
+                        lib = libs_stack.pop() ;
 
-                        if( shd.versions.empty() )
-                            shd.versions.emplace_back( "version_missing" ) ;
-
-                        while( true )
-                        {
-                            if( this_t::tokenize( ss[++i] )[ 0 ] == "close" ) break ;
-                            shd.fragments.emplace_back( ss[ i ] ) ;
-                        }
-                        --i ;
-
-                        // split shader with multiple symbols in multiple shaders
+                        names.pop_back() ;
+                    }
+                    // nsl shader / variable
+                    else
+                    {
+                        // is function
+                        if( token.back() != ";" && ss[i+1] == "{" )
                         {
                             size_t level = 0 ;
-                            natus::nsl::parse::library_t::shader shd2 = shd ;
-                            shd2.fragments.clear() ;
-
-                            for( auto iter = shd.fragments.begin(); iter != shd.fragments.end(); ++iter )
+                            size_t const beg = i ;
+                            while( ++i != ss.size() )
                             {
-                                shd2.fragments.emplace_back( *iter ) ;
+                                if( ss[ i ] == "{" ) ++level ;
+                                else if( ss[ i ] == "}" ) --level ;
 
-                                if( *iter == "{" && level++ == 0 )
-                                {}
+                                if( level == 0 ) break ;
+                            } 
 
-                                if( *iter == "}" && --level == 0 )
+                            // make shader per function symbol 
+                            {
+                                natus::nsl::parse::library_t::lib_function shd ;
+                                shd.sig = ss[ beg ] ;
+                                for( size_t j = beg+2; j < i; ++j )
                                 {
-                                    lib.shaders.emplace_back( std::move( shd2 ) ) ;
-                                    shd2.versions = shd.versions ;
-                                    shd2.fragments.clear() ;
+                                    shd.body.emplace_back( ss[ j ] ) ;
                                 }
+                                lib.functions.emplace_back( std::move( shd ) ) ;
                             }
                         }
-                    }
-                    else if( token[0] == "close" && token[1] == "shader" )
-                    {
-                        in_shader = false ;
-                    }
-                    else if( token.size() > 4 && !in_shader )
-                    {
-                        natus::nsl::parse::library_t::variable v ;
-
-                        v.type = token[ 0 ] ;
-                        v.name = token[ 1 ] ;
-                        v.line = ss[i] ;
-
-                        auto iter = std::find( token.begin(), token.end(), "=" ) ;
-                        while( ++iter != token.end() && *iter != ";" )
+                        // must be a variable
+                        else if( token.size() > 4 )
                         {
-                            v.value += *(iter) + " " ;
-                        }
-                        if( v.value.size() > 0 ) v.value = v.value.substr( 0, v.value.size() - 1 ) ;
+                            natus::nsl::parse::library_t::variable v ;
 
-                        lib.variables.emplace_back( std::move( v ) ) ;
+                            v.type = token[ 0 ] ;
+                            v.name = token[ 1 ] ;
+                            v.line = ss[ i ] ;
+
+                            auto iter = std::find( token.begin(), token.end(), "=" ) ;
+                            while( ++iter != token.end() && *iter != ";" )
+                            {
+                                v.value += *( iter ) +" " ;
+                            }
+                            if( v.value.size() > 0 ) v.value = v.value.substr( 0, v.value.size() - 1 ) ;
+
+                            lib.variables.emplace_back( std::move( v ) ) ;
+                        }
+                        else
+                        {
+                            // should be error I guess.
+                        }
                     }
                 }
                 
                 return std::move( libs ) ;
+            }
+
+            statements_t replace_numbers( statements_rref_t ss ) const
+            {
+                for( auto & s : ss )
+                {
+                    s = std::regex_replace( s, std::regex( " ([0-9]+) "), " num_int ( $1 ) " ) ;
+                    s = std::regex_replace( s, std::regex( " ([0-9]+)u+ "), " num_uint ( $1 ) " ) ;
+                    s = std::regex_replace( s, std::regex( " ([0-9]+)\\.([0-9]+)f? "), " num_float ( $1 , $2 ) " ) ;
+                }
+                return std::move( ss ) ;
+            }
+
+            statements_t replace_operators( statements_rref_t ss ) const
+            {
+                // operators
+                // * / + - = 
+                // *= /= += -= 
+                // < > 
+                // <= >= != ==
+                // << >> 
+                // { } ( ) , ; .
+                
+                struct repl
+                {
+                    natus::ntd::string_t what ;
+                    natus::ntd::string_t with ;
+                };
+
+                typedef std::function< bool_t ( char const t, size_t const l ) > is_stop_t ;
+                auto do_replacement = [] ( natus::ntd::string_ref_t line, repl const & r, is_stop_t is_stop )
+                {
+                    size_t off = 0 ;
+                    while( true )
+                    {
+                        size_t const p0 = line.find( r.what, off ) ;
+                        if( p0 == std::string::npos ) break ;
+
+                        natus::ntd::string_t arg0, arg1 ;
+
+                        size_t beg = 0 ;
+                        size_t end = 0 ;
+
+                        // arg 0, left of what
+                        if( p0 > 0 )
+                        {
+                            size_t level = 0 ;
+                            size_t const cut = p0 - 1 ;
+                            size_t p1 = p0 ;
+                            while( --p1 != size_t( -1 ) )
+                            {
+                                if( line[ p1 ] == ')' ) ++level ;
+                                else if( line[ p1 ] == '(' ) --level ;
+
+                                if( is_stop( line[ p1 ], level ) ) break ;
+                            }
+                            // if the beginning is hit, there is one position missing.
+                            if( p1 == size_t( -1 ) ) --p1 ;
+                            arg0 = line.substr( p1 + 2, ( cut ) -( p1 + 2 ) ) ;
+                            beg = p1 + 2 ;
+                        }
+
+                        // arg1, right of what
+                        {
+                            size_t level = 0 ;
+                            size_t const cut = p0 + r.what.size() + 1 ;
+
+                            size_t p1 = p0 + r.what.size() - 1 ;
+                            while( ++p1 != line.size() )
+                            {
+                                if( line[ p1 ] == '(' ) ++level ;
+                                else if( line[ p1 ] == ')' ) --level ;
+
+                                if( is_stop( line[ p1 ], level ) ) break ;
+                            }
+                            arg1 = line.substr( cut, ( p1 - 1 ) - cut ) ;
+                            end = p1 ;
+                        }
+
+                        if( arg0.empty() )
+                        {
+                            line = line.replace( beg, end - beg,
+                                r.with + " ( " + arg1 + " ) " ) ;
+                        }
+                        else
+                        {
+                            line = line.replace( beg, end - beg,
+                                r.with + " ( " + arg0 + " , " + arg1 + " ) " ) ;
+                        }
+
+                        // find another
+                        off = p0 + 1 ;
+                    }
+                } ;
+
+                // replacing operators #0
+                {
+                    natus::ntd::vector< repl > repls =
+                    {
+                        //{ "=", "ass" }, // declaration need to be handled first. float_t c = ...
+                        { "return", "ret" }
+                    } ;
+
+                    auto is_stop = [&] ( char const t, size_t const l )
+                    {
+                        //if( l == size_t( -1 ) )  return true ;
+                        //if( l != 0 ) return false ;
+                        if( t == ';' ) return true ;
+                        return false ;
+                    } ;
+
+                    for( auto const& r : repls )
+                    {
+                        for( auto& line : ss )
+                        {
+                            do_replacement( line, r, is_stop ) ;
+                        }
+                    }
+                }
+
+                // replacing operators #1
+                {
+                    natus::ntd::vector< repl > repls = 
+                    {
+                        //{ "=", "ass" }, // declaration need to be handled first. float_t c = ...
+                        { "*=", "mul_asg" },
+                        { "/=", "div_asg" },
+                        { "+=", "add_asg" },
+                        { "-=", "sub_asg" },
+                        { "<=", "leq" },
+                        { ">=", "geq" }
+                    } ;
+
+                    auto is_stop = [&] ( char const t, size_t const l )
+                    {
+                        if( l == size_t( -1 ) )  return true ;
+                        if( l != 0 ) return false ;
+                        if( t == ';' || t == ',' ) return true ;
+                        return false ;
+                    } ;
+
+                    for( auto const& r : repls )
+                    {
+                        for( auto& line : ss )
+                        {
+                            do_replacement( line, r, is_stop ) ;
+                        }
+                    }
+                }
+
+                // replacing operators #2
+                {
+                    natus::ntd::vector< repl > repls = 
+                    {
+                        { "*", "mul" },
+                        { "'", "mmul" },
+                        { "/", "div" },
+                        { "+", "add" },
+                        { "-", "sub" },
+                        { ">>", "rs" },
+                        { "<<", "ls" },
+                        { "<", "lt" },
+                        { ">", "gt" }
+                    } ;
+
+                    auto is_stop = [&] ( char const t, size_t const l )
+                    {
+                        if( l == size_t( -1 ) )  return true ;
+                        if( l != 0 ) return false ;
+                        if( t == '*' || t == '/' || t == '+' || t == '-' ||
+                            t == '=' || t == ';' || t == ',' || t == '>' || t == '<' ) return true ;
+                        return false ;
+                    } ;
+
+                    for( auto const& r : repls )
+                    {
+                        for( auto& line : ss )
+                        {
+                            do_replacement( line, r, is_stop ) ;
+                        }
+                    }
+                }
+
+                return std::move( ss ) ;
             }
 
             natus::nsl::post_parse::libraries_t analyse_libraries( natus::nsl::parse::libraries_rref_t libs ) const noexcept
@@ -370,44 +556,106 @@ namespace natus
                     // - for referenceable symbols like functions
                     // - for dependable symbols like function or variables
                     // - also flattens by language class
-                    for( auto& shd : lib.shaders )
+                    for( auto& shd : lib.functions )
                     {
-                        for( auto const & version : shd.versions )
+                        fragment s ;
+
                         {
-                            fragment s ;
-
-                            {
-                                s.sym_long = "nsl" ;
-                                for( auto const& n : lib.names ) s.sym_long += n  ;
-                            }
-
-                            // symbol/function name/signature
-                            if( version == "glsl" )
-                            {
-                                auto const token = this_t::tokenize( shd.fragments[ 0 ] ) ;
-                                s.sig = natus::nsl::glsl::function_signature_analyser( token ).process() ;
-                                s.sym_long += s.sig.name ;
-                            }
-                            else if( version == "hlsl" )
-                            {
-                                auto const token = this_t::tokenize( shd.fragments[ 0 ] ) ;
-                                s.sig = natus::nsl::hlsl::function_signature_analyser( token ).process() ;
-                                s.sym_long += s.sig.name ;
-                            }
-
-                            // this symbol depending on
-                            {
-                                for( auto const& f : shd.fragments )
-                                {
-                                    s.deps = natus::nsl::symbol_t::merge(
-                                        std::move( s.deps ), natus::nsl::symbol_t::find_all_symbols( "nsl.", f ) ) ;
-                                }
-                            }
-                            s.fragments = shd.fragments ;
-                            s.version = natus::nsl::to_language_class( version ) ;
-                            cur_lib.fragments.emplace_back( std::move( s ) ) ;
+                            s.sym_long = "nsl" ;
+                            for( auto const& n : lib.names ) s.sym_long += n  ;
                         }
-                        
+
+                        // symbol/function name/signature
+                        {
+                            auto const token = this_t::tokenize( shd.sig ) ;
+                            s.sig = natus::nsl::function_declaration_analyser( token ).process() ;
+                            s.sym_long += s.sig.name ;
+                        }
+
+                        // this symbol depending on
+                        {
+                            for( auto const& f : shd.body )
+                            {
+                                s.deps = natus::nsl::symbol_t::merge(
+                                    std::move( s.deps ), natus::nsl::symbol_t::find_all_symbols( "nsl.", f ) ) ;
+                            }
+                        }
+
+                        #if 0
+                        // find all depending function symbols
+                        {
+                            using dep_signature_t = natus::nsl::post_parse::library_t::fragment_t::dep_signature_t ;
+                            for( size_t i=1; i<shd.fragments.size(); ++i )
+                            {
+                                auto const& f = shd.fragments[ i ] ;
+
+                                auto token = this_t::tokenize( f ) ;
+                                for( auto iter = token.begin(); iter < token.end(); ++iter )
+                                {
+                                    if( *iter != "(" ) continue ;
+
+                                    dep_signature_t ds ;
+
+                                    // previous symbol must be name
+                                    {
+                                        auto iter_prev = iter - 1 ;
+
+                                        if( iter_prev->find( '+' ) != std::string::npos ) continue ;
+                                        if( iter_prev->find( '-' ) != std::string::npos ) continue ;
+                                        if( iter_prev->find( '*' ) != std::string::npos ) continue ;
+                                        if( iter_prev->find( '/' ) != std::string::npos ) continue ;
+                                        if( iter_prev->find( '=' ) != std::string::npos ) continue ;
+                                        if( iter_prev->find( '<' ) != std::string::npos ) continue ;
+                                        if( iter_prev->find( '>' ) != std::string::npos ) continue ;
+                                        if( iter_prev->find( "if" ) != std::string::npos ) continue ;
+                                        if( iter_prev->find( "for" ) != std::string::npos ) continue ;
+                                        if( iter_prev->find( "while" ) != std::string::npos ) continue ;
+                                        if( iter_prev->find( ',' ) != std::string::npos ) continue ;
+                                        if( iter_prev->find( '(' ) != std::string::npos ) continue ;
+                                        if( iter_prev->find( ')' ) != std::string::npos ) continue ;
+                                        ds.name = *iter_prev ;
+                                    }
+
+                                    // find end and all arg
+                                    {
+                                        size_t level = 0 ;
+
+                                        auto beg = ++iter ;
+                                        while( true )
+                                        {
+                                            if( *iter == "(" ) ++level ;
+                                            else if( *iter == ")" && level != 0 ) --level ;
+                                            else if( (*iter == "," && level == 0 ) || (*iter == ")" && level == 0) )
+                                            {
+                                                natus::ntd::string_t arg ;
+                                                while( beg != iter )
+                                                {
+                                                    arg += *beg++ ;
+                                                }
+                                                ++beg ;
+                                                
+                                                {
+                                                    dep_signature_t sig_arg ;
+                                                    sig_arg.name = arg ;
+                                                    ds.args.emplace_back( std::move( sig_arg ) ) ;
+                                                }
+
+                                                if( *iter == ")" ) break ;
+                                            }
+
+                                            ++iter ;
+                                        }
+                                        
+                                    }
+                                    
+                                }
+                                
+                            }
+                        }
+                        #endif
+
+                        s.fragments = shd.body ;
+                        cur_lib.fragments.emplace_back( std::move( s ) ) ;
                     }
 
                     // process variable symbols
@@ -523,12 +771,20 @@ namespace natus
                     {
                         if( *iter == "(" )
                         {
+                            size_t level = 0 ;
                             auto iter2 = --iter + 1 ;
-                            while( *iter2 != ")" )
+                            do
                             {
+                                if( *iter2 == "(" ) ++level ;
+                                else if( *iter2 == ")" ) --level ;
+                                
+                                if( level == 0 ) break ;
+
                                 *iter += " " + *iter2 ;
                                 iter2 = ss.erase( iter2 ) ;
-                            }
+                                
+                            } while( true ) ;
+
                             *iter += " )" ;
                             iter2 = ss.erase( iter2 ) ;
 
@@ -545,6 +801,27 @@ namespace natus
                         {
                             iter = --ss.erase( iter ) ;
                             *iter += " ;" ;
+
+                            while( *( iter - 1 ) != "{" && 
+                                *( iter - 1 ) != "}" &&
+                                ( iter - 1 )->find( ';' ) == std::string::npos &&
+                                ( iter - 1 )->find( "open " ) == std::string::npos )
+                            {
+                                *( iter - 1 ) += " " + *iter ;
+                                iter = ss.erase( iter ) ;
+                            }
+                        }
+                    }
+                }
+
+                // 3. merge ) and next line
+                {
+                    for( auto iter = ss.begin(); iter != ss.end(); ++iter )
+                    {
+                        if( (*iter).back() == ')' && *(iter + 1) != "{" )
+                        {
+                            *iter += " " + *(iter+1) ;
+                            iter = ss.erase( ++iter ) ;
                         }
                     }
                 }
@@ -666,6 +943,13 @@ namespace natus
                             iter = statements.erase( iter ) ;
                             if( *( --iter ) == "{" ) --iter ;
                         }
+
+                        // lets use this opportunity to remove empty lines.
+                        if( iter->empty() )
+                        {
+                            iter = statements.erase( iter ) ;
+                            if( iter != statements.begin() ) --iter ;
+                        }
                     }
                 }
 
@@ -680,12 +964,22 @@ namespace natus
             {
                 for( auto iter = s.begin(); iter != s.end(); ++iter )
                 {
-                    if( *iter == '+' || *iter == '-' || *iter == '<' || *iter == '>' || *iter == '/' )
+                    if( *iter == '+' || *iter == '-' || *iter == '*' || *iter == '/' || 
+                        *iter == '<' || *iter == '>' || *iter == '/' )
                     {
                         auto iter_next = iter + 1 ;
                         auto iter_last = iter - 1 ;
 
                         if( iter_next == iter_last ) continue ;
+
+                        // do not insert spaces inbetween operator combos
+                        // like +=, -=, <=...
+                        if( *iter_next == '=' ) 
+                        { 
+                            iter = ++s.insert( iter, ' ' ) ;
+                            iter = s.insert( iter + 2, ' ' ) ; 
+                            continue ; 
+                        }
 
                         // in front
                         if( *iter != *iter_last ) iter = ++s.insert( iter, ' ' ) ;

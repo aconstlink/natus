@@ -97,7 +97,6 @@ namespace natus
                         shaders.emplace_back( shd ) ;
                     }
                 }
-
                 ret.shaders = std::move( shaders ) ;
 
                 return std::move( ret ) ;
