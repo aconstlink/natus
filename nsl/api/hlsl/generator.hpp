@@ -51,6 +51,14 @@ namespace natus
                             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
                             {
                                 if( args.size() != 2 ) return "mul ( INVALID_ARGS ) " ;
+                                return args[ 0 ] + " * " + args[ 1 ] ;
+                            }
+                        },
+                        {
+                            natus::ntd::string_t( "mmul" ),
+                            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+                            {
+                                if( args.size() != 2 ) return "mmul ( INVALID_ARGS ) " ;
                                 return "mul( " + args[ 1 ] + " , " + args[ 0 ] + ")" ;
                             }
                         },
@@ -96,6 +104,15 @@ namespace natus
                             }
                         },
                         {
+                            natus::ntd::string_t( "rt_texture" ),
+                            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+                            {
+                                if( args.size() != 2 ) return "texture ( INVALID_ARGS ) " ;
+                                return  args[ 0 ] + ".Sample ( smp_" + args[ 0 ] + " , "
+                                    "float2 ( " + args[ 1 ] + ".x , 1.0f - " + args[ 1 ] + ".y ) ) " ;
+                            }
+                        },
+                        {
                             natus::ntd::string_t( "lt" ),
                             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
                             {
@@ -109,6 +126,22 @@ namespace natus
                             {
                                 if( args.size() != 2 ) return "gt ( INVALID_ARGS ) " ;
                                 return args[ 0 ] + " > " + args[ 1 ] ;
+                            }
+                        },
+                        {
+                            natus::ntd::string_t( "ret" ),
+                            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+                            {
+                                if( args.size() != 1 ) return "ret ( INVALID_ARGS ) " ;
+                                return "return " + args[ 0 ] ;
+                            }
+                        },
+                        {
+                            natus::ntd::string_t( "mix" ),
+                            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+                            {
+                                if( args.size() != 3 ) return "mix ( INVALID_ARGS ) " ;
+                                return "lerp (" + args[ 0 ] + " , " + args[ 1 ] + " , " + args[ 2 ] + " ) " ;
                             }
                         }
                     } ;
@@ -241,26 +274,6 @@ namespace natus
                         }
                     }
 
-                    // replace numbers
-                    for( auto& s : genable.config.shaders )
-                    {
-                        for( auto& c : s.codes )
-                        {
-                            for( auto& l : c.lines )
-                            {
-                                l = std::regex_replace( l,
-                                    std::regex( " num_float \\( ([0-9]+) \\, ([0-9]+) \\) " ),
-                                    " $1.$2f " ) ;
-                                l = std::regex_replace( l,
-                                    std::regex( " num_uint \\( ([0-9]+) \\) " ),
-                                    " $1u " ) ;
-                                l = std::regex_replace( l,
-                                    std::regex( " num_int \\( ([0-9]+) \\) " ),
-                                    " $1 " ) ;
-                            }
-                        }
-                    }
-
                     // replace buildins
                     {
                         for( auto& s : genable.config.shaders )
@@ -342,7 +355,8 @@ namespace natus
                             text << f.sym_long.expand( "_" ) << " ( " ;
                             for( auto const& a : f.sig.args )
                             {
-                                text << this_t::map_variable_type( a.type ) + ", " ;
+                                text << this_t::map_variable_type( a.type ) 
+                                    << " " << a.name << ", " ;
                             }
                             text.seekp( -2, std::ios_base::end ) ;
                             text << " ) ; " << std::endl ;
@@ -610,6 +624,18 @@ namespace natus
                                 }
                             }
                         }
+                    }
+
+                    {
+                        shd = std::regex_replace( shd,
+                            std::regex( " num_float \\( ([0-9]+) \\, ([0-9]+) \\) " ),
+                            " $1.$2 " ) ;
+                        shd = std::regex_replace( shd,
+                            std::regex( " num_uint \\( ([0-9]+) \\) " ),
+                            " $1u " ) ;
+                        shd = std::regex_replace( shd,
+                            std::regex( " num_int \\( ([0-9]+) \\) " ),
+                            " $1 " ) ;
                     }
 
                     {

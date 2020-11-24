@@ -36,6 +36,14 @@ namespace natus
                             }
                         },
                         {
+                            natus::ntd::string_t( "mmul" ),
+                            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+                            {
+                                if( args.size() != 2 ) return "mmul ( INVALID_ARGS ) " ;
+                                return args[ 0 ] + " * " + args[ 1 ] ;
+                            }
+                        },
+                        {
                             natus::ntd::string_t( "add" ),
                             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
                             {
@@ -69,6 +77,22 @@ namespace natus
                             }
                         },
                         {
+                            natus::ntd::string_t( "texture" ),
+                            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+                            {
+                                if( args.size() != 2 ) return "texture ( INVALID_ARGS ) " ;
+                                return  "texture( " + args[ 0 ] + " , " + args[ 1 ] + " ) " ;
+                            }
+                        },
+                        {
+                            natus::ntd::string_t( "rt_texture" ),
+                            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+                            {
+                                if( args.size() != 2 ) return "rt_texture ( INVALID_ARGS ) " ;
+                                return  "texture( " + args[ 0 ] + " , " + args[ 1 ] + " ) " ;
+                            }
+                        },
+                        {
                             natus::ntd::string_t( "lt" ),
                             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
                             {
@@ -82,6 +106,22 @@ namespace natus
                             {
                                 if( args.size() != 2 ) return "gt ( INVALID_ARGS ) " ;
                                 return args[ 0 ] + " > " + args[ 1 ] ;
+                            }
+                        },
+                        {
+                            natus::ntd::string_t( "ret" ),
+                            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+                            {
+                                if( args.size() != 1 ) return "ret ( INVALID_ARGS ) " ;
+                                return "return " + args[ 0 ] ;
+                            }
+                        },
+                        {
+                            natus::ntd::string_t( "mix" ),
+                            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+                            {
+                                if( args.size() != 3 ) return "mix ( INVALID_ARGS ) " ;
+                                return "mix (" + args[ 0 ] + " , " + args[ 1 ] + " , " + args[ 2 ] + " ) " ;
                             }
                         }
                     } ;
@@ -175,27 +215,7 @@ namespace natus
                             }
                         }
                     }
-
-                    // replace numbers
-                    for( auto & s : genable.config.shaders )
-                    {
-                        for( auto& c : s.codes )
-                        {
-                            for( auto & l : c.lines )
-                            {
-                                l = std::regex_replace( l, 
-                                    std::regex(" num_float \\( ([0-9]+) \\, ([0-9]+) \\) "), 
-                                    " $1.$2 " ) ;
-                                l = std::regex_replace( l,
-                                    std::regex( " num_uint \\( ([0-9]+) \\) " ),
-                                    " $1u " ) ;
-                                l = std::regex_replace( l,
-                                    std::regex( " num_int \\( ([0-9]+) \\) " ),
-                                    " $1 " ) ;
-                            }
-                        }
-                    }
-
+                   
                     // replace buildins
                     {
                         for( auto& s : genable.config.shaders )
@@ -477,6 +497,24 @@ namespace natus
                                 }
                             }
                         }
+
+                        // replace numbers
+                        {
+                            shd = std::regex_replace( shd,
+                                std::regex( " num_float \\( ([0-9]+) \\, ([0-9]+) \\) " ),
+                                " $1.$2 " ) ;
+                            shd = std::regex_replace( shd,
+                                std::regex( " num_uint \\( ([0-9]+) \\) " ),
+                                " $1u " ) ;
+                            shd = std::regex_replace( shd,
+                                std::regex( " num_int \\( ([0-9]+) \\) " ),
+                                " $1 " ) ;
+                        }
+
+                        {
+                            shd = this_t::replace_buildin_symbols( std::move( shd ) ) ;
+                        }
+
                         code.shader = shd ;
                     }
 

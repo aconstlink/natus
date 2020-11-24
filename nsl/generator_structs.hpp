@@ -92,9 +92,16 @@ namespace natus
 
         static natus::ntd::string_t perform_repl( natus::ntd::string_t s, repl_syms_cref_t repls ) noexcept
         {
+            if( s.empty() ) return std::move( s ) ;
+
             for( auto const& repl : repls )
             {
                 size_t p0 = s.find( repl.what ) ;
+                if( p0 == 0 ) 
+                {
+                    s = " " + s ;
+                    p0 = 1 ;
+                }
                 while( p0 != std::string::npos )
                 {
                     if( (s[p0-1] != ' ') || (s[p0+repl.what.size()] != ' ') ) 

@@ -398,6 +398,7 @@ namespace natus
                         size_t end = 0 ;
 
                         // arg 0, left of what
+                        if( p0 > 0 )
                         {
                             size_t level = 0 ;
                             size_t const cut = p0 - 1 ;
@@ -432,13 +433,46 @@ namespace natus
                             end = p1 ;
                         }
 
-                        line = line.replace( beg, end - beg,
-                            r.with + " ( " + arg0 + " , " + arg1 + " ) " ) ;
+                        if( arg0.empty() )
+                        {
+                            line = line.replace( beg, end - beg,
+                                r.with + " ( " + arg1 + " ) " ) ;
+                        }
+                        else
+                        {
+                            line = line.replace( beg, end - beg,
+                                r.with + " ( " + arg0 + " , " + arg1 + " ) " ) ;
+                        }
 
                         // find another
                         off = p0 + 1 ;
                     }
                 } ;
+
+                // replacing operators #0
+                {
+                    natus::ntd::vector< repl > repls =
+                    {
+                        //{ "=", "ass" }, // declaration need to be handled first. float_t c = ...
+                        { "return", "ret" }
+                    } ;
+
+                    auto is_stop = [&] ( char const t, size_t const l )
+                    {
+                        //if( l == size_t( -1 ) )  return true ;
+                        //if( l != 0 ) return false ;
+                        if( t == ';' ) return true ;
+                        return false ;
+                    } ;
+
+                    for( auto const& r : repls )
+                    {
+                        for( auto& line : ss )
+                        {
+                            do_replacement( line, r, is_stop ) ;
+                        }
+                    }
+                }
 
                 // replacing operators #1
                 {
@@ -475,6 +509,7 @@ namespace natus
                     natus::ntd::vector< repl > repls = 
                     {
                         { "*", "mul" },
+                        { "'", "mmul" },
                         { "/", "div" },
                         { "+", "add" },
                         { "-", "sub" },

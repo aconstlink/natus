@@ -316,6 +316,7 @@ namespace natus
             mix,
             pow,
             texture,
+            rt_texture,
             num_build_ins
         };
 
@@ -332,6 +333,7 @@ namespace natus
             else if( s == "mix" ) return natus::nsl::build_in::mix ;
             else if( s == "pow" ) return natus::nsl::build_in::pow ;
             else if( s == "texture" ) return natus::nsl::build_in::texture ;
+            else if( s == "rt_texture" ) return natus::nsl::build_in::rt_texture ;
 
             return natus::nsl::build_in::unknown ;
         }
