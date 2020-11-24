@@ -22,8 +22,6 @@ set( sources
 
     "api/glsl/generator.h"
     "api/glsl/generator.cpp"
-    "api/glsl/function_signature_analyser.hpp"
-    "api/hlsl/function_signature_analyser.hpp"
     "api/hlsl/generator.h"
     "api/hlsl/generator.cpp"
 
