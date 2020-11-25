@@ -200,5 +200,51 @@ namespace natus
 
         };
         natus_typedef( async_view ) ;
+
+        class NATUS_GRAPHICS_API async_views
+        {
+            natus_this_typedefs( async_views ) ;
+
+            natus_typedefs( natus::ntd::vector< async_view_t >, asyncs ) ;
+            asyncs_t _asyncs ;
+
+        public:
+
+            async_views( void_t ) noexcept {}
+            async_views( this_cref_t rhv ) 
+            {
+                _asyncs = rhv._asyncs ;
+            }
+            async_views( this_rref_t rhv ) noexcept
+            {
+                _asyncs = std::move( rhv._asyncs ) ;
+            }
+            async_views( asyncs_t asyncs ) noexcept
+            {
+                _asyncs = std::move( asyncs ) ;
+            }
+            ~async_views( void_t ) noexcept {}
+
+            this_ref_t operator = ( this_cref_t rhv ) noexcept
+            {
+                _asyncs = rhv._asyncs ;
+                return *this ;
+            }
+
+            this_ref_t operator = ( this_rref_t rhv ) noexcept
+            {
+                _asyncs = std::move( rhv._asyncs ) ;
+                return *this ;
+            }
+
+        public:
+
+            typedef std::function< void_t ( natus::graphics::async_view_t ) > for_each_async_t ;
+            void_t for_each( for_each_async_t funk )
+            {
+                for( auto & a : _asyncs ) funk( a ) ;
+            }
+        };
+        natus_typedef( async_views ) ;
     }
 }
