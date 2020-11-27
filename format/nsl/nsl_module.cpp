@@ -22,6 +22,13 @@ void_t nsl_module_register::register_module( natus::format::module_registry_res_
 // ***
 natus::format::future_item_t nsl_module::import_from( natus::io::location_cref_t loc, natus::io::database_res_t db ) noexcept
 {
+    return this_t::import_from( loc, db, natus::property::property_sheet_t() ) ;
+}
+
+// ***
+natus::format::future_item_t nsl_module::import_from( natus::io::location_cref_t loc, 
+                natus::io::database_res_t db, natus::property::property_sheet_res_t ) noexcept 
+{
     return std::async( std::launch::async, [=] ( void_t )
     {
         natus::nsl::post_parse::document_t doc ;

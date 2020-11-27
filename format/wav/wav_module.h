@@ -20,6 +20,9 @@ namespace natus
             virtual ~wav_image_module( void_t ) {}
             virtual natus::format::future_item_t import_from( natus::io::location_cref_t loc, natus::io::database_res_t ) noexcept ;
 
+            virtual natus::format::future_item_t import_from( natus::io::location_cref_t loc, 
+                natus::io::database_res_t, natus::property::property_sheet_res_t ) noexcept ;
+
         };
         natus_typedef( wav_image_module ) ;
         typedef natus::format::module_factory<wav_image_module> wav_image_factory_t ;

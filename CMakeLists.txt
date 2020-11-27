@@ -100,6 +100,7 @@ set( subdirs_header_only
     "math"
     "nsl"
     "profiling"
+    "property"
     )
 
 set( subdirs  )

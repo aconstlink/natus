@@ -2,26 +2,12 @@
 set( sources 
     "api.h"
     "typedefs.h"
+    "header_only.cpp"
 
-    "item.hpp"
-    "global.h"
-    "global.cpp"
-    "module_factory.hpp"
-    "module_registry.hpp"
-
-    "imodule.h"
-    
-    "obj/obj_module.cpp"
-    "obj/obj_module.h"
-
-    "stb/stb_module.cpp"
-    "stb/stb_module.h"
-
-    "wav/wav_module.cpp"
-    "wav/wav_module.h"
-
-    "nsl/nsl_module.h"
-    "nsl/nsl_module.cpp"
+    "property_sheet.hpp"
+    "iproperty.hpp"
+    "generic_property.hpp"
+   
     )
 
 natus_vs_src_dir( sources )
@@ -31,11 +17,13 @@ add_library( ${cur_alias_name} ALIAS ${cur_lib_name} )
 
 target_link_libraries( ${cur_lib_name}
   PRIVATE stb
-  PUBLIC natus::property
-  PUBLIC natus::nsl
-  PUBLIC natus::audio
+  PUBLIC imgui
+  PUBLIC natus::device
   PUBLIC natus::graphics
+  PUBLIC natus::memory
+  PUBLIC natus::log 
   PUBLIC natus::io
+  PUBLIC natus_graphics_options 
     )
 
 if( NATUS_COMPILER_GNU )
