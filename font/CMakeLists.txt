@@ -2,21 +2,13 @@
 set( sources 
     "api.h"
     "result.h"
-    "protos.h"
     "typedefs.h"
+    "structs.h"
 
-    "camera/icamera.h"
-    "camera/ilens.h"
-    "camera/pinhole_camera.h"
-    "camera/generic_camera.h"
-    "camera/generic_camera.cpp"
-    "camera/pinhole_lens.h"
-
-    "imgui/imgui.h"
-    "imgui/imgui.cpp"
-
-    "font/text_render_2d.h"
-    "font/text_render_2d.cpp"
+    "glyph_atlas.h"
+    "glyph_atlas.cpp"
+    "stb/stb_glyph_atlas_creator.h"
+    "stb/stb_glyph_atlas_creator.cpp"
     )
 
 natus_vs_src_dir( sources )
@@ -27,11 +19,11 @@ add_library( ${cur_alias_name} ALIAS ${cur_lib_name} )
 target_link_libraries( ${cur_lib_name}
   PRIVATE stb
   PUBLIC imgui
-  PUBLIC natus::font
   PUBLIC natus::device
   PUBLIC natus::graphics
   PUBLIC natus::memory
   PUBLIC natus::log 
+  PUBLIC natus::io
   PUBLIC natus_graphics_options 
     )
 

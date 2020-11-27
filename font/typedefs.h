@@ -1,7 +1,6 @@
 #pragma once
 
 #include <natus/ntd/vector.hpp>
-
 #include <natus/core/types.hpp>
 #include <natus/core/assert.h>
 #include <natus/core/macros/typedef.h>
@@ -13,9 +12,13 @@
 
 namespace natus
 {
-    namespace gfx
+    namespace font
     {
         using namespace natus::core ;
         using namespace natus::core::types ;
+
+
+        natus_typedefs( uint32_t, utf32 ) ;
+        natus_typedefs( natus::ntd::vector< utf32_t >, code_points ) ;
     }
 }

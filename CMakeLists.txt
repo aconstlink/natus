@@ -122,6 +122,7 @@ list( APPEND subdirs
     "format"
     "audio"
     "geometry"
+    "font"
     ${subdirs_header_only}
     )
 
