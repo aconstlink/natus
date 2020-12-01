@@ -122,6 +122,8 @@ namespace natus
             glyph_atlas( this_rref_t ) ;
             ~glyph_atlas( void_t ) ;
 
+            this_ref_t operator = ( this_rref_t ) noexcept ;
+
         public: // creator interface
 
             bool_t add_glyph( glyph_info_cref_t ) ;
@@ -147,6 +149,6 @@ namespace natus
 
 
         };
-        natus_typedef( glyph_atlas ) ;
+        natus_res_typedef( glyph_atlas ) ;
     }
 }

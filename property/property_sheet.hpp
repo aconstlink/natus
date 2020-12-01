@@ -69,7 +69,7 @@ namespace natus
                 auto iter = _properties.find( name ) ;
                 if( iter == _properties.end() ) return false ;
 
-                auto * ptr = dynamic_cast< generic_property< T > const * > iter->second ;
+                auto * ptr = dynamic_cast< generic_property< T > const * >( iter->second ) ;
                 if( ptr == nullptr ) return false ;
 
                 v_out = ptr->get() ;

@@ -1,6 +1,7 @@
 
 #include "stb_module.h"
 
+#include <natus/font/structs.h>
 #include <natus/io/database.h>
 #include <natus/memory/guards/malloc_guard.hpp>
 #include <natus/graphics/texture/image.hpp>
@@ -12,6 +13,8 @@
 
 #include <stb_vorbis.c>
 #include <stb_truetype.h>
+
+#include <natus/font/stb/stb_glyph_atlas_creator.h>
 
 using namespace natus::format ;
 
@@ -222,11 +225,67 @@ natus::format::future_item_t stb_font_module::import_from( natus::io::location_c
 
 // ***
 natus::format::future_item_t stb_font_module::import_from( natus::io::location_cref_t loc, 
-                natus::io::database_res_t db, natus::property::property_sheet_res_t ) noexcept 
+                natus::io::database_res_t db, natus::property::property_sheet_res_t ps ) noexcept 
 {
     return std::async( std::launch::async, [=] ( void_t )
     {
-        return natus::format::item_res_t( natus::format::status_item_res_t(
-            natus::format::status_item_t( "not implemented" ) ) ) ;
+        natus::memory::malloc_guard<char_t> data_buffer ;
+
+        natus::font::font_files_t ffs ;
+
+        natus::ntd::vector< natus::io::database_t::cache_access_t > caches = 
+        {
+            db->load( loc )
+        } ;
+        
+        // check additional locations
+        {
+            natus::ntd::vector< natus::io::location_t > additional_locations ;
+            if( ps->get_value( "additional_locations", additional_locations ) )
+            {
+                for( auto const & l : additional_locations )
+                {
+                    caches.emplace_back( db->load( l ) ) ;
+                }
+            }
+        }
+
+        for( auto & cache : caches )
+        {
+            auto const res = cache.wait_for_operation( [&] ( char_cptr_t data, size_t const sib )
+            {
+                ffs.emplace_back( natus::font::font_file_t( loc.as_string(), (uchar_cptr_t)data, sib ) ) ;
+            }) ;
+
+            if( !res ) 
+            {
+                return natus::format::item_res_t( natus::format::status_item_res_t(
+                    natus::format::status_item_t( "Error loading .ttf file [" + loc.as_string() + "]" ) ) ) ;
+            }
+        }        
+
+        natus::font::code_points_t pts ;
+        if( !ps->get_value( "code_points", pts ) )
+        {
+            for( uint32_t i=33; i<=126; ++i ) pts.emplace_back( i ) ;
+            for( uint32_t i : {uint32_t(0x00003041)} ) pts.emplace_back( i ) ;
+        }
+        
+        size_t dpi ;
+        if( !ps->get_value( "dpi", dpi ) ) dpi = 96 ;
+
+        size_t pt ;
+        if( !ps->get_value( "point_size", pt ) ) pt = 25 ;
+
+        size_t max_width, max_height ;
+        if( !ps->get_value( "atlas_width", max_width ) ) max_width = 2048 ;
+        if( !ps->get_value( "atlas_height", max_height ) ) max_height = 2048 ;
+
+        natus::font::glyph_atlas_t ga = natus::font::stb::glyph_atlas_creator_t::create_glyph_atlas( ffs, pt, dpi, pts, 
+            max_width, max_height ) ;
+                    
+
+        return natus::format::item_res_t( natus::format::glyph_atlas_item_res_t(
+            natus::format::glyph_atlas_item_t( std::move( ga ) ) ) ) ;
     } ) ;
 }

@@ -25,6 +25,15 @@ glyph_atlas::~glyph_atlas( void_t )
 }
 
 //*******************************************************************
+glyph_atlas::this_ref_t glyph_atlas::operator = ( this_rref_t rhv ) noexcept 
+{
+    _glyph_infos = std::move( rhv._glyph_infos ) ;
+    _atlas = std::move( rhv._atlas ) ;
+    _face_name_to_id = std::move( rhv._face_name_to_id ) ;
+    return *this ;
+}
+
+//*******************************************************************
 bool_t glyph_atlas::add_glyph( glyph_info_cref_t gi )
 {
     utf32_t const cp = gi.code_point ;

@@ -4,6 +4,7 @@
 
 #include <natus/audio/object/buffer_object.h>
 #include <natus/graphics/texture/image.hpp>
+#include <natus/font/glyph_atlas.h>
 
 #include <future>
 
@@ -35,6 +36,15 @@ namespace natus
             natus::audio::buffer_res_t obj ;
         };
         natus_res_typedef( audio_item ) ;
+
+        struct glyph_atlas_item : public item
+        {
+            glyph_atlas_item( natus::font::glyph_atlas_rref_t obj_ ) : obj( std::move( obj_ ) ) {}
+            virtual ~glyph_atlas_item( void_t ) {}
+            
+            natus::font::glyph_atlas_res_t obj ;
+        };
+        natus_res_typedef( glyph_atlas_item ) ;
 
         struct status_item : public item
         {
