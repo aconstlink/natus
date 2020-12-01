@@ -234,6 +234,9 @@ natus::application::result context::create_the_context( gl_info_cref_t /*gli*/ )
             natus::log::global_t::error( natus_log_fn("eglInitialize") ) ;
             return natus::application::result::failed ;
         }
+
+        natus::log::global_t::status( "[egl_context] : EGL Version " + 
+               std::to_string( major ) + "." + std::to_string( minor ) ) ;
     }
 
     {
@@ -283,7 +286,9 @@ natus::application::result context::create_the_context( gl_info_cref_t /*gli*/ )
     {
         EGLint const  attribList[] = 
         {
-            EGL_CONTEXT_CLIENT_VERSION, 3, EGL_NONE
+            EGL_CONTEXT_MAJOR_VERSION, 3, 
+            EGL_CONTEXT_MINOR_VERSION, 0, 
+            EGL_NONE
         } ;
 
         EGLContext context = eglCreateContext( display, config, 
@@ -299,6 +304,12 @@ natus::application::result context::create_the_context( gl_info_cref_t /*gli*/ )
 
     {
         eglMakeCurrent( display, _surface, _surface, _context ) ;
+        {
+            natus::application::gl_version v ;
+            this_t::get_es_version( v ) ;
+            natus::log::global_t::status( "[egl_context] : OpenGLES Version " 
+                   + std::to_string( v.major ) + "." + std::to_string( v.minor ) ) ;
+        }
         this_t::strings_t list ;
         this_t::get_es_extension( list ) ;
         glClearColor(1.0f,1.0f,1.0f,1.0f);
