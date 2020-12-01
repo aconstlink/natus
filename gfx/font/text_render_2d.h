@@ -4,6 +4,8 @@
 #include "../result.h"
 #include "../api.h"
 
+#include <natus/font/glyph_atlas.h>
+
 #include <natus/io/location.hpp>
 #include <natus/io/database.h>
 #include <natus/graphics/async.h>
@@ -27,9 +29,9 @@ namespace natus
 
         private:
             
-            size_t _point_size = 20 ;
+            natus::font::glyph_atlas_res_t _ga ;
 
-            natus::math::vec2f_t _glyph_atlas_size = natus::math::vec2f_t( 1024.0f, 1024.0f ) ;
+            natus::ntd::string_t _name ;
 
         private: // default matrices
 
@@ -124,21 +126,17 @@ namespace natus
             natus_typedefs( natus::ntd::vector< size_t >, render_group_ids ) ;
             render_group_ids_t _render_groups ;
 
-            natus::io::database_res_t _db ;
-
         public:
 
-            text_render_2d( natus::graphics::async_views_t, natus::io::database_res_t ) noexcept ;
+            text_render_2d( natus::ntd::string_cref_t, natus::graphics::async_views_t ) noexcept ;
             text_render_2d( this_cref_t ) = delete ;
             text_render_2d( this_rref_t ) noexcept ;
             ~text_render_2d( void_t ) noexcept ;
 
         public:
+            
+            void_t init( natus::font::glyph_atlas_res_t ) noexcept ;
 
-            #if 0
-            void_t init_fonts( size_t const, natus::ntd::vector< natus::io::location_t > const &, size_t const dpi = 96 ) noexcept ;
-            void_t init_fonts( size_t const, natus::ntd::vector< natus::io::location_t > const &, natus::ntd::vector<natus::font::utf32_t> const & , size_t const dpi = 96) noexcept ;
-            #endif
             void_t set_view_projection( natus::math::mat4f_cref_t view, natus::math::mat4f_cref_t proj ) ;
             void_t set_view_projection( size_t const, natus::math::mat4f_cref_t view, natus::math::mat4f_cref_t proj ) ;
 
@@ -153,8 +151,12 @@ namespace natus
             natus::gfx::result release( void_t ) ;
 
         
+        public:
 
-            
+            natus::ntd::string_cref_t name( void_t ) const noexcept
+            {
+                return _name ;
+            }
 
         };
         natus_res_typedef( text_render_2d ) ;

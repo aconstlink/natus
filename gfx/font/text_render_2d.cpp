@@ -4,10 +4,10 @@
 using namespace natus::gfx ;
 
 
-text_render_2d::text_render_2d( natus::graphics::async_views_t asyncs, natus::io::database_res_t db ) noexcept
+text_render_2d::text_render_2d( natus::ntd::string_cref_t name, natus::graphics::async_views_t asyncs ) noexcept
 {
     _asyncs = std::move( asyncs ) ;
-    _db = std::move( db ) ;
+    _name = "natus.gfx.text_render_2d." + name ;
 }
 
 text_render_2d::text_render_2d( this_rref_t rhv ) noexcept
@@ -17,26 +17,17 @@ text_render_2d::text_render_2d( this_rref_t rhv ) noexcept
     _gc = std::move( rhv._gc ) ;
     _vars = std::move( rhv._vars ) ;
     _asyncs = std::move( rhv._asyncs ) ;
-    _db = std::move( rhv._db ) ;
+    _ga = std::move( rhv._ga ) ;
 }
 
 text_render_2d::~text_render_2d( void_t ) noexcept
 {
 }
 
-#if 0
-void_t text_render_2d::init_fonts( size_t const pt, natus::ntd::vector< natus::io::location_t > const & locations, size_t const dpi ) noexcept
+void_t text_render_2d::init( natus::font::glyph_atlas_res_t ga ) noexcept
 {
-    natus::ntd::vector<natus::gfx::utf32_t> cps ;
-    // all ascii chars
-    for( uint32_t i=33; i<=126; ++i ) cps.emplace_back( i ) ;
-    // others?
-    for( uint32_t i : {uint32_t(0x00003041)} ) cps.emplace_back( i ) ;
-    return this_t::init_fonts( pt, locations, cps, dpi ) ;
-}
+    _ga = std::move( ga ) ;  
 
-void_t text_render_2d::init_fonts( size_t const pt, natus::ntd::vector< natus::io::location_t > const & locations, natus::ntd::vector<natus::gfx::utf32_t> const & cps, size_t const dpi ) noexcept
-{
     // geometry
     {
         // @see struct vertex in the header
@@ -96,7 +87,7 @@ void_t text_render_2d::init_fonts( size_t const pt, natus::ntd::vector< natus::i
                     }
                 } ) ; 
 
-        _gc = natus::graphics::geometry_object_t( "natus.gfx.text_render_2d",
+        _gc = natus::graphics::geometry_object_t( this_t::name(),
             natus::graphics::primitive_type::triangles,
             std::move( vb ), std::move( ib ) ) ;
 
@@ -107,12 +98,12 @@ void_t text_render_2d::init_fonts( size_t const pt, natus::ntd::vector< natus::i
     }
 
     {
-        _render_states = natus::graphics::state_object_t("natus.gfx.text_render_2d") ;
+        _render_states = natus::graphics::state_object_t(this_t::name()) ;
     }
 
     // shader config
     {
-        natus::graphics::shader_object_t sc( "natus.gfx.text_render_2d" ) ;
+        natus::graphics::shader_object_t sc( this_t::name() ) ;
 
         // shaders : ogl 3.0
         {
@@ -142,14 +133,14 @@ void_t text_render_2d::init_fonts( size_t const pt, natus::ntd::vector< natus::i
                     #version 140
 
                     out vec4 out_color ;
-                    uniform sampler2D u_tex ;
+                    uniform sampler2D atlas ;
 
                     in vec2 var_uv ;
                     in vec4 var_color ;
 
                     void main()
                     {    
-                        out_color = var_color * texture( u_tex, var_uv ) ;
+                        out_color = var_color * texture( atlas, var_uv ) ;
                     } )" ) ) 
             ) ;
         }
@@ -183,14 +174,14 @@ void_t text_render_2d::init_fonts( size_t const pt, natus::ntd::vector< natus::i
                     precision mediump float ;
                     layout( location = 0 ) out vec4 out_color ;
 
-                    uniform sampler2D u_tex ;
+                    uniform sampler2D atlas ;
 
                     in vec2 var_uv ;
                     in vec4 var_color ;
 
                     void main()
                     {    
-                        out_color = var_color * texture( u_tex, var_uv ) ;
+                        out_color = var_color * texture( atlas, var_uv ) ;
                     } )" ) ) 
             ) ;
         }
@@ -226,8 +217,8 @@ void_t text_render_2d::init_fonts( size_t const pt, natus::ntd::vector< natus::i
                             } )" ) ).
 
                 set_pixel_shader( natus::graphics::shader_t( R"(
-                            Texture2D u_tex : register( t0 );
-                            SamplerState smp_u_tex : register( s0 );
+                            Texture2D atlas : register( t0 );
+                            SamplerState smp_atlas : register( s0 );
 
                             struct VS_OUTPUT
                             {
@@ -238,7 +229,7 @@ void_t text_render_2d::init_fonts( size_t const pt, natus::ntd::vector< natus::i
 
                             float4 PS( VS_OUTPUT input ) : SV_Target
                             {
-                                return u_tex.Sample( smp_u_tex, input.tx ) * input.color ;
+                                return atlas.Sample( smp_atlas, input.tx ) * input.color ;
                             } )" 
                 ) ) ) ;
         }
@@ -259,74 +250,65 @@ void_t text_render_2d::init_fonts( size_t const pt, natus::ntd::vector< natus::i
         } ) ;
     }
 
-    
-    // image configuration
-    // load glyph atlas images
-    for( auto const & l : locations )
     {
-        _db->load( l ).wait_for_operation( [&]( char_cptr_t data, size_t const sib )
+        natus::font::glyph_atlas_ref_t ga = *_ga ;
+        natus::graphics::image_t img = natus::graphics::image_t( 
+        natus::graphics::image_t::dims_t( ga.get_width(), ga.get_height(),1 ) )
+            .update( [&]( natus::graphics::image_ptr_t, natus::graphics::image_t::dims_in_t dims, void_ptr_t data_in )
         {
+            typedef natus::math::vector4< uint8_t > rgba_t ;
+            auto* data_ = reinterpret_cast< rgba_t * >( data_in ) ;
+
+            for( size_t i=0; i<ga.get_num_images(); ++i )
             {
-                auto ga = natus::gfx::stb::glyph_atlas_creator_t::create_glyph_atlas( uchar_cptr_t( data ),  
-                    sib, pt, dpi, cps ) ;
-
-                natus::graphics::image_t img = natus::graphics::image_t( 
-                natus::graphics::image_t::dims_t( ga.get_width(), ga.get_height(),1 ) )
-                    .update( [&]( natus::graphics::image_ptr_t, natus::graphics::image_t::dims_in_t dims, void_ptr_t data_in )
-                {
-                    typedef natus::math::vector4< uint8_t > rgba_t ;
-                    auto* data_ = reinterpret_cast< rgba_t * >( data_in ) ;
-
-                    for( size_t i=0; i<ga.get_num_images(); ++i )
-                    {
-                        // at the moment, only 4 images possible
-                        // @todo allow more glyph atlas images
-                        size_t const iid = i % 4 ;
+                // at the moment, only 4 images possible
+                // @todo allow more glyph atlas images
+                size_t const iid = i % 4 ;
                         
-                        auto * raw = ga.get_image(iid) ;
-                        for( size_t y=0; y<dims.y(); ++y )
-                        {
-                            for( size_t x=0; x<dims.x() ; ++x )
-                            {
-                                *data_ = rgba_t(0) ;
-                                size_t idx = y * dims.y() + x ;
-                                data_[idx][(iid)%4] = raw->get_plane()[idx] ;
-                            }
-                        }
+                auto * raw = ga.get_image(iid) ;
+                for( size_t y=0; y<dims.y(); ++y )
+                {
+                    for( size_t x=0; x<dims.x() ; ++x )
+                    {
+                        *data_ = rgba_t(0) ;
+                        size_t idx = y * dims.y() + x ;
+                        data_[idx][(iid)%4] = raw->get_plane()[idx] ;
                     }
-                } ) ;
-
-                auto ic = natus::graphics::image_object_t( "natus.gfx.text_render_2d.font." + std::to_string( I ),
-                    std::move( img ) )
-                    .set_wrap( natus::graphics::texture_wrap_mode::wrap_s, natus::graphics::texture_wrap_type::repeat )
-                    .set_wrap( natus::graphics::texture_wrap_mode::wrap_t, natus::graphics::texture_wrap_type::repeat )
-                    .set_filter( natus::graphics::texture_filter_mode::min_filter, natus::graphics::texture_filter_type::nearest )
-                    .set_filter( natus::graphics::texture_filter_mode::mag_filter, natus::graphics::texture_filter_type::nearest );
-
-                _asyncs.for_each( [&]( natus::graphics::async_view_t a ) { a.configure( ic ) ; } ) ;
-
-                ++I ;
+                }
             }
         } ) ;
+
+        auto ic = natus::graphics::image_object_t( this_t::name() + ".atlas",
+            std::move( img ) )
+            .set_wrap( natus::graphics::texture_wrap_mode::wrap_s, natus::graphics::texture_wrap_type::repeat )
+            .set_wrap( natus::graphics::texture_wrap_mode::wrap_t, natus::graphics::texture_wrap_type::repeat )
+            .set_filter( natus::graphics::texture_filter_mode::min_filter, natus::graphics::texture_filter_type::nearest )
+            .set_filter( natus::graphics::texture_filter_mode::mag_filter, natus::graphics::texture_filter_type::nearest );
+
+        _asyncs.for_each( [&]( natus::graphics::async_view_t a ) { a.configure( ic ) ; } ) ;
     }
 
     // render configuration
     {
-        natus::graphics::render_object_t rc( "natus.gfx.text_render_2d" ) ;
+        natus::graphics::render_object_t rc( this_t::name() ) ;
 
-        rc.link_geometry( "natus.gfx.text_render_2d" ) ;
-        rc.link_shader( "natus.gfx.text_render_2d" ) ;
+        rc.link_geometry( this_t::name() ) ;
+        rc.link_shader( this_t::name() ) ;
         
         _vars.clear() ;
-
-        for( size_t const pt : pts )
+        natus::graphics::variable_set_t vs ;
+        
         {
-            natus::graphics::variable_set_t vs ;
-            auto* var = vs.texture_variable( "u_tex" ) ;
-            var->set( "natus.gfx.text_render_2d.font." + std::to_string( pt ) ) ;
-
-            _vars.emplace_back( std::move( vs ) ) ;
+            auto* var = vs.texture_variable( "atlas" ) ;
+            var->set( this_t::name() + ".atlas" ) ;
         }
+
+        {
+            auto* var = vs.texture_variable( "glyph_infos" ) ;
+            var->set( this_t::name() + ".glyph_infos" ) ;
+        }
+
+        _vars.emplace_back( std::move( vs ) ) ;
 
         for( size_t i =0; i<_vars.size() ; ++i )
         {
@@ -337,7 +319,6 @@ void_t text_render_2d::init_fonts( size_t const pt, natus::ntd::vector< natus::i
         _asyncs.for_each( [&]( natus::graphics::async_view_t a ) { a.configure( _rc ) ; } ) ;
      }
 }
-#endif
         
 void_t text_render_2d::set_view_projection( natus::math::mat4f_cref_t view, natus::math::mat4f_cref_t proj ) 
 {
@@ -348,8 +329,7 @@ void_t text_render_2d::set_view_projection( size_t const, natus::math::mat4f_cre
 }
 
 
-natus::gfx::result text_render_2d::draw_text( size_t const group, size_t const font_id, size_t const point_size,
-    natus::math::vec2f_cref_t pos, natus::math::vec4f_cref_t color, natus::ntd::string_cref_t ) 
+natus::gfx::result text_render_2d::draw_text( size_t const group, size_t const font_id, size_t const point_size, natus::math::vec2f_cref_t pos, natus::math::vec4f_cref_t color, natus::ntd::string_cref_t ) 
 {
     return natus::gfx::result::ok ;
 }
