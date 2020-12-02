@@ -271,6 +271,9 @@ natus::format::future_item_t stb_font_module::import_from( natus::io::location_c
             for( uint32_t i : {uint32_t(0x00003041)} ) pts.emplace_back( i ) ;
         }
         
+        pts.emplace_back( natus::font::utf32_t('?') ) ;
+        pts.emplace_back( natus::font::utf32_t(' ') ) ;
+
         size_t dpi ;
         if( !ps->get_value( "dpi", dpi ) ) dpi = 96 ;
 

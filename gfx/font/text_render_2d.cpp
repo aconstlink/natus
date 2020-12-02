@@ -24,8 +24,14 @@ text_render_2d::~text_render_2d( void_t ) noexcept
 {
 }
 
-void_t text_render_2d::init( natus::font::glyph_atlas_res_t ga ) noexcept
+void_t text_render_2d::init( natus::font::glyph_atlas_res_t ga, size_t const ng ) noexcept
 {
+    if( !ga.is_valid() ) 
+    {
+        natus::log::global_t::error(natus_log_fn("invalid glyph atlas")) ;
+        return ;
+    }
+
     _ga = std::move( ga ) ;  
 
     // geometry
@@ -250,6 +256,7 @@ void_t text_render_2d::init( natus::font::glyph_atlas_res_t ga ) noexcept
         } ) ;
     }
 
+    // prepare glyph atlas planes as graphics images
     {
         natus::font::glyph_atlas_ref_t ga = *_ga ;
         natus::graphics::image_t img = natus::graphics::image_t( 
@@ -318,6 +325,11 @@ void_t text_render_2d::init( natus::font::glyph_atlas_res_t ga ) noexcept
         _rc = std::move( rc ) ;
         _asyncs.for_each( [&]( natus::graphics::async_view_t a ) { a.configure( _rc ) ; } ) ;
      }
+
+    // group infos
+    {
+        _gis.resize( ng ) ;
+    }
 }
         
 void_t text_render_2d::set_view_projection( natus::math::mat4f_cref_t view, natus::math::mat4f_cref_t proj ) 
@@ -328,9 +340,46 @@ void_t text_render_2d::set_view_projection( size_t const, natus::math::mat4f_cre
 {
 }
 
-
-natus::gfx::result text_render_2d::draw_text( size_t const group, size_t const font_id, size_t const point_size, natus::math::vec2f_cref_t pos, natus::math::vec4f_cref_t color, natus::ntd::string_cref_t ) 
+natus::gfx::result text_render_2d::draw_text( size_t const group, size_t const font_id, size_t const point_size, natus::math::vec2f_cref_t pos, natus::math::vec4f_cref_t color, natus::ntd::string_cref_t text ) 
 {
+    if( group >= _gis.size() )
+        return natus::gfx::result::invalid_argument ;
+
+    natus::concurrent::lock_t lk( _gis[group].mtx ) ;
+
+    for( auto const c : text )
+    {
+        size_t idx ;
+        natus::font::glyph_atlas_t::glyph_info_t gi ;
+        auto const res = _ga->find_glyph( font_id, natus::font::utf32_t( c ), idx, gi ) ;
+        if( !res )
+        {
+            auto const res2 = _ga->find_glyph( font_id, natus::font::utf32_t( '?' ), idx, gi ) ;
+            if( !res2 )
+            {
+                natus::log::global_t::error( natus_log_fn( 
+                    "glyph atlas requires ? glyph for unknown glyphs" ) ) ;
+                continue ;
+            }
+        }
+
+        float_t const point_size_scale = float_t(point_size) / float_t(gi.point_size) ;
+
+        natus::math::vec2f_t adv = natus::math::vec2f_t( gi.dims.x(), 0.0f ) ;
+
+        natus::math::vec2f_t pos_ = pos + adv ;
+
+        {
+            this_t::glyph_info_t tgi ;
+            tgi.color = color ;
+            tgi.pos = pos ;
+            tgi.point_size_scale = point_size_scale ;
+            tgi.offset = idx ;
+
+            _gis[group].glyph_infos.emplace_back( tgi ) ;
+        }
+    }
+
     return natus::gfx::result::ok ;
 }
 

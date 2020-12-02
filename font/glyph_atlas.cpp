@@ -1,7 +1,45 @@
 #include "glyph_atlas.h"
 
+#include <cstring>
+
 using namespace natus::font ;
 
+//*******************************************************************
+glyph_atlas::image::image( void_t ) noexcept {}
+
+//*******************************************************************
+glyph_atlas::image::image( size_t width, size_t height ) noexcept : _width( width ), _height( height )
+{
+    _plane_ptr = natus::memory::global_t::alloc_raw<uint8_t>( width * height ) ;
+    std::memset( ( void_ptr_t ) _plane_ptr, 0, width * height * sizeof( uint8_t ) ) ;
+}
+
+//*******************************************************************
+glyph_atlas::image::image( this_rref_t rhv ) noexcept
+{
+    natus_move_member_ptr( _plane_ptr, rhv ) ;
+    _width = rhv._width ;
+    rhv._width = 0 ;
+    _height = rhv._height ;
+    rhv._height = 0 ;
+}
+
+//*******************************************************************
+glyph_atlas::image::~image( void_t ) noexcept
+{
+    natus::memory::global_t::dealloc_raw<uint8_t>( _plane_ptr ) ;
+}
+
+//*******************************************************************
+glyph_atlas::image::this_ref_t glyph_atlas::image::operator = ( this_rref_t rhv ) noexcept
+{
+    natus_move_member_ptr( _plane_ptr, rhv ) ;
+    _width = rhv._width ;
+    rhv._width = 0 ;
+    _height = rhv._height ;
+    rhv._height = 0 ;
+    return *this ;
+}
 
 //*******************************************************************
 glyph_atlas::glyph_atlas( void_t )

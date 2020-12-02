@@ -77,22 +77,18 @@ namespace natus
 
                 natus::concurrent::mutex_t mtx ;
                 natus::ntd::vector< glyph_info > glyph_infos ;
-
-                size_t group_id = 0 ;
-
+                
                 natus::math::mat4f_t proj ;
                 natus::math::mat4f_t view ;
 
                 group_info( void_t ){}
                 group_info( this_cref_t rhv ){
                     glyph_infos = rhv.glyph_infos ;
-                    group_id = rhv.group_id ;
                     proj = rhv.proj ;
                     view = rhv.view ;
                 }
                 group_info( this_rref_t rhv ) {
                     glyph_infos = std::move( rhv.glyph_infos ) ;
-                    group_id = rhv.group_id ;
                     proj = rhv.proj ;
                     view = rhv.view ;
                 }
@@ -100,21 +96,15 @@ namespace natus
 
                 this_ref_t operator = ( this_cref_t rhv ) {
                     glyph_infos = rhv.glyph_infos ;
-                    group_id = rhv.group_id ;
                     proj = rhv.proj ;
                     view = rhv.view ;
                     return *this ;
                 }
                 this_ref_t operator = ( this_rref_t rhv ) {
                     glyph_infos = std::move( rhv.glyph_infos ) ;
-                    group_id = rhv.group_id ;
                     proj = rhv.proj ;
                     view = rhv.view ;
                     return *this ;
-                }
-
-                bool_t operator == ( this_cref_t rhv ) const{
-                    return group_id == group_id ;
                 }
             };
             natus_typedef( group_info ) ;
@@ -135,7 +125,7 @@ namespace natus
 
         public:
             
-            void_t init( natus::font::glyph_atlas_res_t ) noexcept ;
+            void_t init( natus::font::glyph_atlas_res_t, size_t const = 10 ) noexcept ;
 
             void_t set_view_projection( natus::math::mat4f_cref_t view, natus::math::mat4f_cref_t proj ) ;
             void_t set_view_projection( size_t const, natus::math::mat4f_cref_t view, natus::math::mat4f_cref_t proj ) ;

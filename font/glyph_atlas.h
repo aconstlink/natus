@@ -21,6 +21,8 @@ namespace natus
             /// where to find the glyph in the atlas
             struct glyph_info
             {
+                size_t point_size ;
+
                 /// the glyph's code point
                 utf32_t code_point ;
 
@@ -61,49 +63,27 @@ namespace natus
 
             public:
 
-                image( void_t ) {}
-                image( size_t width, size_t height ) : _width( width ), _height( height )
-                {
-                    _plane_ptr = natus::memory::global_t::alloc_raw<uint8_t>( width * height ) ;
-                    std::memset( ( void_ptr_t ) _plane_ptr, 0, width * height * sizeof( uint8_t ) ) ;
-                }
+                image( void_t ) noexcept ;
+                image( size_t width, size_t height ) noexcept ;
                 image( this_cref_t ) = delete ;
-                image( this_rref_t rhv )
-                {
-                    natus_move_member_ptr( _plane_ptr, rhv ) ;
-                    _width = rhv._width ;
-                    rhv._width = 0 ;
-                    _height = rhv._height ;
-                    rhv._height = 0 ;
-                }
-                ~image( void_t )
-                {
-                    natus::memory::global_t::dealloc_raw<uint8_t>( _plane_ptr ) ;
-                }
+                image( this_rref_t rhv ) noexcept ;
+                ~image( void_t ) noexcept ;
 
-                this_ref_t operator = ( this_rref_t rhv )
-                {
-                    natus_move_member_ptr( _plane_ptr, rhv ) ;
-                    _width = rhv._width ;
-                    rhv._width = 0 ;
-                    _height = rhv._height ;
-                    rhv._height = 0 ;
-                    return *this ;
-                }
+                this_ref_t operator = ( this_rref_t rhv ) noexcept ;
 
             public:
 
-                uint8_ref_t operator[]( size_t const i ) {
+                uint8_ref_t operator[]( size_t const i ) noexcept {
                     return _plane_ptr[ i ] ;
                 }
 
             public:
 
-                uint8_cptr_t get_plane( void_t ) const { return _plane_ptr ; }
-                uint8_ptr_t get_plane( void_t ) { return _plane_ptr ; }
+                uint8_cptr_t get_plane( void_t ) const noexcept { return _plane_ptr ; }
+                uint8_ptr_t get_plane( void_t ) noexcept { return _plane_ptr ; }
 
-                size_t width( void_t ) const { return _width ; }
-                size_t height( void_t ) const { return _height ; }
+                size_t width( void_t ) const noexcept { return _width ; }
+                size_t height( void_t ) const noexcept { return _height ; }
             };
             natus_typedef( image ) ;
 

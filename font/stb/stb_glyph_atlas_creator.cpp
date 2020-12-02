@@ -167,6 +167,7 @@ glyph_atlas_t glyph_atlas_creator::create_glyph_atlas( font_files_cref_t ffs,
         
         {
             glyph_atlas_t::glyph_info_t gi ;
+            gi.point_size = pt ;
             gi.face_id = bb.face_id ;
             gi.code_point = bb.cp ;
             gi.image_id = channel ;
