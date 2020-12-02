@@ -7,6 +7,8 @@
 
 #include <natus/ntd/vector.hpp>
 
+#include <cstring>
+
 namespace natus
 {
     namespace font
