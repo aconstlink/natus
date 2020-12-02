@@ -65,7 +65,7 @@ namespace natus
                 image( size_t width, size_t height ) : _width( width ), _height( height )
                 {
                     _plane_ptr = natus::memory::global_t::alloc_raw<uint8_t>( width * height ) ;
-                    memset( ( void_ptr_t ) _plane_ptr, 0, width * height * sizeof( uint8_t ) ) ;
+                    std::memset( ( void_ptr_t ) _plane_ptr, 0, width * height * sizeof( uint8_t ) ) ;
                 }
                 image( this_cref_t ) = delete ;
                 image( this_rref_t rhv )
