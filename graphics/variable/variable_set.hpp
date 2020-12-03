@@ -36,6 +36,14 @@ namespace natus
             natus_typedef( texture_data ) ;
             natus::ntd::vector< texture_data > _textures ;
 
+            struct array_data
+            {
+                natus::ntd::string_t name ;
+                natus::graphics::ivariable_ptr_t var ;
+            };
+            natus_typedef( array_data ) ;
+            natus::ntd::vector< array_data > _arrays ;
+
             natus::concurrent::mutex_t _mtx ;
 
         public:
@@ -164,6 +172,39 @@ namespace natus
                     d.var = var ;
 
                     _textures.emplace_back( d ) ;
+                }
+
+                return static_cast< natus::graphics::data_variable< natus::ntd::string_t >* >( var ) ;
+            }
+
+            natus::graphics::data_variable< natus::ntd::string_t > * array_variable( 
+                natus::ntd::string_in_t name ) noexcept
+            {
+                natus::graphics::ivariable_ptr_t var = natus::memory::global_t::alloc(
+                    natus::graphics::data_variable<natus::ntd::string_t>(), natus_log_fn( "array variable : " + name ) ) ;
+
+                // before inserting, check if name and type match
+                {
+                    natus::concurrent::lock_guard_t lk( _mtx ) ;
+
+                    auto iter = std::find_if( _arrays.begin(), _arrays.end(),
+                        [&] ( this_t::array_data const& d )
+                    {
+                        return d.name == name ;
+                    } ) ;
+
+                    if( iter != _arrays.end() )
+                    {
+                        natus::memory::global_t::dealloc( var ) ;
+
+                        return static_cast< natus::graphics::data_variable< natus::ntd::string_t >* >( iter->var ) ;
+                    }
+
+                    this_t::array_data_t d ;
+                    d.name = name ;
+                    d.var = var ;
+
+                    _arrays.emplace_back( d ) ;
                 }
 
                 return static_cast< natus::graphics::data_variable< natus::ntd::string_t >* >( var ) ;

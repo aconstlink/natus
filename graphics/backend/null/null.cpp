@@ -53,6 +53,11 @@ natus::graphics::result null_backend::configure( natus::graphics::state_object_r
     return natus::graphics::result::ok ;
 }
 
+natus::graphics::result null_backend::configure( natus::graphics::array_object_res_t ) noexcept 
+{
+    return natus::graphics::result::ok ;
+}
+
 //***
 natus::graphics::result null_backend::connect( natus::graphics::render_object_res_t, natus::graphics::variable_set_res_t ) noexcept 
 {
@@ -61,6 +66,16 @@ natus::graphics::result null_backend::connect( natus::graphics::render_object_re
 
 //***
 natus::graphics::result null_backend::update( natus::graphics::geometry_object_res_t ) noexcept 
+{
+    return natus::graphics::result::ok ;
+}
+
+natus::graphics::result null_backend::update( natus::graphics::array_object_res_t ) noexcept
+{
+    return natus::graphics::result::ok ;
+}
+
+natus::graphics::result null_backend::update( natus::graphics::image_object_res_t ) noexcept
 {
     return natus::graphics::result::ok ;
 }

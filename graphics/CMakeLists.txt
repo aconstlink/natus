@@ -33,6 +33,7 @@ set( sources
     "buffer/vertex_attribute.h"
     "buffer/vertex_buffer.hpp"
     "buffer/index_buffer.hpp"
+    "buffer/data_buffer.hpp"
 
     "object/render_object.h"
     "object/geometry_object.h"
@@ -40,6 +41,7 @@ set( sources
     "object/shader_object.h"
     "object/framebuffer_object.h"
     "object/state_object.h"
+    "object/array_object.h"
 
     "variable/variables.hpp"
     "variable/variable_set.hpp"

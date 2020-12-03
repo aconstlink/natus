@@ -36,9 +36,12 @@ namespace natus
             virtual natus::graphics::result configure( natus::graphics::image_object_res_t ) noexcept override ;
             virtual natus::graphics::result configure( natus::graphics::framebuffer_object_res_t ) noexcept override ;
             virtual natus::graphics::result configure( natus::graphics::state_object_res_t ) noexcept override ;
+            virtual natus::graphics::result configure( natus::graphics::array_object_res_t ) noexcept override ;
 
             virtual natus::graphics::result connect( natus::graphics::render_object_res_t, natus::graphics::variable_set_res_t ) noexcept ;
             virtual natus::graphics::result update( natus::graphics::geometry_object_res_t ) noexcept override ;
+            virtual natus::graphics::result update( natus::graphics::array_object_res_t ) noexcept override ;
+            virtual natus::graphics::result update( natus::graphics::image_object_res_t ) noexcept override ;
 
             virtual natus::graphics::result use( natus::graphics::framebuffer_object_res_t, bool_t const clear_color,
                 bool_t const clear_depth, bool_t const clear_stencil ) noexcept override ;

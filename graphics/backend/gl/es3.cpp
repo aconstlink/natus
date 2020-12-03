@@ -1955,6 +1955,11 @@ natus::graphics::result es3_backend::configure( natus::graphics::state_object_re
     return natus::graphics::result::ok ;
 }
 
+natus::graphics::result es3_backend::configure( natus::graphics::array_object_res_t ) noexcept 
+{
+    return natus::graphics::result::ok ;
+}
+
 //***
 natus::graphics::result es3_backend::connect( natus::graphics::render_object_res_t config, natus::graphics::variable_set_res_t vs ) noexcept
 {
@@ -1992,6 +1997,18 @@ natus::graphics::result es3_backend::update( natus::graphics::geometry_object_re
     natus::log::global_t::error( natus::graphics::is_not( res ),
         natus_log_fn( "update geometry" ) ) ;
 
+    return natus::graphics::result::ok ;
+}
+
+//****
+natus::graphics::result es3_backend::update( natus::graphics::array_object_res_t ) noexcept 
+{
+    return natus::graphics::result::ok ;
+}
+
+//****
+natus::graphics::result es3_backend::update( natus::graphics::image_object_res_t ) noexcept 
+{
     return natus::graphics::result::ok ;
 }
 

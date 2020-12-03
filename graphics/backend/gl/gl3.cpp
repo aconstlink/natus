@@ -218,6 +218,18 @@ struct gl3_backend::pimpl
         // sampler ids for gl>=3.3
     };
 
+    struct array_data
+    {
+        bool_t valid = false ;
+        natus::ntd::string_t name ;
+
+        GLuint tex_id = GLuint( -1 ) ;
+        GLuint buf_id = GLuint( -1 ) ;
+
+        GLuint sib = 0 ;
+    } ;
+    natus_typedef( array_data ) ;
+
     struct framebuffer_data
     {
         bool_t valid = false ;
@@ -258,6 +270,9 @@ struct gl3_backend::pimpl
     typedef natus::ntd::vector< this_t::state_data_t > states_t ;
     states_t _states ;
     natus::ntd::stack< natus::graphics::render_state_sets_t, 10 > _state_stack ;
+
+    typedef natus::ntd::vector< this_t::array_data_t > arrays_t ;
+    arrays_t _arrays ;
 
     GLsizei vp_width = 0 ;
     GLsizei vp_height = 0 ;
@@ -1733,6 +1748,85 @@ struct gl3_backend::pimpl
         return true ;
     }
 
+    size_t construct_array_data( size_t oid, natus::graphics::array_object_ref_t obj ) 
+    {
+        oid = determine_oid( obj.name(), geo_configs ) ;
+
+        bool_t error = false ;
+        auto & data = _arrays[ oid ] ;
+
+        // buffer
+        if( data.buf_id == GLuint(-1) )
+        {
+            GLuint id = GLuint( -1 ) ;
+            glGenBuffers( 1, &id ) ;
+            error = natus::ogl::error::check_and_log( 
+                natus_log_fn( "[construct_array_data] : glGenBuffers" ) ) ;
+
+            data.buf_id = id ;
+        }
+
+        // texture
+        if( data.tex_id == GLuint(-1) )
+        {
+            GLuint id = GLuint( -1 ) ;
+            glGenTextures( 1, &id ) ;
+            error = natus::ogl::error::check_and_log( 
+                natus_log_fn( "[construct_array_data] : glGenTextures" ) ) ;
+
+            data.tex_id = id ;
+        }
+
+        return oid ;
+    }
+
+    size_t update( size_t oid, natus::graphics::array_object_ref_t obj, bool_t const is_config ) 
+    {
+        auto & data = _arrays[ oid ] ;
+
+        // do buffer
+        {
+            // bind buffer
+            {
+                glBindBuffer( GL_ARRAY_BUFFER, data.buf_id ) ;
+                if( natus::ogl::error::check_and_log( natus_log_fn("glBindBuffer") ) )
+                    return false ;
+            }
+
+            // transfer data
+            GLuint const sib = GLuint( obj.data_buffer().get_sib() ) ;
+            if( is_config || sib > data.sib )
+            {
+                glBufferData( GL_TEXTURE_BUFFER, sib,
+                        obj.data_buffer().data(), GL_DYNAMIC_DRAW ) ;
+                if( natus::ogl::error::check_and_log( natus_log_fn( "glBufferData" ) ) )
+                    return false ;
+                data.sib = sib ;
+            }
+            else
+            {
+                glBufferSubData( GL_TEXTURE_BUFFER, 0, sib, obj.data_buffer().data() ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glBufferSubData" ) ) ;
+            }
+        }
+
+        // do texture
+        // glTexBuffer is required to be called after driver memory is aquired.
+        {
+            glBindTexture( GL_TEXTURE_BUFFER, data.tex_id ) ;
+            if( natus::ogl::error::check_and_log( natus_log_fn( "glBindTexture" ) ) )
+                return false ;
+
+            auto const le = obj.data_buffer().get_layout_element(0) ;
+            glTexBuffer( GL_TEXTURE_BUFFER, natus::graphics::gl3::convert_for_texture_buffer(
+                le.type, le.type_struct ), data.buf_id ) ;
+            if( natus::ogl::error::check_and_log( natus_log_fn( "glTexBuffer" ) ) )
+                return false ;
+        }
+
+        return true ;
+    }
+
     bool_t render( size_t const id, size_t const varset_id = size_t(0), GLsizei const start_element = GLsizei(0), 
         GLsizei const num_elements = GLsizei(-1) )
     {
@@ -2049,6 +2143,26 @@ natus::graphics::result gl3_backend::configure( natus::graphics::state_object_re
 }
 
 //***
+natus::graphics::result gl3_backend::configure( natus::graphics::array_object_res_t obj ) noexcept 
+{
+    natus::graphics::id_res_t id = obj->get_id() ;
+
+    {
+        id->set_oid( this_t::get_bid(), _pimpl->construct_array_data( 
+            id->get_oid( this_t::get_bid() ), *obj ) ) ;
+    }
+
+    size_t const oid = id->get_oid( this_t::get_bid() ) ;
+
+    {
+        auto const res = _pimpl->update( oid, *obj, true ) ;
+        if( natus::core::is_not( res ) ) return natus::graphics::result::failed ;
+    }
+
+    return natus::graphics::result::ok ;
+}
+
+//***
 natus::graphics::result gl3_backend::connect( natus::graphics::render_object_res_t config, natus::graphics::variable_set_res_t vs ) noexcept
 {
     natus::graphics::id_res_t id = config->get_id() ;
@@ -2085,6 +2199,18 @@ natus::graphics::result gl3_backend::update( natus::graphics::geometry_object_re
     natus::log::global_t::error( natus::graphics::is_not( res ),
         natus_log_fn( "update geometry" ) ) ;
 
+    return natus::graphics::result::ok ;
+}
+
+//****
+natus::graphics::result gl3_backend::update( natus::graphics::array_object_res_t ) noexcept 
+{
+    return natus::graphics::result::ok ;
+}
+
+//****
+natus::graphics::result gl3_backend::update( natus::graphics::image_object_res_t ) noexcept 
+{
     return natus::graphics::result::ok ;
 }
 

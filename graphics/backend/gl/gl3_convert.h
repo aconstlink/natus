@@ -385,6 +385,56 @@ namespace natus
                 }
                 return GL_NONE ;
             }
+
+            static GLenum convert_for_texture_buffer( natus::graphics::type const t, natus::graphics::type_struct const ts ) noexcept
+            {
+                switch( t )
+                {
+                case natus::graphics::type::tfloat: 
+                    switch( ts ) 
+                    {
+                    case natus::graphics::type_struct::vec4:
+                        return GL_RGBA32F ;
+                    default: break ;
+                    }
+
+                case natus::graphics::type::tchar: 
+                    switch( ts ) 
+                    {
+                    case natus::graphics::type_struct::vec4:
+                        return GL_RGBA8 ;
+                    default: break ;
+                    }
+
+                case natus::graphics::type::tuchar: 
+                    switch( ts ) 
+                    {
+                    case natus::graphics::type_struct::vec4:
+                        return GL_RGBA8UI ;
+                    default: break ;
+                    }
+
+                case natus::graphics::type::tuint: 
+                    switch( ts ) 
+                    {
+                    case natus::graphics::type_struct::vec4:
+                        return GL_RGBA32UI ;
+                    default: break ;
+                    }
+
+                case natus::graphics::type::tint: 
+                    switch( ts ) 
+                    {
+                    case natus::graphics::type_struct::vec4:
+                        return GL_RGBA32I ;
+                    default: break ;
+                    }
+
+                default: break ;
+                }
+
+                return GL_NONE ;
+            }
         }
     }
 }
