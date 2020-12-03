@@ -12,100 +12,100 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_t co
         {
             natus::ntd::string_t( "mul" ),
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
-    {
-        if( args.size() != 2 ) return "mul ( INVALID_ARGS ) " ;
-        return args[ 0 ] + " * " + args[ 1 ] ;
-    }
+            {
+                if( args.size() != 2 ) return "mul ( INVALID_ARGS ) " ;
+                return args[ 0 ] + " * " + args[ 1 ] ;
+            }
         },
-                        {
-                            natus::ntd::string_t( "mmul" ),
-                            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
-    {
-        if( args.size() != 2 ) return "mmul ( INVALID_ARGS ) " ;
-        return args[ 0 ] + " * " + args[ 1 ] ;
-    }
-                        },
-                        {
-                            natus::ntd::string_t( "add" ),
-                            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
-    {
-        if( args.size() != 2 ) return "add ( INVALID_ARGS ) " ;
-        return args[ 0 ] + " + " + args[ 1 ] ;
-    }
-                        },
-                        {
-                            natus::ntd::string_t( "sub" ),
-                            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
-    {
-        if( args.size() != 2 ) return "sub ( INVALID_ARGS ) " ;
-        return args[ 0 ] + " - " + args[ 1 ] ;
-    }
-                        },
-                        {
-                            natus::ntd::string_t( "div" ),
-                            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
-    {
-        if( args.size() != 2 ) return "div ( INVALID_ARGS ) " ;
-        return args[ 0 ] + " / " + args[ 1 ] ;
-    }
-                        },
-                        {
-                            natus::ntd::string_t( "pulse" ),
-                            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
-    {
-        if( args.size() != 3 ) return "pulse ( INVALID_ARGS ) " ;
-        return  "( step ( " + args[ 0 ] + " , " + args[ 2 ] + " ) - " +
-            "step ( " + args[ 1 ] + " , " + args[ 2 ] + " ) )" ;
-    }
-                        },
-                        {
-                            natus::ntd::string_t( "texture" ),
-                            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
-    {
-        if( args.size() != 2 ) return "texture ( INVALID_ARGS ) " ;
-        return  "texture( " + args[ 0 ] + " , " + args[ 1 ] + " ) " ;
-    }
-                        },
-                        {
-                            natus::ntd::string_t( "rt_texture" ),
-                            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
-    {
-        if( args.size() != 2 ) return "rt_texture ( INVALID_ARGS ) " ;
-        return  "texture( " + args[ 0 ] + " , " + args[ 1 ] + " ) " ;
-    }
-                        },
-                        {
-                            natus::ntd::string_t( "lt" ),
-                            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
-    {
-        if( args.size() != 2 ) return "lt ( INVALID_ARGS ) " ;
-        return args[ 0 ] + " < " + args[ 1 ] ;
-    }
-                        },
-                        {
-                            natus::ntd::string_t( "gt" ),
-                            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
-    {
-        if( args.size() != 2 ) return "gt ( INVALID_ARGS ) " ;
-        return args[ 0 ] + " > " + args[ 1 ] ;
-    }
-                        },
-                        {
-                            natus::ntd::string_t( "ret" ),
-                            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
-    {
-        if( args.size() != 1 ) return "ret ( INVALID_ARGS ) " ;
-        return "return " + args[ 0 ] ;
-    }
-                        },
-                        {
-                            natus::ntd::string_t( "mix" ),
-                            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
-    {
-        if( args.size() != 3 ) return "mix ( INVALID_ARGS ) " ;
-        return "mix (" + args[ 0 ] + " , " + args[ 1 ] + " , " + args[ 2 ] + " ) " ;
-    }
-                        }
+        {
+            natus::ntd::string_t( "mmul" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 2 ) return "mmul ( INVALID_ARGS ) " ;
+                return args[ 0 ] + " * " + args[ 1 ] ;
+            }
+        },
+        {
+            natus::ntd::string_t( "add" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 2 ) return "add ( INVALID_ARGS ) " ;
+                return args[ 0 ] + " + " + args[ 1 ] ;
+            }
+        },
+        {
+            natus::ntd::string_t( "sub" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 2 ) return "sub ( INVALID_ARGS ) " ;
+                return args[ 0 ] + " - " + args[ 1 ] ;
+            }
+        },
+        {
+            natus::ntd::string_t( "div" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 2 ) return "div ( INVALID_ARGS ) " ;
+                return args[ 0 ] + " / " + args[ 1 ] ;
+            }
+        },
+        {
+            natus::ntd::string_t( "pulse" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 3 ) return "pulse ( INVALID_ARGS ) " ;
+                return  "( step ( " + args[ 0 ] + " , " + args[ 2 ] + " ) - " +
+                    "step ( " + args[ 1 ] + " , " + args[ 2 ] + " ) )" ;
+            }
+        },
+        {
+            natus::ntd::string_t( "texture" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 2 ) return "texture ( INVALID_ARGS ) " ;
+                return  "texture( " + args[ 0 ] + " , " + args[ 1 ] + " ) " ;
+            }
+        },
+        {
+            natus::ntd::string_t( "rt_texture" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 2 ) return "rt_texture ( INVALID_ARGS ) " ;
+                return  "texture( " + args[ 0 ] + " , " + args[ 1 ] + " ) " ;
+            }
+        },
+        {
+            natus::ntd::string_t( "lt" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 2 ) return "lt ( INVALID_ARGS ) " ;
+                return args[ 0 ] + " < " + args[ 1 ] ;
+            }
+        },
+        {
+            natus::ntd::string_t( "gt" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 2 ) return "gt ( INVALID_ARGS ) " ;
+                return args[ 0 ] + " > " + args[ 1 ] ;
+            }
+        },
+        {
+            natus::ntd::string_t( "ret" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 1 ) return "ret ( INVALID_ARGS ) " ;
+                return "return " + args[ 0 ] ;
+            }
+        },
+        {
+            natus::ntd::string_t( "mix" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 3 ) return "mix ( INVALID_ARGS ) " ;
+                return "mix (" + args[ 0 ] + " , " + args[ 1 ] + " , " + args[ 2 ] + " ) " ;
+            }
+        }
     } ;
 
     return natus::nsl::perform_repl( std::move( code ), repls ) ;

@@ -5,22 +5,19 @@ version 0.1
 
 library noise
 {
-    version gl3 es3
+    float_t noise1d( in float_t x )
     {
-        float noise1d( in float x )
-        {
-            // with seed
-            return nsl.math.perlin1d( 12345, width, height, x ) ;
-        }
+        // with seed
+        return nsl.math.perlin1d( 12345, width, height, x ) ;
     }
 }
 
 library mylib
 {
-    float pi = 3.1432423 ;
-    float c = 5648.3 ;
-    float x = 324 ;
-    vec3 some_vec = vec3(1.0) ;
+    float_t pi = 3.1432423 ;
+    float_t c = 5648.3 ;
+    float_t x = 324 ;
+    vec3_t some_vec = vec3_t(1.0) ;
 
     /*
         this
@@ -31,19 +28,13 @@ library mylib
     */
     library inner
     {
-        version gl3 es3
+        vec3_t xyz( vec3_t )
         {
-            vec3 xyz( vec3 )
-            {
-            }
         }
     }
 
-    version gl3 es3
+    vec3_t xyz( vec3_t )
     {
-        vec3 xyz( vec3 )
-        {
-        }
     }
 }
 
@@ -51,57 +42,47 @@ config name
 {
     render_states
     {
-        
     }
 
     vertex_shader
     {
-        mat4 proj : projection ;
-        mat4 view : view ;
+        mat4_t proj : projection ;
+        mat4_t view : view ;
 
-        float some_var ;
+        float_t some_var ;
 
-        tex2d some_texture ;
+        tex2d_t some_texture ;
+        array_t data ;
 
-        in vec3 pos : position ;
-        in vec2 tx : texcoord0 ;
+        in vec3_t pos : position ;
+        in vec2_t tx : texcoord ;
 
-        out vec4 pos : position ;
+        out vec4_t pos : position ;
 
         void main()
         {
             // nsl shader
         }
 
-        version gl3 es3
+
+        void main()
         {
-            void main()
-            {
-                // build in function
-                vec3 pos = nsl.math.xyz( in.pos ) ;
-
-                // user library function
-                pos = mylib.xyz( in.pos ) ;
-
-                out.pos = proj * view * vec4( pos, 1.0 ) ;
-            }
-        }
-
-        version hlsl9 hlsl10 hlsl11
-        {}
+            // build in function
+            vec3_t pos = nsl.math.xyz( in.pos ) 
+            // user library function
+            pos = mylib.xyz( in.pos ) ;
+            out.pos = proj * view * vec4_t( pos, 1.0 ) ;
+       } 
     }
 
     pixel_shader
     {
-        in vec3 frag_coord : frag_coord ;
-        out vec4 color : color ;
+        in vec3_t frag_coord : frag_coord ;
+        out vec4_t color : color ;
 
-        version gl3 es3
+        void main()
         {
-            void main()
-            {
-                out.color = vec4(1) ;
-            }
+            out.color = vec4_t(1) ;
         }
     }
 }
