@@ -200,6 +200,17 @@ struct gl3_backend::pimpl
         natus::ntd::vector< std::pair<
             natus::graphics::variable_set_res_t,
             natus::ntd::vector< uniform_texture_link > > > var_sets_texture ;
+
+        struct uniform_array_data_link
+        {
+            // the index into the shader_config::uniforms array
+            size_t uniform_id ;
+            GLint tex_id ;
+            size_t buf_id ;
+        };
+        natus::ntd::vector< std::pair<
+            natus::graphics::variable_set_res_t,
+            natus::ntd::vector< uniform_array_data_link > > > var_sets_array ;
         
         natus::ntd::vector< render_state_sets > rss ;
     };
@@ -1315,6 +1326,7 @@ struct gl3_backend::pimpl
             rconfigs[ oid ].name = obj.name() ;
             rconfigs[ oid ].var_sets_data.clear() ;
             rconfigs[ oid ].var_sets_texture.clear() ;
+            rconfigs[ oid ].var_sets_array.clear() ;
             rconfigs[ oid ].var_sets.clear() ;
         }
 
@@ -1370,6 +1382,7 @@ struct gl3_backend::pimpl
                 
                 rd.var_sets_data.clear() ;
                 rd.var_sets_texture.clear() ;
+                rd.var_sets_array.clear() ;
 
                 auto vs = std::move( rd.var_sets ) ;
                 for( auto& item : vs )
@@ -1683,6 +1696,9 @@ struct gl3_backend::pimpl
         auto item_tex = ::std::make_pair( vs,
             natus::ntd::vector< this_t::render_data::uniform_texture_link >() ) ;
 
+        auto item_buf = ::std::make_pair( vs,
+            natus::ntd::vector< this_t::render_data::uniform_array_data_link >() ) ;
+
         this_t::shader_data_ref_t shd = shaders[ config.shd_id ] ;
 
         size_t id = 0 ;
@@ -1740,17 +1756,52 @@ struct gl3_backend::pimpl
                     item_tex.second.emplace_back( link ) ;
                 }
             }
+            else if( natus::ogl::uniform_is_buffer( uv.type ) )
+            {
+                auto* var = vs->array_variable( uv.name ) ;
+
+                if( natus::core::is_nullptr( var ) )
+                {
+                    natus::log::global_t::error( natus_log_fn( "can not claim variable " + uv.name ) ) ;
+                    continue ;
+                }
+
+                // looking for data buffer
+                {
+                    size_t i = 0 ;
+                    auto const & tx_name = var->get() ;
+                    for( auto & cfg : _arrays )
+                    {
+                        if( cfg.name == tx_name ) break ;
+                        ++i ;
+                    }
+
+                    if( i >= _arrays.size() )
+                    {
+                        natus::log::global_t::error( natus_log_fn( "Could not find image [" +
+                            tx_name + "]" ) ) ;
+                        continue ;
+                    }
+
+                    this_t::render_data::uniform_array_data_link link ;
+                    link.uniform_id = id++ ;
+                    link.tex_id = _arrays[ i ].tex_id ;
+                    link.buf_id = i ;
+                    item_buf.second.emplace_back( link ) ;
+                }
+            }
         }
         config.var_sets.emplace_back( vs ) ;
         config.var_sets_data.emplace_back( item_data ) ;
         config.var_sets_texture.emplace_back( item_tex ) ;
+        config.var_sets_array.emplace_back( item_buf ) ;
 
         return true ;
     }
 
     size_t construct_array_data( size_t oid, natus::graphics::array_object_ref_t obj ) 
     {
-        oid = determine_oid( obj.name(), geo_configs ) ;
+        oid = determine_oid( obj.name(), _arrays ) ;
 
         bool_t error = false ;
         auto & data = _arrays[ oid ] ;
@@ -1788,7 +1839,7 @@ struct gl3_backend::pimpl
         {
             // bind buffer
             {
-                glBindBuffer( GL_ARRAY_BUFFER, data.buf_id ) ;
+                glBindBuffer( GL_TEXTURE_BUFFER, data.buf_id ) ;
                 if( natus::ogl::error::check_and_log( natus_log_fn("glBindBuffer") ) )
                     return false ;
             }
@@ -1864,31 +1915,54 @@ struct gl3_backend::pimpl
             // tex vars
             {
                 int_t tex_unit = 0 ;
-                auto& varset = config.var_sets_texture[ varset_id ] ;
-                for( auto& item : varset.second )
+                // textures
                 {
-                    glActiveTexture( GLenum(GL_TEXTURE0 + tex_unit) ) ;
-                    natus::ogl::error::check_and_log( natus_log_fn( "glActiveTexture" ) ) ;
-                    glBindTexture( GL_TEXTURE_2D, item.tex_id ) ;
-                    natus::ogl::error::check_and_log( natus_log_fn( "glBindTexture" ) ) ;
-
+                    auto& varset = config.var_sets_texture[ varset_id ] ;
+                    for( auto& item : varset.second )
                     {
-                        auto const& ic = img_configs[ item.img_id ] ;
-                        glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, ic.wrap_types[0] ) ;
-                        glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, ic.wrap_types[1] ) ;
-                        glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, ic.wrap_types[2] ) ;
-                        glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, ic.filter_types[0] ) ;
-                        glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, ic.filter_types[1] ) ;
-                        natus::ogl::error::check_and_log( natus_log_fn( "glTexParameteri" ) ) ;
-                    }
+                        glActiveTexture( GLenum(GL_TEXTURE0 + tex_unit) ) ;
+                        natus::ogl::error::check_and_log( natus_log_fn( "glActiveTexture" ) ) ;
+                        glBindTexture( GL_TEXTURE_2D, item.tex_id ) ;
+                        natus::ogl::error::check_and_log( natus_log_fn( "glBindTexture" ) ) ;
 
-                    auto var = natus::graphics::data_variable< int_t >( tex_unit ) ;
-                    auto & uv = sconfig.uniforms[ item.uniform_id ] ;
+                        {
+                            auto const& ic = img_configs[ item.img_id ] ;
+                            glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, ic.wrap_types[0] ) ;
+                            glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, ic.wrap_types[1] ) ;
+                            glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, ic.wrap_types[2] ) ;
+                            glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, ic.filter_types[0] ) ;
+                            glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, ic.filter_types[1] ) ;
+                            natus::ogl::error::check_and_log( natus_log_fn( "glTexParameteri" ) ) ;
+                        }
+
+                        auto var = natus::graphics::data_variable< int_t >( tex_unit ) ;
+                        auto & uv = sconfig.uniforms[ item.uniform_id ] ;
                     
-                    uv.do_copy_funk( &var ) ;
-                    uv.do_uniform_funk() ;
+                        uv.do_copy_funk( &var ) ;
+                        uv.do_uniform_funk() ;
 
-                    ++tex_unit ;
+                        ++tex_unit ;
+                    }
+                }
+
+                // array data vars
+                {
+                    auto & varset = config.var_sets_array[ varset_id ] ;
+                    for( auto & item : varset.second )
+                    {
+                        glActiveTexture( GLenum( GL_TEXTURE0 + tex_unit ) ) ;
+                        natus::ogl::error::check_and_log( natus_log_fn( "glActiveTexture" ) ) ;
+                        glBindTexture( GL_TEXTURE_BUFFER, item.tex_id ) ;
+                        natus::ogl::error::check_and_log( natus_log_fn( "glBindTexture" ) ) ;
+
+                        auto var = natus::graphics::data_variable< int_t >( tex_unit ) ;
+                        auto & uv = sconfig.uniforms[ item.uniform_id ] ;
+                    
+                        uv.do_copy_funk( &var ) ;
+                        uv.do_uniform_funk() ;
+
+                        ++tex_unit ;
+                    }
                 }
             }
         }
