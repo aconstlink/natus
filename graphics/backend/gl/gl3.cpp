@@ -1831,7 +1831,7 @@ struct gl3_backend::pimpl
         return oid ;
     }
 
-    size_t update( size_t oid, natus::graphics::array_object_ref_t obj, bool_t const is_config ) 
+    size_t update( size_t oid, natus::graphics::array_object_ref_t obj, bool_t const is_config = false ) 
     {
         auto & data = _arrays[ oid ] ;
 
@@ -2277,8 +2277,16 @@ natus::graphics::result gl3_backend::update( natus::graphics::geometry_object_re
 }
 
 //****
-natus::graphics::result gl3_backend::update( natus::graphics::array_object_res_t ) noexcept 
+natus::graphics::result gl3_backend::update( natus::graphics::array_object_res_t obj ) noexcept 
 {
+    natus::graphics::id_res_t id = obj->get_id() ;
+    size_t const oid = id->get_oid( this_t::get_bid() ) ;
+
+    {
+        auto const res = _pimpl->update( oid, *obj, false ) ;
+        if( natus::core::is_not( res ) ) return natus::graphics::result::failed ;
+    }
+
     return natus::graphics::result::ok ;
 }
 

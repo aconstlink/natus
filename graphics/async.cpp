@@ -166,7 +166,7 @@ async::this_ref_t async::update( natus::graphics::array_object_res_t obj,
 
         _configures.push_back( [=] ( natus::graphics::backend_ptr_t be ) mutable
         {
-            auto const ires = be->configure( std::move( obj ) ) ;
+            auto const ires = be->update( std::move( obj ) ) ;
             if( res.is_valid() ) *res = ires ;
         } ) ;
     }
@@ -183,7 +183,7 @@ async::this_ref_t async::update( natus::graphics::image_object_res_t obj,
 
         _configures.push_back( [=] ( natus::graphics::backend_ptr_t be ) mutable
         {
-            auto const ires = be->configure( std::move( obj ) ) ;
+            auto const ires = be->update( std::move( obj ) ) ;
             if( res.is_valid() ) *res = ires ;
         } ) ;
     }
