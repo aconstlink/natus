@@ -1910,6 +1910,22 @@ public: // functions
     {
         oid = this_t::determine_oid( obj.name(), _arrays ) ;
 
+        // only vec4 float allowed
+        {
+            bool_t valid = true ;
+            obj.data_buffer().for_each_layout_element( [&]( natus::graphics::data_buffer::layout_element_cref_t le )
+            {
+                if( le.type != natus::graphics::type::tfloat &&
+                    le.type_struct != natus::graphics::type_struct::vec4 ) valid = false ;
+            } ) ;
+
+            if( !valid )
+            {
+                natus::log::global_t::error("[d3d11] : data buffer must only consist of vec4f layout elements.") ;
+                return oid ;
+            }
+        }
+
         this_t::array_data_ref_t data = _arrays[ oid ] ;
         data.name = obj.name() ;
 
@@ -1967,13 +1983,14 @@ public: // functions
                 D3D11_SHADER_RESOURCE_VIEW_DESC res_desc = { } ;
                 res_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT ;
                 res_desc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER ;
-                //res_desc.Texture2D.MostDetailedMip = 0 ;
-                //res_desc.Texture2D.MipLevels = UINT(3) ;
+
+                // must be 16 in order to have access to all data.
+                // this is independent from the number of layout elements.
+                // latout elements may only have vec4f inserted!
+                UINT const elem_sib = 16 ; // sizeof( vec4f )
 
                 res_desc.Buffer.FirstElement= 0 ;
-                res_desc.Buffer.NumElements = UINT( byte_width ) / 16 ;
-                //res_desc.Buffer.ElementWidth = 16 ;
-                //res_desc.Buffer.NumElements = UINT( byte_width ) / 4 ;
+                res_desc.Buffer.NumElements = UINT( byte_width ) / elem_sib ;
                 
 
                 auto const hr = dev->CreateShaderResourceView( data.buffer, &res_desc, &data.view ) ;
