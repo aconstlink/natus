@@ -171,6 +171,14 @@ struct d3d11_backend::pimpl
         natus_typedef( image_variable ) ;
         natus_typedefs( natus::ntd::vector< image_variable_t >, image_variables ) ;
 
+        struct buffer_variable
+        {
+            natus::ntd::string_t name ;
+            UINT slot ;
+        } ;
+        natus_typedef( buffer_variable ) ;
+        natus_typedefs( natus::ntd::vector< buffer_variable_t >, buffer_variables ) ;
+
         // a constant buffer represent a way to send 
         // variable data to the shader. This struct
         // keeps track of a buffer in the shader and its
@@ -195,6 +203,9 @@ struct d3d11_backend::pimpl
 
         image_variables_t vs_textures ;
         image_variables_t ps_textures ;
+
+        buffer_variables_t vs_buffers ;
+        buffer_variables_t ps_buffers ;
     } ;
     natus_typedef( shader_data ) ;
 
@@ -208,6 +219,16 @@ struct d3d11_backend::pimpl
         ID3D11SamplerState * sampler = nullptr ;
     };
     natus_typedef( image_data ) ;
+
+    struct array_data
+    {
+        bool_t valid = false ;
+        natus::ntd::string_t name ;
+        ID3D11Buffer* buffer = nullptr ;
+        ID3D11ShaderResourceView * view = nullptr ;
+        void_ptr_t mem = nullptr ;
+    };
+    natus_typedef( array_data ) ;
 
     struct render_state_sets
     {
@@ -280,6 +301,23 @@ struct d3d11_backend::pimpl
 
         natus::ntd::vector< std::pair< natus::graphics::variable_set_res_t,
             image_variables_t > > var_sets_imgs_ps ;
+
+        struct buffer_variable
+        {
+            natus::ntd::string_t name ;
+            UINT slot ;
+
+            // index into the arrays vector
+            size_t id = size_t( -1 ) ;
+        } ;
+        natus_typedef( buffer_variable ) ;
+        natus_typedefs( natus::ntd::vector< buffer_variable_t >, buffer_variables ) ;
+
+        natus::ntd::vector< std::pair< natus::graphics::variable_set_res_t,
+            buffer_variables_t > > var_sets_buffers_vs ;
+
+        natus::ntd::vector< std::pair< natus::graphics::variable_set_res_t,
+            buffer_variables_t > > var_sets_buffers_ps ;
 
         // represents the cbuffer data of a shader stage.
         // very linked shader in a render data object
@@ -359,6 +397,9 @@ public: // variables
 
     typedef natus::ntd::vector< this_t::image_data > image_datas_t ;
     image_datas_t images ;
+
+    typedef natus::ntd::vector< this_t::array_data > array_datas_t ;
+    array_datas_t _arrays ;
 
     typedef natus::ntd::vector< this_t::framebuffer_data > framebuffer_datas_t ;
     framebuffer_datas_t _framebuffers ;
@@ -1260,7 +1301,7 @@ public: // functions
                 // find shader variables in constant buffer
                 {
                     shd.vs_cbuffers = this_t::determine_cbuffer( pVSBlob ) ;
-                    shd.vs_textures = this_t::determine_texture( pVSBlob ) ;
+                    this_t::determine_texture( pVSBlob, shd.vs_textures, shd.vs_buffers ) ;
                 }
             }
 
@@ -1347,7 +1388,7 @@ public: // functions
                 // find shader variables in constant buffer
                 {
                     shd.ps_cbuffers = this_t::determine_cbuffer( pPSBlob ) ;
-                    shd.ps_textures = this_t::determine_texture( pPSBlob ) ;
+                    this_t::determine_texture( pPSBlob, shd.ps_textures, shd.ps_buffers ) ;
                 }
             }
             else if( shd.ps != nullptr )
@@ -1584,6 +1625,8 @@ public: // functions
 
         {
             rd.var_sets_imgs_ps.clear() ;
+            rd.var_sets_buffers_vs.clear() ;
+            rd.var_sets_buffers_ps.clear() ;
         }
 
         // constant buffer mapping
@@ -1671,10 +1714,6 @@ public: // functions
 
                     rd.var_sets_data_ps.emplace_back( std::make_pair( vs, std::move( cbs ) ) ) ;
                 }
-
-                // texture buffers... some day
-
-                 
             } ) ;
         }
 
@@ -1701,6 +1740,58 @@ public: // functions
                     ivs.emplace_back( std::move( iv ) ) ;
                 }
                 rd.var_sets_imgs_ps.emplace_back( std::make_pair( vs, std::move( ivs ) ) ) ;
+            } ) ;
+        }
+
+        // array variable mapping : vs
+        {
+            this_t::shader_data_ref_t shd = shaders[ rd.shd_id ] ;
+            rc.for_each( [&] ( size_t const /*i*/, natus::graphics::variable_set_res_t vs )
+            {
+                this_t::render_data_t::buffer_variables_t bvs ;
+                for( auto& t : shd.vs_buffers )
+                {
+                    auto * dv = vs->array_variable( t.name ) ;
+                    natus::ntd::string_t const name = dv->get() ;
+
+                    size_t i = 0 ;
+                    for( ; i < _arrays.size(); ++i ) if( _arrays[ i ].name == name ) break ;
+
+                    if( i == _arrays.size() ) continue ;
+                    
+                    this_t::render_data_t::buffer_variable_t bv ;
+                    bv.id = i ;
+                    bv.name = t.name ;
+                    bv.slot = t.slot ;
+                    bvs.emplace_back( std::move( bv ) ) ;
+                }
+                rd.var_sets_buffers_vs.emplace_back( std::make_pair( vs, std::move( bvs ) ) ) ;
+            } ) ;
+        }
+
+        // array variable mapping : ps
+        {
+            this_t::shader_data_ref_t shd = shaders[ rd.shd_id ] ;
+            rc.for_each( [&] ( size_t const /*i*/, natus::graphics::variable_set_res_t vs )
+            {
+                this_t::render_data_t::buffer_variables_t bvs ;
+                for( auto& t : shd.ps_buffers )
+                {
+                    auto * dv = vs->array_variable( t.name ) ;
+                    natus::ntd::string_t const name = dv->get() ;
+
+                    size_t i = 0 ;
+                    for( ; i < _arrays.size(); ++i ) if( _arrays[ i ].name == name ) break ;
+
+                    if( i == _arrays.size() ) continue ;
+                    
+                    this_t::render_data_t::buffer_variable_t bv ;
+                    bv.id = i ;
+                    bv.name = t.name ;
+                    bv.slot = t.slot ;
+                    bvs.emplace_back( std::move( bv ) ) ;
+                }
+                rd.var_sets_buffers_ps.emplace_back( std::make_pair( vs, std::move( bvs ) ) ) ;
             } ) ;
         }
 
@@ -1815,6 +1906,136 @@ public: // functions
         return oid ;
     }
 
+    size_t construct_array_data( size_t oid, natus::graphics::array_object_ref_t obj ) 
+    {
+        oid = this_t::determine_oid( obj.name(), _arrays ) ;
+
+        this_t::array_data_ref_t data = _arrays[ oid ] ;
+        data.name = obj.name() ;
+
+        ID3D11Device * dev = _ctx->dev() ;
+
+        // data buffer
+        {
+            // = number of vertices * sizeof( vertex )
+            // if there are vertices already setup, take the numbers
+            size_t const byte_width = obj.data_buffer().get_sib() ;
+
+            D3D11_BUFFER_DESC bd = { } ;
+            bd.Usage = D3D11_USAGE_DYNAMIC ;
+            // using max of 1 sib so empty vbs will create and will 
+            // be resized in the update function. Important for now
+            // is that the buffer will be NOT nullptr.
+            bd.ByteWidth = UINT( std::max( byte_width, size_t( 1 ) ) ) ;
+            bd.BindFlags = D3D11_BIND_VERTEX_BUFFER | D3D10_BIND_SHADER_RESOURCE ;
+            bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE ;
+
+            natus::memory::global_t::dealloc_raw( data.mem ) ;
+            data.mem = natus::memory::global_t::alloc_raw< uint8_t >( 
+                byte_width, "[d3d11] : buffer memory" ) ;
+
+            if( data.buffer != nullptr ) 
+            {
+                data.buffer->Release() ;
+                data.buffer = nullptr ;
+            }
+
+            if( byte_width != 0 )
+            {
+                D3D11_SUBRESOURCE_DATA init_data = { } ;
+                init_data.pSysMem = ( void_cptr_t ) data.mem ;
+
+                std::memcpy( data.mem, obj.data_buffer().data(), byte_width ) ;
+
+                HRESULT const hr = dev->CreateBuffer( &bd, &init_data, &data.buffer ) ;
+                if( FAILED( hr ) )
+                {
+                    natus::log::global_t::error( natus_log_fn( "D3D11_BIND_DATA_BUFFER" ) ) ;
+                }
+            }
+            else
+            {
+                HRESULT const hr = _ctx->dev()->CreateBuffer( &bd, nullptr, &data.buffer ) ;
+                if( FAILED( hr ) )
+                {
+                    natus::log::global_t::error( natus_log_fn( "D3D11_BIND_DATA_BUFFER" ) ) ;
+                }
+            }
+
+            if( data.buffer != nullptr )
+            {
+                D3D11_SHADER_RESOURCE_VIEW_DESC res_desc = { } ;
+                res_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT ;
+                res_desc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER ;
+                //res_desc.Texture2D.MostDetailedMip = 0 ;
+                //res_desc.Texture2D.MipLevels = UINT(3) ;
+
+                res_desc.Buffer.FirstElement= 0 ;
+                res_desc.Buffer.NumElements = UINT( byte_width ) / 16 ;
+                //res_desc.Buffer.ElementWidth = 16 ;
+                //res_desc.Buffer.NumElements = UINT( byte_width ) / 4 ;
+                
+
+                auto const hr = dev->CreateShaderResourceView( data.buffer, &res_desc, &data.view ) ;
+                if( FAILED( hr ) )
+                {
+                    natus::log::global_t::error( natus_log_fn( "CreateShaderResourceView for buffer : [" + data.name + "]" ) ) ;
+                }
+            }
+        }
+
+        return oid ;
+    }
+
+    bool_t update( size_t const id, natus::graphics::array_object_ref_t obj, bool_t const is_config )
+    {
+        auto & data = _arrays[ id ] ;
+        
+        {
+            D3D11_BUFFER_DESC bd ;
+            data.buffer->GetDesc( &bd ) ;
+
+            size_t const sib = obj.data_buffer().get_sib() ;
+            if( sib > bd.ByteWidth )
+            {
+                bd.ByteWidth = uint_t( sib ) ;
+
+                natus::memory::global_t::dealloc_raw( data.mem ) ;
+                data.mem = natus::memory::global_t::alloc_raw< uint8_t >( 
+                    sib, "[d3d11] : data buffer memory" ) ;
+
+                D3D11_SUBRESOURCE_DATA init_data = { } ;
+                init_data.pSysMem = ( void_ptr_t ) data.mem ;
+                
+                data.buffer->Release() ;
+                {
+                    auto const hr = _ctx->dev()->CreateBuffer( &bd, &init_data, &data.buffer ) ;
+                    if( FAILED( hr ) )
+                    {
+                        natus::log::global_t::error( natus_log_fn( "CreateBuffer( vertex_buffer )" ) ) ;
+                    }
+                }
+            }
+
+            // copy data
+            {
+                // exactly the size in bytes of the 1d buffer
+                LONG const lsib = LONG( obj.data_buffer().get_layout_sib() ) ;
+                LONG const ne = LONG( obj.data_buffer().get_num_elements() ) ;
+                void_cptr_t data_ptr = obj.data_buffer().data() ;
+                CD3D11_BOX const box( 0, 0, 0, ne, 1, 1 ) ;
+
+                //_ctx->ctx()->UpdateSubresource( config.vb, 0, nullptr /*&box*/, data, lsib, 0 ) ;
+                D3D11_MAPPED_SUBRESOURCE resource;
+                _ctx->ctx()->Map( data.buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &resource ) ;
+                std::memcpy( resource.pData, data_ptr, lsib * ne ) ;
+                _ctx->ctx()->Unmap( data.buffer, 0 ) ;
+            }
+        }
+
+        return true ;
+    }
+
     bool_t render( size_t const id, size_t const varset_id = size_t( 0 ), UINT const start_element = UINT( 0 ),
         UINT const num_elements = UINT( -1 ) )
     {
@@ -1915,6 +2136,16 @@ public: // functions
             ctx->PSSetSamplers( img.slot, 1, &(images[ img.id ].sampler) ) ;
         }
 
+        for( auto& buf : rnd.var_sets_buffers_vs[ varset_id ].second )
+        {
+            ctx->VSSetShaderResources( buf.slot, 1, &(_arrays[ buf.id ].view) ) ;
+        }
+
+        for( auto& buf : rnd.var_sets_buffers_ps[ varset_id ].second )
+        {
+            ctx->PSSetShaderResources( buf.slot, 1, &(_arrays[ buf.id ].view) ) ;
+        }
+
         if( geo.ib != nullptr )
         {
             ctx->IASetIndexBuffer( geo.ib, DXGI_FORMAT_R32_UINT, 0 );
@@ -1989,10 +2220,10 @@ public: // functions
         return std::move( code ) ;
     }
 
-    static shader_data_t::image_variables_t determine_texture( ID3DBlob * blob ) noexcept
+    static bool_t determine_texture( ID3DBlob * blob,
+        shader_data_t::image_variables_out_t img_vars, 
+        shader_data_t::buffer_variables_out_t buf_vars ) noexcept
     {
-        shader_data_t::image_variables_t ret ;
-
         guard< ID3D11ShaderReflection >  reflector ;
         D3DReflect( blob->GetBufferPointer(), blob->GetBufferSize(),
             IID_ID3D11ShaderReflection, reflector ) ;
@@ -2003,7 +2234,7 @@ public: // functions
             if( FAILED( hr ) )
             {
                 natus::log::global_t::error( natus_log_fn( "Can not get shader reflection desc" ) ) ;
-                return shader_data_t::image_variables_t() ;
+                return false ;
             }
         }
 
@@ -2016,7 +2247,7 @@ public: // functions
                 if( FAILED( hr ) )
                 {
                     natus::log::global_t::error( natus_log_fn( "GetResourceBindingDesc" ) ) ;
-                    return shader_data_t::image_variables_t() ;
+                    return false ;
                 }
             }
 
@@ -2035,7 +2266,14 @@ public: // functions
                 shader_data_t::image_variable_t ivar ;
                 ivar.name = ibd.Name ;
                 ivar.slot = ibd.BindPoint ;
-                ret.emplace_back( ivar ) ;
+                img_vars.emplace_back( ivar ) ;
+            }
+            else if( ibd.Type == D3D_SIT_TEXTURE && ibd.Dimension == D3D_SRV_DIMENSION_BUFFER )
+            {
+                shader_data_t::buffer_variable_t ivar ;
+                ivar.name = ibd.Name ;
+                ivar.slot = ibd.BindPoint ;
+                buf_vars.emplace_back( ivar ) ;
             }
             else
             {
@@ -2043,7 +2281,7 @@ public: // functions
             }
         }
 
-        return std::move( ret ) ;
+        return true ;
     }
 
     // performs reflection on the constant buffers present in
@@ -2338,8 +2576,28 @@ natus::graphics::result d3d11_backend::configure( natus::graphics::state_object_
 }
 
 //***
-natus::graphics::result d3d11_backend::configure( natus::graphics::array_object_res_t ) noexcept 
+natus::graphics::result d3d11_backend::configure( natus::graphics::array_object_res_t obj ) noexcept 
 {
+    if( !obj.is_valid() || obj->name().empty() )
+    {
+        natus::log::global_t::error( natus_log_fn( "Object must be valid and requires a name" ) ) ;
+        return natus::graphics::result::invalid_argument ;
+    }
+
+    natus::graphics::id_res_t id = obj->get_id() ;
+
+    {
+        id->set_oid( this_t::get_bid(), _pimpl->construct_array_data( 
+            id->get_oid( this_t::get_bid() ), *obj ) ) ;
+    }
+
+    size_t const oid = id->get_oid( this_t::get_bid() ) ;
+
+    {
+        auto const res = _pimpl->update( oid, *obj, true ) ;
+        if( natus::core::is_not( res ) ) return natus::graphics::result::failed ;
+    }
+
     return natus::graphics::result::ok ;
 }
 
