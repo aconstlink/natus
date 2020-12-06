@@ -196,6 +196,16 @@ struct es3_backend::pimpl
             natus::graphics::variable_set_res_t,
             natus::ntd::vector< uniform_texture_link > > > var_sets_texture ;
 
+        struct uniform_array_data_link
+        {
+            // the index into the shader_config::uniforms array
+            size_t uniform_id ;
+            GLint tex_id ;
+            size_t buf_id ;
+        };
+        natus::ntd::vector< std::pair<
+            natus::graphics::variable_set_res_t,
+            natus::ntd::vector< uniform_array_data_link > > > var_sets_array ;
     };
     natus_typedef( render_data ) ;
 
@@ -212,6 +222,21 @@ struct es3_backend::pimpl
 
         // sampler ids for gl>=3.3
     };
+
+    // This should be a TBO but is not 
+    // available before GLES3.2
+    struct array_data
+    {
+        bool_t valid = false ;
+        size_t img_id = size_t(-1) ;
+        natus::ntd::string_t name ;
+
+        //GLuint tex_id = GLuint( -1 ) ;
+        //GLuint buf_id = GLuint( -1 ) ;
+
+        //GLuint sib = 0 ;
+    } ;
+    natus_typedef( array_data ) ;
 
     struct framebuffer_data
     {
@@ -251,6 +276,9 @@ struct es3_backend::pimpl
     typedef natus::ntd::vector< this_t::state_data_t > states_t ;
     states_t _states ;
     natus::ntd::stack< natus::graphics::render_state_sets_t, 10 > _state_stack ;
+
+    typedef natus::ntd::vector< this_t::array_data_t > arrays_t ;
+    arrays_t _arrays ;
 
     GLsizei vp_width = 0 ;
     GLsizei vp_height = 0 ;
@@ -1556,7 +1584,7 @@ struct es3_backend::pimpl
 
         config.sib = confin.image().sib() ;
 
-        return false ;
+        return true ;
     }
 
     bool_t connect( size_t const id, natus::graphics::variable_set_res_t vs )
@@ -1578,6 +1606,9 @@ struct es3_backend::pimpl
 
         auto item_tex = ::std::make_pair( vs,
             natus::ntd::vector< this_t::render_data::uniform_texture_link >() ) ;
+
+        auto item_buf = ::std::make_pair( vs,
+            natus::ntd::vector< this_t::render_data::uniform_array_data_link >() ) ;
 
         this_t::shader_data_ref_t shd = shaders[ config.shd_id ] ;
 
@@ -1607,6 +1638,7 @@ struct es3_backend::pimpl
             {
                 //auto const types = natus::graphics::es3::to_type_type_struct( uv.type ) ;
                 auto* var = vs->texture_variable( uv.name ) ;
+                var = var->get().empty() ? vs->array_variable( uv.name ) : var ;
 
                 if( natus::core::is_nullptr( var ) )
                 {
@@ -1640,6 +1672,113 @@ struct es3_backend::pimpl
         config.var_sets_data.emplace_back( item_data ) ;
         config.var_sets_texture.emplace_back( item_tex ) ;
 
+        return true ;
+    }
+
+    size_t construct_array_data( size_t oid, natus::graphics::array_object_ref_t obj ) 
+    {
+        oid = determine_oid( obj.name(), _arrays ) ;
+
+        auto & data = _arrays[ oid ] ;
+        data.name = obj.name() ;
+
+        // prior to GLES 3.2, use a texture for data
+        {
+            size_t oid_img = determine_oid( obj.name(), img_configs ) ;
+            auto & config = img_configs[ oid_img ] ;
+            data.img_id = oid_img ;
+
+            // sampler
+            if( config.tex_id == GLuint( -1 ) )
+            {
+                GLuint id = GLuint( -1 ) ;
+                glGenTextures( 1, &id ) ;
+                natus::es::error::check_and_log( natus_log_fn( "glGenSamplers" ) ) ;
+ 
+                config.tex_id = id ;
+            }
+
+            {
+                for( size_t j=0; j<(size_t)natus::graphics::texture_wrap_mode::size; ++j )
+                {
+                    config.wrap_types[ j ] = natus::graphics::es3::convert(
+                         natus::graphics::texture_wrap_type::clamp );
+                }
+
+                for( size_t j = 0; j < ( size_t ) natus::graphics::texture_filter_mode::size; ++j )
+                {
+                    config.filter_types[ j ] = natus::graphics::es3::convert(
+                        natus::graphics::texture_filter_type::nearest );
+                }
+            }
+        }
+
+        return oid ;
+    }
+
+    size_t update( size_t oid, natus::graphics::array_object_ref_t obj, bool_t const is_config = false ) 
+    {
+        auto & data = _arrays[ oid ] ;
+
+        {
+            this_t::image_config& config = img_configs[ data.img_id ] ;
+
+            glBindTexture( GL_TEXTURE_2D, config.tex_id ) ;
+            if( natus::es::error::check_and_log( natus_log_fn( "glBindTexture" ) ) )
+                return false ;
+
+            size_t num_le = 0 ;
+            {
+                bool_t valid = true ;
+                obj.data_buffer().for_each_layout_element(
+                 [&](natus::graphics::data_buffer_t::layout_element_cref_t le )
+                 {
+                     if( le.type != natus::graphics::type::tfloat ||
+                         le.type_struct != natus::graphics::type_struct::vec4 )
+                         valid = false ;
+                     ++num_le ;
+                 } ) ;
+
+                if( !valid )
+                {
+                    natus::log::global_t::error("[es3] : only vec4f allowed in data_buffer layout") ;
+                    return false ;
+                }
+
+            }
+            size_t const sib = obj.data_buffer().get_sib() ;
+            GLenum const target = GL_TEXTURE_2D ;
+            GLint const level = 0 ;
+            GLint const tmp_w = std::sqrt( obj.data_buffer().get_num_elements() * num_le) ;
+            GLsizei const width = tmp_w + (tmp_w % 2) ;
+            GLsizei const height = width ;
+            GLenum const format = GL_RGBA ;
+            GLenum const type = GL_FLOAT ;
+
+            void_cptr_t data = obj.data_buffer().data() ;
+
+            if( is_config || (sib == 0 || config.sib < sib) )
+            {
+                GLint const border = 0 ;
+                GLint const internal_format = GL_RGBA32F ;
+
+                glTexImage2D( target, level, internal_format, width, height,
+                     border, format, type, data ) ;
+                natus::es::error::check_and_log( natus_log_fn( "glTexImage2D" ) ) ;
+            }
+            else
+            {
+                GLint const xoffset = 0 ;
+                GLint const yoffset = 0 ;
+
+                glTexSubImage2D( target, level, xoffset, yoffset, width, height,
+                                 format, type, data ) ;
+                natus::es::error::check_and_log( natus_log_fn( "glTexSubImage2D" ) ) ;
+            }
+
+            config.sib = obj.data_buffer().get_sib() ;
+
+        }
         return true ;
     }
 
@@ -1955,8 +2094,22 @@ natus::graphics::result es3_backend::configure( natus::graphics::state_object_re
     return natus::graphics::result::ok ;
 }
 
-natus::graphics::result es3_backend::configure( natus::graphics::array_object_res_t ) noexcept 
+natus::graphics::result es3_backend::configure( natus::graphics::array_object_res_t obj ) noexcept 
 {
+    natus::graphics::id_res_t id = obj->get_id() ;
+
+    {
+        id->set_oid( this_t::get_bid(), _pimpl->construct_array_data( 
+            id->get_oid( this_t::get_bid() ), *obj ) ) ;
+    }
+
+    size_t const oid = id->get_oid( this_t::get_bid() ) ;
+
+    {
+        auto const res = _pimpl->update( oid, *obj, true ) ;
+        if( natus::core::is_not( res ) ) return natus::graphics::result::failed ;
+    }
+
     return natus::graphics::result::ok ;
 }
 
@@ -2001,8 +2154,16 @@ natus::graphics::result es3_backend::update( natus::graphics::geometry_object_re
 }
 
 //****
-natus::graphics::result es3_backend::update( natus::graphics::array_object_res_t ) noexcept 
+natus::graphics::result es3_backend::update( natus::graphics::array_object_res_t obj ) noexcept 
 {
+    natus::graphics::id_res_t id = obj->get_id() ;
+    size_t const oid = id->get_oid( this_t::get_bid() ) ;
+
+    {
+        auto const res = _pimpl->update( oid, *obj, false ) ;
+        if( natus::core::is_not( res ) ) return natus::graphics::result::failed ;
+    }
+
     return natus::graphics::result::ok ;
 }
 
