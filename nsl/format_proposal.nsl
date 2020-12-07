@@ -51,8 +51,11 @@ config name
 
         float_t some_var ;
 
+        // 2d textures can be used in vertex shaders too
         tex2d_t some_texture ;
-        array_t data ;
+        
+        // holding user defined data multiple of vec4_t
+        data_array_t data ;
 
         in vec3_t pos : position ;
         in vec2_t tx : texcoord ;
@@ -61,16 +64,19 @@ config name
 
         void main()
         {
-            // nsl shader
-        }
-
-
-        void main()
-        {
             // build in function
-            vec3_t pos = nsl.math.xyz( in.pos ) 
+            vec3_t pos = some_build_in( in.pos ) ;
+
             // user library function
-            pos = mylib.xyz( in.pos ) ;
+            pos = nsl.mylib.xyz( in.pos ) ;
+
+            // access a huge data buffer
+            {
+                int_t idx = vid / 24 ;
+                vec4_t some_pos = data[ idx * 2 + 0 ] ;
+                vec4_t some_col = data[ idx * 2 + 1 ] ;
+            }
+
             out.pos = proj * view * vec4_t( pos, 1.0 ) ;
        } 
     }
@@ -80,9 +86,12 @@ config name
         in vec3_t frag_coord : frag_coord ;
         out vec4_t color : color ;
 
+        // access an array of textures
+        tex2d_array_t tarray ;
+
         void main()
         {
-            out.color = vec4_t(1) ;
+            out.color = texture( tarray[x], vec2_t() ) ;
         }
     }
 }

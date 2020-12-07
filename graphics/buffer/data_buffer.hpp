@@ -87,6 +87,13 @@ namespace natus
                 return *this ;
             }
 
+            template< typename item_t >
+            this_ref_t update( size_t const i, item_t const & item ) noexcept
+            {
+                static_cast< item_t* >( _data )[i] = item ;
+                return *this ;
+            }
+
             void_cptr_t data( void_t ) const noexcept { return _data ; }
 
             // only one element supported for the moment

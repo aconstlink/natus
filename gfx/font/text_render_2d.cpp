@@ -18,6 +18,11 @@ text_render_2d::text_render_2d( this_rref_t rhv ) noexcept
     _vars = std::move( rhv._vars ) ;
     _asyncs = std::move( rhv._asyncs ) ;
     _ga = std::move( rhv._ga ) ;
+
+    _text_infos = std::move( rhv._text_infos ) ;
+    _glyph_infos = std::move( rhv._glyph_infos ) ;
+
+    _name = std::move( rhv._name ) ;
 }
 
 text_render_2d::~text_render_2d( void_t ) noexcept
@@ -111,7 +116,7 @@ void_t text_render_2d::init( natus::font::glyph_atlas_res_t ga, size_t const ng 
     {
         natus::graphics::shader_object_t sc( this_t::name() ) ;
 
-        // shaders : ogl 3.0
+        // shaders : ogl 3.1
         {
             sc.insert( natus::graphics::backend_type::gl3, natus::graphics::shader_set_t().
 
@@ -124,13 +129,31 @@ void_t text_render_2d::init( natus::font::glyph_atlas_res_t ga, size_t const ng 
 
                     uniform mat4 u_proj ;
                     uniform mat4 u_view ;
+                    uniform samplerBuffer u_glyph_infos ;
+                    uniform samplerBuffer u_text_infos ;
 
                     out vec2 var_uv ;
                     out vec4 var_color ;
 
                     void main()
                     {
-                        var_uv = in_uv ;
+                        int idx_text = gl_VertexID / 4 ;
+                        vec4 t1 = texelFetch( u_text_infos, idx_text * 2 + 0 ) ;
+                        vec4 t2 = texelFetch( u_text_infos, idx_text * 2 + 1 ) ;
+
+                        int idx_glyph = 120 ;
+                        vec4 g1 = texelFetch( u_glyph_infos, idx_glyph * 2 + 0 ) ;
+                        vec4 g2 = texelFetch( u_glyph_infos, idx_glyph * 2 + 1 ) ;
+                        
+                        vec2 coords[] = vec2[4]
+                        (
+                            vec2( g1.xy ),
+                            vec2( g1.x, g1.y + g1.w ),
+                            vec2( g1.xy + g1.zw ),
+                            vec2( g1.x + g1.z, g1.y )
+                        ) ;
+                        
+                        var_uv = coords[ gl_VertexID % 4 ] ;
                         var_color = in_color ;
                         gl_Position = u_proj * vec4( in_pos, 0.0, 1.0 ) ;
                     } )" ) ).
@@ -139,14 +162,14 @@ void_t text_render_2d::init( natus::font::glyph_atlas_res_t ga, size_t const ng 
                     #version 140
 
                     out vec4 out_color ;
-                    uniform sampler2D atlas ;
+                    uniform sampler2D u_atlas ;
 
                     in vec2 var_uv ;
                     in vec4 var_color ;
 
                     void main()
                     {    
-                        out_color = var_color * texture( atlas, var_uv ) ;
+                        out_color = var_color * texture( u_atlas, var_uv ) ;
                     } )" ) ) 
             ) ;
         }
@@ -223,8 +246,8 @@ void_t text_render_2d::init( natus::font::glyph_atlas_res_t ga, size_t const ng 
                             } )" ) ).
 
                 set_pixel_shader( natus::graphics::shader_t( R"(
-                            Texture2D atlas : register( t0 );
-                            SamplerState smp_atlas : register( s0 );
+                            Texture2D u_atlas : register( t0 );
+                            SamplerState smp_u_atlas : register( s0 );
 
                             struct VS_OUTPUT
                             {
@@ -235,7 +258,7 @@ void_t text_render_2d::init( natus::font::glyph_atlas_res_t ga, size_t const ng 
 
                             float4 PS( VS_OUTPUT input ) : SV_Target
                             {
-                                return atlas.Sample( smp_atlas, input.tx ) * input.color ;
+                                return u_atlas.Sample( smp_u_atlas, input.tx ) * input.color ;
                             } )" 
                 ) ) ) ;
         }
@@ -295,6 +318,61 @@ void_t text_render_2d::init( natus::font::glyph_atlas_res_t ga, size_t const ng 
         _asyncs.for_each( [&]( natus::graphics::async_view_t a ) { a.configure( ic ) ; } ) ;
     }
 
+    // prepare glyph infos
+    {
+        struct the_data
+        {
+            natus::math::vec4f_t v1 ;
+            natus::math::vec4f_t v2 ;
+        };
+
+        natus::graphics::data_buffer_t db = natus::graphics::data_buffer_t()
+            .add_layout_element( natus::graphics::type::tfloat, natus::graphics::type_struct::vec4 )
+            .add_layout_element( natus::graphics::type::tfloat, natus::graphics::type_struct::vec4 )
+            .resize( _ga->get_num_glyphs() )
+            .update< the_data >( [&]( the_data * array, size_t const ne )
+            {
+                for( size_t i=0; i<ne; ++i )
+                {
+                    natus::font::glyph_atlas_t::glyph_info_t gi ;
+                    auto const res = _ga->get_glyph_info( i, gi ) ;
+                    if( !res ) continue ;
+
+                    auto const v1 = natus::math::vec4f_t( gi.start, gi.dims ) ;
+                    auto const v2 = natus::math::vec4f_t( float_t( gi.image_id ), gi.bearing, 0.0f, 0.0f ) ;
+
+                    array[ i ] = { v1, v2 } ;
+                }
+            }
+        );
+
+        _glyph_infos = natus::graphics::array_object_t( 
+            this_t::name() + ".glyph_infos", std::move( db ) ) ;
+        _asyncs.for_each( [&]( natus::graphics::async_view_t a ) 
+            { a.configure( _glyph_infos ) ; } ) ;
+    }
+
+    // prepare text infos
+    {
+        struct the_data
+        {
+            // v1: ( pos.xy, offset, scale )
+            // v2: ( color.xyz, 0.0f )
+            natus::math::vec4f_t v1 ;
+            natus::math::vec4f_t v2 ;
+        };
+
+        natus::graphics::data_buffer_t db = natus::graphics::data_buffer_t()
+            .add_layout_element( natus::graphics::type::tfloat, natus::graphics::type_struct::vec4 )
+            .add_layout_element( natus::graphics::type::tfloat, natus::graphics::type_struct::vec4 )
+            .resize( 0 ) ;
+
+        _text_infos = natus::graphics::array_object_t( 
+            this_t::name() + ".text_infos", std::move( db ) ) ;
+        _asyncs.for_each( [&]( natus::graphics::async_view_t a ) 
+            { a.configure( _text_infos ) ; } ) ;
+    }
+
     // render configuration
     {
         natus::graphics::render_object_t rc( this_t::name() ) ;
@@ -303,19 +381,30 @@ void_t text_render_2d::init( natus::font::glyph_atlas_res_t ga, size_t const ng 
         rc.link_shader( this_t::name() ) ;
         
         _vars.clear() ;
-        natus::graphics::variable_set_t vs ;
+
+        // one variable set per group
+        for( size_t i=0; i<ng; ++i )
+        {
+            natus::graphics::variable_set_t vs ;
         
-        {
-            auto* var = vs.texture_variable( "atlas" ) ;
-            var->set( this_t::name() + ".atlas" ) ;
-        }
+            {
+                auto* var = vs.texture_variable( "u_atlas" ) ;
+                var->set( this_t::name() + ".atlas" ) ;
+            }
 
-        {
-            auto* var = vs.texture_variable( "glyph_infos" ) ;
-            var->set( this_t::name() + ".glyph_infos" ) ;
-        }
+            {
+                auto* var = vs.array_variable( "u_glyph_infos" ) ;
+                var->set( this_t::name() + ".glyph_infos" ) ;
+            }
 
-        _vars.emplace_back( std::move( vs ) ) ;
+            {
+                auto* var = vs.array_variable( "u_text_infos" ) ;
+                var->set( this_t::name() + ".text_infos" ) ;
+            }
+
+            _vars.emplace_back( std::move( vs ) ) ;
+        }
+        
 
         for( size_t i =0; i<_vars.size() ; ++i )
         {
@@ -385,16 +474,82 @@ natus::gfx::result text_render_2d::draw_text( size_t const group, size_t const f
 
 natus::gfx::result text_render_2d::prepare_for_rendering( void_t ) 
 {
+    struct the_data
+    {
+        // v1: ( pos.xy, offset, scale )
+        // v2: ( color.xyz, 0.0f )
+        natus::math::vec4f_t v1 ;
+        natus::math::vec4f_t v2 ;
+    };
+
+    // resize text infos
+    {
+        size_t num_elems = 0 ;
+        for( size_t i=0; i<_gis.size(); ++i ) 
+        {
+            _gis[i].ri = {} ;
+            num_elems += _gis[i].glyph_infos.size() ;
+        }
+        _text_infos->data_buffer().resize( num_elems ) ;
+    }
+
+    // encode text infos
+    {
+        size_t start = 0 ;
+        size_t num_glyphs = 0 ;
+        for( size_t i=0; i<_gis.size(); ++i )
+        {
+            if( _gis[i].glyph_infos.size() == 0 ) continue ;
+
+            num_glyphs = _gis[i].glyph_infos.size() ;
+            for( size_t g=0; g<num_glyphs; ++g )
+            {
+                auto const & gi = _gis[i].glyph_infos[g] ;
+
+                natus::math::vec4f_t const v1( gi.pos,
+                    natus::math::vec2f_t( float_t( gi.offset ), gi.point_size_scale ) ) ;
+                natus::math::vec4f_t const v2( gi.color, 0.0f ) ;
+
+                _text_infos->data_buffer().update<the_data>( start + g, { v1, v2 } ) ;
+            }
+        
+            _gis[i].ri.start = start ;
+            _gis[i].ri.num_elems = num_glyphs ;
+
+            start += num_glyphs ;
+        }
+    }
+
     return natus::gfx::result::ok ;
 }
 
-bool_t text_render_2d::need_to_render( size_t const ) const 
+bool_t text_render_2d::need_to_render( size_t const i ) const noexcept
 {
-    return true ;
+    return _gis[i].ri.num_elems != 0 ;
 }
 
-natus::gfx::result text_render_2d::render( size_t const ) 
+natus::gfx::result text_render_2d::render( size_t const i ) 
 {
+    if( i >= _gis.size() ) return natus::gfx::result::invalid_argument ;
+    if( !this_t::need_to_render(i) ) return natus::gfx::result::ok ;
+
+    _asyncs.for_each( [&]( natus::graphics::async_view_t a ) 
+    { 
+        // set the offset to the first glyph of this group
+        {
+            _vars[i]->data_variable< int32_t >( "u_offset" )->set( 
+                _gis[i].ri.start ) ;
+        }
+
+        natus::graphics::backend_t::render_detail_t detail ;
+
+        detail.start = 0 ;
+        detail.num_elems = _gis[i].ri.num_elems * 6 ;
+        detail.varset = i ;
+
+        a.render( _rc, detail ) ;
+    } ) ;
+
     return natus::gfx::result::ok ;
 }
 

@@ -55,11 +55,23 @@ namespace natus
             natus::ntd::vector< natus::graphics::variable_set_res_t > _vars ;
             natus::graphics::state_object_res_t  _render_states ;
 
+            /// storing the glyph infos of the glyph atlas
+            natus::graphics::array_object_res_t _glyph_infos ;
+            /// storing the text infos for rendering
+            natus::graphics::array_object_res_t _text_infos ;
+
             natus::graphics::async_views_t _asyncs ;
 
             size_t num_quads = 1000 ;
 
         private:
+
+            struct render_info
+            {
+                size_t start = 0 ;
+                size_t num_elems = 0 ;
+            };
+            natus_typedef( render_info ) ;
 
             struct glyph_info
             {
@@ -74,6 +86,8 @@ namespace natus
             struct group_info
             {
                 natus_this_typedefs( group_info ) ;
+
+                render_info_t ri ;
 
                 natus::concurrent::mutex_t mtx ;
                 natus::ntd::vector< glyph_info > glyph_infos ;
@@ -135,12 +149,15 @@ namespace natus
 
             //so_gfx::result set_canvas_info( canvas_info_cref_t ) ;
             natus::gfx::result prepare_for_rendering( void_t ) ;
-            bool_t need_to_render( size_t const ) const ;
+            
             natus::gfx::result render( size_t const ) ;
 
             natus::gfx::result release( void_t ) ;
 
-        
+        private:
+
+            bool_t need_to_render( size_t const ) const noexcept ;
+
         public:
 
             natus::ntd::string_cref_t name( void_t ) const noexcept
