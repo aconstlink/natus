@@ -162,7 +162,7 @@ void_t text_render_2d::init( natus::font::glyph_atlas_res_t ga, size_t const ng 
                         vec4 g1 = texelFetch( u_glyph_infos, idx_glyph * 2 + 0 ) ;
                         vec4 g2 = texelFetch( u_glyph_infos, idx_glyph * 2 + 1 ) ;
                         
-                        var_layer = int( g1.x ) ;
+                        var_layer = int( g2.x ) ;
 
                         // 
                         // calc texture coordinates
@@ -241,7 +241,7 @@ void_t text_render_2d::init( natus::font::glyph_atlas_res_t ga, size_t const ng 
                         vec4 g2 = texelFetch( u_glyph_infos, 
                             ivec2( (idx_glyph*2+1) % whg.x, (idx_glyph*2+1) / whg.x ), 0 ) ;
                         
-                        var_layer = int( g1.x ) ;
+                        var_layer = int( g2.x ) ;
 
                         // 
                         // calc texture coordinates
@@ -320,7 +320,7 @@ void_t text_render_2d::init( natus::font::glyph_atlas_res_t ga, size_t const ng 
                         float4 g1 = u_glyph_infos.Load( idx_glyph * 2 + 0 ) ;
                         float4 g2 = u_glyph_infos.Load( idx_glyph * 2 + 1 ) ;
                         
-                        output.layer = int( g1.x ) ;
+                        output.layer = int( g2.x ) ;
 
                         // 
                         // calc texture coordinates
