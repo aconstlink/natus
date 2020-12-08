@@ -568,7 +568,7 @@ natus::gfx::result text_render_2d::draw_text( size_t const group, size_t const f
 
         float_t const point_size_scale = float_t(point_size) / float_t(gi.point_size) ;
 
-        natus::math::vec2f_t adv = natus::math::vec2f_t( adv_x, 0.0f ) ;
+        natus::math::vec2f_t adv = natus::math::vec2f_t( adv_x * point_size_scale, 0.0f ) ;
         adv_x += gi.adv.x() ;
 
         natus::math::vec2f_t pos_ = pos + adv ;
