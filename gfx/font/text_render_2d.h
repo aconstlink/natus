@@ -43,8 +43,6 @@ namespace natus
             struct vertex 
             { 
                 natus::math::vec2f_t pos ; 
-                natus::math::vec2f_t uv ; 
-                natus::math::vec4f_t color ; 
             } ;
 
             natus::graphics::render_object_res_t _rc ;
