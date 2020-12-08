@@ -2025,11 +2025,33 @@ public: // functions
                 init_data.pSysMem = ( void_ptr_t ) data.mem ;
                 
                 data.buffer->Release() ;
+                data.buffer = nullptr ;
                 {
                     auto const hr = _ctx->dev()->CreateBuffer( &bd, &init_data, &data.buffer ) ;
                     if( FAILED( hr ) )
                     {
                         natus::log::global_t::error( natus_log_fn( "CreateBuffer( vertex_buffer )" ) ) ;
+                    }
+                }
+
+                // recreate shader resource view
+                {
+                    D3D11_SHADER_RESOURCE_VIEW_DESC res_desc = { } ;
+                    data.view->GetDesc( &res_desc ) ;
+
+                    data.view->Release() ;
+
+                    // must be 16 in order to have access to all data.
+                    // this is independent from the number of layout elements.
+                    // latout elements may only have vec4f inserted!
+                    UINT const elem_sib = 16 ; // sizeof( vec4f )
+
+                    res_desc.Buffer.FirstElement= 0 ;
+                    res_desc.Buffer.NumElements = UINT( bd.ByteWidth ) / elem_sib ;
+                    auto const hr = _ctx->dev()->CreateShaderResourceView( data.buffer, &res_desc, &data.view ) ;
+                    if( FAILED( hr ) )
+                    {
+                        natus::log::global_t::error( natus_log_fn( "CreateShaderResourceView for buffer : [" + data.name + "]" ) ) ;
                     }
                 }
             }
