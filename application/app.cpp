@@ -175,7 +175,7 @@ app::window_async_t app::create_window(
     }
     
     natus::graphics::async_res_t async = pwi.async ;
-    pwi.imgui = natus::gfx::imgui_res_t( natus::gfx::imgui_t() ) ;
+    pwi.imgui = natus::tool::imgui_res_t( natus::tool::imgui_t() ) ;
     pwi.imgui->init( natus::graphics::async_view_t( async ) ) ;
 
     bool_ptr_t run = natus::memory::global_t::alloc<bool_t>(
@@ -304,7 +304,7 @@ bool_t app::platform_update( void_t )
                 _windows[ 0 ].imgui->begin() ;
                 _windows[ 0 ].imgui->execute( [&] ( ImGuiContext* ctx )
                 {
-                    if( this->on_tool( natus::gfx::imgui_view_t( _windows[ 0 ].imgui ) ) != natus::application::result::no_imgui )
+                    if( this->on_tool( natus::tool::imgui_view_t( _windows[ 0 ].imgui ) ) != natus::application::result::no_imgui )
                     {
                         _windows[ 0 ].imgui->update( _dev_ascii ) ;
                         _windows[ 0 ].imgui->update( _dev_mouse ) ;
@@ -379,7 +379,7 @@ bool_t app::before_update( void_t )
                     wi.width = sv.resize_msg.w ;
                     wi.height = sv.resize_msg.h ;
 
-                    natus::gfx::imgui_t::window_data_t wd ;
+                    natus::tool::imgui_t::window_data_t wd ;
                     wd.width = int_t( wi.width ) ;
                     wd.height = int_t( wi.height ) ;
                     pwi.imgui->update( wd ) ;

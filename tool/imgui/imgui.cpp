@@ -1,9 +1,8 @@
 #include "imgui.h"
 
-#include "../camera/pinhole_camera.h"
+#include <natus/math/utility/3d/orthographic_projection.hpp>
 
-
-using namespace natus::gfx ;
+using namespace natus::tool ;
 
 //***
 imgui::imgui( void_t ) 
@@ -287,13 +286,13 @@ void_t imgui::end( void_t ) noexcept
 //***
 void_t imgui::render( natus::graphics::async_view_t async ) 
 {
-    natus::gfx::pinhole_camera_t camera ;
-    camera.orthographic( float_t( _width ), float_t(_height), 1.0f, 1000.0f ) ;
-    
+    natus::math::mat4f_t const proj = natus::math::m3d::orthographic<float_t>::create(
+        float_t( _width ), float_t(_height), 1.0f, 10.0f ) ;
+
     for( auto & vars : _vars )
     {
         auto* var = vars->data_variable< natus::math::mat4f_t >( "u_proj" ) ;
-        var->set( camera.mat_proj() ) ;
+        var->set( proj ) ;
     }
     
     ImGui::Render() ;

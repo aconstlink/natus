@@ -15,7 +15,7 @@
 
 #include <natus/audio/async.h>
 #include <natus/graphics/async.h>
-#include <natus/gfx/imgui/imgui.h>
+#include <natus/tool/imgui/imgui.h>
 #include <natus/concurrent/typedefs.h>
 
 namespace natus
@@ -104,7 +104,7 @@ namespace natus
                 natus::application::window_message_receiver_res_t msg_send ;
                 natus::application::window_message_receiver_res_t gfx_send ;
                 natus::graphics::async_res_t async ;
-                natus::gfx::imgui_res_t imgui ;
+                natus::tool::imgui_res_t imgui ;
                 window_info_t wi ;
                 bool_ptr_t run ;
                 per_window_info( void_t ) {}
@@ -193,7 +193,7 @@ namespace natus
             virtual natus::application::result on_event( window_id_t const, this_t::window_event_info_in_t ) 
             { return natus::application::result::ok ; }
 
-            virtual natus::application::result on_tool( natus::gfx::imgui_view_t ) 
+            virtual natus::application::result on_tool( natus::tool::imgui_view_t ) 
             { return natus::application::result::no_imgui ;  }
 
         protected:

@@ -123,6 +123,7 @@ list( APPEND subdirs
     "audio"
     "geometry"
     "font"
+    "tool"
     ${subdirs_header_only}
     )
 

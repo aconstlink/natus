@@ -16,9 +16,9 @@
 
 namespace natus
 {
-    namespace gfx
+    namespace tool
     {
-        class NATUS_GFX_API imgui
+        class NATUS_TOOL_API imgui
         {
             natus_this_typedefs( imgui ) ;
 
