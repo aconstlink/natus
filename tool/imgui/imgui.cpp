@@ -62,7 +62,7 @@ void_t imgui::init( natus::graphics::async_view_t async )
         auto ib = natus::graphics::index_buffer_t().
             set_layout_element( natus::graphics::type::tuint ).resize( 6*100 ) ;
 
-        _gc = natus::graphics::geometry_object_t( "natus.gfx.imgui",
+        _gc = natus::graphics::geometry_object_t( "natus.system.imgui",
             natus::graphics::primitive_type::triangles,
             ::std::move( vb ), ::std::move( ib ) ) ;
 
@@ -70,12 +70,12 @@ void_t imgui::init( natus::graphics::async_view_t async )
     }
 
     {
-        _render_states = natus::graphics::state_object_t("system.imgui") ;
+        _render_states = natus::graphics::state_object_t("natus.system.imgui") ;
     }
 
     // shader config
     {
-        natus::graphics::shader_object_t sc( "natus.gfx.imgui" ) ;
+        natus::graphics::shader_object_t sc( "natus.system.imgui" ) ;
 
         // shaders : ogl 3.0
         {
@@ -233,7 +233,7 @@ void_t imgui::init( natus::graphics::async_view_t async )
             ::std::memcpy( data_in, ( void_cptr_t ) pixels, size_t( width * height * 4 ) ) ;
         } ) ;
 
-        _ic = natus::graphics::image_object_t( "system.imgui.font", ::std::move( img ) )
+        _ic = natus::graphics::image_object_t( "natus.system.imgui.font", ::std::move( img ) )
             .set_wrap( natus::graphics::texture_wrap_mode::wrap_s, natus::graphics::texture_wrap_type::clamp )
             .set_wrap( natus::graphics::texture_wrap_mode::wrap_t, natus::graphics::texture_wrap_type::clamp )
             .set_filter( natus::graphics::texture_filter_mode::min_filter, natus::graphics::texture_filter_type::linear )
@@ -244,16 +244,16 @@ void_t imgui::init( natus::graphics::async_view_t async )
 
     // render configuration
     {
-        natus::graphics::render_object_t rc( "natus.gfx.imgui" ) ;
+        natus::graphics::render_object_t rc( "natus.system.imgui" ) ;
 
-        rc.link_geometry( "natus.gfx.imgui" ) ;
-        rc.link_shader( "natus.gfx.imgui" ) ;
+        rc.link_geometry( "natus.system.imgui" ) ;
+        rc.link_shader( "natus.system.imgui" ) ;
         
         // the variable set with id == 0 is the default
         // imgui variable set for rendering default widgets
         {
             auto* var = _vars[ 0 ]->texture_variable( "u_tex" ) ;
-            var->set( "system.imgui.font" ) ;
+            var->set( "natus.system.imgui.font" ) ;
         }
 
         rc.add_variable_set( _vars[0] ) ;
