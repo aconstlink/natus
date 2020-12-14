@@ -10,7 +10,6 @@ natus is a software framework for real-time interactive audio/visual application
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Examples of using the engine already exists here in the [test project repository](https://github.com/aconstlink/natus_tests).
-There is also a place for [collaboration](https://github.com/aconstlink/collab).
 
 ## Prerequisites
 
