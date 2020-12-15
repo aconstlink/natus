@@ -2,7 +2,7 @@
 
 #include "api.h"
 #include "typedefs.h"
-#include "item.hpp"
+#include "future_item.hpp"
 
 #include <natus/property/property_sheet.hpp>
 #include <natus/io/database.h>

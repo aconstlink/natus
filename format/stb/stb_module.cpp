@@ -1,6 +1,8 @@
 
 #include "stb_module.h"
 
+#include "../future_items.hpp"
+
 #include <natus/font/structs.h>
 #include <natus/io/database.h>
 #include <natus/memory/guards/malloc_guard.hpp>
