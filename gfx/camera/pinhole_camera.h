@@ -45,16 +45,16 @@ namespace natus
         public:
 
             this_ref_t orthographic( float_t const w, float_t const h,
-                float_t const near, float_t const far  )
+                float_t const n, float_t const f  )
             {
-                _lens->make_orthographic( w, h, near, far ) ;
+                _lens->make_orthographic( w, h, n, f ) ;
                 return *this ;
             }
 
             this_ref_t perspective_fov( float_t const fov, float_t const aspect,
-                float_t const near, float_t const far  )
+                float_t const n, float_t const f  )
             {
-                _lens->make_perspective_fov( fov, aspect, near, far ) ;
+                _lens->make_perspective_fov( fov, aspect, n, f ) ;
                 return *this ;
             }
 

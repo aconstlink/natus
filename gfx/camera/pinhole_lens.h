@@ -55,10 +55,10 @@ namespace natus
         public:
 
             this_ref_t make_orthographic( float_t const w, float_t const h,
-                float_t const near, float_t const far ) noexcept 
+                float_t const n, float_t const f ) noexcept 
             {
                 _proj_matrix = natus::math::m3d::orthographic<float_t>::create(
-                    w, h, near, far ) ;
+                    w, h, n, f ) ;
 
                 _projection_mode = projection_type::orthographic ;
 
@@ -66,10 +66,10 @@ namespace natus
             }
 
             this_ref_t make_perspective_fov( float_t const fov, float_t const aspect,
-                float_t const near, float_t const far ) noexcept 
+                float_t const n, float_t const f ) noexcept 
             {
                 natus::math::m3d::perspective<float_t>::create_by_fovv_aspect(
-                    fov, aspect, near, far, _proj_matrix ) ;
+                    fov, aspect, n, f, _proj_matrix ) ;
 
                 _projection_mode = projection_type::perspective ;
 
@@ -77,18 +77,18 @@ namespace natus
             }
 
             static this_t create_orthographic( float_t const w, float_t const h,
-                float_t const near, float_t const far ) noexcept 
+                float_t const n, float_t const f ) noexcept 
             {
-                return ::std::move( this_t().make_orthographic( w, h, near, far ) ) ;
+                return ::std::move( this_t().make_orthographic( w, h, n, f ) ) ;
             }
 
             static this_t create_perspective_fov( float_t const fov, float_t const aspect,
-                float_t const near, float_t const far ) noexcept 
+                float_t const n, float_t const f ) noexcept 
             {
                 this_t ret ;
 
                 natus::math::m3d::perspective<float_t>::create_by_fovv_aspect(
-                    fov, aspect, near, far, ret._proj_matrix ) ;
+                    fov, aspect, n, f, ret._proj_matrix ) ;
 
                 ret._projection_mode = projection_type::perspective ;
 
