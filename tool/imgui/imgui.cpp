@@ -44,6 +44,8 @@ void_t imgui::init( natus::graphics::async_view_t async )
     _ctx = ImGui::CreateContext() ;
     ImGui::SetCurrentContext( _ctx ) ;
 
+    _async = async ;
+
     // geometry
     {
         // @see struct vertex in the header
@@ -674,4 +676,10 @@ ImTextureID imgui::texture( natus::ntd::string_in_t name ) noexcept
     }
 
     return ImTextureID(i) ;
+}
+
+//****
+natus::graphics::async_view_t imgui::async( void_t ) const noexcept 
+{
+    return _async ;
 }

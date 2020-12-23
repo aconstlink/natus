@@ -7,8 +7,10 @@ set( sources
 
     "imgui/imgui.h"
     "imgui/imgui.cpp"
+    "imgui/sprite_editor.h"
+    "imgui/sprite_editor.cpp"
 
-    
+
     )
 
 natus_vs_src_dir( sources )
@@ -19,6 +21,8 @@ add_library( ${cur_alias_name} ALIAS ${cur_lib_name} )
 target_link_libraries( ${cur_lib_name}
   PRIVATE stb
   PUBLIC imgui
+  PUBLIC natus::format
+  PUBLIC natus::io
   PUBLIC natus::device
   PUBLIC natus::graphics
   PUBLIC natus::memory

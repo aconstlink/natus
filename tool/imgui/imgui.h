@@ -46,6 +46,9 @@ namespace natus
 
             bool_t _texture_added = false ;
 
+            // we store this, so tools can have easy access to it.
+            natus::graphics::async_view_t _async ;
+
         private:
 
 
@@ -81,6 +84,8 @@ namespace natus
             // the image needs to be registered before via an image_object.
             ImTextureID texture( natus::ntd::string_in_t ) noexcept ;
 
+            natus::graphics::async_view_t async( void_t ) const noexcept ;
+
         private:
 
             void_t do_default_imgui_init( void_t ) ;
@@ -115,6 +120,11 @@ namespace natus
             ImTextureID texture( natus::ntd::string_in_t s ) noexcept 
             {
                 return _imres->texture( s ) ;
+            }
+
+            natus::graphics::async_view_t async( void_t ) const noexcept 
+            {
+                return _imres->async() ;
             }
 
         };
