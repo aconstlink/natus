@@ -101,8 +101,15 @@ natus::format::future_item_t stb_image_module::import_from( natus::io::location_
                 for( size_t i=0; i<ne; ++i ) 
                 {
                     // mirror y
-                    size_t const start = ne - width * ( ( i / width ) + 1 ) ;
-                    dst[ i ] = rgba_t( src[ start + i % width ], 255 );
+                    #if 0
+                    {
+                        size_t const start = ne - width * ( ( i / width ) + 1 ) ;
+                        dst[ i ] = rgba_t( src[ start + i % width ], 255 );
+                    }
+                    #endif
+                    {
+                        dst[ i ] = rgba_t( src[ i ], 255 );
+                    }
                 }
             } ) ;
         }
@@ -118,8 +125,16 @@ natus::format::future_item_t stb_image_module::import_from( natus::io::location_
                 for( size_t i = 0; i < ne; ++i )
                 {
                     // mirror y
-                    size_t const start = ne - width * ( ( i / width ) + 1 ) ;
-                    dst[ i ] = rgba_t( src[ start + i % width ] );
+                    #if 0
+                    {
+                        size_t const start = ne - width * ( ( i / width ) + 1 ) ;
+                        dst[ i ] = rgba_t( src[ start + i % width ] );
+                    }
+                    #endif
+                    {
+                        dst[ i ] = rgba_t( src[ i ] );
+                    }
+                    
                 }
 
             } ) ;
