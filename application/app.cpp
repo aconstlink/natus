@@ -301,13 +301,14 @@ bool_t app::platform_update( void_t )
             {
                 bool_t render = false ;
 
+                _windows[ 0 ].imgui->update( _dev_ascii ) ;
+                _windows[ 0 ].imgui->update( _dev_mouse ) ;
+
                 _windows[ 0 ].imgui->begin() ;
                 _windows[ 0 ].imgui->execute( [&] ( ImGuiContext* ctx )
                 {
                     if( this->on_tool( natus::tool::imgui_view_t( _windows[ 0 ].imgui ) ) != natus::application::result::no_imgui )
                     {
-                        _windows[ 0 ].imgui->update( _dev_ascii ) ;
-                        _windows[ 0 ].imgui->update( _dev_mouse ) ;
                         render = true ;
                     }
                 } ) ;
