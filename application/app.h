@@ -160,10 +160,14 @@ namespace natus
             size_t _render_count = 0 ;
             size_t _audio_count = 0 ;
 
-        private:
+        private: // device
 
             natus::device::three_device_res_t _dev_mouse ;
             natus::device::ascii_device_res_t _dev_ascii ;
+
+            typedef std::chrono::high_resolution_clock device_clock_t ;
+            device_clock_t::time_point _device_tp = device_clock_t::now() ;
+            size_t _device_milli_update = 10 ;
 
         public:
 
@@ -177,10 +181,12 @@ namespace natus
             struct update_data {};
             struct render_data {};
             struct audio_data {} ;
+            struct device_data {};
 
             natus_typedef( update_data ) ;
             natus_typedef( render_data ) ;
             natus_typedef( audio_data ) ;
+            natus_typedef( device_data ) ;
 
         public:
 
@@ -188,6 +194,7 @@ namespace natus
             virtual natus::application::result on_update( update_data_in_t ) = 0 ;
             virtual natus::application::result on_graphics( render_data_in_t ) = 0 ;
             virtual natus::application::result on_audio( audio_data_in_t ) { return natus::application::result::ok ; }
+            virtual natus::application::result on_device( device_data_in_t ) { return natus::application::result::ok ; }
             virtual natus::application::result on_shutdown( void_t ) = 0 ;
 
             virtual natus::application::result on_event( window_id_t const, this_t::window_event_info_in_t ) 
@@ -263,6 +270,8 @@ namespace natus
             bool_t after_audio( void_t ) ;
             bool_t before_tool( void_t ) noexcept ;
             bool_t after_tool( void_t ) noexcept ;
+            bool_t before_device( void_t ) noexcept ;
+            bool_t after_device( void_t ) noexcept ;
 
         private:
 

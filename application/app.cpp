@@ -287,6 +287,22 @@ bool_t app::platform_update( void_t )
         this_t::after_audio() ;
     }
 
+    if( this_t::before_device() )
+    {
+        if( _windows.size() != 0 )
+        {
+            _windows[ 0 ].imgui->update( _dev_ascii ) ;
+            _windows[ 0 ].imgui->update( _dev_mouse ) ;
+        }
+        
+        {
+            this_t::device_data_in_t dat = {} ;
+            this->on_device( dat ) ;
+        }
+
+        this_t::after_device() ;
+    }
+
     if( this_t::before_render() )
     {
         // do the actual rendering of the app
@@ -300,9 +316,6 @@ bool_t app::platform_update( void_t )
             if( _windows.size() != 0 )
             {
                 bool_t render = false ;
-
-                _windows[ 0 ].imgui->update( _dev_ascii ) ;
-                _windows[ 0 ].imgui->update( _dev_mouse ) ;
 
                 _windows[ 0 ].imgui->begin() ;
                 
@@ -359,6 +372,27 @@ bool_t app::before_tool( void_t ) noexcept
 
 //***
 bool_t app::after_tool( void_t ) noexcept
+{
+    return true ;
+}
+
+//***
+bool_t app::before_device( void_t ) noexcept 
+{
+    size_t const milli_passed = std::chrono::duration_cast< std::chrono::milliseconds > ( this_t::device_clock_t::now() - _device_tp ).count() ;
+
+    if( milli_passed >= _device_milli_update )
+    {
+        _device_tp = this_t::device_clock_t::now() ;
+        natus::device::global_t::system()->update() ;
+        return true ;
+    }
+
+    return false ;
+}
+
+//***
+bool_t app::after_device( void_t ) noexcept 
 {
     return true ;
 }
@@ -437,8 +471,6 @@ bool_t app::after_render( void_t )
     {
         pwi.async->leave_frame() ;
     }
-
-    natus::device::global_t::system()->update() ;
 
     return true ;
 }
