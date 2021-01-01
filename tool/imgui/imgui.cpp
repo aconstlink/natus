@@ -464,6 +464,8 @@ void_t imgui::do_default_imgui_init( void_t )
 
     io.DisplaySize = ImVec2( float_t( _width ), float_t( _height ) ) ;
 
+    io.ConfigWindowsMoveFromTitleBarOnly = true ;
+
     using key_t = natus::device::layouts::ascii_keyboard_t::ascii_key ;
 
     // Keyboard mapping. ImGui will use those indices to peek into the io.KeysDown[] array.
