@@ -305,6 +305,8 @@ bool_t app::platform_update( void_t )
                 _windows[ 0 ].imgui->update( _dev_mouse ) ;
 
                 _windows[ 0 ].imgui->begin() ;
+                
+
                 _windows[ 0 ].imgui->execute( [&] ( ImGuiContext* ctx )
                 {
                     if( this->on_tool( natus::tool::imgui_view_t( _windows[ 0 ].imgui ) ) != natus::application::result::no_imgui )
@@ -313,6 +315,7 @@ bool_t app::platform_update( void_t )
                     }
                 } ) ;
                 _windows[ 0 ].imgui->end() ;
+                
 
                 if( render ) _windows[ 0 ].imgui->render( _windows[ 0 ].async ) ;
 
@@ -434,6 +437,9 @@ bool_t app::after_render( void_t )
     {
         pwi.async->leave_frame() ;
     }
+
+    natus::device::global_t::system()->update() ;
+
     return true ;
 }
 

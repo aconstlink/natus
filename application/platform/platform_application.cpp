@@ -67,8 +67,6 @@ natus::application::result platform_application::start_update_thread( void_t )
 
         while( _sd->update_running )
         {
-            natus::device::global_t::system()->update() ;
-
             _app->platform_update() ;
         }
         
