@@ -42,6 +42,7 @@ void_t sprite_editor::add_sprite_sheet( natus::ntd::string_cref_t name,
                 natus::io::location_cref_t loc ) noexcept 
 {
     this_t::load_item_t ss ;
+    ss.disp_name = name ;
     ss.name = "natus.tool.sprite_editor." + name ;
     ss.loc = loc ;
 
@@ -54,6 +55,11 @@ void_t sprite_editor::add_sprite_sheet( natus::ntd::string_cref_t name,
 // ****
 void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept 
 {
+    {
+        bool_t show_demo = true ;
+        ImGui::ShowDemoWindow( &show_demo ) ;
+    }
+
     // checking future items
     {
         auto loads = std::move(_loads) ;
@@ -72,6 +78,7 @@ void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept
                 natus::graphics::image_t img = *ii->img ;
                 
                 this_t::sprite_sheet_t ss ;
+                ss.dname = item.disp_name ;
                 ss.name = item.name ;
                 ss.img_loc = item.loc ;
                 ss.dims = natus::math::vec2ui_t( img.get_dims() ) ;
@@ -82,6 +89,8 @@ void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept
                     .set_filter( natus::graphics::texture_filter_mode::min_filter, natus::graphics::texture_filter_type::nearest )
                     .set_filter( natus::graphics::texture_filter_mode::mag_filter, natus::graphics::texture_filter_type::nearest );
 
+                ss.region = natus::math::vec4f_t(ss.dims,ss.dims) * natus::math::vec4f_t( 0.5f ) * natus::math::vec4f_t( -1.0f, -1.0f, 1.0f, 1.0f ) ;
+
                 imgui.async().configure( ss.img ) ;
 
                 _sprite_sheets.emplace_back( std::move( ss ) ) ;
@@ -91,117 +100,198 @@ void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept
 
     ImGui::Begin( "Sprite Editor" ) ;
 
+    // list box for sprite sheet selection
+    {
+        ImGui::BeginGroup() ;
+        
+        ImGui::SetNextItemWidth( ImGui::GetWindowWidth() * 0.3f ) ;
+        ImGui::LabelText( "", "Sprite Sheets" ) ;
+
+        natus::ntd::vector< const char * > names( _sprite_sheets.size() ) ;
+        for( size_t i=0; i<_sprite_sheets.size(); ++i ) names[i] = _sprite_sheets[i].dname.c_str() ;
+        
+        ImGui::SetNextItemWidth( ImGui::GetWindowWidth() * 0.3f ) ;
+        if( ImGui::ListBox( "", &_cur_item, names.data(), names.size() ) )
+        {
+            //origin = natus::math::vec2f_t() ;
+            //zoom = -0.5f ;
+        }
+        ImGui::EndGroup() ;
+    }
+
+    
+    ImGui::SameLine() ; 
+
+    // tabs
+    {
+        ImGui::BeginGroup() ;
+
+        ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
+        if (ImGui::BeginTabBar("MyTabBar", tab_bar_flags))
+        {
+            if( ImGui::BeginTabItem("Animation") )
+            {
+                this_t::handle_mouse( imgui, _cur_item ) ;
+                this_t::show_image( imgui, _cur_item ) ;
+                ImGui::EndTabItem() ;
+            }
+
+            if( ImGui::BeginTabItem("Damage") )
+            {
+                this_t::handle_mouse( imgui, _cur_item ) ;
+                this_t::show_image( imgui, _cur_item ) ;
+                ImGui::EndTabItem() ;
+            }
+
+            if( ImGui::BeginTabItem("Hit") )
+            {
+                //this_t::handle_mouse( imgui, _cur_item ) ;
+                //this_t::show_image( imgui, _cur_item ) ;
+                ImGui::EndTabItem() ;
+            }
+
+            ImGui::EndTabBar() ;
+        }
+
+        ImGui::EndGroup() ;
+    }
+
+    // the image
     if( _sprite_sheets.size() != 0 )
     {
-        ImGuiIO& io = ImGui::GetIO();
-        auto & ss = _sprite_sheets[0] ;
-
-        natus::math::vec2f_t const crdims = natus::math::vec2f_t( 
-            ImGui::GetContentRegionAvail().x, 
-            ImGui::GetContentRegionAvail().y ) * natus::math::vec2f_t( 0.99f, 0.99f ) ;
-
-        natus::math::vec2f_t const idims( ss.dims ) ;
-
-        // world space window rect bottom left, top right
-        natus::math::vec4f_t const wrect = natus::math::vec4f_t( crdims, crdims ) * 
-            natus::math::vec4f_t(0.5f) * natus::math::vec4f_t( -1.0f, -1.0f, 1.0f, 1.0f ) ;
-
-        // world space image rect bottom left, top right
-        natus::math::vec4f_t const irect = natus::math::vec4f_t( idims, idims ) * 
-            natus::math::vec4f_t(0.5f) * natus::math::vec4f_t( -1.0f, -1.0f, 1.0f, 1.0f ) ;
-
-        auto const dif = natus::math::vec4f_t( 0.0f,0.0f,1.0f,1.0f ) + 
-            (wrect - irect) / natus::math::vec4f_t( idims, idims ) ;
-
-        ImGui::Image( imgui.texture( ss.name ), 
-            ImVec2( crdims.x(), crdims.y() ), 
-            ImVec2( dif.x(), dif.y()), 
-            ImVec2( dif.z(), dif.w()),
-            ImVec4( 1, 1, 1, 1),
-            ImVec4( 1, 1, 1, 1) ) ;
-
-        ImGui::BeginTooltip();
-
-        ImGui::Text("dif: (%.2f, %.2f, %.2f, %.2f)", dif.x(), dif.y(), dif.z(), dif.w() );
-        //ImGui::Text("wuv: (%.2f, %.2f)", window_zo.x(), window_zo.y() );
-        //ImGui::Text("iuv: (%.2f, %.2f)", img_pos.x(), img_pos.y() );
-        //ImGui::Text("iuv: (%.2f, %.2f)", image_uv.x(), image_uv.y() );
-        //ImGui::Text("img: (%d, %d)", img_pos.x(), img_pos.y() );
+        
 
         
 
-        ImGui::EndTooltip();
-
-        #if 0
-        ImVec2 pos = ImGui::GetCursorScreenPos();
-
-        natus::math::vec2f_t const window_pos(
-            io.MousePos.x - pos.x,
-            io.MousePos.y - pos.y ) ;
         
-        // [0,1] value origin top left
-        natus::math::vec2f_t const window_zo = window_pos / dims ;
-
-        // number of window pixels per image pixel
-        natus::math::vec2f_t const wppi = dims / idims ;
-
-        float_t const aspect = std::min( wppi.x(), wppi.y() ) ;
-
-        natus::math::vec2i_t img_pos ;
-
-        {
-            natus::math::vec2f_t const orig_zo( 0.5f, 0.5f ) ;
-            natus::math::vec2f_t const origin = dims * orig_zo ;
-            auto const iwh = dims / (wppi/natus::math::vec2f_t(aspect)) ;
-        
-            // top left to bottom left
-            auto const win_zo_inv = natus::math::vec2f_t(0.0f, 1.0f) - 
-                window_zo * natus::math::vec2f_t(-1.0f, 1.0f ) ;
-
-            auto const bl = origin - iwh * 0.5f ; 
-            img_pos = win_zo_inv * dims - bl ;
-            img_pos /= wppi ;
-        }
-
-        // compute uv coords
-        {
-        }
-
-        natus::math::vec2f_t const uv_zoom = natus::math::vec2f_t(1.5f) ;
-        natus::math::vec2f_t const uv_center = natus::math::vec2f_t(0.5f) ;
-
-        // uv dimensions
-        natus::math::vec2f_t const uvd = uv_zoom * (wppi/natus::math::vec2f_t(aspect)) ;
-        natus::math::vec2f_t const uvh = uvd * natus::math::vec2f_t( 0.5f ) ;
-        natus::math::vec2f_t const uv_min = uv_center - uvh ;
-        natus::math::vec2f_t const uv_max = uv_center + uvh ;
-
-        natus::math::vec2f_t const wuv_inv = natus::math::vec2f_t(1.0f) - window_zo ;
-        natus::math::vec2f_t const rel = window_zo - uv_center ;
-
-        natus::math::vec2i_t const image_uv = 
-            wuv_inv - uv_min ;
-        
-        ImGui::Image( imgui.texture( ss.name ), 
-            ImVec2( dims.x(), dims.y() ), 
-            ImVec2(uv_min.x(), uv_min.y()), 
-            ImVec2(uv_max.x(), uv_max.y()),
-            ImVec4( 1, 1, 1, 1),
-            ImVec4( 1, 1, 1, 1) ) ;
-
-        ImGui::BeginTooltip();
-
-        //ImGui::Text("PP: (%.2f, %.2f)", window_pos.x(), window_pos.y() );
-        //ImGui::Text("wuv: (%.2f, %.2f)", window_zo.x(), window_zo.y() );
-        //ImGui::Text("iuv: (%.2f, %.2f)", img_pos.x(), img_pos.y() );
-        //ImGui::Text("iuv: (%.2f, %.2f)", image_uv.x(), image_uv.y() );
-        //ImGui::Text("img: (%d, %d)", img_pos.x(), img_pos.y() );
-
-        
-
-        ImGui::EndTooltip();
-        #endif
     }
 
     ImGui::End() ;
+}
+
+void_t sprite_editor::handle_mouse( natus::tool::imgui_view_t imgui, int_t const selected ) 
+{
+    ImGuiIO& io = ImGui::GetIO() ;
+    auto & ss = _sprite_sheets[_cur_item] ;
+        
+    natus::math::vec2f_t const crdims = natus::math::vec2f_t( 
+        ImGui::GetContentRegionAvail().x, 
+        ImGui::GetContentRegionAvail().y ) * natus::math::vec2f_t( 0.99f, 0.99f ) ;
+
+    natus::math::vec2f_t const idims( ss.dims ) ;
+
+    // compute initial zoom
+    // so the image exactly fits the content region
+    if( ss.zoom < 0.0f )
+    {
+        auto const tmp = idims / crdims ;
+        ss.zoom = std::max( tmp.x(), tmp.y() ) * 0.5f ;            
+    }
+
+    // do mouse click zoom prototype
+    if( ImGui::IsWindowHovered() )
+    {
+        natus::math::vec2f_t const mouse_in_window(
+            io.MousePos.x - ImGui::GetCursorScreenPos().x,
+            io.MousePos.y - ImGui::GetCursorScreenPos().y ) ;
+
+        natus::math::vec2f_t const mouse_centered = 
+                mouse_in_window - crdims * natus::math::vec2f_t( 0.5f ) ;
+
+        auto cur_mouse = ss.origin + mouse_centered * ss.zoom * 2.0f ;
+            
+        // keep the new origin in the image area
+        {
+            cur_mouse = cur_mouse.max_ed( idims * natus::math::vec2f_t( -0.5f ) ) ;
+            cur_mouse = cur_mouse.min_ed( idims * natus::math::vec2f_t( +0.5f ) ) ;
+        }
+
+        bool_t const in_cr = 
+            mouse_in_window.greater_than( natus::math::vec2f_t() ).all() &&
+            mouse_in_window.less_than( crdims ).all() ;
+
+        if( (io.MouseWheel > 0.0f) && in_cr )
+        {
+            ss.origin = cur_mouse ;
+            ss.zoom *= io.KeyCtrl ? 0.5f : 0.9f ;
+            ss.zoom = std::max( ss.zoom, 1.0f/200.0f ) ;
+        }
+        else if( (io.MouseWheel < 0.0f) && in_cr )
+        {
+            ss.origin = cur_mouse ;
+            ss.zoom *= io.KeyCtrl ? 2.0f : 1.1f ;
+
+            // recompute the initial zoom(izoom) 
+            auto const tmp = idims / crdims ;
+            float_t const izoom = std::max( tmp.x(), tmp.y() ) * 0.5f ;
+                
+            // allow out-zooming by only izoom * 2.0f
+            // so it is not going too far out
+            ss.zoom = std::min( ss.zoom, izoom * 2.0f ) ;
+
+            // reset origin by pixel ratio
+            int_t const ratio = std::floor( 1.0f / ss.zoom ) ;
+            if( ratio <= std::floor( 1.0f / izoom ) )
+            {
+                ss.origin = natus::math::vec2f_t() ;
+            }
+        }
+
+        // tool tip infos
+        if( in_cr )
+        {
+            // image pixel coord under mouse pos + transform y coord
+            natus::math::vec2i_t const ip = (cur_mouse + idims * natus::math::vec2f_t( 0.5f, -0.5f )).floored() * natus::math::vec2f_t( 1.0f, -1.0f ) ;
+                
+            // 0.5f because dimensions are multiplided by 0.5f
+            int_t const ratio = std::floor( 0.5f / ss.zoom ) ;
+            
+            _cur_pixel = ip ;
+            _pixel_ratio = ratio ;
+
+            {
+                ImGui::BeginTooltip() ;
+                
+                ImGui::Text("cur mouse: (%.2f, %.2f)", cur_mouse.x(), cur_mouse.y() ) ;
+                ImGui::Text("image pixel: (%d, %d)", ip.x(), ip.y() ) ;
+                ImGui::Text("pixel ratio: 1 : %d", ratio ) ;
+
+                ImGui::EndTooltip() ;
+            }
+        }
+    }
+}
+
+void_t sprite_editor::show_image( natus::tool::imgui_view_t imgui, int_t const selected ) 
+{
+    auto & ss = _sprite_sheets[ selected ] ;
+
+    natus::math::vec2f_t const crdims = natus::math::vec2f_t( 
+        ImGui::GetContentRegionAvail().x, 
+        ImGui::GetContentRegionAvail().y ) * natus::math::vec2f_t( 0.99f, 0.99f ) ;
+
+    natus::math::vec2f_t const idims( ss.dims ) ;
+
+    // This is what we want to see!
+    // world space window rect bottom left, top right
+    natus::math::vec4f_t const wrect = natus::math::vec4f_t( crdims, crdims ) * 
+        natus::math::vec4f_t( ss.zoom ) * natus::math::vec4f_t( -1.0f, -1.0f, 1.0f, 1.0f ) +
+        natus::math::vec4f_t( ss.origin, ss.origin ) ;
+
+    // world space image rect bottom left, top right
+    natus::math::vec4f_t const irect = natus::math::vec4f_t( idims, idims ) * 
+        natus::math::vec4f_t(0.5f) * natus::math::vec4f_t( -1.0f, -1.0f, 1.0f, 1.0f ) ;
+
+    // uv rect bottom left, top right
+    // one vector from bottom left image to bottom left window
+    // one vector from top right image to top right window
+    auto const uv_rect = natus::math::vec4f_t( 0.0f,0.0f,1.0f,1.0f ) + 
+        (wrect - irect) / natus::math::vec4f_t( idims, idims ) ;
+
+    ImGui::Image( imgui.texture( ss.name ), 
+        ImVec2( crdims.x(), crdims.y() ), 
+        ImVec2( uv_rect.x(), uv_rect.y()), 
+        ImVec2( uv_rect.z(), uv_rect.w()),
+        ImVec4( 1, 1, 1, 1),
+        ImVec4( 1, 1, 1, 1) ) ;
 }

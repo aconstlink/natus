@@ -23,24 +23,41 @@ namespace natus
 
             struct sprite_sheet
             {
+                natus::ntd::string_t dname ;
                 natus::ntd::string_t name ;
                 natus::io::location_t img_loc ;
                 natus::graphics::image_object_res_t img ;
 
+                // image dimensions
                 natus::math::vec2ui_t dims ;
 
                 // animation sequences
                 // boxes
-                
+                natus::math::vec4f_t region ;
+
+
+                // origin in world space
+                // the world space is where the window rect and 
+                // the image rect life together in a 1:1 relation
+                natus::math::vec2f_t origin ;
+
+                // zoom of the original 1:1 world rect
+                // zoom == 1 means the window pixel size 
+                // match image pixel size => 1:1
+                float_t zoom = -0.5f ;
                 
             };
             natus_typedef( sprite_sheet ) ;
 
             natus::ntd::vector< sprite_sheet_t > _sprite_sheets ;
+            int_t _cur_item = 0 ;
 
+            int_t _pixel_ratio ;
+            natus::math::vec2i_t _cur_pixel ;
 
             struct load_item
             {
+                natus::ntd::string_t disp_name ;
                 natus::ntd::string_t name ;
                 natus::io::location_t loc ;
                 natus::format::future_item_t fitem ;
@@ -64,6 +81,11 @@ namespace natus
                 natus::io::location_cref_t loc ) noexcept ;
 
             void_t render( natus::tool::imgui_view_t ) noexcept ;
+
+        private:
+
+            void_t handle_mouse( natus::tool::imgui_view_t imgui, int_t const selected ) ;
+            void_t show_image( natus::tool::imgui_view_t imgui, int_t const selected ) ;
 
         };
         natus_res_typedef( sprite_editor ) ;
