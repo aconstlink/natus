@@ -63,6 +63,14 @@ namespace natus
             natus::math::vec2f_t _screen_pos_image ;
             natus::math::vec2f_t _cur_mouse ;
 
+            // content region dimensions
+            natus::math::vec2f_t _crdims ;
+
+            // offset from window orig to content region
+            natus::math::vec2ui_t _croff ;
+
+            
+
             struct load_item
             {
                 natus::ntd::string_t disp_name ;
@@ -98,10 +106,12 @@ namespace natus
             bool_t handle_rect( natus::tool::imgui_view_t imgui, natus::math::vec4ui_ref_t ) ;
             natus::math::vec4ui_t rearrange_mouse_rect( natus::math::vec4ui_cref_t ) const ;
 
-            natus::math::vec4f_t image_rect_to_window_rect( int_t const selection,  natus::math::vec4ui_cref_t ) const ;
-
             natus::math::vec4f_t compute_cur_view_rect( int_t const selection ) const ;
 
+            natus::math::vec4f_t image_rect_to_window_rect( int_t const selection, 
+                natus::math::vec4f_cref_t image_rect ) const ;
+
+            bool_t is_window_rect_inside_content_region( natus::math::vec4f_ref_t rect ) const ;
             
         };
         natus_res_typedef( sprite_editor ) ;

@@ -133,91 +133,47 @@ void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept
         ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
         if (ImGui::BeginTabBar("MyTabBar", tab_bar_flags))
         {
+            _croff = natus::math::vec2f_t( ImGui::GetCursorScreenPos().x,
+                        ImGui::GetCursorScreenPos().y ) ;
+            
+            _crdims = natus::math::vec2f_t( 
+                ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y ) * 
+                    natus::math::vec2f_t( 0.99f, 0.99f ) ;
+
             if( ImGui::BeginTabItem("Bounds") )
             {
                 this_t::handle_mouse( imgui, _cur_item ) ;
                 
-                
                 natus::math::vec4ui_t res ;
                 if( this_t::handle_rect( imgui, res ) )
                 {
-                    natus::math::vec2f_t const sp( ImGui::GetCursorScreenPos().x,
-                        ImGui::GetCursorScreenPos().y ) ;
-
-                    auto const r = this_t::image_rect_to_window_rect( _cur_item, res ) ;
-                    auto const vr = this_t::compute_cur_view_rect( _cur_item ) ;
-
-                    vr.xy() + (vr.xy() - vr.zw()) * 0.5f ;
-                    natus::math::vec2f_t const crdims = natus::math::vec2f_t( 
-                        ImGui::GetContentRegionAvail().x, 
-                        ImGui::GetContentRegionAvail().y ) * natus::math::vec2f_t( 0.99f, 0.99f ) ;
-
-                    natus::math::vec2f_t origin = r.xy() + vr.xy() + crdims * natus::math::vec2f_t(0.5f);
-
-                    
-
-                    auto const x = origin - r.zw() ;
-                    auto const y = origin + r.zw() ;
-
-                    rect = natus::math::vec4f_t( x, y ) ;
-
                 }
 
-                
-                // draw rect
-                {
-                    auto & ss = _sprite_sheets[_cur_item] ;
-
-                    natus::math::vec4ui_t const pixel_rect_stored( 3, 10, 3+10, 10+10 ) ;
-
-                    auto const half = (pixel_rect_stored.zw() - pixel_rect_stored.xy()) * natus::math::vec2f_t(0.5f) ;
-
-                    auto const a = natus::math::vec2f_t( pixel_rect_stored.xy() ) + natus::math::vec2f_t( ss.dims ) * natus::math::vec2f_t( -0.5f );
-                    auto const b = a + natus::math::vec2f_t(pixel_rect_stored.zw()) - natus::math::vec2f_t(pixel_rect_stored.xy()) ;
-
-                    
-                    natus::math::vec2f_t const crdims = natus::math::vec2f_t( 
-                        ImGui::GetContentRegionAvail().x, 
-                        ImGui::GetContentRegionAvail().y ) * natus::math::vec2f_t( 0.99f, 0.99f ) ;
-
-                    natus::math::vec4f_t const wrect = natus::math::vec4f_t( crdims, crdims ) * 
-                        natus::math::vec4f_t( ss.zoom ) * natus::math::vec4f_t( -0.5f, -0.5f, 0.5f, 0.5f ) + natus::math::vec4f_t( ss.origin, ss.origin ) ;
-                                        
-                    auto const y = natus::math::vec2f_t( 0.0f, (wrect.zw() - wrect.xy()).y() ) ;
-
-                    natus::math::vec2f_t const xy = (a - wrect.xy() -y )/ss.zoom ;
-                    natus::math::vec2f_t const wh = (b - a ).absed()/ss.zoom ;
-                    /*
-                    natus::math::vec4f_t pixel_rect = natus::math::vec4f_t(
-                        (pixel_rect_stored.xy() - pixel_rect_stored.zw()) * natus::math::vec2f_t(0.5f),
-                        (pixel_rect_stored.xy() - pixel_rect_stored.zw()) * natus::math::vec2f_t(0.5f) ) ;
-
-
-
-                    natus::math::vec2f_t const offset( ImGui::GetCursorScreenPos().x,
-                        ImGui::GetCursorScreenPos().y ) ;
-
-
-                    ImVec2 const a( 50.0f,50.0f) ;///rect.x(), rect.y() ) ;
-                    ImVec2 const b( a.x + 50.0f, a.y + 50.0f ) ;//rect.z(), rect.w() ) ;
-                    */
-
-                    natus::math::vec2f_t const offset( ImGui::GetCursorScreenPos().x,
-                        ImGui::GetCursorScreenPos().y ) ;
-
-                    natus::math::vec2f_t const xy_ = xy * natus::math::vec2f_t(1.0f, -1.0f) + offset ;
-                    ImVec2 const a_( xy_.x(), xy_.y() ) ;///rect.x(), rect.y() ) ;
-                    ImVec2 const b_( xy_.x() + wh.x(), xy_.y() - wh.y() ) ;//rect.z(), rect.w() ) ;
-
-                    //ImVec2 a( _screen_pos_image.x()+ 50, _screen_pos_image.y()+50) ;
-                    //ImVec2 b( _screen_pos_image.x()+200, _screen_pos_image.y()+200) ;
-                    ImGui::GetWindowDrawList()->AddRectFilled(
-                        a_, b_, IM_COL32( 255, 255, 255, 255 ) );
-
-        
-                        
-                }
                 this_t::show_image( imgui, _cur_item ) ;
+
+                // draw test rects
+                {
+                    natus::math::vec4f_t rects[5] = {
+                        natus::math::vec4ui_t( 3, 10, 3+10, 10+10 ),
+                        natus::math::vec4ui_t( 10, 10, 10+10, 10+10 ),
+                        natus::math::vec4ui_t( 20, 50, 20+10, 50+20 ),
+                        natus::math::vec4ui_t( 100, 50, 100+10, 50+5 ),
+                        natus::math::vec4ui_t( 130, 50, 130+10, 50+15 )
+                    } ;
+
+                    for( size_t i=0; i<5; ++i )
+                    {
+                        auto rect = this_t::image_rect_to_window_rect( _cur_item, rects[i] ) ;
+
+                        if( !this_t::is_window_rect_inside_content_region( rect ) ) continue ;
+
+                        ImVec2 const a_( rect.x(), rect.y() ) ;
+                        ImVec2 const b_( rect.x() + rect.z(), rect.y() - rect.w() ) ;
+
+                        ImGui::GetWindowDrawList()->AddRectFilled(
+                            a_, b_, IM_COL32( 200+rects[i].x(), 200+rects[i].y(), 255, 255 ) ) ;
+                    }
+                }
 
                 ImGui::EndTabItem() ;
             }
@@ -447,29 +403,63 @@ natus::math::vec4ui_t sprite_editor::rearrange_mouse_rect( natus::math::vec4ui_c
     return natus::math::vec4ui_t( x0, y0, x1, y1 ) ;
 }
 
-natus::math::vec4f_t sprite_editor::image_rect_to_window_rect( int_t const selection, natus::math::vec4ui_cref_t rect_in ) const 
-{
-    auto & ss = _sprite_sheets[ selection ] ;
-
-    natus::math::vec4f_t rect = rect_in ;
-
-    auto const half = (rect.xy() - rect.zw()) * natus::math::vec2f_t(0.5f) ;
-    auto const origin = rect.xy() + half ;//- ss.dims * natus::math::vec2f_t( 0.5f );
-
-    return natus::math::vec4f_t( origin, half ) ;
-}
-
 natus::math::vec4f_t sprite_editor::compute_cur_view_rect( int_t const selection ) const 
 {
     auto & ss = _sprite_sheets[ selection ] ;
 
-    natus::math::vec2f_t const crdims = natus::math::vec2f_t( 
-        ImGui::GetContentRegionAvail().x, 
-        ImGui::GetContentRegionAvail().y ) * natus::math::vec2f_t( 0.99f, 0.99f ) ;
-
     // This is what we want to see!
     // world space window rect bottom left, top right
-    return natus::math::vec4f_t( crdims, crdims ) * 
+    return natus::math::vec4f_t( _crdims, _crdims ) * 
         natus::math::vec4f_t( ss.zoom ) * natus::math::vec4f_t( -0.5f, -0.5f, 0.5f, 0.5f ) +
         natus::math::vec4f_t( ss.origin, ss.origin ) ;
+}
+
+natus::math::vec4f_t sprite_editor::image_rect_to_window_rect( int_t const selection, 
+                natus::math::vec4f_cref_t image_rect ) const
+{
+    auto & ss = _sprite_sheets[selection] ;
+
+    auto const a = image_rect.xy() + natus::math::vec2f_t( ss.dims ) * natus::math::vec2f_t( -0.5f ) ;
+
+    auto const b = a + image_rect.zw() - image_rect.xy() ;
+
+    natus::math::vec4f_t const wrect = this_t::compute_cur_view_rect( selection ) ;
+                                        
+    auto const y = natus::math::vec2f_t( 0.0f, (wrect.zw() - wrect.xy()).y() ) ;
+
+    natus::math::vec2f_t const xy = (a - wrect.xy() - y ) / ss.zoom ;
+    natus::math::vec2f_t const wh = (b - a ).absed() / ss.zoom ;
+                   
+    natus::math::vec2f_t const xy_ = xy * natus::math::vec2f_t( 1.0f, -1.0f ) + _croff ;
+
+    return natus::math::vec4f_t( xy_, wh ) ;
+}
+
+bool_t sprite_editor::is_window_rect_inside_content_region( natus::math::vec4f_ref_t rect ) const 
+{
+    // remember: y grows downwards in imgui window space
+
+    natus::math::vec2f_t const off = _croff ;
+
+    // right/bottom completely outside
+    if( rect.x() > (off + _crdims).x() ) return false ;
+    if( rect.y() - rect.w() > (off + _crdims).y() ) return false ;
+    
+    // left/top completly outside
+    if( rect.x() + rect.z() < off.x() ) return false ;
+    if( rect.y() < off.y() ) return false ;
+    
+
+    float_t const x = std::max( rect.x(), off.x() ) ;
+    float_t const y = std::min( rect.y(), off.y() + _crdims.y() ) ;
+
+    float_t const w0 = rect.z() - ( x - rect.x() ) ;
+    float_t const w1 = std::min( rect.x() + rect.z(), off.x() + _crdims.x() ) - rect.x() ;
+
+    float_t const h0 = rect.w() - ( rect.y() - y ) ;
+    float_t const h1 = rect.y() - std::max( rect.y() - rect.w(), off.y() ) ;
+
+    rect = natus::math::vec4f_t( x, y, std::min( w0, w1 ), std::min( h0, h1 ) ) ;
+
+    return true ;
 }
