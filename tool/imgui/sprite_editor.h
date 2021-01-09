@@ -8,6 +8,8 @@
 #include <natus/ntd/string.hpp>
 #include <natus/ntd/vector.hpp>
 
+#include <array>
+
 namespace natus
 {
     namespace tool
@@ -138,10 +140,23 @@ namespace natus
             void_t draw_rect_for_scale( natus::math::vec4f_cref_t, natus::math::vec4ui_cref_t = 
                 natus::math::vec4ui_t(255) ) ;
 
-            void_t draw_scales( natus::math::vec4f_cref_t, natus::math::vec4ui_cref_t = 
+            void_t draw_scales( natus::math::vec4f_cref_t, natus::math::vec4ui_cref_t prect, natus::math::vec4ui_t = 
                 natus::math::vec4ui_t(255) ) ;
 
             bool_t is_ip_mouse_in_bound( natus::math::vec4ui_cref_t ) const ;
+
+            // @precondition mouse must be in bound
+            // @param rect image space rect with format x0,y0,x1,y1
+            // @param hit
+            // [0] : bottom left
+            // [1] : left
+            // [2] : top left
+            // [3] : top
+            // [4] : top right
+            // [5] : right
+            // [6] : bottom right
+            // [7] : bottom
+            bool_t intersect_bound_location( natus::math::vec4ui_cref_t rect, std::array< bool_t, 8 > & hit ) const ; 
             
         };
         natus_res_typedef( sprite_editor ) ;

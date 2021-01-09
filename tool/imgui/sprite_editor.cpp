@@ -155,6 +155,13 @@ void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept
 
                 this_t::show_image( imgui, _cur_item ) ;
 
+                // draw rect for current mouse position
+                {
+                    natus::math::vec4f_t r( _cur_pixel, _cur_pixel ) ;
+                    auto const rect = this_t::image_rect_to_window_rect( _cur_item, r ) ;
+                    this_t::draw_rect_for_scale( rect ) ;
+                }
+
                 // draw rects
                 {
                     for( size_t i=0; i<ss.bounds.size(); ++i )
@@ -163,13 +170,17 @@ void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept
 
                         if( !this_t::is_window_rect_inside_content_region( rect ) ) continue ;
 
-                        this_t::draw_rect( rect, natus::math::vec4ui_t(200+ss.bounds[i].x(), 200+ss.bounds[i].y(), 255, 255) ) ;
-
                         // if mouse on a rect, draw scales
                         if( this_t::is_ip_mouse_in_bound( ss.bounds[i] ) )
                         {
+                            this_t::draw_rect( rect, natus::math::vec4ui_t(0, 0, 255, 150) ) ;
+
                             auto r = this_t::image_rect_to_window_rect( _cur_item, ss.bounds[i] ) ;
-                            this_t::draw_scales( r ) ;
+                            this_t::draw_scales( r, ss.bounds[i] ) ;
+                        }
+                        else
+                        {
+                            this_t::draw_rect( rect, natus::math::vec4ui_t(255, 255, 255, 150) ) ;
                         }
                     }
                 }
@@ -182,15 +193,6 @@ void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept
                     auto const rect = this_t::image_rect_to_window_rect( _cur_item, rect0 ) ;
                     this_t::draw_rect( rect ) ;
                 }
-
-                // draw rect for current mouse position
-                {
-                    natus::math::vec4f_t r( _cur_pixel, _cur_pixel ) ;
-                    auto const rect = this_t::image_rect_to_window_rect( _cur_item, r ) ;
-                    this_t::draw_rect_for_scale( rect ) ;
-                }
-
-
 
                 ImGui::EndTabItem() ;
             }
@@ -325,6 +327,9 @@ void_t sprite_editor::handle_mouse( natus::tool::imgui_view_t imgui, int_t const
 
         if( in_cr && !_mouse_down_rect && idx != size_t(-1) )
         {
+            std::array< bool_t, 8 > corners = {false,false,false,false,false,false,false,false} ;
+            bool_t drag_rect = !this_t::intersect_bound_location( ss.bounds[idx], corners ) ;
+
             if( io.MouseDown[0] )
             {
                 // start dragging
@@ -340,14 +345,44 @@ void_t sprite_editor::handle_mouse( natus::tool::imgui_view_t imgui, int_t const
 
                     auto rect = natus::math::vec4ui_t( ss.bounds[idx] ) ;
 
-                    auto xy0 = natus::math::vec2i_t( rect.xy() ) + dif ;
-                    if( xy0.x() < 0 ) dif.x( dif.x() + -xy0.x() ) ;
-                    if( xy0.y() < 0 ) dif.y( dif.y() + -xy0.y() ) ;
-                    xy0 = natus::math::vec2i_t( rect.xy() ) + dif ;
+                    if( drag_rect )
+                    {
+                        auto xy0 = natus::math::vec2i_t( rect.xy() ) + dif ;
+                        if( xy0.x() < 0 ) dif.x( dif.x() + -xy0.x() ) ;
+                        if( xy0.y() < 0 ) dif.y( dif.y() + -xy0.y() ) ;
+                        xy0 = natus::math::vec2i_t( rect.xy() ) + dif ;
 
-                    auto const xy1 = rect.zw() + dif ;
+                        auto const xy1 = rect.zw() + dif ;
 
-                    rect = natus::math::vec4ui_t( xy0, xy1 ) ;
+                        rect = natus::math::vec4ui_t( xy0, xy1 ) ;
+                    }
+                    else if( corners[0] )
+                    {
+                        auto const xy0 = natus::math::vec2i_t( rect.xy() ) + dif ;
+                        auto const xy1 = rect.zw() ;
+                        rect = natus::math::vec4ui_t( xy0, xy1 ) ;
+                    }
+                    else if( corners[2] )
+                    {
+                        auto const xy = natus::math::vec2i_t( rect.xw() ) + dif ;
+                        auto const xy0 = natus::math::vec2ui_t( xy.x(), rect.y() ) ;
+                        auto const xy1 = natus::math::vec2ui_t( rect.z(), xy.y() ) ;
+                        rect = natus::math::vec4ui_t( xy0, xy1 ) ;
+                    }
+                    else if( corners[4] )
+                    {
+                        auto const xy0 = rect.xy() ;
+                        auto const xy1 = natus::math::vec2i_t( rect.zw() ) + dif ;
+                        rect = natus::math::vec4ui_t( xy0, xy1 ) ;
+                    }
+                    else if( corners[6] )
+                    {
+                        auto const xy = natus::math::vec2i_t( rect.zy() ) + dif ;
+                        auto const xy0 = natus::math::vec2ui_t( rect.x(), xy.y() ) ;
+                        auto const xy1 = natus::math::vec2ui_t( xy.x(), rect.w() ) ;
+                        rect = natus::math::vec4ui_t( xy0, xy1 ) ;
+                    }
+
 
                     ss.bounds[ idx ] = rect ;
 
@@ -549,7 +584,7 @@ void_t sprite_editor::draw_rect( natus::math::vec4f_cref_t rect, natus::math::ve
     ImVec2 const b_( rect.x() + rect.z() + 1, rect.y() - rect.w() + 1 ) ;
 
     ImGui::GetWindowDrawList()->AddRect( a_, b_, IM_COL32( color.x(), color.y(), color.z(), color.w() ) ) ;
-    ImGui::GetWindowDrawList()->AddRectFilled( a_, b_, IM_COL32( color.x(), color.y(), color.z(), color.w() * 0.5f ) ) ;
+    ImGui::GetWindowDrawList()->AddRectFilled( a_, b_, IM_COL32( color.x(), color.y(), color.z(), color.w() ) ) ;
 }
 
 void_t sprite_editor::draw_rect_for_scale( natus::math::vec4f_cref_t rect, natus::math::vec4ui_cref_t color ) 
@@ -560,16 +595,31 @@ void_t sprite_editor::draw_rect_for_scale( natus::math::vec4f_cref_t rect, natus
     ImGui::GetWindowDrawList()->AddRectFilled( a_, b_, IM_COL32( color.x(), color.y(), color.z(), color.w() ) ) ;
 }
 
-void_t sprite_editor::draw_scales( natus::math::vec4f_cref_t rect, natus::math::vec4ui_cref_t color ) 
+void_t sprite_editor::draw_scales( natus::math::vec4f_cref_t rect, natus::math::vec4ui_cref_t prect, natus::math::vec4ui_t color ) 
 {
     float_t const wh = float_t( _pixel_ratio ) * 1.0f ;
+
+    std::array< bool_t, 8 > corners = {false,false,false,false,false,false,false,false} ;
+    this_t::intersect_bound_location( prect, corners ) ;
+
+    std::array< natus::math::vec4ui_t, 8 > colors = 
+    {
+        corners[0] ? natus::math::vec4ui_t( 255, 0, 0, 255  ) : color,
+        corners[1] ? natus::math::vec4ui_t( 255, 0, 0, 255  ) : color,
+        corners[2] ? natus::math::vec4ui_t( 255, 0, 0, 255  ) : color,
+        corners[3] ? natus::math::vec4ui_t( 255, 0, 0, 255  ) : color,
+        corners[4] ? natus::math::vec4ui_t( 255, 0, 0, 255  ) : color,
+        corners[5] ? natus::math::vec4ui_t( 255, 0, 0, 255  ) : color,
+        corners[6] ? natus::math::vec4ui_t( 255, 0, 0, 255  ) : color,
+        corners[7] ? natus::math::vec4ui_t( 255, 0, 0, 255  ) : color,
+    } ;
 
     // bottom left
     {
         natus::math::vec4f_t r( rect.x(), rect.y(), wh, wh ) ;
         if( this_t::is_window_rect_inside_content_region( r, false ) )
         {
-            this_t::draw_rect_for_scale( r, color ) ;
+            this_t::draw_rect_for_scale( r, colors[0] ) ;
         }
     }
     // top left
@@ -577,7 +627,7 @@ void_t sprite_editor::draw_scales( natus::math::vec4f_cref_t rect, natus::math::
         natus::math::vec4f_t r( rect.x(), rect.y()-rect.w()+wh, wh, wh ) ;
         if( this_t::is_window_rect_inside_content_region( r, false ) )
         {
-            this_t::draw_rect_for_scale( r, color ) ;
+            this_t::draw_rect_for_scale( r, colors[2] ) ;
         }
     }
 
@@ -586,7 +636,7 @@ void_t sprite_editor::draw_scales( natus::math::vec4f_cref_t rect, natus::math::
         natus::math::vec4f_t r( rect.x()+rect.z()-wh, rect.y()-rect.w()+wh, wh, wh ) ;
         if( this_t::is_window_rect_inside_content_region( r, false ) )
         {
-            this_t::draw_rect_for_scale( r, color ) ;
+            this_t::draw_rect_for_scale( r, colors[4] ) ;
         }
     }
 
@@ -595,7 +645,7 @@ void_t sprite_editor::draw_scales( natus::math::vec4f_cref_t rect, natus::math::
         natus::math::vec4f_t r( rect.x()+rect.z()-wh, rect.y(), wh, wh ) ;
         if( this_t::is_window_rect_inside_content_region( r, false ) )
         {
-            this_t::draw_rect_for_scale( r, color ) ;
+            this_t::draw_rect_for_scale( r, colors[6] ) ;
         }
     }
 }
@@ -605,4 +655,60 @@ bool_t sprite_editor::is_ip_mouse_in_bound( natus::math::vec4ui_cref_t rect ) co
     if( uint_t( _cur_pixel.x() ) < rect.x() || uint_t( _cur_pixel.x() ) > rect.z() ) return false ;
     if( uint_t( _cur_pixel.y() ) < rect.y() || uint_t( _cur_pixel.y() ) > rect.w() ) return false ;
     return true ;
+}
+
+bool_t sprite_editor::intersect_bound_location( natus::math::vec4ui_cref_t rect, std::array< bool_t, 8 > & hit ) const 
+{
+    natus::math::vec2ui_t const cp = _cur_pixel ;
+
+    // bottom lect
+    if( cp.equal( rect.xy() ).all() )
+    {
+        hit[0] = true ;
+        return true ;
+    }
+    // top left
+    else if( cp.equal( rect.xw() ).all() ) 
+    {
+        hit[2] = true ;
+        return true ;
+    }
+    // top right
+    else if( cp.equal( rect.zw() ).all() ) 
+    {
+        hit[4] = true ;
+        return true ;
+    }
+    // bottom right
+    else if( cp.equal( rect.zy() ).all() ) 
+    {
+        hit[6] = true ;
+        return true ;
+    }
+    // left
+    else if( cp.x() == rect.x() ) 
+    {
+        hit[1] = true ;
+        return true ;
+    }
+    // top
+    else if( cp.y() == rect.w() ) 
+    {
+        hit[3] = true ;
+        return true ;
+    }
+    // right
+    else if( cp.x() == rect.z() ) 
+    {
+        hit[5] = true ;
+        return true ;
+    }
+    // bottom
+    else if( cp.y() == rect.y() ) 
+    {
+        hit[7] = true ;
+        return true ;
+    }
+
+    return false ;
 }
