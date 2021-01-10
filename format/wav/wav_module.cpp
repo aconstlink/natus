@@ -104,7 +104,7 @@ natus::format::future_item_t wav_image_module::import_from( natus::io::location_
 
         // only RIFF and WAVE supported
         {
-            uint32_t const fmt = uint32_t( *uint32_ptr_t( &data_buffer[ 0 ] ) ) ;
+            uint32_t const fmt = uint32_t( *uint32_ptr_t( data_buffer.get() ) ) ;
             uint32_t const ft = uint32_t( *uint32_ptr_t( &data_buffer[ sizeof( uint32_t ) << 1 ] ) ) ;
 
             char_t fmt_buffer[ 5 ] = { 'x', 'x', 'x', 'x', '\0' } ;
