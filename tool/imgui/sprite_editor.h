@@ -37,9 +37,12 @@ namespace natus
                 // format : x0, y0, x1, y1
                 natus::ntd::vector< natus::math::vec4ui_t > bounds ;
 
-                // animation sequences
-                // boxes
-                natus::math::vec4f_t region ;
+                // animation pivots
+                natus::ntd::vector< natus::math::vec2ui_t > anim_pivots ;
+
+                // hit boxes
+                // format : x0, y0, x1, y1
+                natus::ntd::vector< natus::math::vec4ui_t > hits ;
 
 
                 // origin in world space
@@ -73,8 +76,15 @@ namespace natus
             // offset from window orig to content region
             natus::math::vec2ui_t _croff ;
 
+            // used for bound dragging
             bool_t _mouse_down_drag = false ;
             natus::math::vec2ui_t _drag_begin ;
+            size_t _drag_idx = size_t(-1) ;
+
+            // used for anim pivot dragging
+            bool_t _mouse_down_drag_anim = false ;
+            natus::math::vec2ui_t _drag_begin_anim ;
+            size_t _drag_idx_anim = size_t(-1) ;
 
             struct load_item
             {
@@ -106,6 +116,8 @@ namespace natus
         private:
 
             void_t handle_mouse( natus::tool::imgui_view_t imgui, int_t const selected ) ;
+            void_t handle_mouse_drag_for_bounds( int_t const, natus::ntd::vector< natus::math::vec4ui_t > & ) ;
+            void_t handle_mouse_drag_for_anim_pivot( int_t const ) ;
 
             // show the selected image in the content region
             void_t show_image( natus::tool::imgui_view_t imgui, int_t const selected ) ;
@@ -140,8 +152,13 @@ namespace natus
             void_t draw_rect_for_scale( natus::math::vec4f_cref_t, natus::math::vec4ui_cref_t = 
                 natus::math::vec4ui_t(255) ) ;
 
-            void_t draw_scales( natus::math::vec4f_cref_t, natus::math::vec4ui_cref_t prect, natus::math::vec4ui_t = 
-                natus::math::vec4ui_t(255) ) ;
+            void_t draw_scales( natus::math::vec4f_cref_t, natus::math::vec4ui_cref_t prect, 
+                natus::math::vec4ui_t = natus::math::vec4ui_t(255) ) ;
+
+            size_t draw_rects( natus::ntd::vector< natus::math::vec4ui_t > const & rects ) ;
+
+            void_t draw_points( natus::ntd::vector< natus::math::vec2ui_t > const & points,
+                natus::math::vec4ui_cref_t color = natus::math::vec4ui_t(255,0,0,255) ) ;
 
             bool_t is_ip_mouse_in_bound( natus::math::vec4ui_cref_t ) const ;
 
@@ -156,7 +173,7 @@ namespace natus
             // [5] : right
             // [6] : bottom right
             // [7] : bottom
-            bool_t intersect_bound_location( natus::math::vec4ui_cref_t rect, std::array< bool_t, 8 > & hit ) const ; 
+            bool_t intersect_bound_location( natus::math::vec2ui_cref_t cur_pixel, natus::math::vec4ui_cref_t rect, std::array< bool_t, 8 > & hit ) const ; 
             
         };
         natus_res_typedef( sprite_editor ) ;

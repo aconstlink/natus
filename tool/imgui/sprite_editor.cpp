@@ -84,7 +84,7 @@ void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept
                     .set_filter( natus::graphics::texture_filter_mode::min_filter, natus::graphics::texture_filter_type::nearest )
                     .set_filter( natus::graphics::texture_filter_mode::mag_filter, natus::graphics::texture_filter_type::nearest );
 
-                ss.region = natus::math::vec4f_t(ss.dims,ss.dims) * natus::math::vec4f_t( 0.5f ) * natus::math::vec4f_t( -1.0f, -1.0f, 1.0f, 1.0f ) ;
+                //ss.region = natus::math::vec4f_t(ss.dims,ss.dims) * natus::math::vec4f_t( 0.5f ) * natus::math::vec4f_t( -1.0f, -1.0f, 1.0f, 1.0f ) ;
 
                 imgui.async().configure( ss.img ) ;
 
@@ -128,6 +128,8 @@ void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept
 
     // tabs
     {
+        auto & ss = _sprite_sheets[_cur_item] ;
+
         ImGui::BeginGroup() ;
 
         ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
@@ -139,18 +141,21 @@ void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept
             _crdims = natus::math::vec2f_t( 
                 ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y ) * 
                     natus::math::vec2f_t( 0.99f, 0.99f ) ;
+            
+            this_t::handle_mouse( imgui, _cur_item ) ;
 
             if( ImGui::BeginTabItem("Bounds") )
             {
-                auto & ss = _sprite_sheets[_cur_item] ;
+                this_t::handle_mouse_drag_for_bounds( _cur_item, ss.bounds ) ;
+                this_t::handle_mouse_drag_for_anim_pivot( _cur_item ) ;
 
-                this_t::handle_mouse( imgui, _cur_item ) ;
-                
                 natus::math::vec4ui_t res ;
                 if( this_t::handle_rect( imgui, res ) )
                 {
                     res = res ;
                     ss.bounds.emplace_back( res ) ;
+
+                    ss.anim_pivots.emplace_back( res.xy() + (res.zw() - res.xy()) / natus::math::vec2ui_t(2) ) ;
                 }
 
                 this_t::show_image( imgui, _cur_item ) ;
@@ -164,24 +169,11 @@ void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept
 
                 // draw rects
                 {
-                    for( size_t i=0; i<ss.bounds.size(); ++i )
+                    auto const idx = this_t::draw_rects( ss.bounds ) ;
+                    if( idx != size_t(-1) )
                     {
-                        auto rect = this_t::image_rect_to_window_rect( _cur_item, ss.bounds[i] ) ;
-
-                        if( !this_t::is_window_rect_inside_content_region( rect ) ) continue ;
-
-                        // if mouse on a rect, draw scales
-                        if( this_t::is_ip_mouse_in_bound( ss.bounds[i] ) )
-                        {
-                            this_t::draw_rect( rect, natus::math::vec4ui_t(0, 0, 255, 150) ) ;
-
-                            auto r = this_t::image_rect_to_window_rect( _cur_item, ss.bounds[i] ) ;
-                            this_t::draw_scales( r, ss.bounds[i] ) ;
-                        }
-                        else
-                        {
-                            this_t::draw_rect( rect, natus::math::vec4ui_t(255, 255, 255, 150) ) ;
-                        }
+                        auto const r = this_t::image_rect_to_window_rect( _cur_item, ss.bounds[idx] ) ;
+                        this_t::draw_scales( r, ss.bounds[idx] ) ;
                     }
                 }
 
@@ -194,32 +186,62 @@ void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept
                     this_t::draw_rect( rect ) ;
                 }
 
+                
                 ImGui::EndTabItem() ;
             }
 
             if( ImGui::BeginTabItem("Animation") )
             {
-                this_t::handle_mouse( imgui, _cur_item ) ;
+                this_t::handle_mouse_drag_for_anim_pivot( _cur_item ) ;
+
                 this_t::show_image( imgui, _cur_item ) ;
                 
+                // draw rect for current mouse position
+                {
+                    natus::math::vec4f_t r( _cur_pixel, _cur_pixel ) ;
+                    auto const rect = this_t::image_rect_to_window_rect( _cur_item, r ) ;
+                    this_t::draw_rect_for_scale( rect ) ;
+                }
+
+                // draw rects
+                {
+                    this_t::draw_rects( ss.bounds ) ;
+                }
+
+                // draw pivots
+                {
+                    this_t::draw_points( ss.anim_pivots ) ;
+                }
+                
+
                 ImGui::EndTabItem() ;
             }
 
             if( ImGui::BeginTabItem("Hit") )
             {
-                this_t::handle_mouse( imgui, _cur_item ) ;
                 this_t::show_image( imgui, _cur_item ) ;
                 
+                // draw bound rects
+                {
+                    this_t::draw_rects( ss.bounds ) ;
+                }
+
                 ImGui::EndTabItem() ;
             }
 
             if( ImGui::BeginTabItem("Damage") )
             {
-                this_t::handle_mouse( imgui, _cur_item ) ;
                 this_t::show_image( imgui, _cur_item ) ;
                 
+                // draw rects
+                {
+                    this_t::draw_rects( ss.bounds ) ;
+                }
+
                 ImGui::EndTabItem() ;
             }
+
+            
 
             ImGui::EndTabBar() ;
         }
@@ -312,38 +334,76 @@ void_t sprite_editor::handle_mouse( natus::tool::imgui_view_t imgui, int_t const
 
     // image pixel coord under mouse pos + transform y coord
     natus::math::vec2i_t const ip = (cur_mouse + idims * natus::math::vec2f_t( 0.5f, 0.5f )).floored() * natus::math::vec2f_t( 1.0f, 1.0f ) ;
+    
+    
+
+    // tool tip infos
+    // and remember values
+    if( in_cr )
+    {
+        // 0.5f because dimensions are multiplided by 0.5f
+        int_t const ratio = std::floor( 1.0f / ss.zoom ) ;
+            
+        _cur_pixel = ip ;
+        _pixel_ratio = ratio ;
+        _cur_mouse = cur_mouse ; //(cur_mouse + crdims * natus::math::vec2f_t( 0.5f, 0.5f ) )* natus::math::vec2f_t( 1.0f, 1.0f ) ;
+        _cr_mouse = mouse_in_window ;
+    }
+    
+}
+
+void_t sprite_editor::handle_mouse_drag_for_bounds( int_t const selection, natus::ntd::vector< natus::math::vec4ui_t > & rects ) 
+{
+    ImGuiIO& io = ImGui::GetIO() ;
+    auto & ss = _sprite_sheets[selection] ;
+
+    natus::math::vec2f_t const crdims = natus::math::vec2f_t( 
+        ImGui::GetContentRegionAvail().x, 
+        ImGui::GetContentRegionAvail().y ) * natus::math::vec2f_t( 0.99f, 0.99f ) ;
+    
+    natus::math::vec2f_t const mouse_in_window(
+        io.MousePos.x - ImGui::GetCursorScreenPos().x,
+        io.MousePos.y - ImGui::GetCursorScreenPos().y ) ;
+
+    bool_t const in_cr = 
+        mouse_in_window.greater_than( natus::math::vec2f_t() ).all() &&
+        mouse_in_window.less_than( crdims ).all() ;
 
     // handle mouse dragging
     {
-        size_t idx = size_t(-1) ;
-        for( size_t i=0; i<ss.bounds.size(); ++i )
+        if( in_cr && !_mouse_down_rect )
         {
-            if( this_t::is_ip_mouse_in_bound( ss.bounds[i] ) )
-            {
-                idx = i ;
-                break ;
-            }
-        }
-
-        if( in_cr && !_mouse_down_rect && idx != size_t(-1) )
-        {
-            std::array< bool_t, 8 > corners = {false,false,false,false,false,false,false,false} ;
-            bool_t drag_rect = !this_t::intersect_bound_location( ss.bounds[idx], corners ) ;
-
             if( io.MouseDown[0] )
             {
                 // start dragging
                 if( !_mouse_down_drag )
                 {
-                    _mouse_down_drag = true ;
-                    _drag_begin = ip ;
+                    size_t idx = size_t(-1) ;
+                    for( size_t i=0; i<rects.size(); ++i )
+                    {
+                        if( this_t::is_ip_mouse_in_bound( rects[i] ) )
+                        {
+                            idx = i ;
+                            break ;
+                        }
+                    }
+
+                    if( idx != size_t(-1) ) 
+                    {
+                        _drag_idx = idx ;
+                        _mouse_down_drag = true ;
+                        _drag_begin = _cur_pixel ;
+                    }
                 }
                 // do dragging
-                else
+                else if( _drag_idx != size_t(-1) )
                 {
-                    auto dif = natus::math::vec2i_t( ip ) - natus::math::vec2i_t( _drag_begin ) ;
+                    std::array< bool_t, 8 > corners = {false,false,false,false,false,false,false,false} ;
+                    bool_t drag_rect = !this_t::intersect_bound_location( _drag_begin, rects[_drag_idx], corners ) ;
 
-                    auto rect = natus::math::vec4ui_t( ss.bounds[idx] ) ;
+                    auto dif = natus::math::vec2i_t( _cur_pixel ) - natus::math::vec2i_t( _drag_begin ) ;
+
+                    auto rect = natus::math::vec4ui_t( rects[_drag_idx] ) ;
 
                     if( drag_rect )
                     {
@@ -383,39 +443,84 @@ void_t sprite_editor::handle_mouse( natus::tool::imgui_view_t imgui, int_t const
                         rect = natus::math::vec4ui_t( xy0, xy1 ) ;
                     }
 
+                    if( (natus::math::vec2i_t(rect.zw()) - natus::math::vec2i_t(rect.xy())).less_than( natus::math::vec2ui_t( 1, 1 ) ).any() ) 
+                    {
+                        return ;
+                    }
 
-                    ss.bounds[ idx ] = rect ;
+                    ss.bounds[ _drag_idx ] = rect ;
 
-                    _drag_begin = ip ;
+                    _drag_begin = _cur_pixel ;
                 }
             }
             else if( io.MouseReleased[0] && _mouse_down_drag )
             {
+                _drag_idx = size_t(-1 ) ;
                 _mouse_down_drag = false ;
             }
         }
         else if( io.MouseReleased[0] && _mouse_down_drag ) 
         {
+            _drag_idx = size_t(-1 ) ;
             _mouse_down_drag = false ;
         }
     }
-    
+}
 
-    // tool tip infos
-    // and remember values
-    if( in_cr )
-    {
-        
-                
-        // 0.5f because dimensions are multiplided by 0.5f
-        int_t const ratio = std::floor( 1.0f / ss.zoom ) ;
-            
-        _cur_pixel = ip ;
-        _pixel_ratio = ratio ;
-        _cur_mouse = cur_mouse ; //(cur_mouse + crdims * natus::math::vec2f_t( 0.5f, 0.5f ) )* natus::math::vec2f_t( 1.0f, 1.0f ) ;
-        _cr_mouse = mouse_in_window ;
-    }
+void_t sprite_editor::handle_mouse_drag_for_anim_pivot( int_t const selection ) 
+{
+    ImGuiIO& io = ImGui::GetIO() ;
+    auto & ss = _sprite_sheets[selection] ;
+
+    natus::math::vec2f_t const crdims = natus::math::vec2f_t( 
+        ImGui::GetContentRegionAvail().x, 
+        ImGui::GetContentRegionAvail().y ) * natus::math::vec2f_t( 0.99f, 0.99f ) ;
     
+    natus::math::vec2f_t const mouse_in_window(
+        io.MousePos.x - ImGui::GetCursorScreenPos().x,
+        io.MousePos.y - ImGui::GetCursorScreenPos().y ) ;
+
+    bool_t const in_cr = 
+        mouse_in_window.greater_than( natus::math::vec2f_t() ).all() &&
+        mouse_in_window.less_than( crdims ).all() ;
+
+    if( !in_cr ) return ;
+
+    if( io.MouseDown[0] )
+    {
+        // start dragging
+        if( !_mouse_down_drag_anim )
+        {
+            size_t idx = size_t(-1) ;
+            for( size_t i=0; i<ss.anim_pivots.size(); ++i )
+            {
+                //if( this_t::is_ip_mouse_in_bound( natus::math::vec4ui_t( ss.anim_pivots[i], ss.anim_pivots[i]) ) )
+                if( this_t::is_ip_mouse_in_bound( ss.bounds[i] ) )
+                {
+                    idx = i ;
+                    break ;
+                }
+            }
+
+            if( idx != size_t(-1) ) 
+            {
+                _drag_idx_anim = idx ;
+                _mouse_down_drag_anim = true ;
+                _drag_begin_anim = _cur_pixel ;
+            }
+        }
+        // do dragging
+        else
+        {
+            ss.anim_pivots[_drag_idx_anim] += natus::math::vec2i_t(_cur_pixel) - natus::math::vec2i_t(_drag_begin_anim) ;
+            _drag_begin_anim = _cur_pixel ;
+        }
+    }
+    else if( _mouse_down_drag_anim )
+    {
+        _drag_idx_anim = size_t(-1) ;
+        _mouse_down_drag_anim = false ;
+    }
 }
 
 void_t sprite_editor::show_image( natus::tool::imgui_view_t imgui, int_t const selected ) 
@@ -496,6 +601,8 @@ bool_t sprite_editor::handle_rect( natus::tool::imgui_view_t imgui, natus::math:
     {
         _mouse_down_rect = false ;
         _cur_rect.zw( _cur_pixel ) ;
+
+        if( (_cur_rect.zw() - _cur_rect.xy()).less_than( natus::math::vec2ui_t(1,1) ).any() ) return false ;
 
         res = this_t::rearrange_mouse_rect( _cur_rect ) ;
         _cur_rect = natus::math::vec4ui_t() ;
@@ -587,6 +694,55 @@ void_t sprite_editor::draw_rect( natus::math::vec4f_cref_t rect, natus::math::ve
     ImGui::GetWindowDrawList()->AddRectFilled( a_, b_, IM_COL32( color.x(), color.y(), color.z(), color.w() ) ) ;
 }
 
+size_t sprite_editor::draw_rects( natus::ntd::vector< natus::math::vec4ui_t > const & rects ) 
+{
+    size_t ret = size_t( -1 ) ;
+
+    for( size_t i=0; i<rects.size(); ++i )
+    {
+        auto rect = this_t::image_rect_to_window_rect( _cur_item, rects[i] ) ;
+
+        if( !this_t::is_window_rect_inside_content_region( rect ) ) continue ;
+
+        // if mouse on a rect, draw scales
+        if( this_t::is_ip_mouse_in_bound( rects[i] ) )
+        {
+            this_t::draw_rect( rect, natus::math::vec4ui_t(0, 0, 255, 150) ) ;
+            ret = i ;
+        }
+        else
+        {
+            this_t::draw_rect( rect, natus::math::vec4ui_t(255, 255, 255, 150) ) ;
+        }
+    }
+    return ret ;
+}
+
+void_t sprite_editor::draw_points( natus::ntd::vector< natus::math::vec2ui_t > const & points, 
+    natus::math::vec4ui_cref_t color ) 
+{
+    for( size_t i=0; i<points.size(); ++i )
+    {
+        natus::math::vec4f_t rect( points[i], points[i] ) ;
+        rect = this_t::image_rect_to_window_rect( _cur_item, rect  ) ;
+
+        if( !this_t::is_window_rect_inside_content_region( rect ) ) continue ;
+
+        // if mouse on a rect, draw scales
+        if( this_t::is_ip_mouse_in_bound( rect ) )
+        {
+            this_t::draw_rect( rect, natus::math::vec4ui_t(255,255,0,255) ) ;
+
+            auto r = this_t::image_rect_to_window_rect( _cur_item, rect ) ;
+            this_t::draw_scales( r, rect ) ;
+        }
+        else
+        {
+            this_t::draw_rect( rect, color ) ;
+        }
+    }
+}
+
 void_t sprite_editor::draw_rect_for_scale( natus::math::vec4f_cref_t rect, natus::math::vec4ui_cref_t color ) 
 {
     ImVec2 const a_( rect.x(), rect.y() + 1 ) ;
@@ -600,7 +756,7 @@ void_t sprite_editor::draw_scales( natus::math::vec4f_cref_t rect, natus::math::
     float_t const wh = float_t( _pixel_ratio ) * 1.0f ;
 
     std::array< bool_t, 8 > corners = {false,false,false,false,false,false,false,false} ;
-    this_t::intersect_bound_location( prect, corners ) ;
+    this_t::intersect_bound_location( _cur_pixel, prect, corners ) ;
 
     std::array< natus::math::vec4ui_t, 8 > colors = 
     {
@@ -657,9 +813,9 @@ bool_t sprite_editor::is_ip_mouse_in_bound( natus::math::vec4ui_cref_t rect ) co
     return true ;
 }
 
-bool_t sprite_editor::intersect_bound_location( natus::math::vec4ui_cref_t rect, std::array< bool_t, 8 > & hit ) const 
+bool_t sprite_editor::intersect_bound_location( natus::math::vec2ui_cref_t cur_pixel, natus::math::vec4ui_cref_t rect, std::array< bool_t, 8 > & hit ) const 
 {
-    natus::math::vec2ui_t const cp = _cur_pixel ;
+    natus::math::vec2ui_t const cp = cur_pixel ;
 
     // bottom lect
     if( cp.equal( rect.xy() ).all() )
