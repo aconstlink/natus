@@ -64,8 +64,7 @@ namespace natus
             int_t _pixel_ratio ;
             natus::math::vec2i_t _cur_pixel ;
 
-            bool_t _mouse_down_rect = false ;
-            natus::math::vec4ui_t _cur_rect ;
+            
             natus::math::vec2f_t _screen_pos_image ;
             natus::math::vec2f_t _cur_mouse ;
             natus::math::vec2i_t _cr_mouse ;
@@ -76,15 +75,35 @@ namespace natus
             // offset from window orig to content region
             natus::math::vec2ui_t _croff ;
 
+        private:
+
+            struct rect_drag_info
+            {
+                bool_t mouse_down_rect = false ;
+                bool_t mouse_down_drag = false ;
+                natus::math::vec4ui_t cur_rect ;
+                natus::math::vec2ui_t drag_begin ;
+                size_t drag_idx = size_t(-1) ;
+            };
+            natus_typedef( rect_drag_info ) ;
+            rect_drag_info_t _bounds_drag_info ;
+            rect_drag_info_t _hit_drag_info ;
+            rect_drag_info_t _damage_drag_info ;
+
             // used for bound dragging
-            bool_t _mouse_down_drag = false ;
-            natus::math::vec2ui_t _drag_begin ;
-            size_t _drag_idx = size_t(-1) ;
+            //bool_t _mouse_down_drag = false ;
+            //natus::math::vec2ui_t _drag_begin ;
+            //size_t _drag_idx = size_t(-1) ;
 
             // used for anim pivot dragging
             bool_t _mouse_down_drag_anim = false ;
             natus::math::vec2ui_t _drag_begin_anim ;
             size_t _drag_idx_anim = size_t(-1) ;
+
+            // used for bound dragging
+            bool_t _mouse_down_drag_hit = false ;
+            natus::math::vec2ui_t _drag_begin_hit ;
+            size_t _drag_idx_hit = size_t(-1) ;
 
             struct load_item
             {
@@ -116,14 +135,14 @@ namespace natus
         private:
 
             void_t handle_mouse( natus::tool::imgui_view_t imgui, int_t const selected ) ;
-            void_t handle_mouse_drag_for_bounds( int_t const, natus::ntd::vector< natus::math::vec4ui_t > & ) ;
+            void_t handle_mouse_drag_for_bounds( this_t::rect_drag_info_ref_t, natus::ntd::vector< natus::math::vec4ui_t > & ) ;
             void_t handle_mouse_drag_for_anim_pivot( int_t const ) ;
 
             // show the selected image in the content region
             void_t show_image( natus::tool::imgui_view_t imgui, int_t const selected ) ;
 
             // handle the rect the user draws with the mouse
-            bool_t handle_rect( natus::tool::imgui_view_t imgui, natus::math::vec4ui_ref_t ) ;
+            bool_t handle_rect( this_t::rect_drag_info_ref_t, natus::math::vec4ui_ref_t ) ;
 
             // rearrange rect so that 
             // smallest xy is bottom/left and 

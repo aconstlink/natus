@@ -146,15 +146,14 @@ void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept
 
             if( ImGui::BeginTabItem("Bounds") )
             {
-                this_t::handle_mouse_drag_for_bounds( _cur_item, ss.bounds ) ;
+                this_t::handle_mouse_drag_for_bounds( _bounds_drag_info, ss.bounds ) ;
                 this_t::handle_mouse_drag_for_anim_pivot( _cur_item ) ;
 
                 natus::math::vec4ui_t res ;
-                if( this_t::handle_rect( imgui, res ) )
+                if( this_t::handle_rect( _bounds_drag_info, res ) )
                 {
                     res = res ;
                     ss.bounds.emplace_back( res ) ;
-
                     ss.anim_pivots.emplace_back( res.xy() + (res.zw() - res.xy()) / natus::math::vec2ui_t(2) ) ;
                 }
 
@@ -179,9 +178,9 @@ void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept
 
                 // draw currently building rect when user
                 // presses the mouse button
-                if( _mouse_down_rect )
+                if( _bounds_drag_info.mouse_down_rect )
                 {
-                    auto const rect0 = this_t::rearrange_mouse_rect( _cur_rect ) ;
+                    auto const rect0 = this_t::rearrange_mouse_rect( _bounds_drag_info.cur_rect ) ;
                     auto const rect = this_t::image_rect_to_window_rect( _cur_item, rect0 ) ;
                     this_t::draw_rect( rect ) ;
                 }
@@ -352,10 +351,10 @@ void_t sprite_editor::handle_mouse( natus::tool::imgui_view_t imgui, int_t const
     
 }
 
-void_t sprite_editor::handle_mouse_drag_for_bounds( int_t const selection, natus::ntd::vector< natus::math::vec4ui_t > & rects ) 
+void_t sprite_editor::handle_mouse_drag_for_bounds( this_t::rect_drag_info_ref_t info, natus::ntd::vector< natus::math::vec4ui_t > & rects ) 
 {
     ImGuiIO& io = ImGui::GetIO() ;
-    auto & ss = _sprite_sheets[selection] ;
+    auto & ss = _sprite_sheets[_cur_item] ;
 
     natus::math::vec2f_t const crdims = natus::math::vec2f_t( 
         ImGui::GetContentRegionAvail().x, 
@@ -371,12 +370,12 @@ void_t sprite_editor::handle_mouse_drag_for_bounds( int_t const selection, natus
 
     // handle mouse dragging
     {
-        if( in_cr && !_mouse_down_rect )
+        if( in_cr && !info.mouse_down_rect )
         {
             if( io.MouseDown[0] )
             {
                 // start dragging
-                if( !_mouse_down_drag )
+                if( !info.mouse_down_drag )
                 {
                     size_t idx = size_t(-1) ;
                     for( size_t i=0; i<rects.size(); ++i )
@@ -390,20 +389,20 @@ void_t sprite_editor::handle_mouse_drag_for_bounds( int_t const selection, natus
 
                     if( idx != size_t(-1) ) 
                     {
-                        _drag_idx = idx ;
-                        _mouse_down_drag = true ;
-                        _drag_begin = _cur_pixel ;
+                        info.drag_idx = idx ;
+                        info.mouse_down_drag = true ;
+                        info.drag_begin = _cur_pixel ;
                     }
                 }
                 // do dragging
-                else if( _drag_idx != size_t(-1) )
+                else if( info.drag_idx != size_t(-1) )
                 {
                     std::array< bool_t, 8 > corners = {false,false,false,false,false,false,false,false} ;
-                    bool_t drag_rect = !this_t::intersect_bound_location( _drag_begin, rects[_drag_idx], corners ) ;
+                    bool_t drag_rect = !this_t::intersect_bound_location( info.drag_begin, rects[info.drag_idx], corners ) ;
 
-                    auto dif = natus::math::vec2i_t( _cur_pixel ) - natus::math::vec2i_t( _drag_begin ) ;
+                    auto dif = natus::math::vec2i_t( _cur_pixel ) - natus::math::vec2i_t( info.drag_begin ) ;
 
-                    auto rect = natus::math::vec4ui_t( rects[_drag_idx] ) ;
+                    auto rect = natus::math::vec4ui_t( rects[info.drag_idx] ) ;
 
                     if( drag_rect )
                     {
@@ -448,21 +447,21 @@ void_t sprite_editor::handle_mouse_drag_for_bounds( int_t const selection, natus
                         return ;
                     }
 
-                    ss.bounds[ _drag_idx ] = rect ;
+                    rects[ info.drag_idx ] = rect ;
 
-                    _drag_begin = _cur_pixel ;
+                    info.drag_begin = _cur_pixel ;
                 }
             }
-            else if( io.MouseReleased[0] && _mouse_down_drag )
+            else if( io.MouseReleased[0] && info.mouse_down_drag )
             {
-                _drag_idx = size_t(-1 ) ;
-                _mouse_down_drag = false ;
+                info.drag_idx = size_t(-1 ) ;
+                info.mouse_down_drag = false ;
             }
         }
-        else if( io.MouseReleased[0] && _mouse_down_drag ) 
+        else if( io.MouseReleased[0] && info.mouse_down_drag ) 
         {
-            _drag_idx = size_t(-1 ) ;
-            _mouse_down_drag = false ;
+            info.drag_idx = size_t(-1 ) ;
+            info.mouse_down_drag = false ;
         }
     }
 }
@@ -563,9 +562,9 @@ void_t sprite_editor::show_image( natus::tool::imgui_view_t imgui, int_t const s
 }
 
 
-bool_t sprite_editor::handle_rect( natus::tool::imgui_view_t imgui, natus::math::vec4ui_ref_t res  ) 
+bool_t sprite_editor::handle_rect( this_t::rect_drag_info_ref_t info, natus::math::vec4ui_ref_t res  ) 
 {
-    if( _mouse_down_drag ) return false;
+    if( _bounds_drag_info.mouse_down_drag ) return false;
 
     ImGuiIO& io = ImGui::GetIO() ;
     auto & ss = _sprite_sheets[_cur_item] ;
@@ -584,28 +583,29 @@ bool_t sprite_editor::handle_rect( natus::tool::imgui_view_t imgui, natus::math:
         mouse_in_window.greater_than( natus::math::vec2f_t() ).all() &&
         mouse_in_window.less_than( crdims ).all() ;
         
-    if( in_cr && io.MouseDown[0] && !_mouse_down_rect )
+    if( in_cr && io.MouseDown[0] && !info.mouse_down_rect )
     {
-        _mouse_down_rect = true ;
-        _cur_rect = natus::math::vec4ui_t( _cur_pixel, _cur_pixel ) ;
+        info.mouse_down_rect = true ;
+        info.cur_rect = natus::math::vec4ui_t( _cur_pixel, _cur_pixel ) ;
     }
 
     else if( io.MouseDown[0] )
     {        
-        _cur_rect.zw( _cur_pixel ) ;
+        info.cur_rect.zw( _cur_pixel ) ;
         
         return false ;
     }
 
-    else if( io.MouseReleased[0] && _mouse_down_rect )
+    else if( io.MouseReleased[0] && info.mouse_down_rect )
     {
-        _mouse_down_rect = false ;
-        _cur_rect.zw( _cur_pixel ) ;
+        info.mouse_down_rect = false ;
+        info.cur_rect.zw( _cur_pixel ) ;
 
-        if( (_cur_rect.zw() - _cur_rect.xy()).less_than( natus::math::vec2ui_t(1,1) ).any() ) return false ;
+        if( (info.cur_rect.zw() - info.cur_rect.xy()).less_than( natus::math::vec2ui_t(1,1) ).any() ) 
+            return false ;
 
-        res = this_t::rearrange_mouse_rect( _cur_rect ) ;
-        _cur_rect = natus::math::vec4ui_t() ;
+        res = this_t::rearrange_mouse_rect( info.cur_rect ) ;
+        info.cur_rect = natus::math::vec4ui_t() ;
 
         return true ;
     }
