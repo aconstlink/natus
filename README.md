@@ -30,6 +30,12 @@ For execution only
 ```bash
 libX11 mesa-libGLES mesa-libGL mesa-libEGL alsa-lib
 ```
+
+For Raspberry Pi Os:
+```bash
+libx11-dev libglx-dev libgl-dev libgles-dev git cmake 
+```
+
 ## Clone and Build
 
 **Linux Make:**  
