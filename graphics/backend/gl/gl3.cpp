@@ -1778,7 +1778,7 @@ struct gl3_backend::pimpl
 
                     if( i >= _arrays.size() )
                     {
-                        natus::log::global_t::error( natus_log_fn( "Could not find image [" +
+                        natus::log::global_t::error( natus_log_fn( "Could not find array [" +
                             tx_name + "]" ) ) ;
                         continue ;
                     }
