@@ -44,6 +44,10 @@ namespace natus
                 // format : x0, y0, x1, y1
                 natus::ntd::vector< natus::math::vec4ui_t > hits ;
 
+                // damage boxes
+                // format : x0, y0, x1, y1
+                natus::ntd::vector< natus::math::vec4ui_t > damages ;
+
 
                 // origin in world space
                 // the world space is where the window rect and 
@@ -87,23 +91,13 @@ namespace natus
             };
             natus_typedef( rect_drag_info ) ;
             rect_drag_info_t _bounds_drag_info ;
-            rect_drag_info_t _hit_drag_info ;
-            rect_drag_info_t _damage_drag_info ;
-
-            // used for bound dragging
-            //bool_t _mouse_down_drag = false ;
-            //natus::math::vec2ui_t _drag_begin ;
-            //size_t _drag_idx = size_t(-1) ;
+            rect_drag_info_t _hits_drag_info ;
+            rect_drag_info_t _damages_drag_info ;
 
             // used for anim pivot dragging
             bool_t _mouse_down_drag_anim = false ;
             natus::math::vec2ui_t _drag_begin_anim ;
             size_t _drag_idx_anim = size_t(-1) ;
-
-            // used for bound dragging
-            bool_t _mouse_down_drag_hit = false ;
-            natus::math::vec2ui_t _drag_begin_hit ;
-            size_t _drag_idx_hit = size_t(-1) ;
 
             struct load_item
             {
@@ -174,7 +168,9 @@ namespace natus
             void_t draw_scales( natus::math::vec4f_cref_t, natus::math::vec4ui_cref_t prect, 
                 natus::math::vec4ui_t = natus::math::vec4ui_t(255) ) ;
 
-            size_t draw_rects( natus::ntd::vector< natus::math::vec4ui_t > const & rects ) ;
+            size_t draw_rects( natus::ntd::vector< natus::math::vec4ui_t > const & rects,
+                natus::math::vec4ui_cref_t color = natus::math::vec4ui_t(255),
+                natus::math::vec4ui_cref_t over_color = natus::math::vec4ui_t(255) ) ;
 
             void_t draw_points( natus::ntd::vector< natus::math::vec2ui_t > const & points,
                 natus::math::vec4ui_cref_t color = natus::math::vec4ui_t(255,0,0,255) ) ;

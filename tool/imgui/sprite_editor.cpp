@@ -168,7 +168,9 @@ void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept
 
                 // draw rects
                 {
-                    auto const idx = this_t::draw_rects( ss.bounds ) ;
+                    auto const idx = this_t::draw_rects( ss.bounds, natus::math::vec4ui_t(255, 255, 255, 150), 
+                        natus::math::vec4ui_t(0, 0, 255, 150) ) ;
+
                     if( idx != size_t(-1) )
                     {
                         auto const r = this_t::image_rect_to_window_rect( _cur_item, ss.bounds[idx] ) ;
@@ -218,6 +220,15 @@ void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept
 
             if( ImGui::BeginTabItem("Hit") )
             {
+                this_t::handle_mouse_drag_for_bounds( _hits_drag_info, ss.hits ) ;
+
+                natus::math::vec4ui_t res ;
+                if( this_t::handle_rect( _hits_drag_info, res ) )
+                {
+                    res = res ;
+                    ss.hits.emplace_back( res ) ;
+                }
+
                 this_t::show_image( imgui, _cur_item ) ;
                 
                 // draw bound rects
@@ -225,16 +236,55 @@ void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept
                     this_t::draw_rects( ss.bounds ) ;
                 }
 
+                // draw bound rects
+                {
+                    this_t::draw_rects( ss.hits, natus::math::vec4ui_t(255, 0, 0, 150), 
+                        natus::math::vec4ui_t(0, 255, 255, 150) ) ;
+                }
+
+                // draw currently building rect when user
+                // presses the mouse button
+                if( _hits_drag_info.mouse_down_rect )
+                {
+                    auto const rect0 = this_t::rearrange_mouse_rect( _hits_drag_info.cur_rect ) ;
+                    auto const rect = this_t::image_rect_to_window_rect( _cur_item, rect0 ) ;
+                    this_t::draw_rect( rect ) ;
+                }
+
                 ImGui::EndTabItem() ;
             }
 
             if( ImGui::BeginTabItem("Damage") )
             {
+                this_t::handle_mouse_drag_for_bounds( _damages_drag_info, ss.damages ) ;
+
+                natus::math::vec4ui_t res ;
+                if( this_t::handle_rect( _damages_drag_info, res ) )
+                {
+                    res = res ;
+                    ss.damages.emplace_back( res ) ;
+                }
+
                 this_t::show_image( imgui, _cur_item ) ;
                 
-                // draw rects
+                // draw bound rects
                 {
                     this_t::draw_rects( ss.bounds ) ;
+                }
+
+                // draw bound rects
+                {
+                    this_t::draw_rects( ss.damages, natus::math::vec4ui_t(255, 0, 0, 150), 
+                        natus::math::vec4ui_t(0, 255, 255, 150) ) ;
+                }
+
+                // draw currently building rect when user
+                // presses the mouse button
+                if( _damages_drag_info.mouse_down_rect )
+                {
+                    auto const rect0 = this_t::rearrange_mouse_rect( _damages_drag_info.cur_rect ) ;
+                    auto const rect = this_t::image_rect_to_window_rect( _cur_item, rect0 ) ;
+                    this_t::draw_rect( rect ) ;
                 }
 
                 ImGui::EndTabItem() ;
@@ -694,7 +744,8 @@ void_t sprite_editor::draw_rect( natus::math::vec4f_cref_t rect, natus::math::ve
     ImGui::GetWindowDrawList()->AddRectFilled( a_, b_, IM_COL32( color.x(), color.y(), color.z(), color.w() ) ) ;
 }
 
-size_t sprite_editor::draw_rects( natus::ntd::vector< natus::math::vec4ui_t > const & rects ) 
+size_t sprite_editor::draw_rects( natus::ntd::vector< natus::math::vec4ui_t > const & rects,
+        natus::math::vec4ui_cref_t color, natus::math::vec4ui_cref_t over_color) 
 {
     size_t ret = size_t( -1 ) ;
 
@@ -707,12 +758,12 @@ size_t sprite_editor::draw_rects( natus::ntd::vector< natus::math::vec4ui_t > co
         // if mouse on a rect, draw scales
         if( this_t::is_ip_mouse_in_bound( rects[i] ) )
         {
-            this_t::draw_rect( rect, natus::math::vec4ui_t(0, 0, 255, 150) ) ;
+            this_t::draw_rect( rect, over_color ) ;
             ret = i ;
         }
         else
         {
-            this_t::draw_rect( rect, natus::math::vec4ui_t(255, 255, 255, 150) ) ;
+            this_t::draw_rect( rect, color ) ;
         }
     }
     return ret ;
