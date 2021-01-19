@@ -14,6 +14,12 @@ set( sources
 
     "font/text_render_2d.h"
     "font/text_render_2d.cpp"
+
+    "primitive/line_render_2d.h"
+    "primitive/line_render_2d.cpp"
+    "primitive/tri_render_2d.h"
+    "primitive/tri_render_2d.cpp"
+    
     )
 
 natus_vs_src_dir( sources )

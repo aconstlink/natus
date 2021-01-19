@@ -86,9 +86,23 @@ namespace natus
 
             
             template< typename vertex_t >
-            this_ref_t update( ::std::function< void_t ( vertex_t * array, size_t const ne ) > funk )
+            this_ref_t update( std::function< void_t ( vertex_t * array, size_t const ne ) > funk )
             {
                 funk( static_cast< vertex_t* >( _data ), _num_elems ) ;
+                return *this ;
+            }
+
+            // array starts at start
+            template< typename vertex_t >
+            this_ref_t update( size_t start, size_t end, 
+                std::function< void_t ( vertex_t * array, size_t const ne ) > funk )
+            {
+                start = std::min( start, end ) ;
+                end = std::max( start, end ) ;
+                start = std::min( _num_elems, start ) ;
+                end = std::min( _num_elems, end ) ;
+                size_t const ne = end - start ;
+                funk( reinterpret_cast< vertex_t* >( _data ) + start, ne ) ;
                 return *this ;
             }
 
