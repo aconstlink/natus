@@ -63,12 +63,6 @@ namespace natus
 
             size_t _num_lines = 0 ;
 
-            // track the sib of the vertices
-            size_t _vsib = 0 ;
-
-            // track the sib of the data
-            size_t _bsib = 0 ;
-
         private: // graphics
 
             struct per_layer_render_data

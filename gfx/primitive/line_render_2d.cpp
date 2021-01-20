@@ -321,9 +321,6 @@ void_t line_render_2d::draw( size_t const l, natus::math::vec2f_cref_t p0, natus
     ln.color = color ;
 
     _layers[l].lines.emplace_back( std::move( ln ) ) ;
-
-    _vsib += sizeof( this_t::vertex ) ;
-    _bsib += sizeof( this_t::the_data ) ;
     ++_num_lines ;
 }
             
@@ -404,8 +401,6 @@ void_t line_render_2d::prepare_for_rendering( void_t ) noexcept
             if( data_realloc ) a.configure( _ao ) ;
             else a.update( _ao ) ;
         } ) ;
-
-        _vsib = _bsib = 0 ;
     }
 }
             
@@ -415,6 +410,7 @@ void_t line_render_2d::render( size_t const l ) noexcept
     { 
         a.use( _rs ) ;
         
+        if( l < _render_data.size() )
         {
             auto const & plrd = _render_data[l] ;
             natus::graphics::backend::render_detail rd ;
