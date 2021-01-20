@@ -19,6 +19,8 @@ set( sources
     "primitive/line_render_2d.cpp"
     "primitive/tri_render_2d.h"
     "primitive/tri_render_2d.cpp"
+    "primitive/primitive_render_2d.h"
+    "primitive/primitive_render_2d.cpp"
     
     )
 

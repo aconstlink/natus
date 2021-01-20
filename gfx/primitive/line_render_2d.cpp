@@ -1,6 +1,8 @@
 
 #include "line_render_2d.h"
 
+#include <natus/math/utility/constants.hpp>
+
 using namespace natus::gfx ;
 
 line_render_2d::line_render_2d( void_t ) 
@@ -43,7 +45,7 @@ void_t line_render_2d::init( natus::ntd::string_cref_t name, natus::graphics::as
             rss.depth_s.ss.do_depth_write = false ;
 
             rss.polygon_s.do_change = true ;
-            rss.polygon_s.ss.do_activate = true ;
+            rss.polygon_s.ss.do_activate = false ;
             rss.polygon_s.ss.ff = natus::graphics::front_face::clock_wise ;
             rss.polygon_s.ss.cm = natus::graphics::cull_mode::back ;
             rss.polygon_s.ss.fm = natus::graphics::fill_mode::fill ;
@@ -323,7 +325,40 @@ void_t line_render_2d::draw( size_t const l, natus::math::vec2f_cref_t p0, natus
     _layers[l].lines.emplace_back( std::move( ln ) ) ;
     ++_num_lines ;
 }
-            
+        
+void_t line_render_2d::draw_rect( size_t const l, 
+    natus::math::vec2f_cref_t p0, natus::math::vec2f_cref_t p1, 
+    natus::math::vec2f_cref_t p2, natus::math::vec2f_cref_t p3, natus::math::vec4f_cref_t color ) noexcept 
+{
+    this_t::draw( l, p0, p1, color ) ;
+    this_t::draw( l, p1, p2, color ) ;
+    this_t::draw( l, p2, p3, color ) ;
+    this_t::draw( l, p3, p0, color ) ;
+}
+
+void_t line_render_2d::draw_circle( size_t const l, size_t const s, natus::math::vec2f_cref_t p0, float_t const r, natus::math::vec4f_cref_t color ) noexcept 
+{
+    size_t const segs = std::max( size_t(5), s ) ;
+    natus::ntd::vector< natus::math::vec2f_t > points( segs + 1 ) ;
+
+    points[0] = p0 ;
+
+    float_t a = 0.0f ;
+    float_t const del = 2.0f * natus::math::constants<float_t>::pi() / float_t(segs) ;
+    for( size_t i=0; i<segs; ++i )
+    {
+        points[i] = p0 + natus::math::vec2f_t( std::cos( a ), std::sin( a ) ) * 
+            natus::math::vec2f_t(r) ;
+
+        a += del ;
+    }
+
+    for( size_t i=0; i<segs-1; ++i )
+    {
+        this_t::draw( l, points[i], points[i+1] , color ) ;
+    }
+}
+
 void_t line_render_2d::prepare_for_rendering( void_t ) noexcept 
 {
     bool_t vertex_realloc = false ;
