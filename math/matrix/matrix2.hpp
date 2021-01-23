@@ -62,6 +62,7 @@ namespace natus
                 for( size_t i=0; i<4; ++i ){
                     _elem[i] = rhv[i] ;
                 }
+                return *this ;
             }
 
             this_ref_t operator = ( this_rref_t rhv ) noexcept

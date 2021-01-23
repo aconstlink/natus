@@ -22,6 +22,8 @@ set( sources
     "primitive/primitive_render_2d.h"
     "primitive/primitive_render_2d.cpp"
     
+    "sprite/sprite_render_2d.h"
+    "sprite/sprite_render_2d.cpp"
     )
 
 natus_vs_src_dir( sources )

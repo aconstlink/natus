@@ -70,7 +70,7 @@ namespace natus
                 size_t start = 0 ;
                 size_t num_elems = 0 ;
             };
-            std::vector< per_layer_render_data > _render_data ;
+            natus::ntd::vector< per_layer_render_data > _render_data ;
 
             struct vertex
             {
