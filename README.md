@@ -51,7 +51,7 @@ cmake ../../natus
 1. Open CMake Gui
 2. Choose 64 bit Visual Studio 2019
 3. Generate (out of source)
-4. Open START_HERE.bat (required for finding dlls)
+4. Open START_HERE.bat (required for finding dlls)(not in engine only builds)
 
 ## Usage  
 :construction:
