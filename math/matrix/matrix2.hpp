@@ -396,10 +396,10 @@ namespace natus
 
         } ;
     
-        typedef matrix2< int_t > mat2i_t ;
-        typedef matrix2< float_t > mat2f_t ;
-        typedef matrix2< double_t > mat2d_t ;
-        typedef matrix2< uint_t > mat2ui_t ;
-        typedef matrix2< size_t > mat2s_t ;
+        natus_typedefs( matrix2< int_t >, mat2i ) ;
+        natus_typedefs( matrix2< float_t >, mat2f ) ;
+        natus_typedefs( matrix2< double_t >, mat2d ) ;
+        natus_typedefs( matrix2< uint_t >, mat2ui ) ;
+        natus_typedefs( matrix2< size_t >, mat2s ) ;
     }
 }
