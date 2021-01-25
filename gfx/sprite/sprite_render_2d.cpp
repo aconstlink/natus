@@ -139,6 +139,7 @@ void_t sprite_render_2d::init( natus::ntd::string_cref_t name, natus::graphics::
 
                     in vec2 in_pos ;
                     out vec4 var_col ;
+                    out vec2 var_uv ;
                     uniform mat4 u_proj ;
                     uniform mat4 u_view ;
                     uniform mat4 u_world ;
@@ -154,6 +155,9 @@ void_t sprite_render_2d::init( natus::ntd::string_cref_t name, natus::graphics::
 
                         mat2 scaling = mat2( d0.z, 0.0, 0.0, d0.w ) ;
                         mat2 frame = mat2( d1.xy, d1.zw ) ;
+    
+                        vec2 uvs[4] = vec2[4]( d2.xy, d2.xw, d2.zw, d2.zy ) ;
+                        var_uv = uvs[gl_VertexID%4] ;
 
                         var_col = vec4( d2.zw, 0.0, 1.0 ) ;
                         vec4 pos = vec4( d0.xy + frame * scaling * in_pos, 0.0, 1.0 )  ;
@@ -165,11 +169,12 @@ void_t sprite_render_2d::init( natus::ntd::string_cref_t name, natus::graphics::
                     #version 140
 
                     in vec4 var_col ;
+                    in vec2 var_uv ;
                     out vec4 out_color ;
                         
                     void main()
                     {    
-                        out_color = var_col ;
+                        out_color = vec4( var_uv, 0.0, 1.0 ) ;
                     } )" ) ) ;
 
             sc.insert( natus::graphics::backend_type::gl3, std::move( ss ) ) ;
@@ -187,15 +192,22 @@ void_t sprite_render_2d::init( natus::ntd::string_cref_t name, natus::graphics::
                     uniform mat4 u_proj ;
                     uniform mat4 u_view ;
                     uniform mat4 u_world ;
+                    uniform int u_offset ;
                     uniform sampler2D u_data ;
 
                     void main()
                     {
-                        int idx = gl_VertexID / 3 ;
+                        int idx = (gl_VertexID / 4) * 3 + u_offset * 3 ;
                         ivec2 wh = textureSize( u_data, 0 ) ;
-                        var_col = texelFetch( u_data, ivec2( ((idx*3) % wh.x), (idx / wh.x) ), 0 ) ;
-                        
-                        vec4 pos = vec4( in_pos, 0.0, 1.0 )  ;
+                        vec4 d0 = texelFetch( u_data, ivec2( (idx+0) % wh.x, (idx+0) / wh.x ), 0 ) ; // pos scale
+                        vec4 d1 = texelFetch( u_data, ivec2( (idx+1) % wh.x, (idx+1) / wh.x ), 0 ) ; // frame
+                        vec4 d2 = texelFetch( u_data, ivec2( (idx+2) % wh.x, (idx+2) / wh.x ), 0 ) ; // uv rect
+
+                        mat2 scaling = mat2( d0.z, 0.0, 0.0, d0.w ) ;
+                        mat2 frame = mat2( d1.xy, d1.zw ) ;
+
+                        var_col = vec4( d2.zw, 0.0, 1.0 ) ;
+                        vec4 pos = vec4( d0.xy + frame * scaling * in_pos, 0.0, 1.0 )  ;
                         gl_Position = u_proj * u_view * u_world * pos ;
                     } )" ) ).
 
@@ -234,7 +246,8 @@ void_t sprite_render_2d::init( natus::ntd::string_cref_t name, natus::graphics::
                     struct VS_OUTPUT
                     {
                         float4 pos : SV_POSITION;
-                        float4 col : COLOR0;
+                        float4 col : COLOR0 ;
+                        float2 uv : TEXCOORD0 ;
                     };
                             
                     Buffer< float4 > u_data ;
@@ -243,13 +256,21 @@ void_t sprite_render_2d::init( natus::ntd::string_cref_t name, natus::graphics::
                     {
                         VS_OUTPUT output = (VS_OUTPUT)0 ;
                         int idx = (input.in_id / 4) * 3 + u_offset * 3 ;
-                        float4 d0 = u_data.Load( idx + 0 ) ;
-                        float4 d1 = u_data.Load( idx + 1 ) ;
-                        float4 d2 = u_data.Load( idx + 2 ) ;
+                        float4 d0 = u_data.Load( idx + 0 ) ; // pos scale
+                        float4 d1 = u_data.Load( idx + 1 ) ; // frame
+                        float4 d2 = u_data.Load( idx + 2 ) ; // uv rect
+                        
+                        float2x2 frame = { d1.x, d1.y, 
+                                           d1.z, d1.w } ;
 
-                        output.col = d2 ;
-                        float4 pos = float4( d0.xy + input.in_pos * d0.zw, 0.0f, 1.0f )  ;
-                        output.pos = mul( pos, u_world ) ;
+                        float2 uvs[4] = { d2.xy, d2.xw, d2.zw, d2.zy } ;
+                        output.uv = uvs[input.in_id % 4] ;
+
+                        output.col = float4(1.0f,1.0f,1.0f,1.0) ;
+
+                        float2 pos = mul( input.in_pos * d0.zw, frame ) ; 
+                        output.pos = float4( d0.xy + pos, 0.0f, 1.0f )  ;
+                        output.pos = mul( output.pos, u_world ) ;
                         output.pos = mul( output.pos, u_view ) ;
                         output.pos = mul( output.pos, u_proj ) ;
                         return output;
@@ -259,13 +280,14 @@ void_t sprite_render_2d::init( natus::ntd::string_cref_t name, natus::graphics::
                     
                     struct VS_OUTPUT
                     {
-                        float4 Pos : SV_POSITION;
-                        float4 col : COLOR0;
+                        float4 Pos : SV_POSITION ;
+                        float4 col : COLOR0 ;
+                        float2 uv : TEXCOORD0 ;
                     };
 
                     float4 PS( VS_OUTPUT input ) : SV_Target0
                     {
-                        return input.col ;
+                        return float4( input.uv, 0.0, 1.0f ) ;
                     } )" ) ) ;
 
             sc.insert( natus::graphics::backend_type::d3d11, std::move( ss ) ) ;
