@@ -125,6 +125,13 @@ namespace natus
                 }
             }
 
+            size_t get_num_variable_sets( void_t ) const noexcept { return _vars.size() ; }
+            natus::graphics::variable_set_res_t get_variable_set( size_t const i ) noexcept 
+            {
+                if( _vars.size() <= i ) return natus::graphics::variable_set_res_t() ;
+                return _vars[i] ;
+            }
+
         public: // render state sets
 
             this_ref_t add_render_state_set( natus::graphics::render_state_sets_cref_t rs )

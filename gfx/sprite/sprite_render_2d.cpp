@@ -142,17 +142,21 @@ void_t sprite_render_2d::init( natus::ntd::string_cref_t name, natus::graphics::
                     uniform mat4 u_proj ;
                     uniform mat4 u_view ;
                     uniform mat4 u_world ;
+                    uniform int u_offset ;
                     uniform samplerBuffer u_data ;
 
                     void main()
                     {
-                        int idx = (gl_VertexID / 4)*3 ;
+                        int idx = (gl_VertexID / 4) * 3 + u_offset * 3 ;
                         vec4 d0 = texelFetch( u_data, idx + 0 ) ; // pos scale
                         vec4 d1 = texelFetch( u_data, idx + 1 ) ; // frame
                         vec4 d2 = texelFetch( u_data, idx + 2 ) ; // uv rect
 
-                        var_col = d2 ;
-                        vec4 pos = vec4( d0.xy + in_pos * d0.zw, 0.0, 1.0 )  ;
+                        mat2 scaling = mat2( d0.z, 0.0, 0.0, d0.w ) ;
+                        mat2 frame = mat2( d1.xy, d1.zw ) ;
+
+                        var_col = vec4( d2.zw, 0.0, 1.0 ) ;
+                        vec4 pos = vec4( d0.xy + frame * scaling * in_pos, 0.0, 1.0 )  ;
                         gl_Position = u_proj * u_view * u_world * pos ;
 
                     } )" ) ).
@@ -219,6 +223,7 @@ void_t sprite_render_2d::init( natus::ntd::string_cref_t name, natus::graphics::
                         float4x4 u_proj ;
                         float4x4 u_view ;
                         float4x4 u_world ;
+                        int u_offset ;
                     }
 
                     struct VS_INPUT
@@ -237,7 +242,7 @@ void_t sprite_render_2d::init( natus::ntd::string_cref_t name, natus::graphics::
                     VS_OUTPUT VS( VS_INPUT input )
                     {
                         VS_OUTPUT output = (VS_OUTPUT)0 ;
-                        int idx = (input.in_id / 4)*3 ;
+                        int idx = (input.in_id / 4) * 3 + u_offset * 3 ;
                         float4 d0 = u_data.Load( idx + 0 ) ;
                         float4 d1 = u_data.Load( idx + 1 ) ;
                         float4 d2 = u_data.Load( idx + 2 ) ;
@@ -293,27 +298,7 @@ void_t sprite_render_2d::init( natus::ntd::string_cref_t name, natus::graphics::
 
         // add variable set 
         {
-            natus::graphics::variable_set_res_t vars = natus::graphics::variable_set_t() ;
-            
-            {
-                auto* var = vars->array_variable( "u_data" ) ;
-                var->set( name + ".per_sprite_data" ) ;
-            }
-
-            {
-                auto* var = vars->data_variable<natus::math::mat4f_t>( "u_world" ) ;
-                var->set( natus::math::mat4f_t().identity() ) ;
-            }
-            {
-                auto* var = vars->data_variable<natus::math::mat4f_t>( "u_view" ) ;
-                var->set( natus::math::mat4f_t().identity() ) ;
-            }
-            {
-                auto* var = vars->data_variable<natus::math::mat4f_t>( "u_proj" ) ;
-                var->set( natus::math::mat4f_t().identity() ) ;
-            }
-
-            rc.add_variable_set( std::move( vars ) ) ;
+            this_t::add_variable_set( rc ) ;
         }
                 
         _asyncs.for_each( [&]( natus::graphics::async_view_t a )
@@ -343,7 +328,6 @@ void_t sprite_render_2d::draw( size_t const l, natus::math::vec2f_cref_t pos, na
     if( _layers.size() <= l+1 ) 
     {
         _layers.resize( l+1 ) ;
-        _render_data.resize( l+1 ) ;
     }
 
     this_t::sprite_t d ;
@@ -361,8 +345,65 @@ void_t sprite_render_2d::prepare_for_rendering( void_t ) noexcept
 {
     bool_t vertex_realloc = false ;
     bool_t data_realloc = false ;
+    bool_t more_varsets = false ;
 
-    // 1. copy data
+    if( _num_sprites == 0 ) return ;
+
+    // 1. prepare render data
+    {
+        size_t const num_vs = (_num_sprites / _max_quads) + _layers.size() ;
+        _render_data.resize( num_vs ) ;
+        _render_layer_infos.resize( _layers.size() ) ;
+
+        size_t rd_idx = 0 ;
+        
+        size_t rd_start = 0 ;
+
+        for( size_t i=0; i<_layers.size(); ++i )
+        {
+            auto const & sprites = _layers[i].sprites ;
+            
+            // number of render calls for this layer
+            size_t const num_render = sprites.size() / _max_quads ; 
+
+            for( size_t r=0; r< num_render; ++r, ++rd_idx )
+            {
+                _render_data[rd_idx].num_quads = _max_quads ;
+                _render_data[rd_idx].num_elems = _max_quads * 6 ;
+            }
+
+            size_t const residuals = sprites.size() % _max_quads ;
+            if( residuals != 0 )
+            {
+                _render_data[rd_idx].num_quads = residuals ;
+                _render_data[rd_idx].num_elems = residuals * 6 ;
+                ++rd_idx ;
+            }
+
+            this_t::render_layer_info rli = { rd_start, rd_idx } ;
+            _render_layer_infos[i] = std::move( rli ) ;
+
+            rd_start = rd_idx ;
+        }
+    }
+
+    // 2. prepare variable sets
+    {
+        for( size_t i=_ro->get_num_variable_sets(); i<_render_data.size(); ++i )
+        {
+            this_t::add_variable_set( *_ro ) ;
+            more_varsets = true ;
+        }
+
+        int_t offset = 0 ;
+        for( size_t i=0; i<_render_data.size(); ++i )
+        {
+            _ro->get_variable_set(i)->data_variable<int32_t>( "u_offset" )->set( offset ) ;
+            offset += int32_t( _render_data[i].num_quads ) ;
+        }
+    }
+
+    // 3. copy data
     {
         size_t const bsib = _ao->data_buffer().get_sib() ;
 
@@ -370,49 +411,46 @@ void_t sprite_render_2d::prepare_for_rendering( void_t ) noexcept
         _ao->data_buffer().resize( _num_sprites * sizeof_data ) ;
 
         size_t lstart = 0 ;
-        size_t istart = 0 ;
 
         for( size_t i=0; i<_layers.size(); ++i )
         {
             auto const & sprites = _layers[i].sprites ;
-        
+            
+            for( size_t i=0; i<sprites.size(); ++i )
             {
-                for( size_t i=0; i<sprites.size(); ++i )
-                {
-                    size_t const idx = lstart + i * sizeof_data ;
-                    _ao->data_buffer().update< natus::math::vec4f_t >( idx + 0, 
-                        natus::math::vec4f_t( sprites[i].pos, sprites[i].scale ) ) ;
+                size_t const idx = lstart + i * sizeof_data ;
+                _ao->data_buffer().update< natus::math::vec4f_t >( idx + 0, 
+                    natus::math::vec4f_t( sprites[i].pos, sprites[i].scale ) ) ;
 
-                    _ao->data_buffer().update< natus::math::vec4f_t >( idx + 1, 
-                        natus::math::vec4f_t( sprites[i].frame.column(0), sprites[i].frame.column(1) ) ) ;
+                _ao->data_buffer().update< natus::math::vec4f_t >( idx + 1, 
+                    natus::math::vec4f_t( sprites[i].frame.column(0), sprites[i].frame.column(1) ) ) ;
 
-                    _ao->data_buffer().update< natus::math::vec4f_t >( idx + 2, 
-                        sprites[i].uv_rect ) ;
+                _ao->data_buffer().update< natus::math::vec4f_t >( idx + 2, 
+                    sprites[i].uv_rect ) ;
 
-                    //_ao->data_buffer().update< natus::math::vec4f_t >( idx + 3, 
-                      //  natus::math::vec4f_t( sprites[i].pos, sprites[i].scale ) ) ;
-                }
-                lstart += sprites.size() * sizeof_data ;
+                //_ao->data_buffer().update< natus::math::vec4f_t >( idx + 3, 
+                    //  natus::math::vec4f_t( sprites[i].pos, sprites[i].scale ) ) ;
             }
-
-            _render_data[i].start = istart ;
-            _render_data[i].num_elems = sprites.size() * 6 ;
-            istart += _render_data[i].num_elems ;
+            lstart += sprites.size() * sizeof_data ;
+            
             _layers[i].sprites.clear() ;
         }
-        _num_sprites = 0 ;
         
         data_realloc = _ao->data_buffer().get_sib() > bsib ;
     }
 
-    // 2. tell the graphics api
+    // 4. tell the graphics api
     {
         _asyncs.for_each( [&]( natus::graphics::async_view_t a )
         { 
             if( data_realloc ) a.configure( _ao ) ;
             else a.update( _ao ) ;
+
+            if( more_varsets ) a.configure( _ro ) ;
         } ) ;
     }
+
+    _num_sprites = 0 ;
 }
             
 void_t sprite_render_2d::render( size_t const l ) noexcept 
@@ -421,22 +459,51 @@ void_t sprite_render_2d::render( size_t const l ) noexcept
     { 
         a.use( _rs ) ;
         
-        if( l < _render_data.size() )
+        if( _render_layer_infos.size() > l ) 
         {
-            size_t const num_passes = 1;//_render_data[l]. .size() / this_t::_max_quads ;
-            for( size_t i=0; i<num_passes; ++i )
+            auto const & rli = _render_layer_infos[l] ;
+
+            for( size_t idx= rli.start; idx < rli.end; ++idx )
             {
-                auto const & plrd = _render_data[l] ;
+                auto const & plrd = _render_data[idx] ;
+
                 natus::graphics::backend::render_detail rd ;
+                rd.start = 0 ;
                 rd.num_elems = plrd.num_elems ;
-                rd.start = plrd.start ;
-                
+                rd.varset = idx ;
+
                 a.render( _ro, rd ) ;
             }
         }
         
-        
         a.use( natus::graphics::state_object_t() ) ;
     } ) ;
 }
+
+void_t sprite_render_2d::add_variable_set( natus::graphics::render_object_ref_t rc ) noexcept 
+{
+    natus::graphics::variable_set_res_t vars = natus::graphics::variable_set_t() ;
             
+    {
+        auto* var = vars->array_variable( "u_data" ) ;
+        var->set( _name + ".per_sprite_data" ) ;
+    }
+    {
+        auto* var = vars->data_variable<int32_t>( "u_offset" ) ;
+        var->set( 0 ) ;
+    }
+    {
+        auto* var = vars->data_variable<natus::math::mat4f_t>( "u_world" ) ;
+        var->set( natus::math::mat4f_t().identity() ) ;
+    }
+    {
+        auto* var = vars->data_variable<natus::math::mat4f_t>( "u_view" ) ;
+        var->set( natus::math::mat4f_t().identity() ) ;
+    }
+    {
+        auto* var = vars->data_variable<natus::math::mat4f_t>( "u_proj" ) ;
+        var->set( natus::math::mat4f_t().identity() ) ;
+    }
+
+    rc.add_variable_set( std::move( vars ) ) ;
+}

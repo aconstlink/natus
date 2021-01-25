@@ -50,10 +50,17 @@ namespace natus
 
             struct per_layer_render_data
             {
-                size_t start = 0 ;
                 size_t num_elems = 0 ;
+                size_t num_quads = 0 ;
             };
             natus::ntd::vector< per_layer_render_data > _render_data ;
+
+            struct render_layer_info
+            {
+                size_t start = 0 ;
+                size_t end = 0 ;
+            };
+            natus::ntd::vector< render_layer_info > _render_layer_infos ;
 
             struct vertex
             {
@@ -79,8 +86,10 @@ namespace natus
             natus::graphics::shader_object_res_t _so ;
             natus::graphics::render_object_res_t _ro ;
             natus::graphics::geometry_object_res_t _go ;
-
+            
             size_t _max_quads = 2000 ;
+
+            void_t add_variable_set( natus::graphics::render_object_ref_t ) noexcept ;
 
         public:
 
