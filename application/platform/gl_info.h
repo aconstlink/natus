@@ -8,8 +8,8 @@ namespace natus
     {
         struct gl_version
         {
-            int_t major = 4 ;
-            int_t minor = 6 ;
+            int_t major = 3 ;
+            int_t minor = 1 ;
         };
 
         struct gl_info 
