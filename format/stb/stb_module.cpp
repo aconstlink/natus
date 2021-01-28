@@ -101,15 +101,16 @@ natus::format::future_item_t stb_image_module::import_from( natus::io::location_
                 for( size_t i=0; i<ne; ++i ) 
                 {
                     // mirror y
-                    #if 0
+                    #if 1
                     {
                         size_t const start = ne - width * ( ( i / width ) + 1 ) ;
                         dst[ i ] = rgba_t( src[ start + i % width ], 255 );
                     }
-                    #endif
+                    #else
                     {
                         dst[ i ] = rgba_t( src[ i ], 255 );
                     }
+                    #endif
                 }
             } ) ;
         }
@@ -125,15 +126,16 @@ natus::format::future_item_t stb_image_module::import_from( natus::io::location_
                 for( size_t i = 0; i < ne; ++i )
                 {
                     // mirror y
-                    #if 0
+                    #if 1
                     {
                         size_t const start = ne - width * ( ( i / width ) + 1 ) ;
                         dst[ i ] = rgba_t( src[ start + i % width ] );
                     }
-                    #endif
+                    #else
                     {
                         dst[ i ] = rgba_t( src[ i ] );
                     }
+                    #endif
                     
                 }
 
@@ -169,7 +171,7 @@ natus::format::future_item_t stb_audio_module::import_from( natus::io::location_
 
         if( !res )
         {
-            natus::log::global_t::error( "[wav_import] : can not load location " + loc.as_string() ) ;
+            natus::log::global_t::error( "[stb_module] : can not load location " + loc.as_string() ) ;
             return natus::format::item_res_t( natus::format::status_item_t( "error" ) ) ;
         }
 
@@ -181,7 +183,7 @@ natus::format::future_item_t stb_audio_module::import_from( natus::io::location_
 
             if( stbv == nullptr )
             {
-                natus::log::global_t::error( "[stb_audio_module] : failed to import .ogg file [" + loc.as_string() + "] with stb error code [" + std::to_string( error ) + "]" ) ;
+                natus::log::global_t::error( "[stb_module] : failed to import .ogg file [" + loc.as_string() + "] with stb error code [" + std::to_string( error ) + "]" ) ;
                 return natus::format::item_res_t( natus::format::status_item_res_t(
                     natus::format::status_item_t( "Error loading .ogg file" ) ) ) ;
             }

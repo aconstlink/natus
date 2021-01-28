@@ -98,7 +98,7 @@ void_t imgui::init( natus::graphics::async_view_t async )
 
                     void main()
                     {
-                        var_uv = in_uv ;
+                        var_uv = vec2( in_uv.x, 1.0 - in_uv.y ) ;
                         var_color = in_color ;
                         gl_Position = u_proj * vec4( in_pos, 0.0, 1.0 ) ;
                     } )" ) ).
@@ -138,7 +138,7 @@ void_t imgui::init( natus::graphics::async_view_t async )
 
                     void main()
                     {
-                        var_uv = in_uv ;
+                        var_uv = vec2( in_uv.x, 1.0 - in_uv.y ) ;
                         var_color = in_color ;
                         gl_Position = u_proj * u_view * vec4( in_pos, 0.0, 1.0 ) ;
                     } )" ) ).
@@ -185,7 +185,7 @@ void_t imgui::init( natus::graphics::async_view_t async )
                                 VS_OUTPUT output = (VS_OUTPUT)0;
                                 output.pos = mul( pos, u_view );
                                 output.pos = mul( output.pos, u_proj );
-                                output.tx = in_uv ;
+                                output.tx = float2( in_uv.x, 1.0 - in_uv.y ) ;
                                 output.color = in_color ;
                                 return output;
                             } )" ) ).
@@ -230,9 +230,18 @@ void_t imgui::init( natus::graphics::async_view_t async )
         io.Fonts->GetTexDataAsRGBA32( &pixels, &width, &height ) ;
         io.Fonts->TexID = (ImTextureID) 0 ;
         natus::graphics::image_t img = natus::graphics::image_t( natus::graphics::image_t::dims_t( width, height, 1 ) )
-            .update( [&] ( natus::graphics::image_ptr_t, natus::graphics::image_t::dims_in_t /*dims*/, void_ptr_t data_in )
+            .update( [&] ( natus::graphics::image_ptr_t, natus::graphics::image_t::dims_in_t dims, void_ptr_t data_in )
         {
-            ::std::memcpy( data_in, ( void_cptr_t ) pixels, size_t( width * height * 4 ) ) ;
+            typedef natus::math::vector4< uint8_t > rgba_t ;
+            auto* dst = reinterpret_cast< rgba_t* >( data_in ) ;
+            auto* src = reinterpret_cast< rgba_t* >( pixels ) ;
+
+            size_t const ne = dims.x() * dims.y() * dims.z() ;
+            for( size_t i = 0; i < ne; ++i )
+            {
+                size_t const start = ne - width * ( ( i / width ) + 1 ) ;
+                dst[ i ] = rgba_t( src[ start + i % width ] );
+            }
         } ) ;
 
         _ic = natus::graphics::image_object_t( "natus.system.imgui.font", ::std::move( img ) )
