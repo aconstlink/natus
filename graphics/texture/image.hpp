@@ -141,6 +141,14 @@ namespace natus
             }
 
             void_cptr_t get_image_ptr( void_t ) const noexcept { return _data ; }
+            void_cptr_t get_image_ptr( size_t const z ) const noexcept 
+            { 
+                if( z >= _depth ) return nullptr ;
+
+                size_t const esib = natus::graphics::size_of( _iet ) * natus::graphics::size_of(_if ) ;
+
+                return reinterpret_cast< void_ptr_t >( size_t(_data) + _width * _height * z * esib ) ; 
+            }
 
         public:
 

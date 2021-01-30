@@ -1852,11 +1852,13 @@ public: // functions
 
             size_t const width = iref.get_dims().x() ;
             size_t const height = iref.get_dims().y() ;
+            size_t const depth = iref.get_dims().z() ;
+
             D3D11_TEXTURE2D_DESC desc = { } ;
             desc.Width = static_cast< UINT >( width ) ;
             desc.Height = static_cast< UINT >( height ) ;
-            desc.MipLevels = static_cast< UINT >( 1 );
-            desc.ArraySize = static_cast< UINT >( 1 );
+            desc.ArraySize = static_cast< UINT >( depth ) ;
+            desc.MipLevels = static_cast< UINT >( 1 ) ;
             desc.Format = natus::graphics::d3d11::convert( iref.get_image_format(), iref.get_image_element_type() ) ;
             desc.SampleDesc.Count = 1;
             desc.SampleDesc.Quality = 0;
@@ -1871,14 +1873,18 @@ public: // functions
             //uint8_ptr_t mem = natus::memory::global_t::alloc_raw<uint8_t>( width * height * 4 ) ;
             //for( size_t p = 0; p < width * height * 4; ++p ) mem[ p ] = uint8_t( 255 ) ;
 
-            D3D11_SUBRESOURCE_DATA init_data = { } ;
-            init_data.pSysMem = iref.get_image_ptr() ;
-            init_data.SysMemPitch = UINT( width * bpp ) ;
-            init_data.SysMemSlicePitch = UINT( width * height * bpp ) ;
-
             // create the texture object
             {
-                auto const hr = dev->CreateTexture2D( &desc, &init_data, &img.texture ) ;
+                natus::memory::malloc_guard< D3D11_SUBRESOURCE_DATA > init_datas( depth ) ;
+                
+                for( size_t i=0; i<depth; ++i )
+                {
+                    init_datas[i].pSysMem = iref.get_image_ptr(i) ;
+                    init_datas[i].SysMemPitch = UINT( width * bpp ) ;
+                    init_datas[i].SysMemSlicePitch = UINT( width * height * bpp ) ;
+                }
+
+                auto const hr = dev->CreateTexture2D( &desc, init_datas.get(), &img.texture ) ;
                 if( FAILED( hr ) )
                 {
                     natus::log::global_t::error( natus_log_fn( "CreateTexture2D" ) ) ;
@@ -1891,9 +1897,20 @@ public: // functions
             {
                 D3D11_SHADER_RESOURCE_VIEW_DESC res_desc = { } ;
                 res_desc.Format = desc.Format ;
-                res_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D ;
-                res_desc.Texture2D.MostDetailedMip = 0 ;
-                res_desc.Texture2D.MipLevels = UINT(1) ;
+                if( obj.get_type() == natus::graphics::texture_type::texture_2d )
+                {
+                    res_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D ;
+                    res_desc.Texture2D.MostDetailedMip = 0 ;
+                    res_desc.Texture2D.MipLevels = UINT(1) ;
+                }
+                else if( obj.get_type() == natus::graphics::texture_type::texture_2d_array )
+                {
+                    res_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DARRAY ;
+                    res_desc.Texture2DArray.ArraySize = UINT( depth ) ;
+                    res_desc.Texture2DArray.MostDetailedMip = 0 ;
+                    res_desc.Texture2DArray.MipLevels = UINT(1) ;
+                    res_desc.Texture2DArray.FirstArraySlice = UINT(0) ;
+                }
 
                 auto const hr = dev->CreateShaderResourceView( img.texture, &res_desc, &img.view ) ;
                 if( FAILED( hr ) )
@@ -2301,6 +2318,13 @@ public: // functions
                 // ?
             }
             else if( ibd.Type == D3D_SIT_TEXTURE && ibd.Dimension == D3D_SRV_DIMENSION_TEXTURE2D )
+            {
+                shader_data_t::image_variable_t ivar ;
+                ivar.name = ibd.Name ;
+                ivar.slot = ibd.BindPoint ;
+                img_vars.emplace_back( ivar ) ;
+            }
+            else if( ibd.Type == D3D_SIT_TEXTURE && ibd.Dimension == D3D_SRV_DIMENSION_TEXTURE2DARRAY )
             {
                 shader_data_t::image_variable_t ivar ;
                 ivar.name = ibd.Name ;
