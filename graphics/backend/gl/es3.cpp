@@ -1589,10 +1589,20 @@ struct es3_backend::pimpl
         {
             GLint const xoffset = 0 ;
             GLint const yoffset = 0 ;
+            GLint const zoffset = 0 ;
 
-            glTexSubImage2D( target, level, xoffset, yoffset, width, height,
-                format, type, data ) ;
-            natus::es::error::check_and_log( natus_log_fn( "glTexSubImage2D" ) ) ;
+            if( target == GL_TEXTURE_2D )
+            {
+                glTexSubImage2D( target, level, xoffset, yoffset, width, height,
+                    format, type, data ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glTexSubImage2D" ) ) ;
+            }
+            else if( target == GL_TEXTURE_2D_ARRAY )
+            {
+                glTexSubImage3D( target, level, xoffset, yoffset, zoffset, width, height, depth,
+                    format, type, data ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glTexSubImage3D" ) ) ;
+            }
         }
 
         config.sib = confin.image().sib() ;
