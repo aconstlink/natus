@@ -214,6 +214,8 @@ struct es3_backend::pimpl
         bool_t valid = false ;
         natus::ntd::string_t name ;
 
+        GLenum type = GL_NONE ;
+
         GLuint tex_id = GLuint( -1 ) ;
         size_t sib = 0 ;
 
@@ -1203,6 +1205,7 @@ struct es3_backend::pimpl
 
         auto & config = img_configs[ oid ] ;
         config.name = obj.name() ;
+        config.type = natus::graphics::es3::convert( config.get_type() ) ;
 
         // sampler
         if( config.tex_id == GLuint( -1 ) )
