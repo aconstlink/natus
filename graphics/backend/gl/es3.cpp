@@ -1205,7 +1205,7 @@ struct es3_backend::pimpl
 
         auto & config = img_configs[ oid ] ;
         config.name = obj.name() ;
-        config.type = natus::graphics::es3::convert( config.get_type() ) ;
+        config.type = natus::graphics::es3::convert( obj.get_type() ) ;
 
         // sampler
         if( config.tex_id == GLuint( -1 ) )
@@ -1539,15 +1539,16 @@ struct es3_backend::pimpl
     {
         this_t::image_config& config = img_configs[ id ] ;
 
-        glBindTexture( GL_TEXTURE_2D, config.tex_id ) ;
+        glBindTexture( config.type, config.tex_id ) ;
         if( natus::es::error::check_and_log( natus_log_fn( "glBindTexture" ) ) )
             return false ;
 
         size_t const sib = confin.image().sib() ;
-        GLenum const target = GL_TEXTURE_2D ;
+        GLenum const target = config.type ;
         GLint const level = 0 ;
         GLsizei const width = GLsizei( confin.image().get_dims().x() ) ;
         GLsizei const height = GLsizei( confin.image().get_dims().y() ) ;
+        GLsizei const depth = GLsizei( confin.image().get_dims().z() ) ;
         GLenum const format = natus::graphics::es3::convert_to_gl_pixel_format( confin.image().get_image_format() ) ;
         GLenum const type = natus::graphics::es3::convert_to_gl_pixel_type( confin.image().get_image_element_type() ) ;
         void_cptr_t data = confin.image().get_image_ptr() ;
@@ -1571,9 +1572,18 @@ struct es3_backend::pimpl
             GLint const border = 0 ;
             GLint const internal_format = natus::graphics::es3::convert_to_gl_format( confin.image().get_image_format(), confin.image().get_image_element_type() ) ;
 
-            glTexImage2D( target, level, internal_format, width, height,
-                border, format, type, data ) ;
-            natus::es::error::check_and_log( natus_log_fn( "glTexImage2D" ) ) ;
+            if( target == GL_TEXTURE_2D )
+            {
+                glTexImage2D( target, level, internal_format, width, height,
+                              border, format, type, data ) ;
+                natus::es::error::check_and_log( natus_log_fn( "glTexImage2D" ) ) ;
+            }
+            else if( target == GL_TEXTURE_2D_ARRAY )
+            {
+                glTexImage3D( target, level, internal_format, width, height, depth,
+                    border, format, type, data ) ;
+                natus::es::error::check_and_log( natus_log_fn( "glTexImage3D" ) ) ;
+            }
         }
         else
         {
@@ -1828,16 +1838,18 @@ struct es3_backend::pimpl
                 {
                     glActiveTexture( GLenum(GL_TEXTURE0 + tex_unit) ) ;
                     natus::es::error::check_and_log( natus_log_fn( "glActiveTexture" ) ) ;
-                    glBindTexture( GL_TEXTURE_2D, item.tex_id ) ;
-                    natus::es::error::check_and_log( natus_log_fn( "glBindTexture" ) ) ;
 
                     {
                         auto const& ic = img_configs[ item.img_id ] ;
-                        glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, ic.wrap_types[0] ) ;
-                        glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, ic.wrap_types[1] ) ;
-                        glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, ic.wrap_types[2] ) ;
-                        glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, ic.filter_types[0] ) ;
-                        glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, ic.filter_types[1] ) ;
+
+                        glBindTexture( ic.type, item.tex_id ) ;
+                        natus::es::error::check_and_log( natus_log_fn( "glBindTexture" ) ) ;
+
+                        glTexParameteri( ic.type, GL_TEXTURE_WRAP_S, ic.wrap_types[0] ) ;
+                        glTexParameteri( ic.type, GL_TEXTURE_WRAP_T, ic.wrap_types[1] ) ;
+                        glTexParameteri( ic.type, GL_TEXTURE_WRAP_R, ic.wrap_types[2] ) ;
+                        glTexParameteri( ic.type, GL_TEXTURE_MIN_FILTER, ic.filter_types[0] ) ;
+                        glTexParameteri( ic.type, GL_TEXTURE_MAG_FILTER, ic.filter_types[1] ) ;
                         natus::es::error::check_and_log( natus_log_fn( "glTexParameteri" ) ) ;
                     }
 

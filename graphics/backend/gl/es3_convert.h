@@ -246,7 +246,7 @@ namespace natus
 
             static GLenum convert( texture_type const m ) noexcept
             {
-                return natus::graphics::gl3::detail::texture_types_gl[ ( size_t ) m ] ;
+                return natus::graphics::es3::detail::texture_types_gl[ ( size_t ) m ] ;
             }
 
             static GLenum convert( texture_filter_mode const m ) noexcept
