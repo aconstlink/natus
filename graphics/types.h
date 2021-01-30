@@ -224,6 +224,16 @@ namespace natus
 
     namespace graphics
     {
+        enum class texture_type
+        {
+            unknown,
+            //texture_1d,
+            texture_2d,
+            //texture_3d,
+            //texture_1d_array,
+            texture_2d_array
+        };
+
         enum class texture_wrap_mode
         {
             wrap_s,

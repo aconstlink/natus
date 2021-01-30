@@ -21,6 +21,7 @@ namespace natus
             natus::ntd::string_t _name ;
             natus::graphics::image_t _img ;
 
+            natus::graphics::texture_type _texture_type = natus::graphics::texture_type::texture_2d ;
             natus::graphics::texture_wrap_type _wrap_types[ (size_t)natus::graphics::texture_wrap_mode::size ] ;
             natus::graphics::texture_filter_type _filter_types[ (size_t)natus::graphics::texture_filter_mode::size ] ;
 
@@ -60,6 +61,7 @@ namespace natus
             {
                 _name = rhv._name ;
                 _img = rhv._img ;
+                _texture_type = rhv._texture_type ;
 
                 memcpy( ( void_ptr_t ) _wrap_types, ( void_cptr_t )rhv._wrap_types, sizeof(_wrap_types) ) ;
                 memcpy( ( void_ptr_t ) _filter_types, ( void_cptr_t )rhv._filter_types, sizeof(_filter_types) ) ;
@@ -69,6 +71,7 @@ namespace natus
             {
                 _name = ::std::move( rhv._name ) ;
                 _img = ::std::move( rhv._img ) ;
+                _texture_type = rhv._texture_type ;
 
                 memcpy( ( void_ptr_t ) _wrap_types, ( void_cptr_t ) rhv._wrap_types, sizeof( _wrap_types ) ) ;
                 memcpy( ( void_ptr_t ) _filter_types, ( void_cptr_t ) rhv._filter_types, sizeof( _filter_types ) ) ;
@@ -82,6 +85,7 @@ namespace natus
 
                 _name = rhv._name ;
                 _img = rhv._img ;
+                _texture_type = rhv._texture_type ;
 
                 memcpy( ( void_ptr_t ) _wrap_types, ( void_cptr_t )rhv._wrap_types, sizeof(_wrap_types) ) ;
                 memcpy( ( void_ptr_t ) _filter_types, ( void_cptr_t )rhv._filter_types, sizeof(_filter_types) ) ;
@@ -95,6 +99,7 @@ namespace natus
 
                 _name = ::std::move( rhv._name ) ;
                 _img = ::std::move( rhv._img ) ;
+                _texture_type = rhv._texture_type ;
 
                 memcpy( ( void_ptr_t ) _wrap_types, ( void_cptr_t ) rhv._wrap_types, sizeof( _wrap_types ) ) ;
                 memcpy( ( void_ptr_t ) _filter_types, ( void_cptr_t ) rhv._filter_types, sizeof( _filter_types ) ) ;
@@ -134,6 +139,16 @@ namespace natus
                 return *this ;
             }
 
+            this_ref_t set_type( natus::graphics::texture_type const tt ) noexcept 
+            {
+                _texture_type = tt ;
+                return *this ;
+            }
+
+            natus::graphics::texture_type get_type( void_t ) const noexcept 
+            {
+                return _texture_type ;
+            }
         };
         natus_res_typedef( image_object ) ;
     }

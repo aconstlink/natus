@@ -233,6 +233,15 @@ namespace natus
         {
             namespace detail
             {
+                static const GLenum texture_types_gl[] = {
+                    GL_NONE,
+                    //GL_TEXTURE_1D,
+                    GL_TEXTURE_2D,
+                    //GL_TEXTURE_3D,
+                    //GL_TEXTURE_1D_ARRAY,
+                    GL_TEXTURE_2D_ARRAY
+                } ;
+
                 static const GLenum filter_modes_gl[] = {
                     GL_TEXTURE_MAG_FILTER,
                     GL_TEXTURE_MIN_FILTER
@@ -242,6 +251,11 @@ namespace natus
                     GL_NEAREST,
                     GL_LINEAR
                 } ;
+            }
+
+            static GLenum convert( texture_type const m ) noexcept
+            {
+                return natus::graphics::gl3::detail::texture_types_gl[ ( size_t ) m ] ;
             }
 
             static GLenum convert( texture_filter_mode const m ) noexcept

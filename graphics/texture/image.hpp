@@ -29,7 +29,7 @@ namespace natus
             
             size_t _width = 0 ;
             size_t _height = 0 ;
-            size_t _depth = 1 ;
+            size_t _depth = 0 ;
 
             void_ptr_t _data = nullptr ;
 
@@ -108,7 +108,7 @@ namespace natus
 
             this_ref_t resize( size_t const w, size_t const h ) noexcept
             {
-                return this_t::resize( w, h, 1 ) ;
+                return this_t::resize( w, h, 0 ) ;
             }
 
             this_ref_t resize( size_t const w, size_t const h, size_t const d ) noexcept
@@ -144,10 +144,79 @@ namespace natus
 
         public:
 
-            typedef ::std::function< void_t ( this_ptr_t, dims_in_t, void_ptr_t ) > update_funk_t ;
-            this_ref_t update( update_funk_t funk )
+            typedef std::function< void_t ( this_ptr_t, dims_in_t, void_ptr_t ) > update_funk_t ;
+            this_ref_t update( update_funk_t funk ) noexcept
             {
                 funk( this, this_t::get_dims(), _data ) ;
+                return *this ;
+            }
+
+            /// this function allows to add another image to this image
+            /// The resulting width and height is the maximum of all added images.
+            /// each time an image is added, the depth is incremented.
+            this_ref_t append( this_cref_t other ) noexcept
+            {
+                if( _iet != other.get_image_element_type() ||
+                    _if != other.get_image_format() )
+                {
+                    natus::log::global_t::error("[image] : can not append image. "
+                        "element type or image format mismatch." ) ;
+                    return *this ;
+                }
+
+                size_t const esib = natus::graphics::size_of( _iet ) * natus::graphics::size_of(_if ) ;
+
+                auto const odims = other.get_dims() ;
+
+                size_t const w = std::max( _width, odims.x() ) ;
+                size_t const h = std::max( _height, odims.y() ) ;
+                size_t const d = std::max( _depth+1, odims.z() ) ;
+
+                this_t tmp_img( _if, _iet, this_t::dims_t( w, h, d ) ) ;
+
+                tmp_img.update( [&]( this_ptr_t, dims_in_t dims, void_ptr_t data ) 
+                {
+                    size_t base = 0 ;
+                    for( size_t z = 0; z<_depth; ++z )
+                    {
+                        for( size_t y=0; y<_height; ++y )
+                        {
+                            for( size_t x=0; x<_width; ++x )
+                            {
+                                size_t const widx = base + x ;
+                                size_t const ridx = z * _width * _height + y * _width + x ;
+
+                                std::memcpy( 
+                                    reinterpret_cast< void_ptr_t >( size_t(data)+widx*esib), 
+                                    reinterpret_cast< void_cptr_t >( size_t(_data)+ridx*esib), 
+                                    natus::graphics::size_of( _iet ) * natus::graphics::size_of(_if ) ) ;
+                            }
+                            base += w ;
+                        }
+                    }
+
+                    for( size_t z = 0; z < odims.z() ; ++z )
+                    {
+                        for( size_t y=0; y < odims.y() ; ++y )
+                        {
+                            for( size_t x=0; x < odims.x() ; ++x )
+                            {
+                                size_t const widx = base + x ;
+                                size_t const ridx = z * odims.x() * odims.y() + y * odims.x() + x ;
+
+                                void_cptr_t odata = other.get_image_ptr() ;
+                                std::memcpy( 
+                                    reinterpret_cast< void_ptr_t >( size_t(data)+widx*esib), 
+                                    reinterpret_cast< void_cptr_t >( size_t(odata)+ridx*esib), 
+                                    natus::graphics::size_of( _iet ) * natus::graphics::size_of(_if ) ) ;
+                            }
+                            base += w ;
+                        }
+                    }
+                    
+                } ) ;
+
+                *this = std::move( tmp_img ) ;
                 return *this ;
             }
         };
