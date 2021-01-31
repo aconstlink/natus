@@ -75,6 +75,16 @@ namespace natus
                 natus::math::vec4f_t frame ;
                 // uv rect, bottom left (x0,y0,x1,y1)
                 natus::math::vec4f_t uv_rect ;
+
+                // (slot, free, free, free )
+                natus::math::vec4f_t additional_info ;
+
+                // animate the uv coords in x and y direction
+                // (x ani, y ani, free, free)
+                natus::math::vec4f_t uv_anim ;
+
+                
+
                 // color the sprite
                 //natus::math::vec4f_t color ;
             };
@@ -90,6 +100,9 @@ namespace natus
             size_t _max_quads = 2000 ;
 
             void_t add_variable_set( natus::graphics::render_object_ref_t ) noexcept ;
+
+            bool_t _image_name_changed = true ;
+            natus::ntd::string_t _image_name ;
 
         public:
 
@@ -129,13 +142,12 @@ namespace natus
             sprite_render_2d( this_rref_t ) ;
             ~sprite_render_2d( void_t ) ;
 
-            void_t init( natus::ntd::string_cref_t, natus::graphics::async_views_t ) noexcept ;
+            void_t init( natus::ntd::string_cref_t, natus::ntd::string_cref_t, natus::graphics::async_views_t ) noexcept ;
             void_t release( void_t ) noexcept ;
 
         public:
 
-            size_t get_slot( natus::ntd::string_cref_t name ) noexcept ;
-            size_t add_texture( natus::ntd::string_cref_t name ) noexcept ;
+            void_t set_texture( natus::ntd::string_cref_t name ) noexcept ;
 
             // draw a sprite/uv rect from a texture of the screen
             void_t draw( size_t const l, natus::math::vec2f_cref_t pos, natus::math::mat2f_cref_t frame, natus::math::vec2f_cref_t scale, natus::math::vec4f_cref_t uv_rect, size_t const slot ) noexcept ;

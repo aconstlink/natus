@@ -27,10 +27,11 @@ sprite_render_2d::~sprite_render_2d( void_t )
 {
 }
 
-void_t sprite_render_2d::init( natus::ntd::string_cref_t name, natus::graphics::async_views_t asyncs ) noexcept 
+void_t sprite_render_2d::init( natus::ntd::string_cref_t name, natus::ntd::string_cref_t image_name, natus::graphics::async_views_t asyncs ) noexcept 
 {
     _name = name ;
     _asyncs = asyncs ;
+    _image_name = image_name ;
 
     // root render states
     {
@@ -117,7 +118,7 @@ void_t sprite_render_2d::init( natus::ntd::string_cref_t name, natus::graphics::
     {
         natus::graphics::data_buffer_t db = natus::graphics::data_buffer_t()
             .add_layout_element( natus::graphics::type::tfloat, natus::graphics::type_struct::vec4 )
-            .resize( 2 ) ;
+            .resize( 5 ) ;
 
         _ao = natus::graphics::array_object_t( name + ".per_sprite_data", std::move( db ) ) ;
         _asyncs.for_each( [&]( natus::graphics::async_view_t a )
@@ -139,7 +140,7 @@ void_t sprite_render_2d::init( natus::ntd::string_cref_t name, natus::graphics::
 
                     in vec2 in_pos ;
                     out vec4 var_col ;
-                    out vec2 var_uv ;
+                    out vec3 var_uv ;
                     uniform mat4 u_proj ;
                     uniform mat4 u_view ;
                     uniform mat4 u_world ;
@@ -148,16 +149,20 @@ void_t sprite_render_2d::init( natus::ntd::string_cref_t name, natus::graphics::
 
                     void main()
                     {
-                        int idx = (gl_VertexID / 4) * 3 + u_offset * 3 ;
+                        int idx = (gl_VertexID / 4) * 5 + u_offset * 5 ;
                         vec4 d0 = texelFetch( u_data, idx + 0 ) ; // pos scale
                         vec4 d1 = texelFetch( u_data, idx + 1 ) ; // frame
                         vec4 d2 = texelFetch( u_data, idx + 2 ) ; // uv rect
+                        vec4 d3 = texelFetch( u_data, idx + 3 ) ; // additional
+                        vec4 d4 = texelFetch( u_data, idx + 4 ) ; // uv animation
+                        
 
                         mat2 scaling = mat2( d0.z, 0.0, 0.0, d0.w ) ;
                         mat2 frame = mat2( d1.xy, d1.zw ) ;
     
                         vec2 uvs[4] = vec2[4]( d2.xy, d2.xw, d2.zw, d2.zy ) ;
-                        var_uv = uvs[gl_VertexID%4] ;
+                        var_uv.xy = uvs[gl_VertexID%4] ;
+                        var_uv.z = d3.x ; // which texture layer
 
                         var_col = vec4( d2.zw, 0.0, 1.0 ) ;
                         vec4 pos = vec4( d0.xy + frame * scaling * in_pos, 0.0, 1.0 )  ;
@@ -169,12 +174,14 @@ void_t sprite_render_2d::init( natus::ntd::string_cref_t name, natus::graphics::
                     #version 140
 
                     in vec4 var_col ;
-                    in vec2 var_uv ;
+                    in vec3 var_uv ;
                     out vec4 out_color ;
-                        
+                    
+                    uniform sampler2DArray u_tex ;
+
                     void main()
                     {    
-                        out_color = vec4( var_uv, 0.0, 1.0 ) ;
+                        out_color = texture( u_tex, var_uv ) ;
                     } )" ) ) ;
 
             sc.insert( natus::graphics::backend_type::gl3, std::move( ss ) ) ;
@@ -247,7 +254,7 @@ void_t sprite_render_2d::init( natus::ntd::string_cref_t name, natus::graphics::
                     {
                         float4 pos : SV_POSITION;
                         float4 col : COLOR0 ;
-                        float2 uv : TEXCOORD0 ;
+                        float3 uv : TEXCOORD0 ;
                     };
                             
                     Buffer< float4 > u_data ;
@@ -255,16 +262,20 @@ void_t sprite_render_2d::init( natus::ntd::string_cref_t name, natus::graphics::
                     VS_OUTPUT VS( VS_INPUT input )
                     {
                         VS_OUTPUT output = (VS_OUTPUT)0 ;
-                        int idx = (input.in_id / 4) * 3 + u_offset * 3 ;
+                        int idx = (input.in_id / 4) * 5 + u_offset * 5 ;
                         float4 d0 = u_data.Load( idx + 0 ) ; // pos scale
                         float4 d1 = u_data.Load( idx + 1 ) ; // frame
                         float4 d2 = u_data.Load( idx + 2 ) ; // uv rect
+                        float4 d3 = u_data.Load( idx + 3 ) ; // additional
+                        float4 d4 = u_data.Load( idx + 4 ) ; // uv animation
+                        
                         
                         float2x2 frame = { d1.x, d1.y, 
                                            d1.z, d1.w } ;
 
                         float2 uvs[4] = { d2.xy, d2.xw, d2.zw, d2.zy } ;
-                        output.uv = uvs[input.in_id % 4] ;
+                        output.uv.xy = uvs[input.in_id % 4] ;
+                        output.uv.z = d3.x ;
 
                         output.col = float4(1.0f,1.0f,1.0f,1.0) ;
 
@@ -278,16 +289,19 @@ void_t sprite_render_2d::init( natus::ntd::string_cref_t name, natus::graphics::
 
                 set_pixel_shader( natus::graphics::shader_t( R"(
                     
+                    Texture2DArray u_tex : register( t0 ) ;
+                    SamplerState smp_u_tex : register( s0 ) ;
+
                     struct VS_OUTPUT
                     {
                         float4 Pos : SV_POSITION ;
                         float4 col : COLOR0 ;
-                        float2 uv : TEXCOORD0 ;
+                        float3 uv : TEXCOORD0 ;
                     };
 
                     float4 PS( VS_OUTPUT input ) : SV_Target0
                     {
-                        return float4( input.uv, 0.0, 1.0f ) ;
+                        return u_tex.Sample( smp_u_tex, input.uv ) ;
                     } )" ) ) ;
 
             sc.insert( natus::graphics::backend_type::d3d11, std::move( ss ) ) ;
@@ -335,14 +349,9 @@ void_t sprite_render_2d::release( void_t ) noexcept
 {
 }
 
-size_t sprite_render_2d::get_slot( natus::ntd::string_cref_t name ) noexcept 
+void_t sprite_render_2d::set_texture( natus::ntd::string_cref_t name ) noexcept 
 {
-    return 0 ;
-}
-
-size_t sprite_render_2d::add_texture( natus::ntd::string_cref_t name ) noexcept 
-{
-    return 0 ;
+    _image_name = name ;
 }
 
 void_t sprite_render_2d::draw( size_t const l, natus::math::vec2f_cref_t pos, natus::math::mat2f_cref_t frame, natus::math::vec2f_cref_t scale, natus::math::vec4f_cref_t uv_rect, size_t const slot ) noexcept 
@@ -367,7 +376,7 @@ void_t sprite_render_2d::prepare_for_rendering( void_t ) noexcept
 {
     bool_t vertex_realloc = false ;
     bool_t data_realloc = false ;
-    bool_t more_varsets = false ;
+    bool_t reconfig_ro = false ;
 
     if( _num_sprites == 0 ) return ;
 
@@ -409,12 +418,13 @@ void_t sprite_render_2d::prepare_for_rendering( void_t ) noexcept
         }
     }
 
-    // 2. prepare variable sets
+    // 2. prepare variable sets 
+    // one var set per render pass per layer
     {
         for( size_t i=_ro->get_num_variable_sets(); i<_render_data.size(); ++i )
         {
             this_t::add_variable_set( *_ro ) ;
-            more_varsets = true ;
+            reconfig_ro = true ;
         }
 
         int_t offset = 0 ;
@@ -422,6 +432,15 @@ void_t sprite_render_2d::prepare_for_rendering( void_t ) noexcept
         {
             _ro->get_variable_set(i)->data_variable<int32_t>( "u_offset" )->set( offset ) ;
             offset += int32_t( _render_data[i].num_quads ) ;
+        }
+
+        if( _image_name_changed || reconfig_ro )
+        {
+            for( size_t i=0; i<_render_data.size(); ++i )
+            {
+                _ro->get_variable_set(i)->texture_variable( "u_tex" )->set( _image_name ) ;
+            }
+            _image_name_changed = false ;
         }
     }
 
@@ -450,6 +469,16 @@ void_t sprite_render_2d::prepare_for_rendering( void_t ) noexcept
                 _ao->data_buffer().update< natus::math::vec4f_t >( idx + 2, 
                     sprites[i].uv_rect ) ;
 
+                // additional infos
+                _ao->data_buffer().update< natus::math::vec4f_t >( idx + 3, 
+                    natus::math::vec4f_t( float_t( sprites[i].slot ), 0.0f, 0.0f, 0.0f ) ) ;
+
+                // uv animation
+                _ao->data_buffer().update< natus::math::vec4f_t >( idx + 4, 
+                    natus::math::vec4f_t(1.0f) ) ;
+
+                
+
                 //_ao->data_buffer().update< natus::math::vec4f_t >( idx + 3, 
                     //  natus::math::vec4f_t( sprites[i].pos, sprites[i].scale ) ) ;
             }
@@ -468,7 +497,7 @@ void_t sprite_render_2d::prepare_for_rendering( void_t ) noexcept
             if( data_realloc ) a.configure( _ao ) ;
             else a.update( _ao ) ;
 
-            if( more_varsets ) a.configure( _ro ) ;
+            if( reconfig_ro ) a.configure( _ro ) ;
         } ) ;
     }
 
