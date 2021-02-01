@@ -64,7 +64,6 @@ natus_export_clear()
 ################################################################
 
 add_subdirectory( "externals/gulrak" )
-add_subdirectory( "externals/khronos" )
 add_subdirectory( "externals/kcat" )
 add_subdirectory( "externals/ocornut" )
 add_subdirectory( "externals/lua" )
