@@ -32,6 +32,7 @@ add_library( ${cur_alias_name} ALIAS ${cur_lib_name} )
 
 target_link_libraries( ${cur_lib_name}
   PRIVATE stb
+  PUBLIC rapidxml
   PUBLIC natus::font
   PUBLIC natus::property
   PUBLIC natus::nsl
