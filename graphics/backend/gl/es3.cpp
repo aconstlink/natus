@@ -1595,13 +1595,13 @@ struct es3_backend::pimpl
             {
                 glTexSubImage2D( target, level, xoffset, yoffset, width, height,
                     format, type, data ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glTexSubImage2D" ) ) ;
+                natus::es::error::check_and_log( natus_log_fn( "glTexSubImage2D" ) ) ;
             }
             else if( target == GL_TEXTURE_2D_ARRAY )
             {
                 glTexSubImage3D( target, level, xoffset, yoffset, zoffset, width, height, depth,
                     format, type, data ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glTexSubImage3D" ) ) ;
+                natus::es::error::check_and_log( natus_log_fn( "glTexSubImage3D" ) ) ;
             }
         }
 
