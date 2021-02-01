@@ -14,6 +14,7 @@
 [submodule "externals/nothings/stb"]
 	path = externals/nothings/stb
 	url = https://github.com/nothings/stb.git
-[submodule "externals/rapidxml/rapidxml"]
-	path = externals/rapidxml/rapidxml
+
+[submodule "externals/aconstlink/rapidxml"]
+	path = externals/aconstlink/rapidxml
 	url = https://github.com/aconstlink/rapidxml.git
