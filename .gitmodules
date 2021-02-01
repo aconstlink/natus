@@ -18,3 +18,6 @@
 [submodule "externals/aconstlink/rapidxml"]
 	path = externals/aconstlink/rapidxml
 	url = https://github.com/aconstlink/rapidxml.git
+[submodule "externals/aconstlink/khronos-header"]
+	path = externals/aconstlink/khronos-header
+	url = https://github.com/aconstlink/khronos-header.git
