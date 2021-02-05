@@ -160,6 +160,9 @@ namespace natus
             size_t _render_count = 0 ;
             size_t _audio_count = 0 ;
 
+            typedef std::chrono::high_resolution_clock render_clock_t ;
+            render_clock_t::time_point _tp_render ;
+
         private: // device
 
             natus::device::three_device_res_t _dev_mouse ;
@@ -179,7 +182,13 @@ namespace natus
         public:
 
             struct update_data {};
-            struct render_data {};
+            struct render_data 
+            {
+                // how many seconds passed
+                float_t sec_dt ;
+                // how many milli seconds passed
+                size_t milli_dt ;
+            };
             struct audio_data {} ;
             struct device_data {};
 
@@ -272,6 +281,9 @@ namespace natus
             bool_t after_tool( void_t ) noexcept ;
             bool_t before_device( void_t ) noexcept ;
             bool_t after_device( void_t ) noexcept ;
+
+
+            void_t compute_and_reset_timing( render_data & rd ) noexcept ;
 
         private:
 

@@ -308,6 +308,8 @@ bool_t app::platform_update( void_t )
         // do the actual rendering of the app
         
         this_t::render_data_t dat ;
+        this_t::compute_and_reset_timing( dat ) ;
+
         this->on_graphics( dat ) ;
 
         // do the tool ui only if rendering is possible
@@ -790,4 +792,16 @@ natus::application::gfx_context_res_t app::create_null_window( natus::applicatio
         natus::graphics::async_t( std::move( backend ) ) ) ;
 
     return std::move( ctx ) ;
+}
+
+
+void_t app::compute_and_reset_timing( render_data & rd ) noexcept 
+{
+    size_t const milli = std::chrono::duration_cast< std::chrono::milliseconds >( this_t::render_clock_t::now() - _tp_render ).count() ;
+    float_t const dt = float_t( double_t( milli ) / 1000.0 ) ;
+
+    _tp_render = this_t::render_clock_t::now() ;
+
+    rd.milli_dt = milli ;
+    rd.sec_dt = dt ;
 }
