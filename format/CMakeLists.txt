@@ -23,6 +23,10 @@ set( sources
 
     "nsl/nsl_module.h"
     "nsl/nsl_module.cpp"
+
+    "natus/natus_structs.h"
+    "natus/natus_module.h"
+    "natus/natus_module.cpp"
     )
 
 natus_vs_src_dir( sources )
