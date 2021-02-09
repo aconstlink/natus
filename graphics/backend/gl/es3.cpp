@@ -375,7 +375,7 @@ struct es3_backend::pimpl
         return oid ;
     }
 
-    void_t handle_render_state( render_state_sets const& new_states )
+    void_t handle_render_state( render_state_sets const& new_states, bool_t const popped = false )
     {
         // depth test
         {
@@ -483,29 +483,47 @@ struct es3_backend::pimpl
                 }
             }
         }
+
+        // do clear the frame
+        if( !popped )
+        {
+            if( new_states.clear_s.do_change && new_states.clear_s.ss.do_activate )
+            {
+                bool_t const clear_color = new_states.clear_s.ss.do_color_clear ;
+                bool_t const clear_depth = new_states.clear_s.ss.do_depth_clear ;
+
+                natus::math::vec4f_t const color = new_states.clear_s.ss.clear_color ;
+                glClearColor( color.x(), color.y(), color.z(), color.w() ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glClearColor" ) ) ;
+
+                GLbitfield const color_bit = clear_color ? GL_COLOR_BUFFER_BIT : 0 ;
+                GLbitfield const depth_bit = clear_depth ? GL_DEPTH_BUFFER_BIT : 0 ;
+
+                glClear( color_bit | depth_bit ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
+            }
+        }
     }
 
     // if oid == -1, the state is popped.
     void_t handle_render_state( size_t const oid, size_t const rs_id ) noexcept
     {
-        auto new_id = std::make_pair( oid, rs_id ) ;
-
         // pop state
-        if( oid == size_t( -1 ) )
+        if( oid == size_t(-1) )
         {
             if( _state_stack.size() == 1 )
             {
                 natus::log::global_t::error( natus_log_fn( "no more render states to pop" ) ) ;
                 return ;
             }
-            _state_stack.pop() ;
+            this_t::handle_render_state( _state_stack.pop() - _state_stack.top(), true ) ;
         }
         else
         {
+            auto new_id = std::make_pair( oid, rs_id ) ;
             _state_stack.push( _state_stack.top() + _states[ new_id.first ].states[ new_id.second ] ) ;
+            this_t::handle_render_state( _state_stack.top(), false ) ;
         }
-
-        this_t::handle_render_state( _state_stack.top() ) ;
     }
 
     size_t construct_framebuffer( size_t oid, natus::graphics::framebuffer_object_ref_t obj ) noexcept
@@ -677,6 +695,7 @@ struct es3_backend::pimpl
                 size_t const idx = id + i ;
                 img_configs[ idx ].name = fb.name + "." + std::to_string( i ) ;
                 img_configs[ idx ].tex_id = fb.colors[ i ] ;
+                img_configs[ idx ].type = GL_TEXTURE_2D ; 
 
                 for( size_t j = 0; j < ( size_t ) natus::graphics::texture_wrap_mode::size; ++j )
                 {
@@ -699,6 +718,7 @@ struct es3_backend::pimpl
                 size_t const idx = id + 0 ;
                 img_configs[ idx ].name = fb.name + ".depth" ;
                 img_configs[ idx ].tex_id = fb.depth ;
+                img_configs[ idx ].type = GL_TEXTURE_2D ; 
 
                 for( size_t j = 0; j < ( size_t ) natus::graphics::texture_wrap_mode::size; ++j )
                 {
@@ -715,7 +735,7 @@ struct es3_backend::pimpl
         return oid ;
     }
 
-    bool_t activate_framebuffer( size_t const oid, bool_t const clear_color, bool_t const clear_depth, bool_t const  )
+    bool_t activate_framebuffer( size_t const oid  )
     {
         framebuffer_data_ref_t fb = _framebuffers[ oid ] ;
 
@@ -739,27 +759,6 @@ struct es3_backend::pimpl
             natus::es::error::check_and_log( natus_log_fn( "glGenFramebuffers" ) ) ;
         }
 
-        // there is only one dimension at the moment
-        {
-            glViewport( 0, 0, GLsizei( fb.dims.x() ), GLsizei( fb.dims.y() ) ) ;
-            natus::es::error::check_and_log( natus_log_fn( "glViewport" ) ) ;
-        }
-
-        {
-            // do clear the frame
-            {
-                natus::math::vec4f_t const color = _state_stack.top().clear_s.ss.clear_color ;
-                glClearColor( color.x(), color.y(), color.z(), color.w() ) ;
-                natus::es::error::check_and_log( natus_log_fn( "glClearColor" ) ) ;
-
-                GLbitfield const color_bit = clear_color ? GL_COLOR_BUFFER_BIT : 0 ;
-                GLbitfield const depth_bit = clear_depth ? GL_DEPTH_BUFFER_BIT : 0 ;
-
-                glClear( color_bit | depth_bit ) ;
-                natus::es::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
-            }
-        }
-
         return true ;
     }
 
@@ -769,12 +768,6 @@ struct es3_backend::pimpl
         {
             glBindFramebuffer( GL_FRAMEBUFFER, 0 ) ;
             natus::es::error::check_and_log( natus_log_fn( "glGenFramebuffers" ) ) ;
-        }
-
-        // reset viewport
-        {
-            glViewport( 0, 0, vp_width, vp_height ) ;
-            natus::es::error::check_and_log( natus_log_fn( "glViewport" ) ) ;
         }
     }
 
@@ -2198,7 +2191,7 @@ natus::graphics::result es3_backend::update( natus::graphics::image_object_res_t
     return natus::graphics::result::ok ;
 }
 
-natus::graphics::result es3_backend::use( natus::graphics::framebuffer_object_res_t obj, bool_t const clear_color, bool_t const clear_depth, bool_t const clear_stencil ) noexcept 
+natus::graphics::result es3_backend::use( natus::graphics::framebuffer_object_res_t obj ) noexcept 
 {
     if( !obj.is_valid() )
     {
@@ -2215,7 +2208,7 @@ natus::graphics::result es3_backend::use( natus::graphics::framebuffer_object_re
     }
 
     size_t const oid = id->get_oid( this_t::get_bid() ) ;
-    auto const res = _pimpl->activate_framebuffer( oid, clear_color, clear_depth, clear_stencil ) ;
+    auto const res = _pimpl->activate_framebuffer( oid ) ;
     if( !res ) return natus::graphics::result::failed ;
 
     return natus::graphics::result::ok ;

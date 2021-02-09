@@ -46,11 +46,34 @@ namespace natus
             {
                 return rhv.do_change ? rhv : this_t( *this ) ;
             }
+
+            // this  |  other
+            //   0   |    0  -> do nothing
+            //   1   |    0  -> negate effect of this
+            //   0   |    1  -> do nothing
+            //   1   |    1  -> do change to other
+            this_t operator - ( this_cref_t rhv ) const noexcept
+            {
+                this_t ret ;
+
+                if( do_change && !rhv.do_change )
+                {
+                    ret = *this ;
+                    ret.ss.do_activate = !ret.ss.do_activate ;
+                }
+                else if( do_change && rhv.do_change )
+                {
+                    ret = rhv ;
+                }
+
+                return ret ;
+            }
         };
 
         struct clear_states
         {
             natus::math::vec4f_t clear_color = natus::math::vec4f_t( 0.4f, 0.1f, 0.2f, 1.0f ) ;
+            bool_t do_activate = false ;
             bool_t do_color_clear = false ;
             bool_t do_depth_clear = false ;
         };
@@ -93,6 +116,7 @@ namespace natus
 
         struct stencil_states
         {
+            bool_t do_activate = false ;
             // missing
         };
         natus_typedefs( state_set< stencil_states >, stencil_states_set ) ;
@@ -106,7 +130,6 @@ namespace natus
 
         struct polygon_states
         {
-            bool_t do_change = false ;
             bool_t do_activate = false ;
 
             cull_mode cm = natus::graphics::cull_mode::back ;
@@ -120,7 +143,7 @@ namespace natus
             bool_t do_activate = false ;
 
             // x, y, width, height
-            natus::math::vec4ui_t vp ;
+            natus::math::vec4ui_t vp = natus::math::vec4ui_t( 0, 0, 0, 0 ) ;
             
             // depth range
         };
@@ -149,6 +172,7 @@ namespace natus
                 stencil_s = rhv.stencil_s ;
                 polygon_s = rhv.polygon_s ;
                 scissor_s = rhv.scissor_s ;
+                clear_s = rhv.clear_s ;
             }
 
             render_state_sets( this_rref_t rhv ) noexcept
@@ -159,6 +183,7 @@ namespace natus
                 stencil_s = std::move( rhv.stencil_s ) ;
                 polygon_s = std::move( rhv.polygon_s ) ;
                 scissor_s = std::move( rhv.scissor_s ) ;
+                clear_s = std::move( rhv.clear_s ) ;
             }
 
             this_ref_t operator = ( this_cref_t rhv ) noexcept
@@ -169,18 +194,20 @@ namespace natus
                 stencil_s = rhv.stencil_s ;
                 polygon_s = rhv.polygon_s ;
                 scissor_s = rhv.scissor_s ;
+                clear_s = rhv.clear_s ;
 
                 return *this ;
             }
 
             this_ref_t operator += ( this_cref_t rhv ) noexcept
             {
-                view_s += rhv.view_s ;
                 blend_s += rhv.blend_s ;
                 depth_s += rhv.depth_s ;
                 stencil_s += rhv.stencil_s ;
                 polygon_s += rhv.polygon_s ;
                 scissor_s += rhv.scissor_s ;
+                view_s += rhv.view_s ;
+                clear_s += rhv.clear_s ;
 
                 return *this ;
             }
@@ -192,15 +219,46 @@ namespace natus
             {
                 this_t ret = *this ;
 
+                
                 ret.view_s = this_t::view_s + rhv.view_s ;
                 ret.blend_s = this_t::blend_s + rhv.blend_s ;
                 ret.depth_s = this_t::depth_s + rhv.depth_s ;
                 ret.stencil_s = this_t::stencil_s + rhv.stencil_s ;
                 ret.polygon_s = this_t::polygon_s + rhv.polygon_s ;
                 ret.scissor_s = this_t::scissor_s + rhv.scissor_s ;
+                
+                // clear state needs special handling
+                // there will only be a clear if the incoming
+                // state will clear
+                {
+                    ret.clear_s = this_t::clear_s + rhv.clear_s ;
+                    ret.clear_s.do_change = rhv.clear_s.do_change ;
+                }
 
                 return this_t( std::move( ret ) ) ;
             }
+
+            this_t operator - ( this_cref_t rhv ) const noexcept
+            {
+                this_t ret = *this ;
+                
+                ret.view_s = this_t::view_s - rhv.view_s ;
+                ret.blend_s = this_t::blend_s - rhv.blend_s ;
+                ret.depth_s = this_t::depth_s - rhv.depth_s ;
+                ret.stencil_s = this_t::stencil_s - rhv.stencil_s ;
+                ret.polygon_s = this_t::polygon_s - rhv.polygon_s ;
+                ret.scissor_s = this_t::scissor_s - rhv.scissor_s ;
+
+                // clear state needs special handling
+                // never recover the clear state
+                {
+                    ret.clear_s.do_change = false ;
+                }
+
+                return this_t( std::move( ret ) ) ;
+            }
+
+
         };
         natus_res_typedef( render_state_sets ) ;
     }

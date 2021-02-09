@@ -36,8 +36,7 @@ namespace natus
             virtual natus::graphics::result update( natus::graphics::array_object_res_t ) noexcept override ;
             virtual natus::graphics::result update( natus::graphics::image_object_res_t ) noexcept override ;
 
-            virtual natus::graphics::result use( natus::graphics::framebuffer_object_res_t, bool_t const,
-                bool_t const, bool_t const ) noexcept ;
+            virtual natus::graphics::result use( natus::graphics::framebuffer_object_res_t ) noexcept ;
             virtual natus::graphics::result use( natus::graphics::state_object_res_t, size_t const, bool_t const ) noexcept ;
 
             virtual natus::graphics::result render( natus::graphics::render_object_res_t, natus::graphics::backend::render_detail_cref_t ) noexcept override ;

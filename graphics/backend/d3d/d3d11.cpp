@@ -521,7 +521,7 @@ public: // functions
         return oid ;
     }
 
-    void_t handle_render_state( this_t::render_state_sets & new_states )
+    void_t handle_render_state( this_t::render_state_sets & new_states, bool_t const popped )
     {
         //  viewport
         if( new_states.rss.view_s.do_change )
@@ -539,6 +539,34 @@ public: // functions
                 vp.TopLeftX = FLOAT( vp_.x() ) ;
                 vp.TopLeftY = FLOAT( vp_.y() ) ;
                 _ctx->ctx()->RSSetViewports( 1, &vp ) ;
+            }
+        }
+
+        if( new_states.rss.clear_s.do_change && new_states.rss.clear_s.ss.do_activate && !popped )
+        {
+            if( _cur_fb_active == size_t(-1) )
+            {
+                // clear screen
+            }
+            else 
+            {
+                framebuffer_data_ref_t fb = framebuffer_data_ref_t( _framebuffers[ _cur_fb_active ] ) ;
+
+                bool_t const clear_color = new_states.rss.clear_s.ss.do_color_clear ;
+                bool_t const clear_depth = new_states.rss.clear_s.ss.do_depth_clear ;
+
+                if( clear_color )
+                {
+                    natus::math::vec4f_t const color = new_states.rss.clear_s.ss.clear_color ;
+                    FLOAT const dxcolor[ 4 ] = { color.x(), color.y(), color.z(), color.w() } ;
+                    for( size_t i=0; i<fb.num_color; ++i )
+                        _ctx->ctx()->ClearRenderTargetView( fb.rt_view[ i ], dxcolor ) ;
+                }
+
+                if( clear_depth && fb.ds_view != nullptr )
+                {
+                    _ctx->ctx()->ClearDepthStencilView( fb.ds_view, D3D11_CLEAR_DEPTH, 1.0f, 0 ) ;
+                }
             }
         }
 
@@ -649,23 +677,29 @@ public: // functions
                 return ;
             }
             auto old = _state_stack.pop() ;
+            #if 0
             if( old.depth_stencil_state != nullptr )
                 old.depth_stencil_state->Release() ;
             if( old.raster_state != nullptr )
                 old.raster_state->Release() ;
             if( old.blend_state != nullptr )
                 old.blend_state->Release() ;
+            #endif
+
+            // undo render state effects 
+            {
+                old.rss = old.rss - _state_stack.top().rss ;
+                this->handle_render_state( old, true ) ;
+            }
+
         }
         else
         {
             this_t::render_state_sets rss ;
             rss.rss = _state_stack.top().rss + _states[ new_id.first ].states[ new_id.second ] ;
+            
+            this->handle_render_state( rss, false ) ;
             _state_stack.push( rss ) ;
-        }
-
-        {
-            this_t::render_state_sets_t rss = _state_stack.top() ;
-            this_t::handle_render_state( rss ) ;
         }
     }
 
@@ -846,6 +880,7 @@ public: // functions
             
             auto const dst = obj.get_depth_target();
             
+            if( dst != natus::graphics::depth_stencil_target_type::unknown )
             {
                 // sampler
                 guard< ID3D11SamplerState > smp ;
@@ -964,35 +999,12 @@ public: // functions
         return oid ;
     }
 
-    bool_t activate_framebuffer( size_t const oid, bool_t const clear_color, bool_t const clear_depth, bool_t const )
+    bool_t activate_framebuffer( size_t const oid ) noexcept
     {
-        framebuffer_data_ref_t fb = _framebuffers[ oid ] ;
-        
-        if( clear_color )
-        {
-            auto const color = _state_stack.top().rss.clear_s.ss.clear_color ;
-            FLOAT const dxcolor[ 4 ] = { color.x(), color.y(), color.z(), color.w() } ;
-            for( size_t i=0; i<fb.num_color; ++i )
-                _ctx->ctx()->ClearRenderTargetView( fb.rt_view[ i ], dxcolor ) ;
-        }
-
-        if( clear_depth && fb.ds_view != nullptr )
-        {
-            _ctx->ctx()->ClearDepthStencilView( fb.ds_view, D3D11_CLEAR_DEPTH, 1.0f, 0 ) ;
-        }
+        framebuffer_data_ref_t fb = framebuffer_data_ref_t( _framebuffers[ oid ] ) ;
 
         _ctx->ctx()->OMSetRenderTargets( UINT( fb.num_color ), fb.rt_view, fb.ds_view ) ;
 
-        // Setup the viewport
-        D3D11_VIEWPORT vp ;
-        vp.Width = fb.width ;
-        vp.Height = fb.height ;
-        vp.MinDepth = 0.0f ;
-        vp.MaxDepth = 1.0f ;
-        vp.TopLeftX = FLOAT( 0 ) ;
-        vp.TopLeftY = FLOAT( 0 ) ;
-        _ctx->ctx()->RSSetViewports( 1, &vp );
-        
         _cur_fb_active = oid ;
 
         return true ;
@@ -1002,6 +1014,9 @@ public: // functions
     {
         _ctx->activate_framebuffer() ;
         
+        // done by the render states
+
+        #if 0
         // Setup the viewport
         D3D11_VIEWPORT vp ;
         vp.Width = vp_width ;
@@ -1011,6 +1026,7 @@ public: // functions
         vp.TopLeftX = FLOAT( 0 ) ;
         vp.TopLeftY = FLOAT( 0 ) ;
         _ctx->ctx()->RSSetViewports( 1, &vp );
+        #endif
 
         _cur_fb_active = size_t( -1 ) ;
 
@@ -2234,7 +2250,7 @@ public: // functions
                 this_t::render_state_sets rss ;
                 rss.rss = _states[ ids_new.first ].states[ ids_new.second ] ;
                 _state_stack.push( rss ) ;
-                this_t::handle_render_state( rss ) ;
+                this->handle_render_state( rss, false ) ;
             }
         }
 
@@ -2248,7 +2264,7 @@ public: // functions
 
     void_t end_frame( void_t )
     {
-        this_t::handle_render_state( size_t( -1 ), size_t( -1 ) ) ;
+        this->handle_render_state( size_t( -1 ), size_t( -1 ) ) ;
     }
 
     natus::ntd::string_t remove_unwanded_characters( natus::ntd::string_cref_t code_in ) const noexcept
@@ -2729,8 +2745,7 @@ natus::graphics::result d3d11_backend::update( natus::graphics::image_object_res
 }
 
 //****
-natus::graphics::result d3d11_backend::use( natus::graphics::framebuffer_object_res_t obj, bool_t const clear_color,
-    bool_t const clear_depth, bool_t const clear_stencil ) noexcept
+natus::graphics::result d3d11_backend::use( natus::graphics::framebuffer_object_res_t obj ) noexcept
 {
     if( !obj.is_valid() )
     {
@@ -2747,7 +2762,7 @@ natus::graphics::result d3d11_backend::use( natus::graphics::framebuffer_object_
     }
 
     size_t const oid = id->get_oid( this_t::get_bid() ) ;
-    auto const res = _pimpl->activate_framebuffer( oid, clear_color, clear_depth, clear_stencil ) ;
+    auto const res = _pimpl->activate_framebuffer( oid ) ;
     if( !res ) return natus::graphics::result::failed ;
 
     return natus::graphics::result::ok ;

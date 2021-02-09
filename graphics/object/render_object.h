@@ -114,6 +114,12 @@ namespace natus
                 return *this ;
             }
 
+            this_ref_t remove_variable_sets( void_t ) noexcept 
+            {
+                _vars.clear() ;
+                return *this ;
+            }
+
             typedef std::function< void_t ( size_t const i, natus::graphics::variable_set_res_t const & ) > for_each_var_funk_t ;
 
             void_t for_each( for_each_var_funk_t funk )
