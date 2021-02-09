@@ -72,10 +72,15 @@ namespace natus
 
             this_ref_t resize( size_t const ne ) noexcept
             {
+                auto const old_sib = this_t::get_sib() ;
+
                 _num_elems = ne ;
                 size_t const sib = this_t::get_sib() ;
+
+                void_ptr_t tmp = natus::memory::global_t::alloc( sib, "data buffer" ) ;
+                std::memcpy( tmp, _data, std::min( sib, old_sib ) ) ;
                 natus::memory::global_t::dealloc( _data ) ;
-                _data = natus::memory::global_t::alloc( sib, "data buffer" ) ;
+                _data = tmp ;
 
                 return *this ;
             }
