@@ -149,23 +149,27 @@ void_t sprite_render_2d::init( natus::ntd::string_cref_t name, natus::ntd::strin
 
                     void main()
                     {
-                        int idx = (gl_VertexID / 4) * 5 + u_offset * 5 ;
+                        int idx = (gl_VertexID / 4) * 6 + u_offset * 6 ;
                         vec4 d0 = texelFetch( u_data, idx + 0 ) ; // pos scale
                         vec4 d1 = texelFetch( u_data, idx + 1 ) ; // frame
                         vec4 d2 = texelFetch( u_data, idx + 2 ) ; // uv rect
                         vec4 d3 = texelFetch( u_data, idx + 3 ) ; // additional
                         vec4 d4 = texelFetch( u_data, idx + 4 ) ; // uv animation
+                        vec4 d5 = texelFetch( u_data, idx + 5 ) ; // color
                         
+                        vec2 pivot = d3.xy * d0.zw * vec2( 0.5 ) ;
+                        vec2 scale = d0.zw * (d2.zw - d2.xy) ;
+                        vec2 pos_p = d0.xy + pivot ;
 
-                        mat2 scaling = mat2( d0.z, 0.0, 0.0, d0.w ) ;
+                        mat2 scaling = mat2( scale.x, 0.0, 0.0, scale.y ) ;
                         mat2 frame = mat2( d1.xy, d1.zw ) ;
     
                         vec2 uvs[4] = vec2[4]( d2.xy, d2.xw, d2.zw, d2.zy ) ;
                         var_uv.xy = uvs[gl_VertexID%4] ;
-                        var_uv.z = d3.x ; // which texture layer
+                        var_uv.z = d3.w ; // which texture layer
 
-                        var_col = vec4( d2.zw, 0.0, 1.0 ) ;
-                        vec4 pos = vec4( d0.xy + frame * scaling * in_pos, 0.0, 1.0 )  ;
+                        var_col = d5 ;
+                        vec4 pos = vec4( pos_p + frame * scaling * in_pos, 0.0, 1.0 )  ;
                         gl_Position = u_proj * u_view * u_world * pos ;
 
                     } )" ) ).
@@ -181,7 +185,7 @@ void_t sprite_render_2d::init( natus::ntd::string_cref_t name, natus::ntd::strin
 
                     void main()
                     {    
-                        out_color = texture( u_tex, var_uv ) ;
+                        out_color = texture( u_tex, var_uv ) * var_col ;
                     } )" ) ) ;
 
             sc.insert( natus::graphics::backend_type::gl3, std::move( ss ) ) ;
@@ -262,25 +266,29 @@ void_t sprite_render_2d::init( natus::ntd::string_cref_t name, natus::ntd::strin
                     VS_OUTPUT VS( VS_INPUT input )
                     {
                         VS_OUTPUT output = (VS_OUTPUT)0 ;
-                        int idx = (input.in_id / 4) * 5 + u_offset * 5 ;
+                        int idx = (input.in_id / 4) * 6 + u_offset * 6 ;
                         float4 d0 = u_data.Load( idx + 0 ) ; // pos scale
                         float4 d1 = u_data.Load( idx + 1 ) ; // frame
                         float4 d2 = u_data.Load( idx + 2 ) ; // uv rect
                         float4 d3 = u_data.Load( idx + 3 ) ; // additional
                         float4 d4 = u_data.Load( idx + 4 ) ; // uv animation
+                        float4 d5 = u_data.Load( idx + 5 ) ; // color
                         
-                        
+                        float2 pivot = d3.xy * d0.zw * float2( 0.5, 0.5 ) ;
+                        float2 scale = d0.zw * (d2.zw - d2.xy) ;
+                        float2 pos_p = d0.xy + pivot ;
+
                         float2x2 frame = { d1.x, d1.y, 
                                            d1.z, d1.w } ;
 
                         float2 uvs[4] = { d2.xy, d2.xw, d2.zw, d2.zy } ;
                         output.uv.xy = uvs[input.in_id % 4] ;
-                        output.uv.z = d3.x ;
+                        output.uv.z = d3.w ;
 
-                        output.col = float4(1.0f,1.0f,1.0f,1.0) ;
+                        output.col = d5 ;
 
-                        float2 pos = mul( input.in_pos * d0.zw, frame ) ; 
-                        output.pos = float4( d0.xy + pos, 0.0f, 1.0f )  ;
+                        float2 pos = mul( input.in_pos * scale, frame ) ; 
+                        output.pos = float4( pos_p + pos, 0.0f, 1.0f )  ;
                         output.pos = mul( output.pos, u_world ) ;
                         output.pos = mul( output.pos, u_view ) ;
                         output.pos = mul( output.pos, u_proj ) ;
@@ -301,7 +309,7 @@ void_t sprite_render_2d::init( natus::ntd::string_cref_t name, natus::ntd::strin
 
                     float4 PS( VS_OUTPUT input ) : SV_Target0
                     {
-                        return u_tex.Sample( smp_u_tex, input.uv ) ;
+                        return u_tex.Sample( smp_u_tex, input.uv ) * input.col ;
                     } )" ) ) ;
 
             sc.insert( natus::graphics::backend_type::d3d11, std::move( ss ) ) ;
@@ -354,7 +362,7 @@ void_t sprite_render_2d::set_texture( natus::ntd::string_cref_t name ) noexcept
     _image_name = name ;
 }
 
-void_t sprite_render_2d::draw( size_t const l, natus::math::vec2f_cref_t pos, natus::math::mat2f_cref_t frame, natus::math::vec2f_cref_t scale, natus::math::vec4f_cref_t uv_rect, size_t const slot ) noexcept 
+void_t sprite_render_2d::draw( size_t const l, natus::math::vec2f_cref_t pos, natus::math::mat2f_cref_t frame, natus::math::vec2f_cref_t scale, natus::math::vec4f_cref_t uv_rect, size_t const slot, natus::math::vec2f_cref_t pivot, natus::math::vec4f_cref_t color ) noexcept 
 {
     if( _layers.size() <= l+1 ) 
     {
@@ -367,6 +375,8 @@ void_t sprite_render_2d::draw( size_t const l, natus::math::vec2f_cref_t pos, na
     d.scale = scale ;
     d.uv_rect = uv_rect ;
     d.slot = slot ;
+    d.pivot = pivot ;
+    d.color = color ;
 
     _layers[l].sprites.emplace_back( std::move( d ) ) ;
     ++_num_sprites ;
@@ -471,11 +481,15 @@ void_t sprite_render_2d::prepare_for_rendering( void_t ) noexcept
 
                 // additional infos
                 _ao->data_buffer().update< natus::math::vec4f_t >( idx + 3, 
-                    natus::math::vec4f_t( float_t( sprites[i].slot ), 0.0f, 0.0f, 0.0f ) ) ;
+                    natus::math::vec4f_t( sprites[i].pivot.x(), sprites[i].pivot.y(), 0.0f, float_t( sprites[i].slot ) ) ) ;
 
                 // uv animation
                 _ao->data_buffer().update< natus::math::vec4f_t >( idx + 4, 
                     natus::math::vec4f_t(1.0f) ) ;
+
+                // color
+                _ao->data_buffer().update< natus::math::vec4f_t >( idx + 5, 
+                    sprites[i].color ) ;
 
                 
 
@@ -527,7 +541,7 @@ void_t sprite_render_2d::render( size_t const l ) noexcept
             }
         }
         
-        a.use( natus::graphics::state_object_t() ) ;
+        a.use( natus::graphics::state_object_res_t() ) ;
     } ) ;
 }
 

@@ -32,6 +32,9 @@ namespace natus
                 natus::math::mat2f_t frame ;
                 natus::math::vec2f_t scale ;
                 natus::math::vec4f_t uv_rect ;
+                natus::math::vec2f_t pivot ;
+                natus::math::vec4f_t color ;
+
                 size_t slot = 0 ;
             };
             natus_typedef( sprite ) ;
@@ -76,17 +79,15 @@ namespace natus
                 // uv rect, bottom left (x0,y0,x1,y1)
                 natus::math::vec4f_t uv_rect ;
 
-                // (slot, free, free, free )
+                // (pivot.xy, free, slot )
                 natus::math::vec4f_t additional_info ;
 
                 // animate the uv coords in x and y direction
                 // (x ani, y ani, free, free)
                 natus::math::vec4f_t uv_anim ;
 
-                
-
                 // color the sprite
-                //natus::math::vec4f_t color ;
+                natus::math::vec4f_t color ;
             };
 
             natus::ntd::string_t _name ;
@@ -150,7 +151,7 @@ namespace natus
             void_t set_texture( natus::ntd::string_cref_t name ) noexcept ;
 
             // draw a sprite/uv rect from a texture of the screen
-            void_t draw( size_t const l, natus::math::vec2f_cref_t pos, natus::math::mat2f_cref_t frame, natus::math::vec2f_cref_t scale, natus::math::vec4f_cref_t uv_rect, size_t const slot ) noexcept ;
+            void_t draw( size_t const l, natus::math::vec2f_cref_t pos, natus::math::mat2f_cref_t frame, natus::math::vec2f_cref_t scale, natus::math::vec4f_cref_t uv_rect, size_t const slot, natus::math::vec2f_cref_t pivot = natus::math::vec2f_t(0.0f), natus::math::vec4f_cref_t color = natus::math::vec4f_t(1.0f) ) noexcept ;
 
         public:
 
