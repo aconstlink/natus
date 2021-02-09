@@ -226,7 +226,6 @@ struct d3d11_backend::pimpl
         natus::ntd::string_t name ;
         ID3D11Buffer* buffer = nullptr ;
         ID3D11ShaderResourceView * view = nullptr ;
-        void_ptr_t mem = nullptr ;
     };
     natus_typedef( array_data ) ;
 
@@ -480,7 +479,7 @@ public: // functions
 
             obj.add_render_state_set( new_states ) ;
 
-            size_t const oid = this_t::construct_state( size_t( -1 ), obj ) ;
+            size_t const oid = this->construct_state( size_t( -1 ), obj ) ;
         }
     }
 
@@ -1963,13 +1962,27 @@ public: // functions
         data.name = obj.name() ;
 
         ID3D11Device * dev = _ctx->dev() ;
+        
+        // = number of vertices * sizeof( vertex )
+        // if there are vertices already setup, take the numbers
+        size_t const byte_width = obj.data_buffer().get_sib() ;
 
-        // data buffer
+        if( data.buffer != nullptr ) 
         {
-            // = number of vertices * sizeof( vertex )
-            // if there are vertices already setup, take the numbers
-            size_t const byte_width = obj.data_buffer().get_sib() ;
+            data.buffer->Release() ;
+            data.buffer = nullptr ;
+        }
 
+        // this release is important for releasing the
+        // buffer reference too.
+        if( data.view != nullptr ) 
+        {
+            data.view->Release() ;
+            data.view = nullptr ;
+        }
+            
+        // create the buffer
+        {
             D3D11_BUFFER_DESC bd = { } ;
             bd.Usage = D3D11_USAGE_DYNAMIC ;
             // using max of 1 sib so empty vbs will create and will 
@@ -1979,58 +1992,31 @@ public: // functions
             bd.BindFlags = D3D11_BIND_VERTEX_BUFFER | D3D10_BIND_SHADER_RESOURCE ;
             bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE ;
 
-            natus::memory::global_t::dealloc_raw( data.mem ) ;
-            data.mem = natus::memory::global_t::alloc_raw< uint8_t >( 
-                byte_width, "[d3d11] : buffer memory" ) ;
-
-            if( data.buffer != nullptr ) 
+            HRESULT const hr = dev->CreateBuffer( &bd, nullptr, &data.buffer ) ;
+            if( FAILED( hr ) )
             {
-                data.buffer->Release() ;
-                data.buffer = nullptr ;
+                natus::log::global_t::error( natus_log_fn( "D3D11_BIND_DATA_BUFFER" ) ) ;
             }
+        }
+            
+        // create the resource view
+        {
+            D3D11_SHADER_RESOURCE_VIEW_DESC res_desc = { } ;
+            res_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT ;
+            res_desc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER ;
 
-            if( byte_width != 0 )
+            // must be 16 in order to have access to all data.
+            // this is independent from the number of layout elements.
+            // latout elements may only have vec4f inserted!
+            UINT const elem_sib = 16 ; // sizeof( vec4f )
+
+            res_desc.Buffer.FirstElement= 0 ;
+            res_desc.Buffer.NumElements = UINT( byte_width ) / elem_sib ;
+
+            auto const hr = dev->CreateShaderResourceView( data.buffer, &res_desc, &data.view ) ;
+            if( FAILED( hr ) )
             {
-                D3D11_SUBRESOURCE_DATA init_data = { } ;
-                init_data.pSysMem = ( void_cptr_t ) data.mem ;
-
-                std::memcpy( data.mem, obj.data_buffer().data(), byte_width ) ;
-
-                HRESULT const hr = dev->CreateBuffer( &bd, &init_data, &data.buffer ) ;
-                if( FAILED( hr ) )
-                {
-                    natus::log::global_t::error( natus_log_fn( "D3D11_BIND_DATA_BUFFER" ) ) ;
-                }
-            }
-            else
-            {
-                HRESULT const hr = _ctx->dev()->CreateBuffer( &bd, nullptr, &data.buffer ) ;
-                if( FAILED( hr ) )
-                {
-                    natus::log::global_t::error( natus_log_fn( "D3D11_BIND_DATA_BUFFER" ) ) ;
-                }
-            }
-
-            if( data.buffer != nullptr )
-            {
-                D3D11_SHADER_RESOURCE_VIEW_DESC res_desc = { } ;
-                res_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT ;
-                res_desc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER ;
-
-                // must be 16 in order to have access to all data.
-                // this is independent from the number of layout elements.
-                // latout elements may only have vec4f inserted!
-                UINT const elem_sib = 16 ; // sizeof( vec4f )
-
-                res_desc.Buffer.FirstElement= 0 ;
-                res_desc.Buffer.NumElements = UINT( byte_width ) / elem_sib ;
-                
-
-                auto const hr = dev->CreateShaderResourceView( data.buffer, &res_desc, &data.view ) ;
-                if( FAILED( hr ) )
-                {
-                    natus::log::global_t::error( natus_log_fn( "CreateShaderResourceView for buffer : [" + data.name + "]" ) ) ;
-                }
+                natus::log::global_t::error( natus_log_fn( "CreateShaderResourceView for buffer : [" + data.name + "]" ) ) ;
             }
         }
 
@@ -2041,68 +2027,26 @@ public: // functions
     {
         auto & data = _arrays[ id ] ;
         
+        D3D11_BUFFER_DESC bd ;
+        data.buffer->GetDesc( &bd ) ;
+
+        size_t const sib = obj.data_buffer().get_sib() ;
+        if( sib > bd.ByteWidth )
         {
-            D3D11_BUFFER_DESC bd ;
-            data.buffer->GetDesc( &bd ) ;
+            this->construct_array_data( id, obj ) ;
+        }
 
-            size_t const sib = obj.data_buffer().get_sib() ;
-            if( sib > bd.ByteWidth )
-            {
-                bd.ByteWidth = uint_t( sib ) ;
+        // copy data
+        {
+            // exactly the size in bytes of the 1d buffer
+            LONG const lsib = LONG( obj.data_buffer().get_layout_sib() ) ;
+            LONG const ne = LONG( obj.data_buffer().get_num_elements() ) ;
+            void_cptr_t data_ptr = obj.data_buffer().data() ;
 
-                natus::memory::global_t::dealloc_raw( data.mem ) ;
-                data.mem = natus::memory::global_t::alloc_raw< uint8_t >( 
-                    sib, "[d3d11] : data buffer memory" ) ;
-
-                D3D11_SUBRESOURCE_DATA init_data = { } ;
-                init_data.pSysMem = ( void_ptr_t ) data.mem ;
-                
-                data.buffer->Release() ;
-                data.buffer = nullptr ;
-                {
-                    auto const hr = _ctx->dev()->CreateBuffer( &bd, &init_data, &data.buffer ) ;
-                    if( FAILED( hr ) )
-                    {
-                        natus::log::global_t::error( natus_log_fn( "CreateBuffer( vertex_buffer )" ) ) ;
-                    }
-                }
-
-                // recreate shader resource view
-                {
-                    D3D11_SHADER_RESOURCE_VIEW_DESC res_desc = { } ;
-                    data.view->GetDesc( &res_desc ) ;
-
-                    data.view->Release() ;
-
-                    // must be 16 in order to have access to all data.
-                    // this is independent from the number of layout elements.
-                    // latout elements may only have vec4f inserted!
-                    UINT const elem_sib = 16 ; // sizeof( vec4f )
-
-                    res_desc.Buffer.FirstElement= 0 ;
-                    res_desc.Buffer.NumElements = UINT( bd.ByteWidth ) / elem_sib ;
-                    auto const hr = _ctx->dev()->CreateShaderResourceView( data.buffer, &res_desc, &data.view ) ;
-                    if( FAILED( hr ) )
-                    {
-                        natus::log::global_t::error( natus_log_fn( "CreateShaderResourceView for buffer : [" + data.name + "]" ) ) ;
-                    }
-                }
-            }
-
-            // copy data
-            {
-                // exactly the size in bytes of the 1d buffer
-                LONG const lsib = LONG( obj.data_buffer().get_layout_sib() ) ;
-                LONG const ne = LONG( obj.data_buffer().get_num_elements() ) ;
-                void_cptr_t data_ptr = obj.data_buffer().data() ;
-                CD3D11_BOX const box( 0, 0, 0, ne, 1, 1 ) ;
-
-                //_ctx->ctx()->UpdateSubresource( config.vb, 0, nullptr /*&box*/, data, lsib, 0 ) ;
-                D3D11_MAPPED_SUBRESOURCE resource;
-                _ctx->ctx()->Map( data.buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &resource ) ;
-                std::memcpy( resource.pData, data_ptr, lsib * ne ) ;
-                _ctx->ctx()->Unmap( data.buffer, 0 ) ;
-            }
+            D3D11_MAPPED_SUBRESOURCE resource;
+            _ctx->ctx()->Map( data.buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &resource ) ;
+            std::memcpy( resource.pData, data_ptr, lsib * ne ) ;
+            _ctx->ctx()->Unmap( data.buffer, 0 ) ;
         }
 
         return true ;
