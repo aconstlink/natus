@@ -24,6 +24,9 @@ set( sources
     
     "sprite/sprite_render_2d.h"
     "sprite/sprite_render_2d.cpp"
+
+    "util/quad.h"
+    "util/quad.cpp"
     )
 
 natus_vs_src_dir( sources )
