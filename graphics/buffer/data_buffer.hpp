@@ -77,6 +77,8 @@ namespace natus
                 _num_elems = ne ;
                 size_t const sib = this_t::get_sib() ;
 
+                if( old_sib == sib ) return *this ;
+
                 void_ptr_t tmp = natus::memory::global_t::alloc( sib, "data buffer" ) ;
                 std::memcpy( tmp, _data, std::min( sib, old_sib ) ) ;
                 natus::memory::global_t::dealloc( _data ) ;
