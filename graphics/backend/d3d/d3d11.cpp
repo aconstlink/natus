@@ -217,6 +217,14 @@ struct d3d11_backend::pimpl
         ID3D11ShaderResourceView * view = nullptr ;
         ID3D11Texture2D * texture = nullptr ;
         ID3D11SamplerState * sampler = nullptr ;
+
+        // 0.0 : do not flip uv.v
+        // 1.0 : do flip uv.v
+        // render targets can not be flipped. those
+        // are rendered upside down, so in the shader
+        // the user needs to access this variable for
+        // flipping information.
+        float_t requires_y_flip = 0.0f ;
     };
     natus_typedef( image_data ) ;
 
@@ -841,6 +849,7 @@ public: // functions
                         images[ iid ].texture = tex.move_out() ;
                         images[ iid ].valid = true ;
                         images[ iid ].view = srv.move_out() ;
+                        images[ iid ].requires_y_flip = 1.0f ;
                     }
 
                     {
@@ -982,6 +991,7 @@ public: // functions
                         images[ iid ].texture = tex.move_out() ;
                         images[ iid ].valid = true ;
                         images[ iid ].view = srv.move_out() ;
+                        images[ iid ].requires_y_flip = 1.0f ;
                     }
 
                     {
@@ -1753,6 +1763,12 @@ public: // functions
                     iv.name = t.name ;
                     iv.slot = t.slot ;
                     ivs.emplace_back( std::move( iv ) ) ;
+
+                    // set y flip for the current texture in the current variable set
+                    {
+                        auto * var = vs->data_variable< float_t >( "sys_flipv_" + t.name ) ;
+                        var->set( images[i].requires_y_flip ) ;
+                    }
                 }
                 rd.var_sets_imgs_ps.emplace_back( std::make_pair( vs, std::move( ivs ) ) ) ;
             } ) ;

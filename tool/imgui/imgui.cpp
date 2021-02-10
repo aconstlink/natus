@@ -193,6 +193,7 @@ void_t imgui::init( natus::graphics::async_view_t async )
                 set_pixel_shader( natus::graphics::shader_t( R"(
                             Texture2D u_tex : register( t0 );
                             SamplerState smp_u_tex : register( s0 );
+                            float sys_flipv_u_tex ;
 
                             struct VS_OUTPUT
                             {
@@ -203,7 +204,9 @@ void_t imgui::init( natus::graphics::async_view_t async )
 
                             float4 PS( VS_OUTPUT input ) : SV_Target
                             {
-                                return u_tex.Sample( smp_u_tex, input.tx ) * input.color ;
+                                float2 uv = input.tx ;
+                                uv.y = lerp( uv.y, 1.0 - uv.y, sys_flipv_u_tex ) ;
+                                return u_tex.Sample( smp_u_tex, uv ) * input.color ;
                             } )" 
                 ) ) ) ;
         }

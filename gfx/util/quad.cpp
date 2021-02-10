@@ -202,7 +202,8 @@ void_t quad::init( natus::graphics::async_views_t asyncs ) noexcept
                             
                     Texture2D u_tex : register( t0 );
                     SamplerState smp_u_tex : register( s0 );
-                            
+                    float sys_flipv_u_tex ;
+
                     struct VS_OUTPUT
                     {
                         float4 pos : SV_POSITION ;
@@ -211,7 +212,9 @@ void_t quad::init( natus::graphics::async_views_t asyncs ) noexcept
 
                     float4 PS( VS_OUTPUT input ) : SV_Target
                     {
-                        return u_tex.Sample( smp_u_tex, input.tx );
+                        float2 uv = input.tx ;
+                        uv.y = lerp( uv.y, 1.0 - uv.y, sys_flipv_u_tex ) ;
+                        return u_tex.Sample( smp_u_tex, uv );
                     } )" ) ) ;
 
                 sc.insert( natus::graphics::backend_type::d3d11, std::move( ss ) ) ;
