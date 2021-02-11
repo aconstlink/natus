@@ -131,7 +131,7 @@ void_t quad::init( natus::graphics::async_views_t asyncs ) noexcept
                     void main()
                     {
                         var_tx = sign( in_pos.xy ) * vec2( 0.5 ) + vec2( 0.5 )  ;
-                        gl_Position = vec4( in_pos, 1.0 ) ;
+                        gl_Position = vec4( sign( in_pos ), 1.0 ) ;
                     } )" ) ).
 
                     set_pixel_shader( natus::graphics::shader_t( R"(
@@ -160,7 +160,7 @@ void_t quad::init( natus::graphics::async_views_t asyncs ) noexcept
                     void main()
                     {
                         var_tx = sign( in_pos.xy ) * vec2( 0.5 ) + vec2( 0.5 )  ;
-                        gl_Position = vec4( in_pos, 1.0 ) ;
+                        gl_Position = vec4( sign( in_pos ), 1.0 ) ;
                     } )" ) ).
 
                     set_pixel_shader( natus::graphics::shader_t( R"(
@@ -193,7 +193,7 @@ void_t quad::init( natus::graphics::async_views_t asyncs ) noexcept
                     VS_OUTPUT VS( float4 in_pos : POSITION )
                     {
                         VS_OUTPUT output = (VS_OUTPUT)0;
-                        output.pos = float4( in_pos.xyz, 1.0f ) ;
+                        output.pos = float4( sign( in_pos.xyz ), 1.0f ) ;
                         output.tx = sign( in_pos.xy ) * float2( 0.5, 0.5 ) + float2( 0.5, 0.5 ) ;
                         return output;
                     } )" ) ).
