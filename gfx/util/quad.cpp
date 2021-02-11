@@ -64,7 +64,7 @@ void_t quad::init( natus::graphics::async_views_t asyncs ) noexcept
             rss.depth_s.ss.do_depth_write = false ;
 
             rss.polygon_s.do_change = true ;
-            rss.polygon_s.ss.do_activate = true ;
+            rss.polygon_s.ss.do_activate = false ;
             rss.polygon_s.ss.ff = natus::graphics::front_face::clock_wise ;
             so.add_render_state_set( rss ) ;
         }
@@ -127,7 +127,7 @@ void_t quad::init( natus::graphics::async_views_t asyncs ) noexcept
                     #version 140
                     in vec3 in_pos ;
                     out vec2 var_tx ;
-                            
+
                     void main()
                     {
                         var_tx = sign( in_pos.xy ) * vec2( 0.5 ) + vec2( 0.5 )  ;
@@ -139,9 +139,9 @@ void_t quad::init( natus::graphics::async_views_t asyncs ) noexcept
                     in vec2 var_tx ;
                     out vec4 out_color ;
                     uniform sampler2D u_tex ;
-                        
+
                     void main()
-                    {    
+                    {
                         out_color = texture( u_tex, var_tx ) ;
                     } )" ) ) ;
 
@@ -159,7 +159,7 @@ void_t quad::init( natus::graphics::async_views_t asyncs ) noexcept
 
                     void main()
                     {
-                        var_tx = sign( in_pos ) * vec2( 0.5 ) + vec2( 0.5 )  ;
+                        var_tx = sign( in_pos.xy ) * vec2( 0.5 ) + vec2( 0.5 )  ;
                         gl_Position = vec4( in_pos, 1.0 ) ;
                     } )" ) ).
 
@@ -169,9 +169,9 @@ void_t quad::init( natus::graphics::async_views_t asyncs ) noexcept
                     in vec2 var_tx ;
                     out vec4 out_color ;
                     uniform sampler2D u_tex ;
-                        
+
                     void main()
-                    {   
+                    {
                         out_color = texture( u_tex, var_tx ) ;
                     } )" ) ) ;
 

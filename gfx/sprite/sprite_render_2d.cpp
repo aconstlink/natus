@@ -46,7 +46,7 @@ void_t sprite_render_2d::init( natus::ntd::string_cref_t name, natus::ntd::strin
             rss.depth_s.ss.do_depth_write = false ;
 
             rss.polygon_s.do_change = true ;
-            rss.polygon_s.ss.do_activate = false ;
+            rss.polygon_s.ss.do_activate = true ;
             rss.polygon_s.ss.ff = natus::graphics::front_face::clock_wise ;
             rss.polygon_s.ss.cm = natus::graphics::cull_mode::back ;
             rss.polygon_s.ss.fm = natus::graphics::fill_mode::fill ;
@@ -197,9 +197,10 @@ void_t sprite_render_2d::init( natus::ntd::string_cref_t name, natus::ntd::strin
 
                 set_vertex_shader( natus::graphics::shader_t( R"(
                     #version 300 es
-
-                    in vec2 in_pos ;
+                    precision mediump float ;
+                    layout( location = 0 ) in vec2 in_pos ;
                     out vec4 var_col ;
+                    out vec3 var_uv ;
                     uniform mat4 u_proj ;
                     uniform mat4 u_view ;
                     uniform mat4 u_world ;
@@ -208,29 +209,47 @@ void_t sprite_render_2d::init( natus::ntd::string_cref_t name, natus::ntd::strin
 
                     void main()
                     {
-                        int idx = (gl_VertexID / 4) * 3 + u_offset * 3 ;
                         ivec2 wh = textureSize( u_data, 0 ) ;
-                        vec4 d0 = texelFetch( u_data, ivec2( (idx+0) % wh.x, (idx+0) / wh.x ), 0 ) ; // pos scale
-                        vec4 d1 = texelFetch( u_data, ivec2( (idx+1) % wh.x, (idx+1) / wh.x ), 0 ) ; // frame
-                        vec4 d2 = texelFetch( u_data, ivec2( (idx+2) % wh.x, (idx+2) / wh.x ), 0 ) ; // uv rect
 
-                        mat2 scaling = mat2( d0.z, 0.0, 0.0, d0.w ) ;
+                        int idx = (gl_VertexID / 4) * 6 + u_offset * 6 ;
+                        vec4 d0 = texelFetch( u_data, ivec2((idx+0)%wh.x, (idx+0)/wh.x), 0 ) ; // pos scale
+                        vec4 d1 = texelFetch( u_data, ivec2((idx+1)%wh.x, (idx+1)/wh.x), 0 ) ; // frame
+                        vec4 d2 = texelFetch( u_data, ivec2((idx+2)%wh.x, (idx+2)/wh.x), 0 ) ; // uv rect
+                        vec4 d3 = texelFetch( u_data, ivec2((idx+3)%wh.x, (idx+3)/wh.x), 0 ) ; // additional
+                        vec4 d4 = texelFetch( u_data, ivec2((idx+4)%wh.x, (idx+4)/wh.x), 0 ) ; // uv animation
+                        vec4 d5 = texelFetch( u_data, ivec2((idx+5)%wh.x, (idx+5)/wh.x), 0 ) ; // color
+
+                        vec2 pivot = d3.xy * d0.zw * vec2( 0.5 ) ;
+                        vec2 scale = d0.zw * (d2.zw - d2.xy) ;
+                        vec2 pos_p = d0.xy + pivot ;
+
+                        mat2 scaling = mat2( scale.x, 0.0, 0.0, scale.y ) ;
                         mat2 frame = mat2( d1.xy, d1.zw ) ;
+    
+                        vec2 uvs[4] = vec2[4]( d2.xy, d2.xw, d2.zw, d2.zy ) ;
+                        var_uv.xy = uvs[gl_VertexID%4] ;
+                        var_uv.z = d3.w ; // which texture layer
+                        //var_uv.xy = sign( in_pos.xy ) *0.5 + 0.5 ;
 
-                        var_col = vec4( d2.zw, 0.0, 1.0 ) ;
-                        vec4 pos = vec4( d0.xy + frame * scaling * in_pos, 0.0, 1.0 )  ;
+                        var_col = d5 ;
+                        vec4 pos = vec4( pos_p + frame * scaling * in_pos, 0.0, 1.0 )  ;
                         gl_Position = u_proj * u_view * u_world * pos ;
                     } )" ) ).
 
                 set_pixel_shader( natus::graphics::shader_t( R"(
                     #version 300 es
                     precision mediump float ;
+                    precision mediump sampler2DArray ;
+
                     in vec4 var_col ;
-                    layout(location = 0 ) out vec4 out_color ;
-                        
+                    in vec3 var_uv ;
+                    layout( location = 0 )out vec4 out_color ;
+
+                    uniform sampler2DArray u_tex ;
+
                     void main()
-                    {    
-                        out_color = var_col ;
+                    {
+                        out_color = texture( u_tex, var_uv ) * var_col ;
                     })" ) ) ;
 
             sc.insert( natus::graphics::backend_type::es3, std::move( ss ) ) ;

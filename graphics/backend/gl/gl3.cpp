@@ -420,7 +420,7 @@ struct gl3_backend::pimpl
 
                     GLenum const glsrc = natus::graphics::gl3::convert( new_states.blend_s.ss.src_blend_factor ) ;
                     GLenum const gldst = natus::graphics::gl3::convert( new_states.blend_s.ss.dst_blend_factor  );
-                    
+
                     glBlendFunc( glsrc, gldst ) ;
                     natus::ogl::error::check_and_log( natus_log_fn( "glBlendFunc" ) ) ;
                 }
@@ -525,7 +525,8 @@ struct gl3_backend::pimpl
                 natus::log::global_t::error( natus_log_fn( "no more render states to pop" ) ) ;
                 return ;
             }
-            this_t::handle_render_state( _state_stack.pop() - _state_stack.top(), true ) ;
+            auto const popped = _state_stack.pop() ;
+            this_t::handle_render_state( popped - _state_stack.top(), true ) ;
         }
         else
         {

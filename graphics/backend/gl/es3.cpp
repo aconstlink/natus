@@ -494,13 +494,13 @@ struct es3_backend::pimpl
 
                 natus::math::vec4f_t const color = new_states.clear_s.ss.clear_color ;
                 glClearColor( color.x(), color.y(), color.z(), color.w() ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glClearColor" ) ) ;
+                natus::es::error::check_and_log( natus_log_fn( "glClearColor" ) ) ;
 
                 GLbitfield const color_bit = clear_color ? GL_COLOR_BUFFER_BIT : 0 ;
                 GLbitfield const depth_bit = clear_depth ? GL_DEPTH_BUFFER_BIT : 0 ;
 
                 glClear( color_bit | depth_bit ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
+                natus::es::error::check_and_log( natus_log_fn( "glEnable" ) ) ;
             }
         }
     }
@@ -516,7 +516,8 @@ struct es3_backend::pimpl
                 natus::log::global_t::error( natus_log_fn( "no more render states to pop" ) ) ;
                 return ;
             }
-            this_t::handle_render_state( _state_stack.pop() - _state_stack.top(), true ) ;
+            auto const popped = _state_stack.pop() ;
+            this_t::handle_render_state( popped - _state_stack.top(), true ) ;
         }
         else
         {
@@ -1702,6 +1703,7 @@ struct es3_backend::pimpl
         {
             size_t oid_img = determine_oid( obj.name(), img_configs ) ;
             auto & config = img_configs[ oid_img ] ;
+            config.type = GL_TEXTURE_2D ;
             data.img_id = oid_img ;
 
             // sampler
@@ -1765,7 +1767,7 @@ struct es3_backend::pimpl
             size_t const sib = obj.data_buffer().get_sib() ;
             GLenum const target = GL_TEXTURE_2D ;
             GLint const level = 0 ;
-            GLint const tmp_w = std::sqrt( obj.data_buffer().get_num_elements() * num_le) ;
+            GLint const tmp_w = std::floor(std::sqrt( obj.data_buffer().get_num_elements() * num_le))+1 ;
             GLsizei const width = tmp_w + (tmp_w % 2) ;
             GLsizei const height = width ;
             GLenum const format = GL_RGBA ;
