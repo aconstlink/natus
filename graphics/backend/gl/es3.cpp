@@ -694,6 +694,7 @@ struct es3_backend::pimpl
             for( size_t i = 0; i < nt; ++i )
             {
                 size_t const idx = id + i ;
+                img_configs[ idx ].valid = true ;
                 img_configs[ idx ].name = fb.name + "." + std::to_string( i ) ;
                 img_configs[ idx ].tex_id = fb.colors[ i ] ;
                 img_configs[ idx ].type = GL_TEXTURE_2D ; 
