@@ -718,6 +718,7 @@ struct es3_backend::pimpl
 
             {
                 size_t const idx = id + 0 ;
+                img_configs[ idx ].valid = true ;
                 img_configs[ idx ].name = fb.name + ".depth" ;
                 img_configs[ idx ].tex_id = fb.depth ;
                 img_configs[ idx ].type = GL_TEXTURE_2D ; 
