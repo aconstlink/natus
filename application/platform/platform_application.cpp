@@ -63,7 +63,7 @@ natus::application::result platform_application::start_update_thread( void_t )
     
     _thr = natus::concurrent::thread_t( [=]( void_t )
     {
-        _app->on_init() ;
+        _app->platform_init() ;
 
         while( _sd->update_running )
         {

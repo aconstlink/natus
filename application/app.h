@@ -107,9 +107,9 @@ namespace natus
                 natus::tool::imgui_res_t imgui ;
                 window_info_t wi ;
                 bool_ptr_t run ;
-                per_window_info( void_t ) {}
+                per_window_info( void_t ) noexcept {}
                 per_window_info( this_cref_t ) = delete ;
-                per_window_info( this_rref_t rhv )
+                per_window_info( this_rref_t rhv ) noexcept
                 {
                     imgui = std::move( rhv.imgui ) ;
                     rnd_thread = std::move( rhv.rnd_thread ) ;
@@ -161,7 +161,10 @@ namespace natus
             size_t _audio_count = 0 ;
 
             typedef std::chrono::high_resolution_clock render_clock_t ;
-            render_clock_t::time_point _tp_render ;
+            render_clock_t::time_point _tp_render = render_clock_t::now() ;
+
+            typedef std::chrono::high_resolution_clock update_clock_t ;
+            update_clock_t::time_point _tp_update = update_clock_t::now() ;
 
         private: // device
 
@@ -181,7 +184,14 @@ namespace natus
 
         public:
 
-            struct update_data {};
+            struct update_data 
+            {
+                // how many seconds passed
+                float_t sec_dt ;
+                // how many micro seconds passed
+                size_t micro_dt ;
+            };
+
             struct render_data 
             {
                 // how many seconds passed
@@ -267,6 +277,7 @@ namespace natus
 
         private: // platform application interface
 
+            bool_t platform_init( void_t ) ;
             bool_t platform_update( void_t ) ;
 
         private: // system specific update code
@@ -284,6 +295,7 @@ namespace natus
 
 
             void_t compute_and_reset_timing( render_data & rd ) noexcept ;
+            void_t compute_and_reset_timing( update_data & rd ) noexcept ;
 
         private:
 

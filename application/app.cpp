@@ -271,11 +271,22 @@ natus::application::result app::request_change( this_t::window_info_in_t )
 }
 
 //***
+bool_t app::platform_init( void_t ) 
+{
+    this->on_init() ;
+    _tp_update = this_t::update_clock_t::now() ;
+    _tp_render = this_t::render_clock_t::now() ;
+    return true ;
+}
+
+//***
 bool_t app::platform_update( void_t ) 
 {
     if( this_t::before_update() )
     {
         this_t::update_data_t dat ;
+        this_t::compute_and_reset_timing( dat ) ;
+
         this->on_update( dat ) ;
         this_t::after_update() ;
     }
@@ -804,4 +815,15 @@ void_t app::compute_and_reset_timing( render_data & rd ) noexcept
 
     rd.milli_dt = milli ;
     rd.sec_dt = dt ;
+}
+
+void_t app::compute_and_reset_timing( update_data & d ) noexcept 
+{
+    size_t const micro = std::chrono::duration_cast< std::chrono::microseconds >( this_t::update_clock_t::now() - _tp_update ).count() ;
+    float_t const dt = float_t( double_t( micro ) / 1000000.0 ) ;
+
+    _tp_update = this_t::update_clock_t::now() ;
+
+    d.micro_dt = micro ;
+    d.sec_dt = dt ;
 }
