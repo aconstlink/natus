@@ -152,6 +152,11 @@ namespace natus
                 return *this ;
             }
 
+            bool_t operator == ( this_cref_t rhv ) const noexcept
+            {
+                return _data == rhv._data ;
+            }
+
         public:
 
             bool_t is_valid( void_t ) const { return _data != nullptr ; }
