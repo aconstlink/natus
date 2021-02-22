@@ -76,14 +76,7 @@ void_t tri_render_2d::init( natus::ntd::string_cref_t name, natus::graphics::asy
             array[ 2 ].pos = natus::math::vec2f_t( +0.5f, +0.5f ) ;
         } );
 
-        auto ib = natus::graphics::index_buffer_t().
-            set_layout_element( natus::graphics::type::tuint ).resize( 3 ).
-            update<uint_t>( [] ( uint_t* array, size_t const ne )
-        {
-            array[ 0 ] = 0 ;
-            array[ 1 ] = 1 ;
-            array[ 2 ] = 2 ;
-        } ) ;
+        auto ib = natus::graphics::index_buffer_t() ;
 
         natus::graphics::geometry_object_res_t geo = natus::graphics::geometry_object_t( name + ".geometry",
             natus::graphics::primitive_type::triangles, std::move( vb ), std::move( ib ) ) ;
@@ -373,17 +366,17 @@ void_t tri_render_2d::prepare_for_rendering( void_t ) noexcept
         size_t const bsib = _ao->data_buffer().get_sib() ;
 
         _go->vertex_buffer().resize( _num_tris * 3 ) ;
-        _go->index_buffer().resize( _num_tris *3 ) ;
         _ao->data_buffer().resize( _num_tris ) ;
 
         size_t start = 0 ;
         size_t lstart = 0 ;
 
-        size_t istart = 0 ;
-
         for( size_t i=0; i<_layers.size(); ++i )
         {
             auto const & tris = _layers[i].tris ;
+
+            _render_data[i].start = start ;
+            _render_data[i].num_elems = tris.size() * 3 ;
 
             // copy vertices
             {
@@ -391,21 +384,12 @@ void_t tri_render_2d::prepare_for_rendering( void_t ) noexcept
                 _go->vertex_buffer().update<this_t::vertex>( start, start+num_verts, 
                     [&]( this_t::vertex * array, size_t const ne )
                 {
-                    for( size_t i=0; i<ne; ++i )
+                    for( size_t v=0; v<ne; ++v )
                     {
-                        size_t const ls = i / 3 ;
-                        array[i].pos = tris[ls].array[ i % 3 ] ;
+                        array[v].pos = tris[ v / 3 ].array[ v % 3 ] ;
                     }
                 } ) ;
                 start += num_verts ;
-                
-                _go->index_buffer().update<uint32_t>( [&]( uint32_t * array, size_t const ne )
-                {
-                    for( size_t i=0; i<ne; ++i )
-                    {
-                        array[i] = i ;
-                    }
-                } ) ;
             }
         
             // copy color data
@@ -417,10 +401,6 @@ void_t tri_render_2d::prepare_for_rendering( void_t ) noexcept
                 }
                 lstart += tris.size() ;
             }
-
-            _render_data[i].start = istart ;
-            _render_data[i].num_elems = tris.size() * 3 ;
-            istart = _render_data[i].num_elems ;
             _layers[i].tris.clear() ;
         }
         _num_tris = 0 ;

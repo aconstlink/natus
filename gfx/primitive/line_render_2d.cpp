@@ -73,15 +73,7 @@ void_t line_render_2d::init( natus::ntd::string_cref_t name, natus::graphics::as
             array[ 3 ].pos = natus::math::vec2f_t( +0.5f, -0.5f ) ;
         } );
 
-        auto ib = natus::graphics::index_buffer_t().
-            set_layout_element( natus::graphics::type::tuint ).resize( 4 ).
-            update<uint_t>( [] ( uint_t* array, size_t const ne )
-        {
-            array[ 0 ] = 0 ;
-            array[ 1 ] = 1 ;
-            array[ 2 ] = 2 ;
-            array[ 3 ] = 3 ;
-        } ) ;
+        auto ib = natus::graphics::index_buffer_t() ;
 
         natus::graphics::geometry_object_res_t geo = natus::graphics::geometry_object_t( name + "_lines",
             natus::graphics::primitive_type::lines, std::move( vb ), std::move( ib ) ) ;
@@ -370,17 +362,17 @@ void_t line_render_2d::prepare_for_rendering( void_t ) noexcept
         size_t const bsib = _ao->data_buffer().get_sib() ;
 
         _go->vertex_buffer().resize( _num_lines << 1 ) ;
-        _go->index_buffer().resize( _num_lines << 1 ) ;
         _ao->data_buffer().resize( _num_lines ) ;
 
         size_t start = 0 ;
         size_t lstart = 0 ;
 
-        size_t istart = 0 ;
-
         for( size_t i=0; i<_layers.size(); ++i )
         {
             auto const & lines = _layers[i].lines ;
+
+            _render_data[i].start = start ;
+            _render_data[i].num_elems = lines.size() * 2 ;
 
             // copy vertices
             {
@@ -388,21 +380,12 @@ void_t line_render_2d::prepare_for_rendering( void_t ) noexcept
                 _go->vertex_buffer().update<this_t::vertex>( start, start+num_verts, 
                     [&]( this_t::vertex * array, size_t const ne )
                 {
-                    for( size_t i=0; i<ne; ++i )
+                    for( size_t l=0; l<ne; ++l )
                     {
-                        size_t const ls = i >> 1 ;
-                        array[i].pos = lines[ls].a2[ i % 2 ] ;
+                        array[ l ].pos = lines[ l / 2 ].a2[ l % 2 ] ;
                     }
                 } ) ;
                 start += num_verts ;
-                
-                _go->index_buffer().update<uint32_t>( [&]( uint32_t * array, size_t const ne )
-                {
-                    for( size_t i=0; i<ne; ++i )
-                    {
-                        array[i] = i ;
-                    }
-                } ) ;
             }
         
             // copy color data
@@ -414,10 +397,7 @@ void_t line_render_2d::prepare_for_rendering( void_t ) noexcept
                 }
                 lstart += lines.size() ;
             }
-
-            _render_data[i].start = istart ;
-            _render_data[i].num_elems = lines.size() << 2 ;
-            istart = _render_data[i].num_elems ;
+            
             _layers[i].lines.clear() ;
         }
         _num_lines = 0 ;
