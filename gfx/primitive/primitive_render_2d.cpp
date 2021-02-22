@@ -47,14 +47,14 @@ void_t primitive_render_2d::draw_tri( size_t const l, natus::math::vec2f_cref_t 
 void_t primitive_render_2d::draw_rect( size_t const l, natus::math::vec2f_cref_t p0, natus::math::vec2f_cref_t p1, natus::math::vec2f_cref_t p2, natus::math::vec2f_cref_t p3, natus::math::vec4f_cref_t color, 
     natus::math::vec4f_cref_t border_color ) noexcept 
 {
-    _tr->draw_rect( l+0, p0, p1, p2, p3, color ) ;
-    _lr->draw_rect( l+1, p0, p1, p2, p3, border_color ) ;
+    _tr->draw_rect( l*2+0, p0, p1, p2, p3, color ) ;
+    _lr->draw_rect( l*2+1, p0, p1, p2, p3, border_color ) ;
 }
 
 void_t primitive_render_2d::draw_circle( size_t const l, size_t const s, natus::math::vec2f_cref_t p0, float_t const r, natus::math::vec4f_cref_t color, natus::math::vec4f_cref_t border_color ) noexcept 
 {
-    _tr->draw_circle( l+0, s, p0, r, color ) ;
-    _lr->draw_circle( l+1, s, p0, r, border_color ) ;
+    _tr->draw_circle( l*2+0, s, p0, r, color ) ;
+    _lr->draw_circle( l*2+1, s, p0, r, border_color ) ;
 }
 
 

@@ -114,6 +114,13 @@ namespace natus
             // copy all data to the gpu buffer and transmit the data
             void_t prepare_for_rendering( void_t ) noexcept ;
             void_t render( size_t const ) noexcept ;
+
+
+        private:
+
+            natus_typedefs( natus::ntd::vector< natus::math::vec2f_t >, circle ) ;
+            natus::ntd::vector< circle_t > _circle_cache ;
+            circle_cref_t lookup_circle_cache( size_t const ) noexcept ;
         };
         natus_res_typedef( tri_render_2d ) ;
     }

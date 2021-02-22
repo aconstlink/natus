@@ -330,25 +330,13 @@ void_t line_render_2d::draw_rect( size_t const l,
 
 void_t line_render_2d::draw_circle( size_t const l, size_t const s, natus::math::vec2f_cref_t p0, float_t const r, natus::math::vec4f_cref_t color ) noexcept 
 {
-    size_t const segs = std::max( size_t(5), s ) ;
-    natus::ntd::vector< natus::math::vec2f_t > points( segs + 1 ) ;
+    auto const & points = this_t::lookup_circle_cache( s ) ;
 
-    points[0] = p0 ;
-
-    float_t a = 0.0f ;
-    float_t const del = 2.0f * natus::math::constants<float_t>::pi() / float_t(segs) ;
-    for( size_t i=0; i<segs; ++i )
+    for( size_t i=0; i<points.size()-1; ++i )
     {
-        points[i] = p0 + natus::math::vec2f_t( std::cos( a ), std::sin( a ) ) * 
-            natus::math::vec2f_t(r) ;
-
-        a += del ;
+        this_t::draw( l, p0+points[i]*r, p0+points[i+1]*r, color ) ;
     }
-
-    for( size_t i=0; i<segs-1; ++i )
-    {
-        this_t::draw( l, points[i], points[i+1] , color ) ;
-    }
+    this_t::draw( l, p0+points.back()*r, p0+points[0]*r, color ) ;
 }
 
 void_t line_render_2d::prepare_for_rendering( void_t ) noexcept 
@@ -438,3 +426,25 @@ void_t line_render_2d::render( size_t const l ) noexcept
     } ) ;
 }
             
+line_render_2d::circle_cref_t line_render_2d::lookup_circle_cache( size_t const s ) noexcept 
+{
+    auto iter = std::find_if( _circle_cache.begin(), _circle_cache.end(), [&]( circle_cref_t c )
+    {
+        return c.size() == s ;
+    } ) ;
+
+    if( iter == _circle_cache.end() )
+    {
+        size_t const segs = std::max( size_t(5), s ) ;
+        natus::ntd::vector< natus::math::vec2f_t > points( segs ) ;
+
+        float_t a = 0.0f ;
+        float_t const del = 2.0f * natus::math::constants<float_t>::pi() / float_t(segs) ;
+        for( size_t i=0; i<segs; ++i, a += del )
+        {
+            points[i] = natus::math::vec2f_t( std::cos( a ), std::sin( a ) ) ;
+        }
+        iter = _circle_cache.insert( iter, points ) ;
+    }
+    return *iter ;
+}
