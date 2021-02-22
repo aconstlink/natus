@@ -1111,6 +1111,7 @@ public: // functions
         }
 
         // index buffer object
+        if( obj.index_buffer().get_num_elements() > 0 )
         {
             // = number of vertices * sizeof( index_t )
             size_t const byte_width = obj.index_buffer().get_sib() ;
@@ -1209,6 +1210,7 @@ public: // functions
         }
 
         // ib: check memory space
+        if( config.ib != nullptr )
         {
             D3D11_BUFFER_DESC bd ;
             config.ib->GetDesc( &bd ) ;

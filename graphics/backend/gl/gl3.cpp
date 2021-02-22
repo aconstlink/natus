@@ -1532,7 +1532,7 @@ struct gl3_backend::pimpl
         {
             config.num_elements_ib = geo->index_buffer().get_num_elements() ;
             config.num_elements_vb = geo->vertex_buffer().get_num_elements() ;
-            config.ib_elem_sib = geo->index_buffer().get_element_sib() ;
+            config.ib_elem_sib = 0 ;
             config.ib_type = GL_UNSIGNED_INT ;
             config.pt = natus::graphics::gl3::convert( geo->primitive_type() ) ;
         }
@@ -1563,12 +1563,6 @@ struct gl3_backend::pimpl
             }
         }
 
-        // there may be no index buffer
-        if( config.ib_id == GLuint(-1) )
-        {
-            return true ;
-        }
-
         // bind index buffer
         {
             glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, config.ib_id ) ;
@@ -1578,7 +1572,10 @@ struct gl3_backend::pimpl
 
         // allocate buffer memory
         // what about mapped memory?
+        if( geo->index_buffer().get_num_elements() > 0 )
         {
+            config.ib_elem_sib = geo->index_buffer().get_element_sib() ;
+
             GLuint const sib = GLuint( geo->index_buffer().get_sib() ) ;
             if( is_config || sib > config.sib_ib )
             {
@@ -1987,7 +1984,7 @@ struct gl3_backend::pimpl
             GLuint const ib = gconfig.ib_id ;
             //GLuint const vb = config.geo->vb_id ;
 
-            if( ib != GLuint(-1) )
+            if( gconfig.num_elements_ib > 0 )
             {
                 GLsizei const max_elems = GLsizei( gconfig.num_elements_ib ) ;
                 GLsizei const ne = std::min( num_elements>=0?num_elements:max_elems, max_elems ) ;
