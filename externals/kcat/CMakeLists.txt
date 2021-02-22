@@ -6,6 +6,7 @@ option( ALSOFT_INSTALL_CONFIG "" OFF )
 option( ALSOFT_INSTALL_EXAMPLES "" OFF )
 option( ALSOFT_INSTALL_HRTF_DEFS "" OFF )
 option( ALSOFT_INSTALL_AMBDEC_PRESETS "" OFF )
+option( CMAKE_DISABLE_FIND_PACKAGE_WindowsSDK "" ON )
 
 add_subdirectory( "openal-soft" )
 
