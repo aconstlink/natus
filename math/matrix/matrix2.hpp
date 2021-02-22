@@ -390,6 +390,16 @@ namespace natus
                 return *this ;
             }
 
+        public:
+
+            //************************************************************************************
+            static this_t rotation( float_t const angle ) noexcept
+            {
+                float_t const s = std::sin( angle ) ;
+                float_t const c = std::cos( angle ) ;
+                return this_t().set_row( 0, vec2_t( c, -s ) ).set_row( 1, vec2_t( s, c ) ) ;
+            }
+
         private:
 
             /// the matrix elements.
