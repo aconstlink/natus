@@ -9,7 +9,8 @@ set( sources
     "imgui/imgui.cpp"
     "imgui/sprite_editor.h"
     "imgui/sprite_editor.cpp"
-
+    "imgui/custom_widgets.h"
+    "imgui/custom_widgets.cpp"
 
     )
 
