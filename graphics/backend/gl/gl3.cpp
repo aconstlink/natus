@@ -1503,6 +1503,8 @@ struct gl3_backend::pimpl
         {
             config.name = obj.name() ;
             config.stride = GLuint( obj.vertex_buffer().get_layout_sib() ) ;
+
+            config.elements.clear() ;
             obj.vertex_buffer().for_each_layout_element( 
                 [&]( natus::graphics::vertex_buffer_t::data_cref_t d )
             {
