@@ -50,6 +50,10 @@ void_t line_render_2d::init( natus::ntd::string_cref_t name, natus::graphics::as
             rss.polygon_s.ss.cm = natus::graphics::cull_mode::back ;
             rss.polygon_s.ss.fm = natus::graphics::fill_mode::fill ;
 
+            rss.blend_s.do_change = true ;
+            rss.blend_s.ss.do_activate = true ;
+            rss.blend_s.ss.src_blend_factor = natus::graphics::blend_factor::src_alpha ;
+            rss.blend_s.ss.dst_blend_factor = natus::graphics::blend_factor::one_minus_src_alpha ;
                    
             so.add_render_state_set( rss ) ;
         }
