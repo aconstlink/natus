@@ -36,7 +36,7 @@ void_t primitive_render_2d::release( void_t ) noexcept
 
 void_t primitive_render_2d::draw_line( size_t const l, natus::math::vec2f_cref_t p0, natus::math::vec2f_cref_t p1, natus::math::vec4f_cref_t color ) noexcept
 {
-    _lr->draw( l, p0, p1, color ) ;
+    //_lr->draw( l, p0, p1, color ) ;
 }
 
 void_t primitive_render_2d::draw_tri( size_t const l, natus::math::vec2f_cref_t p0, natus::math::vec2f_cref_t p1, natus::math::vec2f_cref_t p2, natus::math::vec4f_cref_t color ) noexcept 
@@ -48,35 +48,24 @@ void_t primitive_render_2d::draw_rect( size_t const l, natus::math::vec2f_cref_t
     natus::math::vec4f_cref_t border_color ) noexcept 
 {
     _tr->draw_rect( l*2+0, p0, p1, p2, p3, color ) ;
-    _lr->draw_rect( l*2+1, p0, p1, p2, p3, border_color ) ;
+    //_lr->draw_rect( l*2+1, p0, p1, p2, p3, border_color ) ;
 }
 
 void_t primitive_render_2d::draw_circle( size_t const l, size_t const s, natus::math::vec2f_cref_t p0, float_t const r, natus::math::vec4f_cref_t color, natus::math::vec4f_cref_t border_color ) noexcept 
 {
     _tr->draw_circle( l*2+0, s, p0, r, color ) ;
-    _lr->draw_circle( l*2+1, s, p0, r, border_color ) ;
+    //_lr->draw_circle( l*2+1, s, p0, r, border_color ) ;
 }
 
 
 void_t primitive_render_2d::prepare_for_rendering( void_t ) noexcept 
 {
-    auto f0 = std::async( std::launch::async, [&]( void_t )
-    {
-        _lr->prepare_for_rendering() ;
-    } );
-
-    auto f1 = std::async( std::launch::async, [&]( void_t )
-    {
-        _tr->prepare_for_rendering() ;
-    } );
-    
-    f0.wait() ;
-    f1.wait() ;
+    //_lr->prepare_for_rendering() ;
+    _tr->prepare_for_rendering() ;
 }
-            
+
 void_t primitive_render_2d::render( size_t const l ) noexcept 
 {
-    _lr->render( l ) ;
+    //_lr->render( l ) ;
     _tr->render( l ) ;
 }
-            

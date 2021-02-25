@@ -122,7 +122,9 @@ namespace natus
             natus::ntd::vector< circle_t > _circle_cache ;
             circle_cref_t lookup_circle_cache( size_t const ) noexcept ;
 
+            void_t add_variable_set( natus::graphics::render_object_ref_t rc ) noexcept ;
 
+            bool_t has_data_for_layer( size_t const l ) const noexcept ;
         };
         natus_res_typedef( line_render_2d ) ;
     }

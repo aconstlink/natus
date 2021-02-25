@@ -70,13 +70,7 @@ void_t tri_render_2d::init( natus::ntd::string_cref_t name, natus::graphics::asy
     // geometry configuration
     {
         auto vb = natus::graphics::vertex_buffer_t()
-            .add_layout_element( natus::graphics::vertex_attribute::position, natus::graphics::type::tfloat, natus::graphics::type_struct::vec2 )
-            .resize( 3 ).update<this_t::vertex>( [=] ( this_t::vertex* array, size_t const ne )
-        {
-            array[ 0 ].pos = natus::math::vec2f_t( -0.5f, -0.5f ) ;
-            array[ 1 ].pos = natus::math::vec2f_t( -0.5f, +0.5f ) ;
-            array[ 2 ].pos = natus::math::vec2f_t( +0.5f, +0.5f ) ;
-        } );
+            .add_layout_element( natus::graphics::vertex_attribute::position, natus::graphics::type::tfloat, natus::graphics::type_struct::vec2 );
 
         auto ib = natus::graphics::index_buffer_t() ;
 
@@ -126,10 +120,12 @@ void_t tri_render_2d::init( natus::ntd::string_cref_t name, natus::graphics::asy
                     uniform mat4 u_view ;
                     uniform mat4 u_world ;
                     uniform samplerBuffer u_data ;
+                    uniform int u_offset ;
 
                     void main()
                     {
-                        int idx = gl_VertexID / 3 ;
+                        // glDrawArrays adds starting index to gl_VertexID
+                        int idx = (gl_VertexID) / 3 ;
                         vec4 color = texelFetch( u_data, idx ) ;
                         
                         var_col = color ;
@@ -200,6 +196,7 @@ void_t tri_render_2d::init( natus::ntd::string_cref_t name, natus::graphics::asy
                         float4x4 u_proj ;
                         float4x4 u_view ;
                         float4x4 u_world ;
+                        int u_offset ;
                     }
 
                     struct VS_INPUT
@@ -218,8 +215,10 @@ void_t tri_render_2d::init( natus::ntd::string_cref_t name, natus::graphics::asy
                     VS_OUTPUT VS( VS_INPUT input )
                     {
                         VS_OUTPUT output = (VS_OUTPUT)0 ;
-                        int idx = input.in_id / 3 ;
-                        float4 col = u_data.Load( idx ) ;
+
+                        int idx = (input.in_id / 3) * 1 + (u_offset / 3) * 1 ;
+                        float4 col = u_data.Load( idx + 0 ) ;
+
                         output.col = col ;
                         float4 pos = float4( input.in_pos, 0.0f, 1.0f )  ;
                         output.pos = mul( pos, u_world ) ;
@@ -232,7 +231,7 @@ void_t tri_render_2d::init( natus::ntd::string_cref_t name, natus::graphics::asy
                     
                     struct VS_OUTPUT
                     {
-                        float4 Pos : SV_POSITION;
+                        float4 pos : SV_POSITION;
                         float4 col : COLOR0;
                     };
 
@@ -269,29 +268,9 @@ void_t tri_render_2d::init( natus::ntd::string_cref_t name, natus::graphics::asy
             rc.link_shader( name + ".shader" ) ;
         }
 
-        // add variable set 
         {
-            natus::graphics::variable_set_res_t vars = natus::graphics::variable_set_t() ;
-            
-            {
-                auto* var = vars->array_variable( "u_data" ) ;
-                var->set( name + ".per_tri_data" ) ;
-            }
-
-            {
-                auto* var = vars->data_variable<natus::math::mat4f_t>( "u_world" ) ;
-                var->set( natus::math::mat4f_t().identity() ) ;
-            }
-            {
-                auto* var = vars->data_variable<natus::math::mat4f_t>( "u_view" ) ;
-                var->set( natus::math::mat4f_t().identity() ) ;
-            }
-            {
-                auto* var = vars->data_variable<natus::math::mat4f_t>( "u_proj" ) ;
-                var->set( natus::math::mat4f_t().identity() ) ;
-            }
-
-            rc.add_variable_set( std::move( vars ) ) ;
+            this_t::add_variable_set( rc ) ;
+            //this_t::add_variable_set( rc ) ;
         }
                 
         _asyncs.for_each( [&]( natus::graphics::async_view_t a )
@@ -348,6 +327,7 @@ void_t tri_render_2d::prepare_for_rendering( void_t ) noexcept
 {
     bool_t vertex_realloc = false ;
     bool_t data_realloc = false ;
+    bool_t reconfig_ro = false ;
 
     // 1. copy data
     {
@@ -369,6 +349,7 @@ void_t tri_render_2d::prepare_for_rendering( void_t ) noexcept
 
             // copy vertices
             {
+                size_t tmp = sizeof( this_t::vertex) ;
                 size_t const num_verts = tris.size() * 3 ;
                 _go->vertex_buffer().update<this_t::vertex>( start, start+num_verts, 
                     [&]( this_t::vertex * array, size_t const ne )
@@ -398,37 +379,60 @@ void_t tri_render_2d::prepare_for_rendering( void_t ) noexcept
         data_realloc = _ao->data_buffer().get_sib() > bsib ;
     }
 
-    // 2. tell the graphics api
+    // 2. prepare variable sets 
+    // one var set per layer
+    {
+        for( size_t i=_ro->get_num_variable_sets(); i<_render_data.size(); ++i )
+        {
+            this_t::add_variable_set( *_ro ) ;
+            reconfig_ro = true ;
+        }
+
+        int_t offset = 0 ;
+        for( size_t i=0; i<_render_data.size(); ++i )
+        {
+            _ro->get_variable_set(i)->data_variable<int32_t>( "u_offset" )->set( offset ) ;
+            offset += int32_t( _render_data[i].num_elems ) ;
+        }
+    }
+
+    // 3. tell the graphics api
     {
         _asyncs.for_each( [&]( natus::graphics::async_view_t a )
         { 
+            
+
             if( vertex_realloc ) a.configure( _go ) ;
             else a.update( _go ) ;
 
             if( data_realloc ) a.configure( _ao ) ;
             else a.update( _ao ) ;
+
+            if( reconfig_ro ) a.configure( _ro ) ;
         } ) ;
     }
 }
-            
+
 void_t tri_render_2d::render( size_t const l ) noexcept 
 {
-    _asyncs.for_each( [&]( natus::graphics::async_view_t a )
-    { 
-        a.use( _rs ) ;
-        
-        if( l < _render_data.size() )
-        {
-            auto const & plrd = _render_data[l] ;
-            natus::graphics::backend::render_detail rd ;
-            rd.num_elems = plrd.num_elems ;
-            rd.start = plrd.start ;
-                
-            a.render( _ro, rd ) ;
-        }
-        a.use( natus::graphics::state_object_t() ) ;
-    } ) ;
+    if( this_t::has_data_for_layer( l ) )
+    {
+        _asyncs.for_each( [&]( natus::graphics::async_view_t a )
+        { 
+            a.use( _rs ) ;
+            {
+                auto const & plrd = _render_data[l] ;
+                natus::graphics::backend::render_detail rd ;
+                rd.num_elems = plrd.num_elems ;
+                rd.start = plrd.start ;
+                rd.varset = l ;
+                a.render( _ro, rd ) ;
+            }
+            a.use( natus::graphics::state_object_t() ) ;
+        } ) ;
+    }
 }
+
             
 tri_render_2d::circle_cref_t tri_render_2d::lookup_circle_cache( size_t const s ) noexcept 
 {
@@ -451,4 +455,37 @@ tri_render_2d::circle_cref_t tri_render_2d::lookup_circle_cache( size_t const s 
         iter = _circle_cache.insert( iter, points ) ;
     }
     return *iter ;
+}
+
+void_t tri_render_2d::add_variable_set( natus::graphics::render_object_ref_t rc ) noexcept 
+{
+    natus::graphics::variable_set_res_t vars = natus::graphics::variable_set_t() ;
+            
+    {
+        auto* var = vars->array_variable( "u_data" ) ;
+        var->set( _name + ".per_tri_data" ) ;
+    }
+    {
+        auto* var = vars->data_variable<int32_t>( "u_offset" ) ;
+        var->set( 0 ) ;
+    }
+    {
+        auto* var = vars->data_variable<natus::math::mat4f_t>( "u_world" ) ;
+        var->set( natus::math::mat4f_t().identity() ) ;
+    }
+    {
+        auto* var = vars->data_variable<natus::math::mat4f_t>( "u_view" ) ;
+        var->set( natus::math::mat4f_t().identity() ) ;
+    }
+    {
+        auto* var = vars->data_variable<natus::math::mat4f_t>( "u_proj" ) ;
+        var->set( natus::math::mat4f_t().identity() ) ;
+    }
+
+    rc.add_variable_set( std::move( vars ) ) ;
+}
+
+bool_t tri_render_2d::has_data_for_layer( size_t const l ) const noexcept 
+{
+    return l < _render_data.size() && _render_data[l].num_elems > 0 ;
 }

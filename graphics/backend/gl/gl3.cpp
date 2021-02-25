@@ -1106,7 +1106,8 @@ struct gl3_backend::pimpl
 
         // bind index buffer
         {
-            glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, gconfig.ib_id ) ;
+            GLint const id_ = gconfig.ib_elem_sib == 0 ? 0 : gconfig.ib_id ;
+            glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, id_ ) ;
             if( natus::ogl::error::check_and_log( 
                 natus_log_fn( "glBindBuffer(GL_ELEMENT_ARRAY_BUFFER)" ) ) )
                 return false ;
@@ -1155,6 +1156,12 @@ struct gl3_backend::pimpl
             natus::ogl::error::check_and_log( natus_log_fn( "glVertexAttribPointer" ) ) ;
         }
       
+        {
+            glBindVertexArray( 0 ) ;
+            if( natus::ogl::error::check_and_log(
+                natus_log_fn( "glBindVertexArray" ) ) )
+                return false ;
+        }
         return true ;
     }
 
@@ -1308,22 +1315,6 @@ struct gl3_backend::pimpl
         return i ;
     }
 
-    //***********************
-    size_t construct_render_data( size_t oid, natus::graphics::render_object_ref_t obj )
-    {
-        oid = determine_oid( obj.name(), rconfigs ) ;
-
-        {
-            rconfigs[ oid ].name = obj.name() ;
-            rconfigs[ oid ].var_sets_data.clear() ;
-            rconfigs[ oid ].var_sets_texture.clear() ;
-            rconfigs[ oid ].var_sets_array.clear() ;
-            rconfigs[ oid ].var_sets.clear() ;
-        }
-
-        return oid ;
-    }
-
     bool_t update( size_t const id, natus::graphics::shader_object_cref_t sc )
     {
         auto& sconfig = shaders[ id ] ;
@@ -1382,6 +1373,22 @@ struct gl3_backend::pimpl
         }
 
         return true ;
+    }
+
+    //***********************
+    size_t construct_render_data( size_t oid, natus::graphics::render_object_ref_t obj )
+    {
+        oid = determine_oid( obj.name(), rconfigs ) ;
+
+        {
+            rconfigs[ oid ].name = obj.name() ;
+            rconfigs[ oid ].var_sets_data.clear() ;
+            rconfigs[ oid ].var_sets_texture.clear() ;
+            rconfigs[ oid ].var_sets_array.clear() ;
+            rconfigs[ oid ].var_sets.clear() ;
+        }
+
+        return oid ;
     }
 
     bool_t update( size_t const id, natus::graphics::render_object_ref_t rc )
@@ -1527,7 +1534,7 @@ struct gl3_backend::pimpl
 
         // disable vertex array so the buffer ids do not get overwritten
         {
-            glBindVertexArray( 0 ) ;
+            glBindVertexArray( config.va_id ) ;
             natus::ogl::error::check_and_log( natus_log_fn( "glBindVertexArray" ) ) ;
         }
 
@@ -1567,7 +1574,8 @@ struct gl3_backend::pimpl
 
         // bind index buffer
         {
-            glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, config.ib_id ) ;
+            GLint const id_ = geo->index_buffer().get_num_elements() == 0 ? 0 : config.ib_id ;
+            glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, id_ ) ;
             if( natus::ogl::error::check_and_log( natus_log_fn( "glBindBuffer - index buffer" ) ) )
                 return false ;
         }
@@ -1907,7 +1915,10 @@ struct gl3_backend::pimpl
         {
             glUseProgram( sconfig.pg_id ) ;
             if( natus::ogl::error::check_and_log( natus_log_fn( "glUseProgram" ) ) )
+            {
+                glBindVertexArray( 0 ) ;
                 return false ;
+            }
         }
 
         if( config.var_sets_data.size() > varset_id )
@@ -2006,9 +2017,14 @@ struct gl3_backend::pimpl
                 GLsizei const ne = std::min( num_elements, max_elems ) ;
 
                 glDrawArrays( pt, start_element, ne ) ;
-
                 natus::ogl::error::check_and_log( natus_log_fn( "glDrawArrays" ) ) ;
             }
+        }
+
+        {
+            glBindVertexArray( 0 ) ;
+            if( natus::ogl::error::check_and_log( natus_log_fn( "glBindVertexArray" ) ) )
+                return false ;
         }
 
         return true ;

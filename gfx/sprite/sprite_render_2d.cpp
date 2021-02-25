@@ -536,13 +536,12 @@ void_t sprite_render_2d::prepare_for_rendering( void_t ) noexcept
 
     _num_sprites = 0 ;
 }
-            
+
 void_t sprite_render_2d::render( size_t const l ) noexcept 
 {
     _asyncs.for_each( [&]( natus::graphics::async_view_t a )
-    { 
+    {         
         a.use( _rs ) ;
-        
         if( _render_layer_infos.size() > l ) 
         {
             auto const & rli = _render_layer_infos[l] ;
@@ -559,8 +558,7 @@ void_t sprite_render_2d::render( size_t const l ) noexcept
                 a.render( _ro, rd ) ;
             }
         }
-        
-        a.use( natus::graphics::state_object_res_t() ) ;
+        a.use( natus::graphics::state_object_t() ) ;
     } ) ;
 }
 
