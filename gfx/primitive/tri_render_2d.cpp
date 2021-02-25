@@ -127,7 +127,7 @@ void_t tri_render_2d::init( natus::ntd::string_cref_t name, natus::graphics::asy
                         // glDrawArrays adds starting index to gl_VertexID
                         int idx = (gl_VertexID) / 3 ;
                         vec4 color = texelFetch( u_data, idx ) ;
-                        
+
                         var_col = color ;
                         vec4 pos = vec4( in_pos, 0.0, 1.0 )  ;
                         gl_Position = u_proj * u_view * u_world * pos ;
@@ -139,7 +139,7 @@ void_t tri_render_2d::init( natus::ntd::string_cref_t name, natus::graphics::asy
 
                     in vec4 var_col ;
                     out vec4 out_color ;
-                        
+
                     void main()
                     {    
                         out_color = var_col ;
@@ -161,13 +161,14 @@ void_t tri_render_2d::init( natus::ntd::string_cref_t name, natus::graphics::asy
                     uniform mat4 u_view ;
                     uniform mat4 u_world ;
                     uniform sampler2D u_data ;
+                    uniform int u_offset ;
 
                     void main()
                     {
                         int idx = gl_VertexID / 3 ;
                         ivec2 wh = textureSize( u_data, 0 ) ;
-                        var_col = texelFetch( u_data, ivec2( ((idx*3) % wh.x), (idx / wh.x) ), 0 ) ;
-                        
+                        var_col = texelFetch( u_data, ivec2( ((idx) % wh.x), (idx / wh.x) ), 0 ) ;
+
                         vec4 pos = vec4( in_pos, 0.0, 1.0 )  ;
                         gl_Position = u_proj * u_view * u_world * pos ;
                     } )" ) ).
@@ -177,7 +178,7 @@ void_t tri_render_2d::init( natus::ntd::string_cref_t name, natus::graphics::asy
                     precision mediump float ;
                     in vec4 var_col ;
                     layout(location = 0 ) out vec4 out_color ;
-                        
+
                     void main()
                     {    
                         out_color = var_col ;
