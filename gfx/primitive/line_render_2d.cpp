@@ -12,6 +12,11 @@ line_render_2d::line_render_2d( void_t )
     _ro = natus::graphics::render_object_t() ;
     _go = natus::graphics::geometry_object_t() ;
     _so = natus::graphics::shader_object_t() ;
+
+    {
+        _proj = natus::math::mat4f_t().identity() ;
+        _view = natus::math::mat4f_t().identity() ;
+    }
 }
 
 line_render_2d::line_render_2d( this_rref_t rhv ) 
@@ -21,6 +26,11 @@ line_render_2d::line_render_2d( this_rref_t rhv )
     _ro = std::move( rhv._ro ) ;
     _go = std::move( rhv._go ) ;
     _so = std::move( rhv._so ) ;
+
+    _circle_cache = std::move( rhv._circle_cache ) ;
+
+    _proj = std::move( rhv._proj ) ;
+    _view = std::move( rhv._view ) ;
 }
             
 line_render_2d::~line_render_2d( void_t ) 
@@ -397,6 +407,18 @@ void_t line_render_2d::prepare_for_rendering( void_t ) noexcept
             _ro->get_variable_set(i)->data_variable<int32_t>( "u_offset" )->set( offset ) ;
             offset += int32_t( _render_data[i].num_elems ) ;
         }
+
+        _ro->for_each( [&]( size_t const i, natus::graphics::variable_set_res_t const & vars )
+        {
+            {
+                auto* var = vars->data_variable<natus::math::mat4f_t>( "u_view" ) ;
+                var->set( _view ) ;
+            }
+            {
+                auto* var = vars->data_variable<natus::math::mat4f_t>( "u_proj" ) ;
+                var->set( _proj ) ;
+            }
+        } ) ;
     }
 
     // 3. tell the graphics api
@@ -489,4 +511,10 @@ void_t line_render_2d::add_variable_set( natus::graphics::render_object_ref_t rc
 bool_t line_render_2d::has_data_for_layer( size_t const l ) const noexcept 
 {
     return l < _render_data.size() && _render_data[l].num_elems > 0 ;
+}
+
+void_t line_render_2d::set_view_proj( natus::math::mat4f_cref_t view, natus::math::mat4f_cref_t proj ) noexcept 
+{
+    _view = view ;
+    _proj = proj ;
 }

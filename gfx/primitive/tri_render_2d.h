@@ -89,6 +89,9 @@ namespace natus
             natus::graphics::render_object_res_t _ro ;
             natus::graphics::geometry_object_res_t _go ;
 
+            natus::math::mat4f_t _proj ;
+            natus::math::mat4f_t _view ;
+
         public:
 
             tri_render_2d( void_t ) ;
@@ -115,6 +118,7 @@ namespace natus
             void_t prepare_for_rendering( void_t ) noexcept ;
             void_t render( size_t const ) noexcept ;
 
+            void_t set_view_proj( natus::math::mat4f_cref_t view, natus::math::mat4f_cref_t ) noexcept ;
 
         private:
 

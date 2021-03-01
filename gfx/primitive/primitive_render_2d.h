@@ -43,6 +43,8 @@ namespace natus
 
             void_t draw_circle( size_t const, size_t const, natus::math::vec2f_cref_t p0, float_t const r, natus::math::vec4f_cref_t color, natus::math::vec4f_cref_t border_color ) noexcept ;
 
+            void_t set_view_proj( natus::math::mat4f_cref_t view, natus::math::mat4f_cref_t proj ) noexcept ;
+
         public:
 
             // copy all data to the gpu buffer and transmit the data
