@@ -276,6 +276,7 @@ bool_t app::platform_init( void_t )
     this->on_init() ;
     _tp_update = this_t::update_clock_t::now() ;
     _tp_render = this_t::render_clock_t::now() ;
+    _tp_physics = this_t::physics_clock_t::now() ;
     return true ;
 }
 
@@ -312,6 +313,14 @@ bool_t app::platform_update( void_t )
         }
 
         this_t::after_device() ;
+    }
+
+    if( this_t::before_physics() )
+    {
+        this_t::physics_data_t dat ;
+        this_t::compute_and_reset_timing( dat ) ;
+        this->on_physics( dat ) ;
+        this_t::after_physics() ;
     }
 
     if( this_t::before_render() )
@@ -458,6 +467,19 @@ bool_t app::after_update( void_t )
 {
     *_access = true ;
     ++_update_count ;
+    return true ;
+}
+
+//***
+bool_t app::before_physics( void_t ) 
+{
+    auto const micro = std::chrono::duration_cast< std::chrono::microseconds >( this_t::physics_clock_t::now() - _tp_physics ) + _physics_residual ;
+
+    return micro >= _physics_dur ;
+}
+
+bool_t app::after_physics( void_t ) 
+{
     return true ;
 }
 
@@ -826,4 +848,20 @@ void_t app::compute_and_reset_timing( update_data & d ) noexcept
 
     d.micro_dt = micro ;
     d.sec_dt = dt ;
+}
+
+bool_t app::compute_and_reset_timing( physics_data & d ) noexcept 
+{
+    auto const micro = std::chrono::duration_cast< std::chrono::microseconds >( this_t::physics_clock_t::now() - _tp_physics ) + _physics_residual ;
+
+    _physics_residual = micro - _physics_dur ;
+
+    float_t const dt = float_t( double_t( _physics_dur.count() ) / 1000000.0 ) ;
+
+    _tp_physics = this_t::physics_clock_t::now() ;
+
+    d.micro_dt = _physics_dur.count() ;
+    d.sec_dt = dt ;
+
+    return true ;
 }

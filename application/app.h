@@ -166,6 +166,11 @@ namespace natus
             typedef std::chrono::high_resolution_clock update_clock_t ;
             update_clock_t::time_point _tp_update = update_clock_t::now() ;
 
+            typedef std::chrono::high_resolution_clock physics_clock_t ;
+            physics_clock_t::time_point _tp_physics = physics_clock_t::now() ;
+            std::chrono::microseconds _physics_dur = std::chrono::microseconds( 8000 ) ;
+            std::chrono::microseconds _physics_residual = std::chrono::microseconds( 0 ) ;
+
         private: // device
 
             natus::device::three_device_res_t _dev_mouse ;
@@ -192,6 +197,14 @@ namespace natus
                 size_t micro_dt ;
             };
 
+            struct physics_data 
+            {
+                // how many seconds passed
+                float_t sec_dt ;
+                // how many micro seconds passed
+                size_t micro_dt ;
+            };
+
             struct render_data 
             {
                 // how many seconds passed
@@ -203,6 +216,7 @@ namespace natus
             struct device_data {};
 
             natus_typedef( update_data ) ;
+            natus_typedef( physics_data ) ;
             natus_typedef( render_data ) ;
             natus_typedef( audio_data ) ;
             natus_typedef( device_data ) ;
@@ -221,6 +235,9 @@ namespace natus
 
             virtual natus::application::result on_tool( natus::tool::imgui_view_t ) 
             { return natus::application::result::no_imgui ;  }
+
+            virtual natus::application::result on_physics( physics_data_in_t ) noexcept 
+            { return natus::application::result::ok ; }
 
         protected:
 
@@ -284,6 +301,8 @@ namespace natus
 
             bool_t before_update( void_t ) ;
             bool_t after_update( void_t ) ;
+            bool_t before_physics( void_t ) ;
+            bool_t after_physics( void_t ) ;
             bool_t before_render( void_t ) ;
             bool_t after_render( void_t ) ;
             bool_t before_audio( void_t ) ;
@@ -296,6 +315,7 @@ namespace natus
 
             void_t compute_and_reset_timing( render_data & rd ) noexcept ;
             void_t compute_and_reset_timing( update_data & rd ) noexcept ;
+            bool_t compute_and_reset_timing( physics_data & rd ) noexcept ;
 
         private:
 
