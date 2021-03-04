@@ -4,7 +4,7 @@
 
 #include "../typedefs.h"
 #include "../vector/protos.hpp"
-
+#include "../vector/vector3.hpp"
 #include "switch.h"
 
 namespace natus
