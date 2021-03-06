@@ -3,6 +3,7 @@
 
 #include "particle.h"
 
+#include <natus/math/interpolation/interpolate.hpp>
 #include <natus/math/matrix/matrix2.hpp>
 #include <natus/ntd/vector.hpp>
 
@@ -416,7 +417,8 @@ namespace natus
                 {
                     funk = [=]( void_t )
                     {
-                        return this_t::random_real_number( this_t::get_parallel_distance() * 0.2f, this_t::get_parallel_distance() ) ;
+                        auto const r = this_t::random_real_number( 0.0f, 1.0f ) ;
+                        return natus::math::interpolation<float_t>::linear( this_t::get_parallel_distance() * 0.2f, this_t::get_parallel_distance(), r ) ;
                     } ;
                 }
                 _parallel_vt = avt ; 
@@ -434,7 +436,8 @@ namespace natus
                 {
                     funk = [=]( void_t )
                     {
-                        return this_t::random_real_number( this_t::get_ortho_distance() * 0.2f, this_t::get_ortho_distance() ) ;
+                        auto const r = this_t::random_real_number( 0.0f, 1.0f ) ;
+                        return natus::math::interpolation<float_t>::linear( this_t::get_ortho_distance() * 0.2f, this_t::get_ortho_distance(), r ) ;
                     } ;
                 }
                 _ortho_vt = avt ; 

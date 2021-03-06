@@ -150,10 +150,35 @@ void_t particle_system::update( float_t const dt ) noexcept
             p.vel += natus::math::vec2f_t( dt ) * p.acl ;
             p.pos += natus::math::vec2f_t( dt ) * p.vel ;
         }
-    }            
+    }
+
+    // compute extend
+    {
+        natus::math::vec2f_t min_xy( std::numeric_limits<float_t>::max(), std::numeric_limits<float_t>::max() ) ;
+        natus::math::vec2f_t max_xy( std::numeric_limits<float_t>::min(), std::numeric_limits<float_t>::min() ) ;
+
+        for( auto & p : _particles )
+        {
+            min_xy = min_xy.greater_than( p.pos ).select( p.pos, min_xy ) ;
+            max_xy = max_xy.less_than( p.pos ).select( p.pos, max_xy ) ;
+        }
+
+        _extend = natus::math::vec4f_t( min_xy, max_xy ) ;
+    }
 }
 
 void_t particle_system::on_particles( on_particles_funk_t funk ) noexcept
 {
     funk( _particles ) ;
+}
+
+std::array< natus::math::vec2f_t, 4 > particle_system::get_extend_rect( void_t ) const noexcept 
+{
+    return 
+    {
+        _extend.xy() ,
+        _extend.xw() ,
+        _extend.zw() ,
+        _extend.zy() 
+    } ;
 }

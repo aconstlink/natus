@@ -4,6 +4,7 @@
 #include "particle.h"
 
 #include <natus/ntd/vector.hpp>
+#include <natus/math/utility/constants.hpp>
 
 namespace natus
 {
@@ -142,5 +143,77 @@ namespace natus
             }
         } ;
         natus_res_typedef( viscosity_force_field ) ;
+
+        class sin_velocity_field : public force_field
+        {
+            natus_this_typedefs( sin_velocity_field ) ;
+
+        private:
+
+            float_t _amplitude = 1.0f ;
+            float_t _frequency = 1.0f ;
+            float_t _shift = 1.0f ;
+        
+        public:
+
+            sin_velocity_field( void_t ) noexcept {}
+            sin_velocity_field( float_t const a, float_t const f, float_t const s ) noexcept 
+            { 
+                _amplitude = a ;
+                _frequency = f ;
+                _shift = s ;
+            }
+
+            float_t get_amplitude( void_t ) const noexcept
+            {
+                return _amplitude ;
+            }
+
+            float_t get_frequency( void_t ) const noexcept
+            {
+                return _frequency ;
+            }
+
+            float_t get_shift( void_t ) const noexcept
+            {
+                return _shift ;
+            }
+
+            void_t set_amplitude( float_t const a ) noexcept
+            {
+                _amplitude = a ;
+            }
+
+            void_t set_frequency( float_t const a ) noexcept
+            {
+                _frequency = a ;
+            }
+
+            void_t set_shift( float_t const a ) noexcept
+            {
+                _shift = a ;
+            }
+
+        public:
+
+            virtual void_t apply( size_t const beg, size_t const n, natus::ntd::vector< particle_t > & particles ) const noexcept 
+            {
+                for( size_t i=beg; i<beg+n; ++i )
+                {
+                    physics::particle_ref_t p = particles[i] ;
+                    if( !this_t::is_inside( p ) ) continue ;
+                    
+                    auto const v = (p.pos / _frequency).fracted() ;
+                    auto const f = v.dot(v) * natus::math::constants<float_t>::pi() * 2.0f ;
+
+                    float_t const s = _amplitude * std::sin(  f   ) ;                    
+                    natus::math::vec2f_t ortho = p.vel.ortho() ;
+                    //p.force += ortho.normalize() * s * p.mass;
+                    p.vel += ortho.normalize() * s ;
+
+                }
+            }
+        } ;
+        natus_res_typedef( sin_velocity_field ) ;
     }
 }

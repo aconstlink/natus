@@ -3,6 +3,9 @@
 #include "emitters.hpp"
 #include "force_fields.hpp"
 
+#include <natus/math/vector/vector4.hpp>
+#include <array>
+
 namespace natus
 {
     namespace physics
@@ -50,6 +53,8 @@ namespace natus
             // force fields
             natus::ntd::vector< force_field_data_t > _forces ;
 
+            natus::math::vec4f_t _extend ;
+
         public:
 
             void_t attach_emitter( emitter_res_t emt ) noexcept ;
@@ -62,6 +67,9 @@ namespace natus
 
             void_t clear( void_t ) noexcept ;
 
+            natus::math::vec4f_cref_t get_extend( void_t ) const noexcept { return _extend ; }
+            std::array< natus::math::vec2f_t, 4 > get_extend_rect( void_t ) const noexcept ;
+            
         public: 
 
             void_t update( float_t const dt ) noexcept ;
