@@ -110,6 +110,11 @@ namespace natus
                 return this_t::smooth_step_e5( ( x - a ) / ( b - a ) );
             }
 
+            static type_t smooth_pulse( typec_t x, typec_t a, typec_t b ) {
+                return this_t::smooth_step( this_t::clamp( x, 0.0f, a ), 0.0f, a ) - 
+                    this_t::smooth_step( this_t::clamp( x, b, 1.0f ), b, 1.0f );
+            }
+
         public:
 
             /// @precondition x in [0,1]
