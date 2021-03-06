@@ -124,6 +124,12 @@ namespace natus
             {
                 return _elem[0] || _elem[1] ;
             }
+
+            template< typename T >
+            natus::math::vector2< T > select( natus::math::vector2< T > const t, natus::math::vector2< T > const & f ) const noexcept
+            {
+                return natus::math::vector2< T >( _elem[0] ? t.x() : f.x(), _elem[1] ? t.y() : f.y() ) ;
+            }
         };
         typedef vector2b vec2b_t ;
     }

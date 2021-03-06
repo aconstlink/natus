@@ -544,6 +544,12 @@ namespace natus
                     ::std::floor( _elem[ 1 ] ) ) ;
             }
 
+            //***************************************************
+            vec2_t ortho( void_t ) const
+            {
+                return this_t( _elem[1], -_elem[0] ) ;
+            }
+
         private:
 
                 type_t _elem[2] ;
