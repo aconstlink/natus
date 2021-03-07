@@ -24,7 +24,7 @@ quad::~quad( void_t ) noexcept
 void_t quad::set_view_proj( natus::math::mat4f_cref_t view, natus::math::mat4f_cref_t proj ) noexcept 
 {
     {
-        auto * var = _vars->data_variable< natus::math::mat4f_t >( "u_world" ) ;
+        auto * var = _vars->data_variable< natus::math::mat4f_t >( "u_view" ) ;
         var->set( view ) ;
     }
     {
@@ -33,9 +33,10 @@ void_t quad::set_view_proj( natus::math::mat4f_cref_t view, natus::math::mat4f_c
     }
 }
 
-void_t quad::set_scale( float_t const s ) noexcept 
+void_t quad::set_scale( natus::math::vec2f_cref_t s ) noexcept 
 {
-    _world *= s ;
+    _world[0] = s.x() ;
+    _world[5] = s.y() ;
 
     {
         auto * var = _vars->data_variable< natus::math::mat4f_t >( "u_world" ) ;
@@ -127,11 +128,13 @@ void_t quad::init( natus::graphics::async_views_t asyncs ) noexcept
                     #version 140
                     in vec3 in_pos ;
                     out vec2 var_tx ;
-
+                    uniform mat4 u_world ;
+                    uniform mat4 u_view ;
+                    uniform mat4 u_proj ;
                     void main()
                     {
                         var_tx = sign( in_pos.xy ) * vec2( 0.5 ) + vec2( 0.5 )  ;
-                        gl_Position = vec4( sign( in_pos ), 1.0 ) ;
+                        gl_Position = u_world * u_view * u_proj * vec4( sign( in_pos ), 1.0 ) ;
                     } )" ) ).
 
                     set_pixel_shader( natus::graphics::shader_t( R"(
@@ -156,11 +159,13 @@ void_t quad::init( natus::graphics::async_views_t asyncs ) noexcept
                     #version 300 es
                     in vec3 in_pos ;
                     out vec2 var_tx ;
-
+                    uniform mat4 u_world ;
+                    uniform mat4 u_view ;
+                    uniform mat4 u_proj ;
                     void main()
                     {
                         var_tx = sign( in_pos.xy ) * vec2( 0.5 ) + vec2( 0.5 )  ;
-                        gl_Position = vec4( sign( in_pos ), 1.0 ) ;
+                        gl_Position = u_world * u_view * u_proj * vec4( sign( in_pos ), 1.0 ) ;
                     } )" ) ).
 
                     set_pixel_shader( natus::graphics::shader_t( R"(
@@ -184,6 +189,13 @@ void_t quad::init( natus::graphics::async_views_t asyncs ) noexcept
 
                     set_vertex_shader( natus::graphics::shader_t( R"(
 
+                    cbuffer ConstantBuffer : register( b0 ) 
+                    {
+                        float4x4 u_proj ;
+                        float4x4 u_view ;
+                        float4x4 u_world ;
+                    }
+
                     struct VS_OUTPUT
                     {
                         float4 pos : SV_POSITION ;
@@ -194,6 +206,9 @@ void_t quad::init( natus::graphics::async_views_t asyncs ) noexcept
                     {
                         VS_OUTPUT output = (VS_OUTPUT)0;
                         output.pos = float4( sign( in_pos.xyz ), 1.0f ) ;
+                        output.pos = mul( output.pos, u_world ) ;
+                        output.pos = mul( output.pos, u_view ) ;
+                        output.pos = mul( output.pos, u_proj ) ;
                         output.tx = sign( in_pos.xy ) * float2( 0.5, 0.5 ) + float2( 0.5, 0.5 ) ;
                         return output;
                     } )" ) ).
@@ -255,6 +270,21 @@ void_t quad::init( natus::graphics::async_views_t asyncs ) noexcept
             rc.add_variable_set( std::move( vars ) ) ;
         }
         #endif
+
+        {
+            {
+                auto * var = _vars->data_variable< natus::math::mat4f_t >( "u_world" ) ;
+                var->set( _world ) ;
+            }
+            {
+                auto * var = _vars->data_variable< natus::math::mat4f_t >( "u_view" ) ;
+                var->set( _view ) ;
+            }
+            {
+                auto * var = _vars->data_variable< natus::math::mat4f_t >( "u_proj" ) ;
+                var->set( _proj ) ;
+            }
+        }
 
         _ro = std::move( rc ) ;
 

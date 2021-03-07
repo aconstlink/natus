@@ -43,7 +43,7 @@ namespace natus
             
             void_t set_view_proj( natus::math::mat4f_cref_t view, natus::math::mat4f_cref_t proj ) noexcept ;
 
-            void_t set_scale( float_t const ) noexcept ;
+            void_t set_scale( natus::math::vec2f_cref_t ) noexcept ;
             void_t set_texture( natus::ntd::string_cref_t ) noexcept ;
 
             void_t init( natus::graphics::async_views_t ) noexcept ;
