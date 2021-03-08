@@ -138,7 +138,8 @@ void_t text_render_2d::init( natus::font::glyph_atlas_res_t ga, size_t const ng 
                     uniform mat4 u_view ;
 
                     // 1: vec4( vec2( tx start ), vec2( tx_dims ) )
-                    // 2: vec4( img_id, bearing, 0.0, 0.0 )
+                    // 2: vec4( img_id, bearing, vec2( aspect ) )
+                    // aspect for geometric scaling
                     uniform samplerBuffer u_glyph_infos ;
 
                     // 1: vec4( pos.xy, offset, scale )
@@ -174,8 +175,8 @@ void_t text_render_2d::init( natus::font::glyph_atlas_res_t ga, size_t const ng 
                         // calc position and scale
                         //
                         vec3 pos = vec3( sign( in_pos ) * 0.5 + 0.5, 0.0 ) ;
-                        pos *= vec3( g1.zw * t1.w, 1.0 ) ;
-                        pos += vec3( t1.xy + vec2( 0.0f, g2.y*t1.w), 0.0 ) ;
+                        pos *= vec3( g1.zw * g2.zw * vec2(t1.w), 1.0 ) ;
+                        pos += vec3( t1.xy  + vec2( 0.0f, g2.y*t1.w), 0.0 ) ;
                         gl_Position = u_proj * u_view * vec4( pos, 1.0 ) ;
 
                         var_color = t2.xyz ;
@@ -212,7 +213,7 @@ void_t text_render_2d::init( natus::font::glyph_atlas_res_t ga, size_t const ng 
                     uniform mat4 u_view ;
 
                     // 1: vec4( vec2( tx start ), vec2( tx_dims ) )
-                    // 2: vec4( img_id, bearing, 0.0, 0.0 )
+                    // 2: vec4( img_id, bearing, vec2( aspect ) )
                     uniform sampler2D u_glyph_infos ;
 
                     // 1: vec4( pos.xy, offset, scale )
@@ -254,7 +255,7 @@ void_t text_render_2d::init( natus::font::glyph_atlas_res_t ga, size_t const ng 
                         // calc position and scale
                         //
                         vec3 pos = vec3( sign( in_pos ) * 0.5 + 0.5, 0.0 ) ;
-                        pos *= vec3( g1.zw * t1.w, 1.0 ) ;
+                        pos *= vec3( g1.zw * g2.zw * t1.w, 1.0 ) ;
                         pos += vec3( t1.xy + vec2( 0.0f, g2.y*t1.w), 0.0 ) ;
                         gl_Position = u_proj * u_view * vec4( pos, 1.0 ) ;
 
@@ -304,7 +305,7 @@ void_t text_render_2d::init( natus::font::glyph_atlas_res_t ga, size_t const ng 
                     };
 
                     // 1: vec4( vec2( tx start ), vec2( tx_dims ) )
-                    // 2: vec4( img_id, bearing, 0.0, 0.0 )
+                    // 2: vec4( img_id, bearing, float2(aspect) )
                     Buffer< float4 > u_glyph_infos ;
 
                     // 1: vec4( pos.xy, offset, scale )
@@ -335,7 +336,7 @@ void_t text_render_2d::init( natus::font::glyph_atlas_res_t ga, size_t const ng 
                         // calc position and scale
                         //
                         float3 pos = float3( sign( in_pos ) * 0.5 + 0.5, 0.0 ) ;
-                        pos *= float3( g1.zw * t1.w, 1.0 ) ;
+                        pos *= float3( g1.zw * g2.zw * t1.w, 1.0 ) ;
                         pos += float3( t1.xy + float2( 0.0f, g2.y*t1.w), 0.0 ) ;
                         
                         output.pos = mul( float4( pos, 1.0 ), u_view ) ;
@@ -427,6 +428,9 @@ void_t text_render_2d::init( natus::font::glyph_atlas_res_t ga, size_t const ng 
 
     // prepare glyph infos
     {
+        natus::math::vec2f_t const aspect( 
+            float_t( _ga->get_width() ) / float_t( _ga->get_height() ), 1.0f ) ;
+
         struct the_data
         {
             natus::math::vec4f_t v1 ;
@@ -446,7 +450,8 @@ void_t text_render_2d::init( natus::font::glyph_atlas_res_t ga, size_t const ng 
                     if( !res ) continue ;
 
                     auto const v1 = natus::math::vec4f_t( gi.start, gi.dims ) ;
-                    auto const v2 = natus::math::vec4f_t( float_t( gi.image_id ), gi.bearing, 0.0f, 0.0f ) ;
+                    auto const v2 = natus::math::vec4f_t( float_t( gi.image_id ), gi.bearing, 
+                        aspect.x(), aspect.y() ) ;
 
                     array[ i ] = { v1, v2 } ;
                 }
@@ -541,6 +546,8 @@ natus::gfx::result text_render_2d::draw_text( size_t const group, size_t const f
     if( group >= _gis.size() )
         return natus::gfx::result::invalid_argument ;
 
+    natus::math::vec2f_t const aspect( float_t( _ga->get_width() ) / float_t( _ga->get_height() ), 1.0f ) ;
+
     natus::concurrent::lock_t lk( _gis[group].mtx ) ;
 
     float_t adv_x = 0.0f ;
@@ -576,10 +583,11 @@ natus::gfx::result text_render_2d::draw_text( size_t const group, size_t const f
             continue ;
         }
 
+        
         float_t const point_size_scale = float_t(point_size) / float_t(gi.point_size) ;
 
-        natus::math::vec2f_t adv = natus::math::vec2f_t( adv_x * point_size_scale, 0.0f ) ;
-        adv_x += gi.adv.x() ;
+        natus::math::vec2f_t adv = natus::math::vec2f_t( adv_x * point_size_scale, 0.0f ) * aspect ;
+        adv_x += gi.adv.x()  ;
 
         natus::math::vec2f_t pos_ = pos + adv ;
 
