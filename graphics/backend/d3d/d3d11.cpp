@@ -553,7 +553,19 @@ public: // functions
         {
             if( _cur_fb_active == size_t(-1) )
             {
-                // clear screen
+                bool_t const clear_color = new_states.rss.clear_s.ss.do_color_clear ;
+                bool_t const clear_depth = new_states.rss.clear_s.ss.do_depth_clear ;
+
+                if( clear_color )
+                {
+                    natus::math::vec4f_t const color = new_states.rss.clear_s.ss.clear_color ;
+                    _ctx->clear_render_target_view( color ) ;
+                }
+
+                if( clear_depth )
+                {
+                    _ctx->clear_depth_stencil_view() ;
+                }
             }
             else 
             {
