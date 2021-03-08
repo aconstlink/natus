@@ -142,8 +142,6 @@ glyph_atlas_t glyph_atlas_creator::create_glyph_atlas( font_files_cref_t ffs,
             start_y = 0 ;
             ++channel ;
         }
-        if( channel == 4 )
-            break ;
 
         if( channel > ga.get_num_images() )
         {

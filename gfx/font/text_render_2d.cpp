@@ -148,7 +148,7 @@ void_t text_render_2d::init( natus::font::glyph_atlas_res_t ga, size_t const ng 
                     // group offset for separated group rendering
                     uniform uint u_offset ;
 
-                    out vec2 var_uv ;
+                    out vec3 var_uv ;
                     out vec3 var_color ;
                     flat out int var_layer ;
 
@@ -162,12 +162,13 @@ void_t text_render_2d::init( natus::font::glyph_atlas_res_t ga, size_t const ng 
                         vec4 g1 = texelFetch( u_glyph_infos, idx_glyph * 2 + 0 ) ;
                         vec4 g2 = texelFetch( u_glyph_infos, idx_glyph * 2 + 1 ) ;
                         
-                        var_layer = int( g2.x ) ;
+                        float z = floor( g2.x / 4.0 ) ;
+                        var_layer = int( g2.x ) % 4 ;
 
                         // 
                         // calc texture coordinates
                         // 
-                        var_uv = vec2( sign(in_pos.xy) * 0.5 + 0.5 ) * g1.zw + g1.xy ;
+                        var_uv = vec3( vec2( sign(in_pos.xy) * 0.5 + 0.5 ) * g1.zw + g1.xy, z ) ;
                         
                         // 
                         // calc position and scale
@@ -184,9 +185,9 @@ void_t text_render_2d::init( natus::font::glyph_atlas_res_t ga, size_t const ng 
                     #version 140
 
                     out vec4 out_color ;
-                    uniform sampler2D u_atlas ;
+                    uniform sampler2DArray u_atlas ;
 
-                    in vec2 var_uv ;
+                    in vec3 var_uv ;
                     in vec3 var_color ;
                     flat in int var_layer ;
 
@@ -221,7 +222,7 @@ void_t text_render_2d::init( natus::font::glyph_atlas_res_t ga, size_t const ng 
                     // group offset for separated group rendering
                     uniform uint u_offset ;
 
-                    out vec2 var_uv ;
+                    out vec3 var_uv ;
                     out vec3 var_color ;
                     flat out int var_layer ;
 
@@ -241,12 +242,13 @@ void_t text_render_2d::init( natus::font::glyph_atlas_res_t ga, size_t const ng 
                         vec4 g2 = texelFetch( u_glyph_infos, 
                             ivec2( (idx_glyph*2+1) % whg.x, (idx_glyph*2+1) / whg.x ), 0 ) ;
                         
-                        var_layer = int( g2.x ) ;
+                        float z = floor( g2.x / 4.0 ) ;
+                        var_layer = int( g2.x ) % 4 ;
 
                         // 
                         // calc texture coordinates
                         // 
-                        var_uv = vec2( sign(in_pos.xy) * 0.5 + 0.5 ) * g1.zw + g1.xy ;
+                        var_uv = vec3( vec2( sign(in_pos.xy) * 0.5 + 0.5 ) * g1.zw + g1.xy, z ) ;
                         
                         // 
                         // calc position and scale
@@ -262,11 +264,12 @@ void_t text_render_2d::init( natus::font::glyph_atlas_res_t ga, size_t const ng 
                 set_pixel_shader( natus::graphics::shader_t( R"(
                     #version 300 es
                     precision mediump float ;
+                    precision mediump sampler2DArray ;
                     layout( location = 0 ) out vec4 out_color ;
 
-                    uniform sampler2D u_atlas ;
+                    uniform sampler2DArray u_atlas ;
 
-                    in vec2 var_uv ;
+                    in vec3 var_uv ;
                     in vec3 var_color ;
                     flat in int var_layer ;
 
@@ -295,7 +298,7 @@ void_t text_render_2d::init( natus::font::glyph_atlas_res_t ga, size_t const ng 
                     struct VS_OUTPUT
                     {
                         float4 pos : SV_POSITION ;
-                        float2 tx : TEXCOORD0 ;
+                        float3 tx : TEXCOORD0 ;
                         float3 color : COLOR0 ;
                         int layer : TEXCOORD1 ;
                     };
@@ -320,12 +323,13 @@ void_t text_render_2d::init( natus::font::glyph_atlas_res_t ga, size_t const ng 
                         float4 g1 = u_glyph_infos.Load( idx_glyph * 2 + 0 ) ;
                         float4 g2 = u_glyph_infos.Load( idx_glyph * 2 + 1 ) ;
                         
-                        output.layer = int( g2.x ) ;
+                        float z = floor( g2.x / 4.0 ) ;
+                        output.layer = int( g2.x % 4 ) ;
 
                         // 
                         // calc texture coordinates
                         // 
-                        output.tx = float2( sign(in_pos.xy) * 0.5 + 0.5 ) * g1.zw + g1.xy ;
+                        output.tx = float3( float2( (sign(in_pos.xy) * 0.5 + 0.5 ) * g1.zw + g1.xy ), z ) ;
                         
                         // 
                         // calc position and scale
@@ -343,13 +347,13 @@ void_t text_render_2d::init( natus::font::glyph_atlas_res_t ga, size_t const ng 
                     } )" ) ).
 
                 set_pixel_shader( natus::graphics::shader_t( R"(
-                        Texture2D u_atlas : register( t0 );
+                        Texture2DArray u_atlas : register( t0 );
                         SamplerState smp_u_atlas : register( s0 );
 
                         struct VS_OUTPUT
                         {
                             float4 pos : SV_POSITION ;
-                            float2 tx : TEXCOORD0 ;
+                            float3 tx : TEXCOORD0 ;
                             float3 color : COLOR0 ;
                             int layer : TEXCOORD1 ;
                         };
@@ -379,8 +383,11 @@ void_t text_render_2d::init( natus::font::glyph_atlas_res_t ga, size_t const ng 
     // prepare glyph atlas planes as graphics images
     {
         natus::font::glyph_atlas_ref_t ga = *_ga ;
+
+        // squeeze one image in a color channel. 
+        size_t const z = (ga.get_num_images() >> 2) + (ga.get_num_images() % 4 != 0 ? 1 : 0) ;
         natus::graphics::image_t img = natus::graphics::image_t( 
-        natus::graphics::image_t::dims_t( ga.get_width(), ga.get_height(),1 ) )
+        natus::graphics::image_t::dims_t( ga.get_width(), ga.get_height(), z ) )
             .update( [&]( natus::graphics::image_ptr_t, natus::graphics::image_t::dims_in_t dims, void_ptr_t data_in )
         {
             typedef natus::math::vector4< uint8_t > rgba_t ;
@@ -388,25 +395,28 @@ void_t text_render_2d::init( natus::font::glyph_atlas_res_t ga, size_t const ng 
 
             for( size_t i=0; i<ga.get_num_images(); ++i )
             {
-                // at the moment, only 4 images possible
-                // @todo allow more glyph atlas images
-                size_t const iid = i % 4 ;
-                        
-                auto * raw = ga.get_image(iid) ;
+                auto * raw = ga.get_image(i) ;
+                
+                size_t const z = i >> 2 ;
+                size_t const c = i % 4 ;
+
                 for( size_t y=0; y<dims.y(); ++y )
                 {
                     for( size_t x=0; x<dims.x() ; ++x )
                     {
                         *data_ = rgba_t(0) ;
-                        size_t idx = y * dims.y() + x ;
-                        data_[idx][(iid)%4] = raw->get_plane()[idx] ;
+
+                        size_t const idx_w = z * dims.x() * dims.y() + y * dims.x() + x ;
+                        size_t const idx_r = y * dims.x() + x ;
+                        
+                        data_[idx_w][c] = raw->get_plane()[idx_r] ;
                     }
                 }
             }
         } ) ;
 
-        auto ic = natus::graphics::image_object_t( this_t::name() + ".atlas",
-            std::move( img ) )
+        auto ic = natus::graphics::image_object_t( this_t::name() + ".atlas", std::move( img ) )
+            .set_type( natus::graphics::texture_type::texture_2d_array )
             .set_wrap( natus::graphics::texture_wrap_mode::wrap_s, natus::graphics::texture_wrap_type::repeat )
             .set_wrap( natus::graphics::texture_wrap_mode::wrap_t, natus::graphics::texture_wrap_type::repeat )
             .set_filter( natus::graphics::texture_filter_mode::min_filter, natus::graphics::texture_filter_type::nearest )
