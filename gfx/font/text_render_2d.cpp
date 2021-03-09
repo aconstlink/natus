@@ -514,6 +514,19 @@ void_t text_render_2d::init( natus::font::glyph_atlas_res_t ga, size_t const ng 
                 var->set( this_t::name() + ".text_infos" ) ;
             }
 
+            {
+                auto* var = vs.data_variable<natus::math::mat4f_t>( "u_world" ) ;
+                var->set( natus::math::mat4f_t().identity() ) ;
+            }
+            {
+                auto* var = vs.data_variable<natus::math::mat4f_t>( "u_view" ) ;
+                var->set( natus::math::mat4f_t().identity() ) ;
+            }
+            {
+                auto* var = vs.data_variable<natus::math::mat4f_t>( "u_proj" ) ;
+                var->set( natus::math::mat4f_t().identity() ) ;
+            }
+
             _vars.emplace_back( std::move( vs ) ) ;
         }
         
@@ -533,12 +546,45 @@ void_t text_render_2d::init( natus::font::glyph_atlas_res_t ga, size_t const ng 
     }
 }
         
-void_t text_render_2d::set_view_projection( natus::math::mat4f_cref_t view, natus::math::mat4f_cref_t proj ) 
+void_t text_render_2d::set_view_proj( natus::math::mat4f_cref_t view, natus::math::mat4f_cref_t proj ) 
 {
+    for( auto & g : _gis )
+    {
+        g.proj = proj ;
+        g.view = view ;
+    }
+
+    for( auto & vs : _vars )
+    {
+        {
+            auto* var = vs->data_variable<natus::math::mat4f_t>( "u_view" ) ;
+            var->set( view ) ;
+        }
+        {
+            auto* var = vs->data_variable<natus::math::mat4f_t>( "u_proj" ) ;
+            var->set( proj ) ;
+        }
+    }
 }
 
-void_t text_render_2d::set_view_projection( size_t const, natus::math::mat4f_cref_t view, natus::math::mat4f_cref_t proj ) 
+void_t text_render_2d::set_view_proj( size_t const i, natus::math::mat4f_cref_t view, natus::math::mat4f_cref_t proj ) 
 {
+    if( i >= _gis.size() ) return ;
+
+    _gis[i].proj = proj ;
+    _gis[i].view = view ;
+
+    {
+        auto & vs = _vars[i] ;
+        {
+            auto* var = vs->data_variable<natus::math::mat4f_t>( "u_view" ) ;
+            var->set( view ) ;
+        }
+        {
+            auto* var = vs->data_variable<natus::math::mat4f_t>( "u_proj" ) ;
+            var->set( proj ) ;
+        }
+    }
 }
 
 natus::gfx::result text_render_2d::draw_text( size_t const group, size_t const font_id, size_t const point_size, natus::math::vec2f_cref_t pos, natus::math::vec4f_cref_t color, natus::ntd::string_cref_t text ) 
