@@ -471,6 +471,22 @@ void_t sprite_render_2d::prepare_for_rendering( void_t ) noexcept
             }
             _image_name_changed = false ;
         }
+
+        if( _reset_view_proj )
+        {
+            _reset_view_proj = false ;
+            for( size_t i=0; i<_render_data.size(); ++i )
+            {
+                {
+                    auto* var = _ro->get_variable_set(i)->data_variable<natus::math::mat4f_t>( "u_view" ) ;
+                    var->set( _view ) ;
+                }
+                {
+                    auto* var = _ro->get_variable_set(i)->data_variable<natus::math::mat4f_t>( "u_proj" ) ;
+                    var->set( _proj ) ;
+                }
+            }
+        }
     }
 
     // 3. copy data
@@ -588,4 +604,11 @@ void_t sprite_render_2d::add_variable_set( natus::graphics::render_object_ref_t 
     }
 
     rc.add_variable_set( std::move( vars ) ) ;
+}
+
+void_t sprite_render_2d::set_view_proj( natus::math::mat4f_cref_t view, natus::math::mat4f_cref_t proj ) noexcept 
+{
+    _view = view ;
+    _proj = proj ;
+    _reset_view_proj = true ;
 }

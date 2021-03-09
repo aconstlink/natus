@@ -105,6 +105,10 @@ namespace natus
             bool_t _image_name_changed = true ;
             natus::ntd::string_t _image_name ;
 
+            bool_t _reset_view_proj = false ;
+            natus::math::mat4f_t _view ;
+            natus::math::mat4f_t _proj ;
+
         public:
 
             #if 0
@@ -152,6 +156,8 @@ namespace natus
 
             // draw a sprite/uv rect from a texture of the screen
             void_t draw( size_t const l, natus::math::vec2f_cref_t pos, natus::math::mat2f_cref_t frame, natus::math::vec2f_cref_t scale, natus::math::vec4f_cref_t uv_rect, size_t const slot, natus::math::vec2f_cref_t pivot = natus::math::vec2f_t(0.0f), natus::math::vec4f_cref_t color = natus::math::vec4f_t(1.0f) ) noexcept ;
+
+            void_t set_view_proj( natus::math::mat4f_cref_t view, natus::math::mat4f_cref_t proj ) noexcept ;
 
         public:
 
