@@ -139,8 +139,8 @@ namespace natus
             
             void_t init( natus::font::glyph_atlas_res_t, size_t const = 10 ) noexcept ;
 
-            void_t set_view_projection( natus::math::mat4f_cref_t view, natus::math::mat4f_cref_t proj ) ;
-            void_t set_view_projection( size_t const, natus::math::mat4f_cref_t view, natus::math::mat4f_cref_t proj ) ;
+            void_t set_view_proj( natus::math::mat4f_cref_t view, natus::math::mat4f_cref_t proj ) ;
+            void_t set_view_proj( size_t const, natus::math::mat4f_cref_t view, natus::math::mat4f_cref_t proj ) ;
 
             natus::gfx::result draw_text( size_t const group, size_t const font_id, size_t const point_size,
                 natus::math::vec2f_cref_t pos, natus::math::vec4f_cref_t color, natus::ntd::string_cref_t ) ;
