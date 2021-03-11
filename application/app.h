@@ -159,6 +159,7 @@ namespace natus
             size_t _update_count = 0 ;
             size_t _render_count = 0 ;
             size_t _audio_count = 0 ;
+            size_t _logic_count = 0 ;
 
             typedef std::chrono::high_resolution_clock render_clock_t ;
             render_clock_t::time_point _tp_render = render_clock_t::now() ;
@@ -170,6 +171,11 @@ namespace natus
             physics_clock_t::time_point _tp_physics = physics_clock_t::now() ;
             std::chrono::microseconds _physics_dur = std::chrono::microseconds( 8000 ) ;
             std::chrono::microseconds _physics_residual = std::chrono::microseconds( 0 ) ;
+
+            typedef std::chrono::high_resolution_clock logic_clock_t ;
+            logic_clock_t::time_point _tp_logic = logic_clock_t::now() ;
+            std::chrono::milliseconds _logic_dur = std::chrono::milliseconds( 8 ) ;
+            std::chrono::milliseconds _logic_residual = std::chrono::milliseconds( 0 ) ;
 
         private: // device
 
@@ -215,20 +221,30 @@ namespace natus
             struct audio_data {} ;
             struct device_data {};
 
+            struct logic_data 
+            {
+                // how many seconds passed
+                float_t sec_dt ;
+                // how many milli seconds passed
+                size_t milli_dt ;
+            };
+
             natus_typedef( update_data ) ;
             natus_typedef( physics_data ) ;
             natus_typedef( render_data ) ;
             natus_typedef( audio_data ) ;
             natus_typedef( device_data ) ;
+            natus_typedef( logic_data ) ;
 
         public:
 
             virtual natus::application::result on_init( void_t ) = 0 ;
-            virtual natus::application::result on_update( update_data_in_t ) = 0 ;
+            virtual natus::application::result on_update( update_data_in_t ) { return natus::application::result::ok ; }
             virtual natus::application::result on_graphics( render_data_in_t ) = 0 ;
             virtual natus::application::result on_audio( audio_data_in_t ) { return natus::application::result::ok ; }
             virtual natus::application::result on_device( device_data_in_t ) { return natus::application::result::ok ; }
             virtual natus::application::result on_shutdown( void_t ) = 0 ;
+            virtual natus::application::result on_logic( logic_data_in_t ) noexcept { return natus::application::result::ok ; }
 
             virtual natus::application::result on_event( window_id_t const, this_t::window_event_info_in_t ) 
             { return natus::application::result::ok ; }
@@ -311,11 +327,14 @@ namespace natus
             bool_t after_tool( void_t ) noexcept ;
             bool_t before_device( void_t ) noexcept ;
             bool_t after_device( void_t ) noexcept ;
+            bool_t before_logic( void_t ) noexcept ;
+            bool_t after_logic( void_t ) noexcept ;
 
 
             void_t compute_and_reset_timing( render_data & rd ) noexcept ;
             void_t compute_and_reset_timing( update_data & rd ) noexcept ;
             bool_t compute_and_reset_timing( physics_data & rd ) noexcept ;
+            bool_t compute_and_reset_timing( logic_data & rd ) noexcept ;
 
         private:
 

@@ -277,28 +277,13 @@ bool_t app::platform_init( void_t )
     _tp_update = this_t::update_clock_t::now() ;
     _tp_render = this_t::render_clock_t::now() ;
     _tp_physics = this_t::physics_clock_t::now() ;
+    _tp_logic = this_t::logic_clock_t::now() ;
     return true ;
 }
 
 //***
 bool_t app::platform_update( void_t ) 
 {
-    if( this_t::before_update() )
-    {
-        this_t::update_data_t dat ;
-        this_t::compute_and_reset_timing( dat ) ;
-
-        this->on_update( dat ) ;
-        this_t::after_update() ;
-    }
-
-    if( this_t::before_audio() )
-    {
-        this_t::audio_data_t dat ;
-        this->on_audio( dat ) ;
-        this_t::after_audio() ;
-    }
-
     if( this_t::before_device() )
     {
         if( _windows.size() != 0 )
@@ -315,12 +300,37 @@ bool_t app::platform_update( void_t )
         this_t::after_device() ;
     }
 
+    if( this_t::before_update() )
+    {
+        this_t::update_data_t dat ;
+        this_t::compute_and_reset_timing( dat ) ;
+
+        this->on_update( dat ) ;
+        this_t::after_update() ;
+    }
+
+    if( this_t::before_logic() )
+    {
+        this_t::logic_data_t dat ;
+        this_t::compute_and_reset_timing( dat ) ;
+
+        this->on_logic( dat ) ;
+        this_t::after_logic() ;
+    }
+
     if( this_t::before_physics() )
     {
         this_t::physics_data_t dat ;
         this_t::compute_and_reset_timing( dat ) ;
         this->on_physics( dat ) ;
         this_t::after_physics() ;
+    }
+
+    if( this_t::before_audio() )
+    {
+        this_t::audio_data_t dat ;
+        this->on_audio( dat ) ;
+        this_t::after_audio() ;
     }
 
     if( this_t::before_render() )
@@ -415,6 +425,20 @@ bool_t app::before_device( void_t ) noexcept
 
 //***
 bool_t app::after_device( void_t ) noexcept 
+{
+    return true ;
+}
+
+//***
+bool_t app::before_logic( void_t ) noexcept 
+{
+   auto const dt = std::chrono::duration_cast< std::chrono::milliseconds >( this_t::logic_clock_t::now() - _tp_logic ) + _logic_residual ;
+
+    return dt >= _logic_dur ;
+}
+
+//***
+bool_t app::after_logic( void_t ) noexcept 
 {
     return true ;
 }
@@ -861,6 +885,22 @@ bool_t app::compute_and_reset_timing( physics_data & d ) noexcept
     _tp_physics = this_t::physics_clock_t::now() ;
 
     d.micro_dt = _physics_dur.count() ;
+    d.sec_dt = dt ;
+
+    return true ;
+}
+
+bool_t app::compute_and_reset_timing( logic_data & d ) noexcept 
+{
+    auto const milli = std::chrono::duration_cast< std::chrono::milliseconds >( this_t::logic_clock_t::now() - _tp_logic ) + _logic_residual ;
+
+    _logic_residual = milli - _logic_dur ;
+
+    float_t const dt = float_t( double_t( _logic_dur.count() ) / 1000.0 ) ;
+
+    _tp_logic = this_t::logic_clock_t::now() ;
+
+    d.milli_dt = _logic_dur.count() ;
     d.sec_dt = dt ;
 
     return true ;
