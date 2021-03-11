@@ -90,26 +90,6 @@ namespace natus
             {
                 natus::graphics::ivariable_ptr_t var = nullptr ;
 
-                switch( t )
-                {
-                case natus::graphics::type::tchar: var = this_t::from_type_struct<char_t>( name, ts ) ; break ;
-                case natus::graphics::type::tuchar: var = this_t::from_type_struct<uchar_t>( name, ts ) ; break ; 
-                case natus::graphics::type::tshort: var = this_t::from_type_struct<short_t>( name, ts ) ; break ;
-                case natus::graphics::type::tushort: var = this_t::from_type_struct<ushort_t>( name, ts ) ; break ;
-                case natus::graphics::type::tint: var = this_t::from_type_struct<int_t>( name, ts ) ; break ;
-                case natus::graphics::type::tuint: var = this_t::from_type_struct<uint_t>( name, ts ) ; break ;
-                case natus::graphics::type::tfloat: var = this_t::from_type_struct<float_t>( name, ts ) ; break ;
-                case natus::graphics::type::tdouble: var = this_t::from_type_struct<double_t>( name, ts ) ; break ;
-                case natus::graphics::type::tbool: var = this_t::from_type_struct<bool_t>( name, ts ) ; break ;
-                default: break ;
-                }
-
-                if( natus::core::is_nullptr( var ) ) 
-                {
-                    natus::log::global_t::error( natus_log_fn( "invalid type for variable " + name ) ) ;
-                    return var ;
-                }
-
                 // before inserting, check if name and type match
                 {
                     natus::concurrent::lock_guard_t lk( _mtx ) ;
@@ -122,8 +102,6 @@ namespace natus
 
                     if( iter != _variables.end() )
                     {
-                        natus::memory::global_t::dealloc( var ) ;
-
                         if( iter->type != t || iter->type_struct != ts )
                         {
                             natus::log::global_t::error( natus_log_fn( "type mismatch for " + name ) ) ;
@@ -133,13 +111,35 @@ namespace natus
                         return iter->var ;
                     }
 
-                    this_t::data_t d ;
-                    d.name = name ;
-                    d.type = t ;
-                    d.type_struct = ts ;
-                    d.var = var ;
+                    {
+                        switch( t )
+                        {
+                        case natus::graphics::type::tchar: var = this_t::from_type_struct<char_t>( name, ts ) ; break ;
+                        case natus::graphics::type::tuchar: var = this_t::from_type_struct<uchar_t>( name, ts ) ; break ; 
+                        case natus::graphics::type::tshort: var = this_t::from_type_struct<short_t>( name, ts ) ; break ;
+                        case natus::graphics::type::tushort: var = this_t::from_type_struct<ushort_t>( name, ts ) ; break ;
+                        case natus::graphics::type::tint: var = this_t::from_type_struct<int_t>( name, ts ) ; break ;
+                        case natus::graphics::type::tuint: var = this_t::from_type_struct<uint_t>( name, ts ) ; break ;
+                        case natus::graphics::type::tfloat: var = this_t::from_type_struct<float_t>( name, ts ) ; break ;
+                        case natus::graphics::type::tdouble: var = this_t::from_type_struct<double_t>( name, ts ) ; break ;
+                        case natus::graphics::type::tbool: var = this_t::from_type_struct<bool_t>( name, ts ) ; break ;
+                        default: break ;
+                        }
 
-                    _variables.emplace_back( d ) ;
+                        if( natus::core::is_nullptr( var ) ) 
+                        {
+                            natus::log::global_t::error( natus_log_fn( "invalid type for variable " + name ) ) ;
+                            return var ;
+                        }
+
+                        this_t::data_t d ;
+                        d.name = name ;
+                        d.type = t ;
+                        d.type_struct = ts ;
+                        d.var = var ;
+
+                        _variables.emplace_back( d ) ;
+                    }
                 }
 
                 return var ;
