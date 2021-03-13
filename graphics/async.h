@@ -68,7 +68,10 @@ namespace natus
             this_ref_t update( natus::graphics::image_object_res_t, natus::graphics::result_res_t = natus::graphics::result_res_t() ) noexcept ;
 
             this_ref_t use( natus::graphics::framebuffer_object_res_t, natus::graphics::result_res_t = natus::graphics::result_res_t() ) noexcept ;
-            this_ref_t use( natus::graphics::state_object_res_t, size_t const = 0, bool_t const = true, natus::graphics::result_res_t = natus::graphics::result_res_t() ) noexcept ;
+            this_ref_t unuse( natus::graphics::backend::unuse_type const, natus::graphics::result_res_t = natus::graphics::result_res_t() ) noexcept ;
+
+            this_ref_t push( natus::graphics::state_object_res_t, size_t const = 0, bool_t const = true, natus::graphics::result_res_t = natus::graphics::result_res_t() ) noexcept ;
+            this_ref_t pop( natus::graphics::backend::pop_type const, natus::graphics::result_res_t = natus::graphics::result_res_t() ) noexcept ;
             this_ref_t render( natus::graphics::render_object_res_t, natus::graphics::backend::render_detail_cref_t, 
                 natus::graphics::result_res_t = natus::graphics::result_res_t() ) noexcept ;
 
@@ -195,9 +198,21 @@ namespace natus
                 return *this ;
             }
 
-            this_ref_t use( natus::graphics::state_object_res_t obj, size_t const sid = 0 , bool_t const push = true, natus::graphics::result_res_t res = natus::graphics::result_res_t() ) noexcept
+            this_ref_t unuse( natus::graphics::backend::unuse_type const t, natus::graphics::result_res_t res = natus::graphics::result_res_t() ) noexcept
             {
-                _async->use( obj, sid, push, res ) ;
+                _async->unuse( t, res ) ;
+                return *this ;
+            }
+
+            this_ref_t push( natus::graphics::state_object_res_t obj, size_t const sid = 0 , bool_t const push = true, natus::graphics::result_res_t res = natus::graphics::result_res_t() ) noexcept
+            {
+                _async->push( obj, sid, push, res ) ;
+                return *this ;
+            }
+
+            this_ref_t pop( natus::graphics::backend::pop_type const t, natus::graphics::result_res_t res = natus::graphics::result_res_t() ) noexcept
+            {
+                _async->pop( t, res ) ;
                 return *this ;
             }
 

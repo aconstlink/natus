@@ -440,7 +440,7 @@ void_t imgui::render( natus::graphics::async_view_t async )
                 }
 
                 {
-                    async.use( _render_states, rs_id, false ) ;
+                    async.push( _render_states, rs_id, false ) ;
                 }
 
                 // do rendering
@@ -453,7 +453,7 @@ void_t imgui::render( natus::graphics::async_view_t async )
                 }
 
                 {
-                    async.use( natus::graphics::state_object_t() ) ;
+                    async.pop( natus::graphics::backend::pop_type::render_state ) ;
                 }
             }
 

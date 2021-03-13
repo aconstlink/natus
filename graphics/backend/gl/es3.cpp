@@ -2192,20 +2192,19 @@ natus::graphics::result es3_backend::update( natus::graphics::image_object_res_t
     return natus::graphics::result::ok ;
 }
 
+//****
 natus::graphics::result es3_backend::use( natus::graphics::framebuffer_object_res_t obj ) noexcept 
 {
     if( !obj.is_valid() )
     {
-        _pimpl->deactivate_framebuffer() ;
-        return natus::graphics::result::ok ;
+        return this_t::unuse( natus::graphics::backend::unuse_type::framebuffer ) ;
     }
 
     natus::graphics::id_res_t id = obj->get_id() ;
 
     if( id->is_not_valid( this_t::get_bid() ) )
     {
-        _pimpl->deactivate_framebuffer() ;
-        return natus::graphics::result::ok ;
+        return this_t::unuse( natus::graphics::backend::unuse_type::framebuffer ) ;
     }
 
     size_t const oid = id->get_oid( this_t::get_bid() ) ;
@@ -2216,25 +2215,36 @@ natus::graphics::result es3_backend::use( natus::graphics::framebuffer_object_re
 }
 
 //****
-natus::graphics::result es3_backend::use( natus::graphics::state_object_res_t obj, size_t const sid, bool_t const ) noexcept 
+natus::graphics::result es3_backend::unuse( natus::graphics::backend::unuse_type const ) noexcept 
+{
+    _pimpl->deactivate_framebuffer() ;
+    return natus::graphics::result::ok ;
+}
+
+//****
+natus::graphics::result es3_backend::push( natus::graphics::state_object_res_t obj, size_t const sid, bool_t const ) noexcept 
 {
     if( !obj.is_valid() )
     {
-        _pimpl->handle_render_state( size_t( -1 ), size_t( -1 ) ) ;
-        return natus::graphics::result::ok ;
+        return this_t::pop( natus::graphics::backend::pop_type::render_state ) ;
     }
 
     natus::graphics::id_res_t id = obj->get_id() ;
 
     if( id->is_not_valid( this_t::get_bid() ) )
     {
-        _pimpl->handle_render_state( size_t( -1 ), size_t( -1 ) ) ;
-        return natus::graphics::result::ok ;
+        return this_t::pop( natus::graphics::backend::pop_type::render_state ) ;
     }
 
     size_t const oid = id->get_oid( this_t::get_bid() ) ;
     _pimpl->handle_render_state( oid, sid ) ;
 
+    return natus::graphics::result::ok ;
+}
+
+natus::graphics::result es3_backend::pop( natus::graphics::backend::pop_type const ) noexcept 
+{
+    _pimpl->handle_render_state( size_t( -1 ), size_t( -1 ) ) ;
     return natus::graphics::result::ok ;
 }
 

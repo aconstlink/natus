@@ -718,7 +718,7 @@ natus::gfx::result text_render_2d::render( size_t const i )
 
     _asyncs.for_each( [&]( natus::graphics::async_view_t a ) 
     { 
-        a.use( _render_states ) ;
+        a.push( _render_states ) ;
 
         // set the offset to the first glyph of this group
         {
@@ -734,6 +734,7 @@ natus::gfx::result text_render_2d::render( size_t const i )
 
         a.render( _rc, detail ) ;
         
+        a.pop( natus::graphics::backend::pop_type::render_state ) ;
     } ) ;
 
     return natus::gfx::result::ok ;

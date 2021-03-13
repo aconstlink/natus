@@ -87,7 +87,19 @@ natus::graphics::result null_backend::use( natus::graphics::framebuffer_object_r
 }
 
 //****
-natus::graphics::result null_backend::use( natus::graphics::state_object_res_t, size_t const, bool_t const ) noexcept 
+natus::graphics::result null_backend::unuse( natus::graphics::backend::unuse_type const ) noexcept
+{
+    return natus::graphics::result::ok ;
+}
+
+//****
+natus::graphics::result null_backend::push( natus::graphics::state_object_res_t, size_t const, bool_t const ) noexcept 
+{
+    return natus::graphics::result::ok ;
+}
+
+//****
+natus::graphics::result null_backend::pop( pop_type const ) noexcept 
 {
     return natus::graphics::result::ok ;
 }

@@ -304,8 +304,8 @@ void_t quad::render( natus::graphics::async_views_t asyncs ) noexcept
 {
     asyncs.for_each( [&]( natus::graphics::async_view_t a )
     {
-        a.use( _rs ) ;
+        a.push( _rs ) ;
         a.render( _ro ) ;
-        a.use( natus::graphics::state_object_res_t() ) ;
+        a.pop( natus::graphics::backend::pop_type::render_state ) ;
     } ) ;
 }

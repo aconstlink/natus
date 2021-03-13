@@ -48,6 +48,16 @@ namespace natus
             };
             natus_typedef( render_detail ) ;
 
+            enum class pop_type
+            {
+                render_state
+            };
+
+            enum class unuse_type
+            {
+                framebuffer
+            };
+
         public: // user interface
 
             virtual natus::graphics::result configure( natus::graphics::geometry_object_res_t ) noexcept = 0 ;
@@ -66,7 +76,9 @@ namespace natus
             virtual natus::graphics::result update( natus::graphics::image_object_res_t ) noexcept = 0 ;
 
             virtual natus::graphics::result use( natus::graphics::framebuffer_object_res_t ) noexcept = 0 ;
-            virtual natus::graphics::result use( natus::graphics::state_object_res_t, size_t const, bool_t const ) noexcept = 0 ;
+            virtual natus::graphics::result unuse( natus::graphics::backend::unuse_type const ) noexcept = 0 ;
+            virtual natus::graphics::result push( natus::graphics::state_object_res_t, size_t const, bool_t const ) noexcept = 0 ;
+            virtual natus::graphics::result pop( pop_type const ) noexcept = 0 ;
 
             virtual natus::graphics::result render( natus::graphics::render_object_res_t, natus::graphics::backend::render_detail_cref_t ) noexcept = 0 ;
 
