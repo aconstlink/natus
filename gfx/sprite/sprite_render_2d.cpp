@@ -494,7 +494,8 @@ void_t sprite_render_2d::prepare_for_rendering( void_t ) noexcept
         size_t const bsib = _ao->data_buffer().get_sib() ;
 
         size_t const sizeof_data = sizeof(this_t::the_data) / sizeof( natus::math::vec4f_t ) ;
-        _ao->data_buffer().resize( _num_sprites * sizeof_data ) ;
+        if( _ao->data_buffer().get_num_elements() < (_num_sprites * sizeof_data) )
+            _ao->data_buffer().resize( _num_sprites * sizeof_data ) ;
 
         size_t lstart = 0 ;
 
