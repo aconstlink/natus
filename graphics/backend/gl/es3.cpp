@@ -2193,6 +2193,12 @@ natus::graphics::result es3_backend::update( natus::graphics::image_object_res_t
 }
 
 //****
+natus::graphics::result es3_backend::update( natus::graphics::render_object_res_t, size_t const varset ) noexcept 
+{
+    return natus::graphics::result::ok ;
+}
+
+//****
 natus::graphics::result es3_backend::use( natus::graphics::framebuffer_object_res_t obj ) noexcept 
 {
     if( !obj.is_valid() )

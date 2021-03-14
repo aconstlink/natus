@@ -2325,6 +2325,11 @@ natus::graphics::result gl3_backend::update( natus::graphics::image_object_res_t
     return natus::graphics::result::ok ;
 }
 
+natus::graphics::result gl3_backend::update( natus::graphics::render_object_res_t, size_t const varset ) noexcept 
+{
+    return natus::graphics::result::ok ;
+}
+
 //****
 natus::graphics::result gl3_backend::use( natus::graphics::framebuffer_object_res_t obj ) noexcept
 {

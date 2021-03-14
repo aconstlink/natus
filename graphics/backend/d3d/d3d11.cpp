@@ -2082,26 +2082,9 @@ public: // functions
         return true ;
     }
 
-    bool_t render( size_t const id, size_t const varset_id = size_t( 0 ), UINT const start_element = UINT( 0 ),
-        UINT const num_elements = UINT( -1 ) )
+    bool_t update( size_t const id, natus::graphics::render_object_ref_t obj, size_t const varset_id )
     {
         this_t::render_data_ref_t rnd = renders[ id ] ;
-
-        if( rnd.shd_id == size_t( -1 ) )
-        {
-            natus::log::global_t::error( natus_log_fn( "shader invalid. First shader compilation failed probably." ) ) ;
-            return false ;
-        }
-
-        
-        this_t::shader_data_cref_t shd = shaders[ rnd.shd_id ] ;
-        this_t::geo_data_ref_t geo = geo_datas[ rnd.geo_id ] ;
-
-        if( shd.vs == nullptr )
-        {
-            natus::log::global_t::error( natus_log_fn( "shader missing" ) ) ;
-            return false ;
-        }
 
         ID3D11DeviceContext * ctx = _ctx->ctx() ;
 
@@ -2130,8 +2113,7 @@ public: // functions
                 offset += iter->sib ;
             }
 
-            ctx->UpdateSubresource( cb.ptr, 0, nullptr, cb.mem, 0, 0 );
-            ctx->VSSetConstantBuffers( cb.slot, 1, &cb.ptr ) ;
+            ctx->UpdateSubresource( cb.ptr, 0, nullptr, cb.mem, 0, 0 ) ;
         }
 
         // pixel shader variables
@@ -2159,7 +2141,44 @@ public: // functions
                 offset += iter->sib ;
             }
 
-            ctx->UpdateSubresource( cb.ptr, 0, nullptr, cb.mem, 0, 0 );
+            ctx->UpdateSubresource( cb.ptr, 0, nullptr, cb.mem, 0, 0 ) ;
+        }
+
+        return true ;
+    }
+
+    bool_t render( size_t const id, size_t const varset_id = size_t( 0 ), UINT const start_element = UINT( 0 ),
+        UINT const num_elements = UINT( -1 ) )
+    {
+        this_t::render_data_ref_t rnd = renders[ id ] ;
+
+        if( rnd.shd_id == size_t( -1 ) )
+        {
+            natus::log::global_t::error( natus_log_fn( "shader invalid. First shader compilation failed probably." ) ) ;
+            return false ;
+        }
+
+        
+        this_t::shader_data_cref_t shd = shaders[ rnd.shd_id ] ;
+        this_t::geo_data_ref_t geo = geo_datas[ rnd.geo_id ] ;
+
+        if( shd.vs == nullptr )
+        {
+            natus::log::global_t::error( natus_log_fn( "shader missing" ) ) ;
+            return false ;
+        }
+
+        ID3D11DeviceContext * ctx = _ctx->ctx() ;
+
+        // vertex shader variables
+        for( auto & cb : rnd.var_sets_data[ varset_id ].second )
+        {
+            ctx->VSSetConstantBuffers( cb.slot, 1, &cb.ptr ) ;
+        }
+
+        // pixel shader variables
+        for( auto& cb : rnd.var_sets_data_ps[ varset_id ].second )
+        {
             ctx->PSSetConstantBuffers( cb.slot, 1, &cb.ptr ) ;
         }
 
@@ -2715,6 +2734,22 @@ natus::graphics::result d3d11_backend::update( natus::graphics::array_object_res
 //****
 natus::graphics::result d3d11_backend::update( natus::graphics::image_object_res_t ) noexcept 
 {
+    return natus::graphics::result::ok ;
+}
+
+//****
+natus::graphics::result d3d11_backend::update( natus::graphics::render_object_res_t obj, size_t const varset ) noexcept 
+{
+    natus::graphics::id_res_t id = obj->get_id() ;
+    
+    if( id->is_not_valid( this_t::get_bid() ) )
+    {
+        natus::log::global_t::error( natus_log_fn( "invalid id" ) ) ;
+        return natus::graphics::result::failed ;
+    }
+
+    _pimpl->update( id->get_oid( this_t::get_bid() ), *obj, varset ) ;
+    
     return natus::graphics::result::ok ;
 }
 

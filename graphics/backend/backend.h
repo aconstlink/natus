@@ -74,6 +74,7 @@ namespace natus
             virtual natus::graphics::result update( natus::graphics::geometry_object_res_t ) noexcept = 0 ;
             virtual natus::graphics::result update( natus::graphics::array_object_res_t ) noexcept = 0 ;
             virtual natus::graphics::result update( natus::graphics::image_object_res_t ) noexcept = 0 ;
+            virtual natus::graphics::result update( natus::graphics::render_object_res_t, size_t const varset ) noexcept = 0 ;
 
             virtual natus::graphics::result use( natus::graphics::framebuffer_object_res_t ) noexcept = 0 ;
             virtual natus::graphics::result unuse( natus::graphics::backend::unuse_type const ) noexcept = 0 ;

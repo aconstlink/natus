@@ -249,15 +249,25 @@ async::this_ref_t async::pop( natus::graphics::backend::pop_type const t, natus:
 }
 
 //****
-async::this_ref_t async::render( natus::graphics::render_object_res_t config, natus::graphics::backend::render_detail_cref_t detail,
+async::this_ref_t async::render( natus::graphics::render_object_res_t obj, natus::graphics::backend::render_detail_cref_t detail,
     natus::graphics::result_res_t res ) noexcept
 {
+    {
+        natus::concurrent::lock_guard_t lk( _configures_mtx ) ;
+
+        _configures.push_back( [=] ( natus::graphics::backend_ptr_t be ) mutable
+        {
+            auto const ires = be->update( obj, detail.varset ) ;
+            if( res.is_valid() ) *res = ires ;
+        } ) ;
+    }
+
     {
         natus::concurrent::lock_guard_t lk( _runtimes_mtx ) ;
 
         _runtimes.push_back( [=] ( natus::graphics::backend_ptr_t be ) mutable
         { 
-            auto const ires = be->render( std::move( config ), detail ) ;
+            auto const ires = be->render( std::move( obj ), detail ) ;
             if( res.is_valid() ) *res = ires ;
         } ) ;
     }
@@ -296,26 +306,28 @@ void_t async::system_update( void_t ) noexcept
 
     // runtime functions
     {
-        _backend->render_begin() ;
-
         this_t::commands_t coms ;
         {
             natus::concurrent::lock_guard_t lk( _runtimes_mtx ) ;
             coms = std::move( _runtimes ) ;
         }
 
-        auto* bptr = _backend.get_sptr().get() ;
-        for( auto& rtz : coms )
         {
-            rtz( bptr ) ;
+            natus::concurrent::lock_guard_t lk( _frame_mtx ) ;
+            _num_enter = 0 ;
         }
+        
+        {
+            _backend->render_begin() ;
 
-        _backend->render_end() ;
-    }
+            auto* bptr = _backend.get_sptr().get() ;
+            for( auto& rtz : coms )
+            {
+                rtz( bptr ) ;
+            }
 
-    {
-        natus::concurrent::lock_guard_t lk( _frame_mtx ) ;
-        _num_enter = 0 ;
+            _backend->render_end() ;
+        }
     }
 }
 
