@@ -1799,6 +1799,71 @@ struct es3_backend::pimpl
         return true ;
     }
 
+    bool_t update_for_render( size_t const id, natus::graphics::render_object_ref_t obj, size_t const varset_id )
+    {
+        this_t::render_data & config = rconfigs[ id ] ;
+        this_t::shader_data & sconfig = shaders[ config.shd_id ] ;
+
+        {
+            glUseProgram( sconfig.pg_id ) ;
+            if( natus::ogl::error::check_and_log( natus_log_fn( "glUseProgram" ) ) )
+            {
+                return false ;
+            }
+        }
+
+        if( config.var_sets_data.size() > varset_id )
+        {
+            // data vars
+            {
+                auto& varset = config.var_sets_data[ varset_id ] ;
+                for( auto& item : varset.second )
+                {
+                    auto& uv = sconfig.uniforms[ item.uniform_id ] ;
+                    uv.do_copy_funk( item.var ) ;
+                    uv.do_uniform_funk() ;
+                }
+            }
+
+            // tex vars
+            // this section must match with the section in the render function
+            {
+                int_t tex_unit = 0 ;
+                // textures
+                {
+                    auto& varset = config.var_sets_texture[ varset_id ] ;
+                    for( auto& item : varset.second )
+                    {
+                        auto var = natus::graphics::data_variable< int_t >( tex_unit ) ;
+                        auto & uv = sconfig.uniforms[ item.uniform_id ] ;
+                    
+                        uv.do_copy_funk( &var ) ;
+                        uv.do_uniform_funk() ;
+
+                        ++tex_unit ;
+                    }
+                }
+
+                // array data vars
+                {
+                    auto & varset = config.var_sets_array[ varset_id ] ;
+                    for( auto & item : varset.second )
+                    {
+                        auto var = natus::graphics::data_variable< int_t >( tex_unit ) ;
+                        auto & uv = sconfig.uniforms[ item.uniform_id ] ;
+                    
+                        uv.do_copy_funk( &var ) ;
+                        uv.do_uniform_funk() ;
+
+                        ++tex_unit ;
+                    }
+                }
+            }
+        }
+
+        return true ;
+    }
+
     bool_t render( size_t const id, size_t const varset_id = size_t(0), GLsizei const start_element = GLsizei(0), 
         GLsizei const num_elements = GLsizei(-1) )
     {
@@ -1823,17 +1888,6 @@ struct es3_backend::pimpl
 
         if( config.var_sets_data.size() > varset_id )
         {
-            // data vars
-            {
-                auto& varset = config.var_sets_data[ varset_id ] ;
-                for( auto& item : varset.second )
-                {
-                    auto& uv = sconfig.uniforms[ item.uniform_id ] ;
-                    uv.do_copy_funk( item.var ) ;
-                    uv.do_uniform_funk() ;
-                }
-            }
-
             // tex vars
             {
                 int_t tex_unit = 0 ;
@@ -1856,13 +1910,6 @@ struct es3_backend::pimpl
                         glTexParameteri( ic.type, GL_TEXTURE_MAG_FILTER, ic.filter_types[1] ) ;
                         natus::es::error::check_and_log( natus_log_fn( "glTexParameteri" ) ) ;
                     }
-
-                    auto var = natus::graphics::data_variable< int_t >( tex_unit ) ;
-                    auto & uv = sconfig.uniforms[ item.uniform_id ] ;
-                    
-                    uv.do_copy_funk( &var ) ;
-                    uv.do_uniform_funk() ;
-
                     ++tex_unit ;
                 }
             }
@@ -2193,8 +2240,16 @@ natus::graphics::result es3_backend::update( natus::graphics::image_object_res_t
 }
 
 //****
-natus::graphics::result es3_backend::update( natus::graphics::render_object_res_t, size_t const varset ) noexcept 
+natus::graphics::result es3_backend::update( natus::graphics::render_object_res_t obj, size_t const varset ) noexcept 
 {
+    natus::graphics::id_res_t id = obj->get_id() ;
+    size_t const oid = id->get_oid( this_t::get_bid() ) ;
+
+    {
+        auto const res = _pimpl->update_for_render( oid, *obj, varset ) ;
+        if( natus::core::is_not( res ) ) return natus::graphics::result::failed ;
+    }
+
     return natus::graphics::result::ok ;
 }
 
