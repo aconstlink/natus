@@ -130,31 +130,23 @@ struct gl3_backend::pimpl
             GLuint loc ;
             GLenum type ;
 
-            // this variable's memory location
-            void_ptr_t mem = nullptr ;
-
             // the GL uniform function
             natus::ogl::uniform_funk_t uniform_funk ;
 
-            // set by the user in user-space
-            //natus::graphics::ivariable_ptr_t var ;
-
-            void_t do_uniform_funk( void_t )
+            void_t do_uniform_funk( void_ptr_t mem_ )
             {
-                uniform_funk( loc, 1, mem ) ;
+                uniform_funk( loc, 1, mem_ ) ;
                 natus::ogl::error::check_and_log( natus_log_fn( "glUniform" ) ) ;
             }
 
-            void_t do_copy_funk( natus::graphics::ivariable_ptr_t var )
+            void_t do_copy_funk( void_ptr_t mem_, natus::graphics::ivariable_ptr_t var )
             {
-                ::std::memcpy( mem, var->data_ptr(), natus::ogl::uniform_size_of( type ) ) ;
+                std::memcpy( mem_, var->data_ptr(), natus::ogl::uniform_size_of( type ) ) ;
             }
         };
         natus_typedef( uniform_variable ) ;
 
         natus::ntd::vector< uniform_variable > uniforms ;
-
-        void_ptr_t uniform_mem = nullptr ;
     } ;
     natus_typedef( shader_data ) ;
 
@@ -181,6 +173,9 @@ struct gl3_backend::pimpl
             size_t uniform_id ;
             // the user variable holding the data.
             natus::graphics::ivariable_ptr_t var ;
+
+            // pointing into the mem_block
+            void_ptr_t mem = nullptr ;
         };
 
         natus::ntd::vector< natus::graphics::variable_set_res_t > var_sets ;
@@ -196,6 +191,9 @@ struct gl3_backend::pimpl
             size_t uniform_id ;
             GLint tex_id ;
             size_t img_id ;
+
+            // pointing into the mem_block
+            void_ptr_t mem = nullptr ;
         };
         natus::ntd::vector< std::pair<
             natus::graphics::variable_set_res_t,
@@ -207,11 +205,17 @@ struct gl3_backend::pimpl
             size_t uniform_id ;
             GLint tex_id ;
             size_t buf_id ;
+
+            // pointing into the mem_block
+            void_ptr_t mem = nullptr ;
         };
         natus::ntd::vector< std::pair<
             natus::graphics::variable_set_res_t,
             natus::ntd::vector< uniform_array_data_link > > > var_sets_array ;
         
+        // memory block for all variables in all variable sets.
+        void_ptr_t mem_block = nullptr ;
+
         natus::ntd::vector< render_state_sets > rss ;
     };
     natus_typedef( render_data ) ;
@@ -926,16 +930,7 @@ struct gl3_backend::pimpl
             // delete memory
         }
         config.attributes.clear() ;
-
-        for( auto & v : config.uniforms )
-        {
-            // delete memory. No dealloc. The memory is 
-            // a pointer to a memory block.
-            v.mem = nullptr ;
-        }
         config.uniforms.clear() ;
-        natus::memory::global_t::dealloc( config.uniform_mem ) ;
-        config.uniform_mem = nullptr ;
     }
 
     //***********************
@@ -1213,46 +1208,6 @@ struct gl3_backend::pimpl
 
             config.uniforms[ i ] = vd ;
         }
-
-        // alloc memory for all uniforms
-        {
-            size_t sib = 0 ;
-            for( auto& v : config.uniforms )
-            {
-                sib += natus::ogl::uniform_size_of( v.type ) ;
-            }
-            natus_assert( config.uniform_mem == nullptr ) ;
-            config.uniform_mem = natus::memory::global_t::alloc( sib, 
-                natus_log_fn("uniform memory block") ) ;
-        }
-
-        // assign ptr
-        {
-            size_t sib = 0 ;
-            for( auto& v : config.uniforms )
-            {
-                v.mem = void_ptr_t( byte_ptr_t( config.uniform_mem ) + sib ) ;
-                natus::ogl::uniform_default_value( v.type )( v.mem ) ;
-                sib += natus::ogl::uniform_size_of( v.type ) ;
-            }
-        }
-    }
-
-    //***********************
-    void_t update_all_uniforms( this_t::shader_data & config )
-    {
-        GLuint const program_id = config.pg_id ;
-
-        {
-            glUseProgram( program_id ) ;
-            if( natus::ogl::error::check_and_log( natus_log_fn( "glUseProgram" ) ) )
-                return ;
-        }
-
-        for( auto & v : config.uniforms )
-        {
-            v.do_uniform_funk() ;
-        }
     }
 
     //***********************
@@ -1355,6 +1310,8 @@ struct gl3_backend::pimpl
             this_t::post_link_uniforms( sconfig ) ;
         }
 
+        // if the shader is redone, all render objects using
+        // the shader need to be updated
         {
             for( size_t i=0; i<rconfigs.size(); ++i )
             {
@@ -1369,6 +1326,12 @@ struct gl3_backend::pimpl
                 auto vs = std::move( rd.var_sets ) ;
                 for( auto& item : vs )
                     this_t::connect( rd, item ) ;
+
+                this_t::render_object_variable_memory( rd, shaders[ rd.shd_id ] ) ;
+                for( size_t vs_id=0; vs_id<rd.var_sets.size(); ++vs_id )
+                {
+                    this_t::update_variables( i, vs_id ) ;
+                }
             }
         }
 
@@ -1386,6 +1349,9 @@ struct gl3_backend::pimpl
             rconfigs[ oid ].var_sets_texture.clear() ;
             rconfigs[ oid ].var_sets_array.clear() ;
             rconfigs[ oid ].var_sets.clear() ;
+
+            natus::memory::global_t::dealloc( rconfigs[ oid ].mem_block ) ;
+            rconfigs[ oid ].mem_block = nullptr ;
         }
 
         return oid ;
@@ -1453,18 +1419,86 @@ struct gl3_backend::pimpl
                     natus_log_fn( "connect" ) ) ;
             } ) ;
         }
-
-        /*{
-            auto vss = ::std::move( config.var_sets ) ;
-            for( auto & vs : vss )
-            {
-                auto const res = this_t::connect( id, vs.first ) ;
-                natus::log::global_t::warning( natus::core::is_not( res ), 
-                    natus_log_fn( "connect" ) ) ;
-            }
-        }*/
         
+        this_t::render_object_variable_memory( config, shaders[ config.shd_id ] ) ;
+
         return true ;
+    }
+
+    void_t render_object_variable_memory( this_t::render_data & rd, this_t::shader_data & shader )
+    {
+        auto& config = rd ;
+
+        // construct memory block
+        {
+            size_t sib = 0 ;
+            for( auto & vs : config.var_sets_data )
+            {
+                for( auto & link : vs.second )
+                {
+                    auto & uv = shader.uniforms[ link.uniform_id ] ;
+                    sib += natus::ogl::uniform_size_of( uv.type ) ;
+                }
+            }
+
+            for( auto & vs : config.var_sets_texture )
+            {
+                for( auto & link : vs.second )
+                {
+                    auto & uv = shader.uniforms[ link.uniform_id ] ;
+                    sib += natus::ogl::uniform_size_of( uv.type ) ;
+                }
+            }
+
+            for( auto & vs : config.var_sets_array )
+            {
+                for( auto & link : vs.second )
+                {
+                    auto & uv = shader.uniforms[ link.uniform_id ] ;
+                    sib += natus::ogl::uniform_size_of( uv.type ) ;
+                }
+            }
+
+            natus::memory::global_t::dealloc( config.mem_block ) ;
+            config.mem_block = natus::memory::global_t::alloc( sib, "[gl3] : render config memory block" ) ;
+        }
+
+        // assign memory locations
+        {
+            void_ptr_t mem = config.mem_block ;
+            for( auto & vs : config.var_sets_data )
+            {
+                for( auto & link : vs.second )
+                {
+                    link.mem = mem ;
+
+                    auto & uv = shader.uniforms[ link.uniform_id ] ;
+                    mem = reinterpret_cast<void_ptr_t>( size_t(mem) + size_t( natus::ogl::uniform_size_of( uv.type ) )) ;
+                }
+            }
+
+            for( auto & vs : config.var_sets_texture )
+            {
+                for( auto & link : vs.second )
+                {
+                    link.mem = mem ;
+
+                    auto & uv = shader.uniforms[ link.uniform_id ] ;
+                    mem = reinterpret_cast<void_ptr_t>( size_t(mem) + size_t( natus::ogl::uniform_size_of( uv.type ) )) ;
+                }
+            }
+
+            for( auto & vs : config.var_sets_array )
+            {
+                for( auto & link : vs.second )
+                {
+                    link.mem = mem ;
+
+                    auto & uv = shader.uniforms[ link.uniform_id ] ;
+                    mem = reinterpret_cast<void_ptr_t>( size_t(mem) + size_t( natus::ogl::uniform_size_of( uv.type ) )) ;
+                }
+            }
+        }
     }
 
     size_t construct_geo( size_t oid, natus::graphics::geometry_object_ref_t obj ) 
@@ -1701,8 +1735,7 @@ struct gl3_backend::pimpl
 
         this_t::shader_data_ref_t shd = shaders[ config.shd_id ] ;
 
-        if( this_t::connect( config, vs ) )
-            this_t::update_all_uniforms( shd ) ;
+        this_t::connect( config, vs ) ;
 
         return true ;
     }
@@ -1897,9 +1930,9 @@ struct gl3_backend::pimpl
         return true ;
     }
 
-    bool_t update_for_render( size_t const id, natus::graphics::render_object_ref_t obj, size_t const varset_id )
+    bool_t update_variables( size_t const rd_id, size_t const varset_id )
     {
-        this_t::render_data & config = rconfigs[ id ] ;
+        this_t::render_data & config = rconfigs[ rd_id ] ;
         this_t::shader_data & sconfig = shaders[ config.shd_id ] ;
 
         {
@@ -1918,7 +1951,7 @@ struct gl3_backend::pimpl
                 for( auto& item : varset.second )
                 {
                     auto& uv = sconfig.uniforms[ item.uniform_id ] ;
-                    uv.do_copy_funk( item.var ) ;
+                    uv.do_copy_funk( item.mem, item.var ) ;
                 }
             }
 
@@ -1934,7 +1967,7 @@ struct gl3_backend::pimpl
                         auto var = natus::graphics::data_variable< int_t >( tex_unit ) ;
                         auto & uv = sconfig.uniforms[ item.uniform_id ] ;
                     
-                        uv.do_copy_funk( &var ) ;
+                        uv.do_copy_funk( item.mem, &var ) ;
 
                         ++tex_unit ;
                     }
@@ -1948,7 +1981,7 @@ struct gl3_backend::pimpl
                         auto var = natus::graphics::data_variable< int_t >( tex_unit ) ;
                         auto & uv = sconfig.uniforms[ item.uniform_id ] ;
                     
-                        uv.do_copy_funk( &var ) ;
+                        uv.do_copy_funk( item.mem, &var ) ;
 
                         ++tex_unit ;
                     }
@@ -1991,7 +2024,7 @@ struct gl3_backend::pimpl
                 for( auto& item : varset.second )
                 {
                     auto& uv = sconfig.uniforms[ item.uniform_id ] ;
-                    uv.do_uniform_funk() ;
+                    uv.do_uniform_funk( item.mem ) ;
                 }
             }
 
@@ -2023,7 +2056,7 @@ struct gl3_backend::pimpl
 
                         {
                             auto & uv = sconfig.uniforms[ item.uniform_id ] ;
-                            uv.do_uniform_funk() ;
+                            uv.do_uniform_funk( item.mem ) ;
                         }
 
                         ++tex_unit ;
@@ -2042,7 +2075,7 @@ struct gl3_backend::pimpl
 
                         {
                             auto & uv = sconfig.uniforms[ item.uniform_id ] ;
-                            uv.do_uniform_funk() ;
+                            uv.do_uniform_funk( item.mem ) ;
                         }
 
                         ++tex_unit ;
@@ -2391,7 +2424,7 @@ natus::graphics::result gl3_backend::update( natus::graphics::render_object_res_
     size_t const oid = id->get_oid( this_t::get_bid() ) ;
 
     {
-        auto const res = _pimpl->update_for_render( oid, *obj, varset ) ;
+        auto const res = _pimpl->update_variables( oid, varset ) ;
         if( natus::core::is_not( res ) ) return natus::graphics::result::failed ;
     }
 
