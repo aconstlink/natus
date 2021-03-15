@@ -1782,6 +1782,8 @@ struct es3_backend::pimpl
                 glTexImage2D( target, level, internal_format, width, height,
                      border, format, type, data ) ;
                 natus::es::error::check_and_log( natus_log_fn( "glTexImage2D" ) ) ;
+
+                config.sib = obj.data_buffer().get_sib() ;
             }
             else
             {
@@ -1792,9 +1794,6 @@ struct es3_backend::pimpl
                                  format, type, data ) ;
                 natus::es::error::check_and_log( natus_log_fn( "glTexSubImage2D" ) ) ;
             }
-
-            config.sib = obj.data_buffer().get_sib() ;
-
         }
         return true ;
     }
@@ -1806,7 +1805,7 @@ struct es3_backend::pimpl
 
         {
             glUseProgram( sconfig.pg_id ) ;
-            if( natus::ogl::error::check_and_log( natus_log_fn( "glUseProgram" ) ) )
+            if( natus::es::error::check_and_log( natus_log_fn( "glUseProgram" ) ) )
             {
                 return false ;
             }
@@ -1833,21 +1832,6 @@ struct es3_backend::pimpl
                 {
                     auto& varset = config.var_sets_texture[ varset_id ] ;
                     for( auto& item : varset.second )
-                    {
-                        auto var = natus::graphics::data_variable< int_t >( tex_unit ) ;
-                        auto & uv = sconfig.uniforms[ item.uniform_id ] ;
-                    
-                        uv.do_copy_funk( &var ) ;
-                        uv.do_uniform_funk() ;
-
-                        ++tex_unit ;
-                    }
-                }
-
-                // array data vars
-                {
-                    auto & varset = config.var_sets_array[ varset_id ] ;
-                    for( auto & item : varset.second )
                     {
                         auto var = natus::graphics::data_variable< int_t >( tex_unit ) ;
                         auto & uv = sconfig.uniforms[ item.uniform_id ] ;
