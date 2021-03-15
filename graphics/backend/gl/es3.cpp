@@ -232,11 +232,14 @@ struct es3_backend::pimpl
         bool_t valid = false ;
         size_t img_id = size_t(-1) ;
         natus::ntd::string_t name ;
+        // if an image is used, this memory
+        // is required to tmp copy before
+        // calling glTex*2D
+        void_ptr_t tmp_mem = nullptr ;
+        GLuint sib = 0 ;
 
         //GLuint tex_id = GLuint( -1 ) ;
         //GLuint buf_id = GLuint( -1 ) ;
-
-        //GLuint sib = 0 ;
     } ;
     natus_typedef( array_data ) ;
 
@@ -1772,26 +1775,37 @@ struct es3_backend::pimpl
             GLenum const format = GL_RGBA ;
             GLenum const type = GL_FLOAT ;
 
-            void_cptr_t data = obj.data_buffer().data() ;
+            size_t const req_sib = width * height * sizeof( natus::math::vec4f_t ) ;
+            void_cptr_t data_ = obj.data_buffer().data() ;
 
             if( is_config || (sib == 0 || config.sib < sib) )
             {
+                // at the moment, copy the data to a tmp memory is not enough 
+                // memory is present. This is due to the width, height computation,
+                // which keeps the texture quadratic. 
+                natus::memory::global_t::dealloc_raw( data.tmp_mem ) ;
+                data.tmp_mem = natus::memory::global_t::alloc_raw<byte_t>( req_sib ) ;
+                std::memcpy( data.tmp_mem, data_, sib ) ;
+
                 GLint const border = 0 ;
                 GLint const internal_format = GL_RGBA32F ;
 
                 glTexImage2D( target, level, internal_format, width, height,
-                     border, format, type, data ) ;
+                     border, format, type, data.tmp_mem ) ;
                 natus::es::error::check_and_log( natus_log_fn( "glTexImage2D" ) ) ;
 
-                config.sib = obj.data_buffer().get_sib() ;
+                config.sib = req_sib ;
+                data.sib = req_sib ;
             }
             else
             {
+                std::memcpy( data.tmp_mem, data_, sib ) ;
+
                 GLint const xoffset = 0 ;
                 GLint const yoffset = 0 ;
 
                 glTexSubImage2D( target, level, xoffset, yoffset, width, height,
-                                 format, type, data ) ;
+                                 format, type, data.tmp_mem ) ;
                 natus::es::error::check_and_log( natus_log_fn( "glTexSubImage2D" ) ) ;
             }
         }
