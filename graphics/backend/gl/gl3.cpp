@@ -1919,7 +1919,6 @@ struct gl3_backend::pimpl
                 {
                     auto& uv = sconfig.uniforms[ item.uniform_id ] ;
                     uv.do_copy_funk( item.var ) ;
-                    uv.do_uniform_funk() ;
                 }
             }
 
@@ -1936,7 +1935,6 @@ struct gl3_backend::pimpl
                         auto & uv = sconfig.uniforms[ item.uniform_id ] ;
                     
                         uv.do_copy_funk( &var ) ;
-                        uv.do_uniform_funk() ;
 
                         ++tex_unit ;
                     }
@@ -1951,7 +1949,6 @@ struct gl3_backend::pimpl
                         auto & uv = sconfig.uniforms[ item.uniform_id ] ;
                     
                         uv.do_copy_funk( &var ) ;
-                        uv.do_uniform_funk() ;
 
                         ++tex_unit ;
                     }
@@ -1988,6 +1985,16 @@ struct gl3_backend::pimpl
 
         if( config.var_sets_data.size() > varset_id )
         {
+            // data vars
+            {
+                auto& varset = config.var_sets_data[ varset_id ] ;
+                for( auto& item : varset.second )
+                {
+                    auto& uv = sconfig.uniforms[ item.uniform_id ] ;
+                    uv.do_uniform_funk() ;
+                }
+            }
+
             // tex vars
             // this section must match with the section in the update(render_object) function
             {
@@ -2014,6 +2021,11 @@ struct gl3_backend::pimpl
                             natus::ogl::error::check_and_log( natus_log_fn( "glTexParameteri" ) ) ;
                         }
 
+                        {
+                            auto & uv = sconfig.uniforms[ item.uniform_id ] ;
+                            uv.do_uniform_funk() ;
+                        }
+
                         ++tex_unit ;
                     }
                 }
@@ -2027,6 +2039,11 @@ struct gl3_backend::pimpl
                         natus::ogl::error::check_and_log( natus_log_fn( "glActiveTexture" ) ) ;
                         glBindTexture( GL_TEXTURE_BUFFER, item.tex_id ) ;
                         natus::ogl::error::check_and_log( natus_log_fn( "glBindTexture" ) ) ;
+
+                        {
+                            auto & uv = sconfig.uniforms[ item.uniform_id ] ;
+                            uv.do_uniform_funk() ;
+                        }
 
                         ++tex_unit ;
                     }
