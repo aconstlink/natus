@@ -881,16 +881,7 @@ struct es3_backend::pimpl
             // delete memory
         }
         config.attributes.clear() ;
-
-        for( auto & v : config.uniforms )
-        {
-            // delete memory. No dealloc. The memory is 
-            // a pointer to a memory block.
-            v.mem = nullptr ;
-        }
         config.uniforms.clear() ;
-        natus::memory::global_t::dealloc( config.uniform_mem ) ;
-        config.uniform_mem = nullptr ;
     }
 
     //***********************
@@ -1160,29 +1151,6 @@ struct es3_backend::pimpl
             vd.uniform_funk = natus::ogl::uniform_funk( gl_uniform_type ) ;
 
             config.uniforms[ i ] = vd ;
-        }
-
-        // alloc memory for all uniforms
-        {
-            size_t sib = 0 ;
-            for( auto& v : config.uniforms )
-            {
-                sib += natus::ogl::uniform_size_of( v.type ) ;
-            }
-            natus_assert( config.uniform_mem == nullptr ) ;
-            config.uniform_mem = natus::memory::global_t::alloc( sib, 
-                natus_log_fn("uniform memory block") ) ;
-        }
-
-        // assign ptr
-        {
-            size_t sib = 0 ;
-            for( auto& v : config.uniforms )
-            {
-                v.mem = void_ptr_t( byte_ptr_t( config.uniform_mem ) + sib ) ;
-                natus::ogl::uniform_default_value( v.type )( v.mem ) ;
-                sib += natus::ogl::uniform_size_of( v.type ) ;
-            }
         }
     }
 
@@ -1680,8 +1648,7 @@ struct es3_backend::pimpl
 
         this_t::shader_data_ref_t shd = shaders[ config.shd_id ] ;
 
-        if( this_t::connect( config, vs ) )
-            this_t::update_all_uniforms( shd ) ;
+        this_t::connect( config, vs ) ;
 
         return true ;
     }
