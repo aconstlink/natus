@@ -40,7 +40,7 @@ set( SOURCES
 
 natus_vs_src_dir( SOURCES )
 
-add_library( ${cur_lib_name} ${SNAKEOIL_LIBRARY_BUILD_TYPE} ${SOURCES} )
+add_library( ${cur_lib_name} ${NATUS_LIBRARY_BUILD_TYPE} ${SOURCES} )
 add_library( ${cur_alias_name} ALIAS ${cur_lib_name} )
 
 target_link_libraries( ${cur_lib_name}
