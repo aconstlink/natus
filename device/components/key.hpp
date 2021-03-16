@@ -77,7 +77,12 @@ namespace natus
 
                 this_ref_t operator = ( key_state const bs ) noexcept
                 {
-                    _s = bs ;
+                    using ks_t = natus::device::components::key_state ;
+                    if( _s == ks_t::pressing && bs == ks_t::pressed )
+                        _s = ks_t::pressing ;
+                    else
+                        _s = bs ;
+
                     return *this ;
                 }
 
