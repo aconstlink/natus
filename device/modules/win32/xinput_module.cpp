@@ -381,7 +381,7 @@ namespace this_file
 //***
 xinput_module::xinput_module( void_t ) 
 {
-    #if defined( SNAKEOIL_OS_WIN8 )
+    #if defined( NATUS_TARGET_OS_WIN10 ) || defined( NATUS_TARGET_OS_WIN8 )
     XInputEnable( true ) ;
     #endif
 
@@ -410,7 +410,7 @@ xinput_module::xinput_module( this_rref_t rhv )
 //***
 xinput_module::~xinput_module( void_t ) 
 {
-    #if defined( SNAKEOIL_OS_WIN8 )
+    #if defined( NATUS_TARGET_OS_WIN10 ) || defined( NATUS_TARGET_OS_WIN8 )
     XInputEnable( false ) ;
     #endif
 
