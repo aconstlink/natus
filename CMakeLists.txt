@@ -100,6 +100,7 @@ set( subdirs_header_only
     "nsl"
     "profiling"
     "property"
+    "collide"
     )
 
 set( subdirs  )
