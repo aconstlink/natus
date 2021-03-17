@@ -36,7 +36,7 @@ namespace natus
                 /// constructs the aabb without checking for
                 /// validity of the given values. The user must 
                 /// assert the correctness of max and being on the 
-                /// correct sides herself.
+                /// correct sides.
                 aabb( vec2_cref_t min, vec2_cref_t max ) noexcept
                 {
                     _max = max ;
