@@ -382,7 +382,7 @@ namespace this_file
 xinput_module::xinput_module( void_t ) 
 {
     #if defined( NATUS_TARGET_OS_WIN10 ) || defined( NATUS_TARGET_OS_WIN8 )
-    XInputEnable( true ) ;
+    //XInputEnable( true ) ;
     #endif
 
     // by XInput 1.4 spec. only 4 devices supported.
@@ -411,7 +411,7 @@ xinput_module::xinput_module( this_rref_t rhv )
 xinput_module::~xinput_module( void_t ) 
 {
     #if defined( NATUS_TARGET_OS_WIN10 ) || defined( NATUS_TARGET_OS_WIN8 )
-    XInputEnable( false ) ;
+    //XInputEnable( false ) ;
     #endif
 
     for( auto item : _devices )
