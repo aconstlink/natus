@@ -323,6 +323,15 @@ bool_t app::platform_update( void_t )
         this_t::physics_data_t dat ;
         this_t::compute_and_reset_timing( dat ) ;
         this->on_physics( dat ) ;
+        // how to handle the missed time?
+        {
+            size_t const l = _physics_residual / _physics_dur ;
+            for( size_t i=0; i<l; ++i )
+            {
+                this->on_physics( dat ) ;
+            }
+            _physics_residual -= _physics_dur * l ;
+        }
         this_t::after_physics() ;
     }
 
@@ -497,7 +506,7 @@ bool_t app::after_update( void_t )
 //***
 bool_t app::before_physics( void_t ) 
 {
-    auto const micro = std::chrono::duration_cast< std::chrono::microseconds >( this_t::physics_clock_t::now() - _tp_physics ) + _physics_residual ;
+    auto const micro = std::chrono::duration_cast< std::chrono::microseconds >( this_t::physics_clock_t::now() - _tp_physics )  ;
 
     return micro >= _physics_dur ;
 }
@@ -876,9 +885,9 @@ void_t app::compute_and_reset_timing( update_data & d ) noexcept
 
 bool_t app::compute_and_reset_timing( physics_data & d ) noexcept 
 {
-    auto const micro = std::chrono::duration_cast< std::chrono::microseconds >( this_t::physics_clock_t::now() - _tp_physics ) + _physics_residual ;
+    auto const micro = std::chrono::duration_cast< std::chrono::microseconds >( this_t::physics_clock_t::now() - _tp_physics )  ;
 
-    _physics_residual = micro - _physics_dur ;
+    _physics_residual += micro - _physics_dur ;
 
     float_t const dt = float_t( double_t( _physics_dur.count() ) / 1000000.0 ) ;
 
