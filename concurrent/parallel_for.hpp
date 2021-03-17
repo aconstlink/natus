@@ -5,7 +5,7 @@
 #include "job/job.h"
 
 #include "global.h"
-#include "scheduler.h"
+#include "job/job_scheduler.h"
 
 #include <natus/memory/arena/exp_arena.hpp>
 
@@ -29,7 +29,7 @@ namespace natus
             }
 
             natus_typedefs( natus::concurrent::range_1d<T>, range ) ;
-            natus_typedefs( natus::memory::natus::experimental::arena< job_t >, job_arena ) ;
+            natus_typedefs( natus::memory::experimental::arena< job_t >, job_arena ) ;
 
             static job_arena_t local_arena ;
 
