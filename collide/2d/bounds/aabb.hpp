@@ -86,6 +86,21 @@ namespace natus
                     return inside ;
                 }
 
+                bool_t is_overlapping( this_cref_t other ) const
+                {
+                    bool_t inside = false ;
+
+                    vec2_t points[ 4 ] ;
+                    other.get_points( points ) ;
+
+                    for( size_t i = 0; i < 4; ++i )
+                    {
+                        if( inside = this_t::is_inside( points[ i ] ) ) break ;
+                    }
+
+                    return inside ;
+                }
+
                 /// computes the closest point to p on aabb.
                 /// q will contain the closest point.
                 /// @note only works if p is outside of aabb.
