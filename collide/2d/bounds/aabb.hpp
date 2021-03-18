@@ -80,7 +80,7 @@ namespace natus
                     for( size_t i = 0; i < 4; ++i )
                     {
                         inside = this_t::is_inside( points[ i ] ) ;
-                        if( natus_core::is_not( inside ) ) break ;
+                        if( natus::core::is_not( inside ) ) break ;
                     }
 
                     return inside ;
@@ -132,7 +132,7 @@ namespace natus
                     const vec2_t max_dist = p - _max ;
 
                     const vec4_t dist = vec4_t( min_dist, max_dist ).
-                        select( vec4_t( type_t(0) ), vec4b_t( bmin, bmax ) ) ;
+                        select( vec4_t( type_t(0) ), natus::math::vec4b_t( bmin, bmax ) ) ;
                 
                     return dist.dot(dist) ;
                 }
@@ -141,13 +141,14 @@ namespace natus
                 /// @param p [in] the point to which the normal is required.
                 /// @param n [out] the normal ( x, y, hesse distance )
                 /// @note the distance is measured to be of length to the aabb's center.
-                void_t calculate_normal_for( vec2_cref_t p, vec3_ref_t n ) const noexcept
+                vec3_t calculate_normal_for( vec2_cref_t p ) const noexcept
                 {
+                    vec3_t n ;
                     const vec3_t p_local( p - this_t::get_center(), type_t(1) ) ;
                     const vec2_t ext = this_t::get_extend() ;
 
-                    const type_t sign_x = natus::math::sign<type_t>( p_local.x() ) ;
-                    const type_t sign_y = natus::math::sign<type_t>( p_local.y() ) ;
+                    const type_t sign_x = natus::math::fn<type_t>::sign( p_local.x() ) ;
+                    const type_t sign_y = natus::math::fn<type_t>::sign( p_local.y() ) ;
 
                     const vec3_t n_x( sign_x, type_t(0), -ext.x() ) ;
                     const vec3_t n_y( type_t(0), sign_y, -ext.y() ) ;
@@ -169,16 +170,7 @@ namespace natus
                     {
                         n = ( d_x > type_t(0) ) ? n_x : n_y ;
                     }
-                }
 
-                /// returns the aabb side normal for the point p.
-                /// the normal will also contain the distance to the 
-                /// box's center. 
-                /// @see calculate_normal_for
-                vec3_t calculate_normal_for( vec2_cref_t p ) const noexcept
-                {
-                    vec3f_t n ;
-                    calculate_normal_for( p, n ) ;
                     return n ;
                 }
 
