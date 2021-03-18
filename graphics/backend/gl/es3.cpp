@@ -567,14 +567,24 @@ struct es3_backend::pimpl
             dims.y( dims.y() + dims.y() % 2 ) ;
         }
 
+        bool_t const requires_store = fb.colors[0]== GLuint(-1) ;
+
+        {
+            if( fb.colors[0] == GLuint(-1) )
+            {
+                glGenTextures( GLsizei( 8 ), fb.colors ) ;
+                natus::es::error::check_and_log( natus_log_fn( "glGenTextures" ) ) ;
+            }
+
+            if( fb.depth == GLuint(-1) )
+            {
+                glGenTextures( GLsizei( 1 ), &fb.depth ) ;
+                natus::es::error::check_and_log( natus_log_fn( "glGenTextures" ) ) ;
+            }
+        }
+
         // construct textures
         {
-            glDeleteTextures( GLsizei( fb.nt ), fb.colors ) ;
-            natus::es::error::check_and_log( natus_log_fn( "glDeleteTextures" ) ) ;
-
-            glGenTextures( GLsizei( nt ), fb.colors ) ;
-            natus::es::error::check_and_log( natus_log_fn( "glGenTextures" ) ) ;
-
             for( size_t i = 0; i < nt; ++i )
             {
                 GLuint const tid = fb.colors[ i ] ;
@@ -630,12 +640,6 @@ struct es3_backend::pimpl
         // depth/stencil
         if( dst != natus::graphics::depth_stencil_target_type::unknown )
         {
-            glDeleteTextures( GLsizei( 1 ), &fb.depth ) ;
-            natus::es::error::check_and_log( natus_log_fn( "glDeleteTextures" ) ) ;
-
-            glGenTextures( GLsizei( 1 ), &fb.depth ) ;
-            natus::es::error::check_and_log( natus_log_fn( "glGenTextures" ) ) ;
-
             {
                 GLuint const tid = fb.depth ;
 
@@ -696,6 +700,7 @@ struct es3_backend::pimpl
         }
 
         // store images
+        if( requires_store )
         {
             size_t const id = img_configs.size() ;
             img_configs.resize( img_configs.size() + nt ) ;
@@ -721,6 +726,7 @@ struct es3_backend::pimpl
         }
 
         // store depth/stencil
+        if( requires_store )
         {
             size_t const id = img_configs.size() ;
             img_configs.resize( img_configs.size() + 1 ) ;
