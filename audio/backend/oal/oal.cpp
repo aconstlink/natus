@@ -564,9 +564,11 @@ struct natus::audio::oal_backend::pimpl
         {
             if( buffer.get_sib() != size_t( alb.sib ) )
             {
+                size_t const sib = buffer.get_sib() / 2 ;
+
                 natus::memory::global_t::dealloc_raw<ALCbyte>( (ALCbyte*)alb.data ) ;
-                alb.data = natus::memory::global_t::alloc_raw<ALCbyte>( buffer.get_sib() ) ;
-                alb.sib = ALsizei( buffer.get_sib() ) ;
+                alb.data = natus::memory::global_t::alloc_raw<ALCbyte>( sib ) ;
+                alb.sib = ALsizei( sib ) ;
             }
         }
 
@@ -641,10 +643,19 @@ struct natus::audio::oal_backend::pimpl
 
         if( det.to == natus::audio::execution_options::stop )
         {
-            alSourceStop( bo.sid ) ;
-            auto const res = alGetError() ;
-            natus::log::global_t::error( res != ALC_NO_ERROR,
-                "[OpenAL Backend] : alSourceStop" ) ;
+            {
+                alSourceStop( bo.sid ) ;
+                auto const res = alGetError() ;
+                natus::log::global_t::error( res != ALC_NO_ERROR,
+                    "[OpenAL Backend] : alSourceStop" ) ;
+            }
+
+            {
+                alSourcei( bo.sid, AL_LOOPING, AL_FALSE ) ;
+                auto const res = alGetError() ;
+                natus::log::global_t::error( res != ALC_NO_ERROR,
+                    "[OpenAL Backend] : alSourcei" ) ;
+            }
         }
         else if( det.to == natus::audio::execution_options::pause )
         {
@@ -676,11 +687,21 @@ struct natus::audio::oal_backend::pimpl
                 natus::log::global_t::error( res != ALC_NO_ERROR,
                     "[OpenAL Backend] : alSourcef" ) ;
             }
+           
+            {
+                alSourcei( bo.sid, AL_LOOPING, det.loop ? AL_TRUE : AL_FALSE ) ;
+                auto const res = alGetError() ;
+                natus::log::global_t::error( res != ALC_NO_ERROR,
+                    "[OpenAL Backend] : alSourcei" ) ;
 
-            alSourcePlay( bo.sid );
-            auto const res = alGetError() ;
-            natus::log::global_t::error( res != ALC_NO_ERROR,
-                "[OpenAL Backend] : alSourceRewind" ) ;
+            }
+            
+            {
+                alSourcePlay( bo.sid );
+                auto const res = alGetError() ;
+                natus::log::global_t::error( res != ALC_NO_ERROR,
+                    "[OpenAL Backend] : alSourceRewind" ) ;
+            }
         }
 
         {
@@ -699,6 +720,12 @@ struct natus::audio::oal_backend::pimpl
                 obj.set_execution_state( natus::audio::execution_state::paused ) ;
             }
         }
+    }
+
+    void_t update( void_t ) noexcept
+    {
+        // stuff can be done here per frame
+        // track state of playing sources
     }
 };
 
@@ -833,7 +860,7 @@ void_t oal_backend::release( void_t ) noexcept
 
 void_t oal_backend::begin( void_t ) noexcept
 {
-    
+    _pimpl->update() ;
 }
 
 void_t oal_backend::end( void_t ) noexcept

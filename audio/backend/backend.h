@@ -27,6 +27,7 @@ namespace natus
                 natus::audio::execution_options to ;
                 size_t sample = size_t( -1 ) ;
                 float_t sec = float_t( -1 ) ;
+                bool_t loop = false ;
             };
             natus_typedef( execute_detail ) ;
 
