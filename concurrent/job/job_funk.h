@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../typedefs.h"
-#include "../range/range_1d.hpp"
+#include "../range_1d.hpp"
 
 #include <functional>
 

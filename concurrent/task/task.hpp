@@ -84,15 +84,15 @@ namespace natus
 
             this_res_t in_between( this_res_t other ) noexcept
             {
-                _inbetweens.emplace_back( other ) ;
                 other->inc_incoming() ;
+                _inbetweens.emplace_back( other ) ;
                 return other ;
             }
 
             this_res_t then( this_res_t other ) noexcept
             {
-                _thens.emplace_back( other ) ;
                 other->inc_incoming() ;
+                _thens.emplace_back( other ) ;
                 return other ;
             }
 
@@ -134,11 +134,15 @@ namespace natus
                     for( auto & t : _thens ) 
                     {
                         c->then( t ) ;
-
-                        // t is not scheduled yet
-                        t->dec_incoming() ; 
                     }
                     tasks.emplace_back( c ) ;
+                }
+
+                // t is not scheduled yet it is
+                // delayed to the children
+                for( auto & t : _thens ) 
+                {
+                    t->dec_incoming() ; 
                 }
             }
 

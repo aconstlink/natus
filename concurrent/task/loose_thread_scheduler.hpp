@@ -38,6 +38,9 @@ namespace natus
             natus::concurrent::mutex_t _mtx ;
             tasks_t _tasks ;
 
+            natus::concurrent::mutex_t _mtx_f ;
+            natus::ntd::vector< std::future<void_t> > _futures ;
+
         public:
 
             loose_thread_scheduler( void_t ) noexcept
@@ -67,6 +70,20 @@ namespace natus
 
         private:
 
+            void_t place_future( std::future< void_t > && f_ ) noexcept
+            {
+                natus::concurrent::lock_guard_t lk( _mtx_f ) ;
+                for( auto & f : _futures )
+                {
+                    if( f.wait_for( std::chrono::microseconds(0) ) == std::future_status::ready )
+                    {
+                        f = std::move( f_ ) ;
+                        return ;
+                    }
+                }
+                _futures.emplace_back( std::move( f_ ) ) ;
+            }
+
             void_t execute( task_res_t t ) noexcept
             {
                 if( natus::concurrent::task::scheduler_accessor::will_execute( t ) ) 
@@ -80,6 +97,7 @@ namespace natus
 
                         _sd->owner->schedule( std::move( tasks ) ) ;
                     } ) ;
+                    this_t::place_future( std::move(f) ) ;
                 }
             }
 
@@ -113,7 +131,6 @@ namespace natus
                     this_t::execute( t ) ;
                 }
             }
-
         };
     }
 }
