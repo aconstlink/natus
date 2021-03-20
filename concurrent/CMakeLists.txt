@@ -16,12 +16,16 @@ set( sources
     "mutex.hpp"
 
     "parallel_for.hpp"
-    "range/range_1d.hpp"
+    "range_1d.hpp"
     
     "job/job.h"
     "job/job_funk.h"
     "job/job_scheduler.h"
     "job/job_scheduler.cpp"
+
+    "task/task.hpp"
+    "task/loose_thread_scheduler.hpp"
+    "task/fixed_thread_scheduler.hpp"
     )
     
 if( NATUS_TARGET_OS_WIN )
