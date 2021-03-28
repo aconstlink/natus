@@ -41,8 +41,7 @@ namespace natus
                 xlib::window_res_t create_window( gl_info_in_t, window_info_in_t ) ;
                 Window create_egl_window( window_info_in_t ) ;
             };
-            natus_typedef( window ) ;
-            typedef natus::memory::res< window_t > window_res_t ;
+            natus_res_typedef( window ) ;
         }
     }
 }

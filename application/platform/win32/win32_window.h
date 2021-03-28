@@ -71,8 +71,7 @@ namespace natus
                 void_t send_resize( HWND ) ;
                 void_t send_destroy( void_t ) ;
             };
-            natus_typedef( window ) ;
-            typedef natus::memory::res< window > window_res_t ;
+            natus_res_typedef( window ) ;            
         }
     }
 }

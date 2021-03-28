@@ -25,7 +25,7 @@ namespace natus
 
             virtual imodule_res_t create_module( natus::ntd::string_cref_t ) noexcept 
             {
-                return natus::memory::res< T >( T() ) ;
+                return natus::memory::res_t< T >( T() ) ;
             }
         };
     }

@@ -111,7 +111,7 @@ namespace natus
 
             virtual void_t on_screen( screen_dpi_message_cref_t msg ) noexcept
             {
-                natus::concurrent::lock_t lk( _mtx ) ;
+                natus::concurrent::lock_guard_t lk( _mtx ) ;
                 _states.dpi_msg_changed = true ;
                 _states.dpi_msg = msg ;
                 _has_any_change = true ;
@@ -119,7 +119,7 @@ namespace natus
 
             virtual void_t on_screen( screen_size_message_cref_t msg ) noexcept
             {
-                natus::concurrent::lock_t lk( _mtx ) ;
+                natus::concurrent::lock_guard_t lk( _mtx ) ;
                 _states.msize_msg_changed = true ;
                 _states.msize_msg = msg ;
                 _has_any_change = true ;
@@ -127,7 +127,7 @@ namespace natus
 
             virtual void_t on_resize( resize_message_cref_t msg ) noexcept
             {
-                natus::concurrent::lock_t lk( _mtx ) ;
+                natus::concurrent::lock_guard_t lk( _mtx ) ;
                 _states.resize_changed = true ;
                 _states.resize_msg.combine( msg ) ;
                 _has_any_change = true ;
@@ -135,7 +135,7 @@ namespace natus
 
             virtual void_t on_visible( show_message_cref_t msg ) noexcept
             {
-                natus::concurrent::lock_t lk( _mtx ) ;
+                natus::concurrent::lock_guard_t lk( _mtx ) ;
                 _states.show_changed = true ;
                 _states.show_msg = msg ;
                 _has_any_change = true ;
@@ -143,7 +143,7 @@ namespace natus
 
             virtual void_t on_close( close_message_cref_t msg ) noexcept
             {
-                natus::concurrent::lock_t lk( _mtx ) ;
+                natus::concurrent::lock_guard_t lk( _mtx ) ;
                 _states.close_changed = true ;
                 _states.close_msg = msg ;
                 _has_any_change = true ;
@@ -151,7 +151,7 @@ namespace natus
 
             virtual void_t on_vsync( vsync_message_cref_t msg ) noexcept
             {
-                natus::concurrent::lock_t lk( _mtx ) ;
+                natus::concurrent::lock_guard_t lk( _mtx ) ;
                 _states.vsync_msg_changed = true ;
                 _states.vsync_msg = msg ;
                 _has_any_change = true ;
@@ -159,7 +159,7 @@ namespace natus
 
             virtual void_t on_fullscreen( fullscreen_message_cref_t msg ) noexcept
             {
-                natus::concurrent::lock_t lk( _mtx ) ;
+                natus::concurrent::lock_guard_t lk( _mtx ) ;
                 _states.fulls_msg_changed = true ;
                 _states.fulls_msg = msg ;
                 _has_any_change = true ;

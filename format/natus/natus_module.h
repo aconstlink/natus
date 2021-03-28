@@ -32,7 +32,7 @@ namespace natus
         };
         natus_typedef( natus_module ) ;
         typedef natus::format::module_factory<natus_module> natus_factory_t ;
-        typedef natus::memory::res< natus_factory_t > natus_factory_res_t ;
+        typedef natus::memory::res_t< natus_factory_t > natus_factory_res_t ;
 
         struct natus_item : public item
         {

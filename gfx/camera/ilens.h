@@ -32,6 +32,6 @@ namespace natus
                 natus::math::vec3f_cref_t up, natus::math::vec3f_cref_t at ) = 0 ;
         };
         natus_res_typedef( ilens ) ;
-        typedef natus::memory::res< ilens_t > lens_res_t ;
+        typedef natus::memory::res_t< ilens_t > lens_res_t ;
     }
 }

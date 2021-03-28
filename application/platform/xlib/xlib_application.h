@@ -57,7 +57,7 @@ namespace natus
                 virtual natus::application::result on_exec( void_t ) ;
             };
             natus_res_typedef( xlib_application ) ;
-            typedef natus::memory::res< xlib_application > application_res_t ;
+            typedef natus::memory::res_t< xlib_application > application_res_t ;
         }
     }
 }

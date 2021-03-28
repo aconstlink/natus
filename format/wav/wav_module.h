@@ -26,20 +26,20 @@ namespace natus
         };
         natus_typedef( wav_image_module ) ;
         typedef natus::format::module_factory<wav_image_module> wav_image_factory_t ;
-        typedef natus::memory::res< wav_image_factory_t > wav_image_factory_res_t ;
+        typedef natus::memory::res_t< wav_image_factory_t > wav_image_factory_res_t ;
 
         class NATUS_FORMAT_API wav_audio_module // : public imodule
         {
         };
         natus_typedef( wav_audio_module ) ;
         typedef natus::format::module_factory<wav_audio_module_t> wav_audio_factory_t ;
-        typedef natus::memory::res< wav_audio_factory_t > wav_audio_factory_res_t ;
+        typedef natus::memory::res_t< wav_audio_factory_t > wav_audio_factory_res_t ;
 
         class NATUS_FORMAT_API wav_font_module //: public imodule
         {
         };
         natus_typedef( wav_font_module ) ;
         typedef natus::format::module_factory<wav_font_module_t> wav_font_factory_t ;
-        typedef natus::memory::res< wav_font_factory_t > wav_font_factory_res_t ;
+        typedef natus::memory::res_t< wav_font_factory_t > wav_font_factory_res_t ;
     }
 }

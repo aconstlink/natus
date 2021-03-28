@@ -92,8 +92,7 @@ namespace natus
 
                 natus::application::result create_the_context( natus::application::gl_info_cref_t gli ) ;
             };
-            natus_typedef( context ) ;
-            typedef natus::memory::res< context_t > context_res_t ;
+            natus_res_typedef( context ) ;
 
             // this is passed to the graphics backend at construction time, so the backend
             // can check for extensions or other context related topics.

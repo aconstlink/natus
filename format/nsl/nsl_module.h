@@ -33,7 +33,7 @@ namespace natus
         };
         natus_typedef( nsl_module ) ;
         typedef natus::format::module_factory<nsl_module> nsl_factory_t ;
-        typedef natus::memory::res< nsl_factory_t > nsl_factory_res_t ;
+        typedef natus::memory::res_t< nsl_factory_t > nsl_factory_res_t ;
 
         struct nsl_item : public item
         {

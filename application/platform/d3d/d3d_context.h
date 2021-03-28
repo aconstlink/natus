@@ -91,7 +91,7 @@ namespace natus
                 natus::application::result create_the_context( natus::application::d3d_info_cref_t gli ) ;
             };
             natus_typedef( context ) ;
-            typedef natus::memory::res< context_t > context_res_t ;
+            typedef natus::memory::res_t< context_t > context_res_t ;
 
             class NATUS_APPLICATION_API d3d11_context : public natus::graphics::d3d11_context
             {

@@ -42,8 +42,7 @@ namespace natus
 
                 Window create_glx_window( window_info_in_t ) ;
             };
-            natus_typedef( window ) ;
-            typedef natus::memory::res< window_t > window_res_t ;
+            natus_res_typedef( window ) ;
         }
     }
 }

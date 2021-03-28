@@ -30,7 +30,6 @@ namespace natus
 
             virtual void_t update( void_t ) noexcept = 0;
         };
-        natus_typedef( imapping ) ;
-        using imapping_res_t = natus::memory::res< imapping_t > ;
+        natus_res_typedef( imapping ) ;
     }
 }
