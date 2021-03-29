@@ -131,6 +131,11 @@ namespace natus
                     this_t::execute( t ) ;
                 }
             }
+
+            void_t yield( natus::concurrent::sync_object_res_t ) noexcept 
+            {
+            }
         };
+        natus_typedef( loose_thread_scheduler ) ;
     }
 }

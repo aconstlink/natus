@@ -1,15 +1,14 @@
 #pragma once
 
-#include "../typedefs.h"
-#include "../protos.h"
+#include "typedefs.h"
 
 namespace natus
 {
     namespace concurrent
     {
         /// allows a thread to wait for an object
-    /// of this type. The waiting thread will 
-    /// go to sleep until the object is signaled.
+        /// of this type. The waiting thread will 
+        /// go to sleep until the object is signaled.
         class sync_object
         {
             natus_this_typedefs( sync_object ) ;
@@ -80,7 +79,13 @@ namespace natus
                 lock_t lk( _mtx ) ;
                 while( !_condition ) _cond.wait( lk ) ;
             }
+
+            /// yield ("busy wait") until condition == true
+            void_t yield( void_t )
+            {
+                while( !_condition ) std::this_thread::yield() ;
+            }
         } ;
-        natus_typedef( sync_object ) ;
+        natus_res_typedef( sync_object ) ;
     }
 }

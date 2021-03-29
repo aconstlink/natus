@@ -14,15 +14,13 @@ set( sources
     "semaphore.hpp"
     "semaphore_guard.hpp"
     "mutex.hpp"
+    "thread_pool.hpp"
 
     "parallel_for.hpp"
     "range_1d.hpp"
-    
-    "job/job.h"
-    "job/job_funk.h"
-    "job/job_scheduler.h"
-    "job/job_scheduler.cpp"
 
+    "scheduler.h"
+    "scheduler.cpp"
     "task/task.hpp"
     "task/loose_thread_scheduler.hpp"
     "task/fixed_thread_scheduler.hpp"

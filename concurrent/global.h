@@ -5,6 +5,8 @@
 #include "typedefs.h"
 #include "protos.h"
 #include "mutex.hpp"
+#include "sync_object.hpp"
+#include "task/task.hpp"
 
 namespace natus
 {
@@ -16,34 +18,27 @@ namespace natus
 
         private:
 
-            job_scheduler_ptr_t _job_scheduler_ptr = nullptr ;
-            //itask_scheduler_ptr_t _task_scheduler_ptr = nullptr ;
+            struct singleton_data ;
+            static singleton_data * _dptr ;
+            static mutex_t _mtx ;
 
         private:
 
-            static mutex_t _mtx ;
-            static this_ptr_t _ptr ;
+            static singleton_data * init( void_t ) noexcept ;
 
-        public:
+        public: 
 
-            global( void_t ) ;
-            global( this_cref_t ) = delete ;
-            global( this_rref_t ) ;
-            ~global( void_t ) ;
-
-        public:
-
-            static this_ptr_t create( this_rref_t, natus::memory::purpose_cref_t ) ;
-            static void_t destroy( this_ptr_t ) ;
-
-        public:
-
-            static this_ptr_t init( void_t ) ;
             static void_t deinit( void_t ) ;
             static void_t update( void_t ) ;
-            static this_ptr_t get( void_t ) ;
-            static job_scheduler_ptr_t job_scheduler( void_t ) ;
-            //static itask_scheduler_ptr_t task_scheduler( void_t ) ;
+
+            // yield the current thread of execution 
+            // until the sync object is signaled
+            // if the thread is part of the thread pool, the thread
+            // will be exchanged with another worker until the old thread  
+            // resumes execution.
+            static void_t yield( natus::concurrent::sync_object_res_t ) noexcept ;
+
+            static void_t schedule( natus::concurrent::task_res_t, natus::concurrent::schedule_type const ) noexcept ;
         };
         natus_typedef( global ) ;
     }

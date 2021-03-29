@@ -46,5 +46,12 @@ namespace natus
         //natus_typedefs( natus::concurrent::detail::task_map_t, task_map ) ;
 
         typedef std::future< void_t > future_t ;
+
+
+        enum class schedule_type
+        {
+            loose,
+            pool
+        };
     }
 }

@@ -1,13 +1,8 @@
 #pragma once
 
 #include "range_1d.hpp"
-#include "job/job_funk.h"
-#include "job/job.h"
 
 #include "global.h"
-#include "job/job_scheduler.h"
-
-#include <natus/memory/arena/exp_arena.hpp>
 
 #include <thread>
 
@@ -16,8 +11,14 @@ namespace natus
     namespace concurrent
     {
         template< typename T >
+        using funk_t = std::function< void_t ( natus::concurrent::range_1d< T > const & ) > ;
+
+        template< typename T >
         void_t parallel_for( natus::concurrent::range_1d< T > const& r, natus::concurrent::funk_t<T> f )
         {
+            f( r ) ;
+
+            #if 0
             size_t const num_threads = ::std::thread::hardware_concurrency() ;
 
             natus_typedefs( natus::concurrent::job_1d<T>, job ) ;
@@ -96,6 +97,9 @@ namespace natus
                 natus::concurrent::lock_t lk( mtx ) ;
                 while( num_jobs > 0 ) cv.wait( lk ) ;
             }
+
+            #endif
         }
+        
     }
 }

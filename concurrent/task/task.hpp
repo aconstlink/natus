@@ -3,7 +3,9 @@
 
 #include "../api.h"
 #include "../typedefs.h"
+#include "../sync_object.hpp"
 
+#include <natus/memory/arena.hpp>
 #include <natus/ntd/vector.hpp>
 
 #include <atomic>
@@ -15,13 +17,14 @@ namespace natus
         class task
         {
             natus_this_typedefs( task ) ;
-            typedef natus::memory::res< task > this_res_t ;
+            typedef natus::memory::res_t< task > this_res_t ;
 
             friend class task ;
 
         public:
 
             typedef std::function< void_t ( this_res_t ) > task_funk_t ;
+            natus_typedefs( natus::ntd::vector< this_res_t >, tasks ) ;
 
         private: // user execution funktion
 
@@ -47,8 +50,8 @@ namespace natus
 
         private: //
 
-            natus::ntd::vector< this_res_t > _inbetweens ;
-            natus::ntd::vector< this_res_t > _thens ;
+            tasks_t _inbetweens ;
+            tasks_t _thens ;
 
         public:
 
@@ -95,8 +98,8 @@ namespace natus
                 _thens.emplace_back( other ) ;
                 return other ;
             }
-
-        public:
+            
+        public: // accessor
 
             struct scheduler_accessor
             {
@@ -157,11 +160,26 @@ namespace natus
             bool_t execute( this_res_t this_res ) noexcept 
             {
                 if( _incomings != 0 ) return false ;
-                
-                 _funk( this_res ) ;
-                 return true ;
+
+                _funk( this_res ) ;
+
+                return true ;
+            }
+
+            bool_t resume( void_t ) noexcept
+            {
+                return this_t::dec_incoming() ;
             }
         };
         natus_res_typedef( task ) ;
+
+        // uses task memory arena for task creation
+        // instead of the default one.
+        static task_res_t make_task( natus::concurrent::task_t::task_funk_t f ) noexcept
+        {
+            static natus::memory::arena< natus::concurrent::task_t > arena(500000) ;
+            return task_res_t( arena.alloc( natus::concurrent::task_t(f) ),
+                [&]( natus::concurrent::task_ptr_t ptr ){ arena.dealloc(ptr) ; } ) ;
+        }
     }
 }
