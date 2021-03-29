@@ -83,7 +83,7 @@ namespace natus
                 } ) ;
             }
 
-            template< class T, class D >
+            template< class D >
             res( T * ptr, D deleter ) noexcept
             {
                 _data = sptr_t( ptr, deleter ) ;
