@@ -78,23 +78,36 @@ namespace natus
                 return _count == c ;
             }
 
+            bool_t operator != ( size_t c ) noexcept
+            {
+                natus::concurrent::lock_guard_t lk( _mtx ) ;
+                return _count != c ;
+            }
+
         public:
 
             this_ref_t operator ++( void_t ) noexcept
             {
-                natus::concurrent::lock_guard_t lk( _mtx ) ;
-                ++_count ;
+                this_t::increment() ;
                 return *this ;
             }
 
             this_ref_t operator --( void_t ) noexcept
             {
-                natus::concurrent::lock_guard_t lk( _mtx ) ;
-                --_count ;
+                this_t::decrement() ;
                 return *this ;
             }
 
         public:
+
+            bool_t increment_by( size_t const n ) noexcept
+            {
+                natus::concurrent::lock_guard_t lk( _mtx ) ;
+
+                _count += n ;
+
+                return true ;
+            }
 
             bool_t increment( void_t ) noexcept
             {
@@ -151,6 +164,11 @@ namespace natus
                 natus::concurrent::lock_t lk( _mtx ) ;
                 while( _count != value ) _cv.wait( lk ) ;
                 _count += inc ;
+            }
+
+            size_t value( void_t ) const 
+            {
+                return _count ;
             }
         };
         natus_typedef( semaphore ) ;

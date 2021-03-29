@@ -50,6 +50,8 @@ namespace natus
                     threads_max = rhv.threads_max ;
                 }
 
+            public: // thread pool access
+
                 void_t inc_thread_count( void_t ) noexcept
                 {
                     natus::concurrent::lock_guard_t lk( pool_mtx ) ;
@@ -64,10 +66,39 @@ namespace natus
 
                 void_t add_task( natus::concurrent::task_res_t t ) noexcept
                 {
-                    natus::concurrent::lock_guard_t lk( tasks_mtx ) ;
-                    tasks.emplace_back( t ) ;
+                    {
+                        natus::concurrent::lock_guard_t lk( tasks_mtx ) ;
+                        tasks.emplace_back( t ) ;
+                    }
                     tasks_cv.notify_one() ;
                 }
+
+                bool_t contains_thread_id( std::thread::id const & id ) noexcept
+                {
+                    natus::concurrent::lock_t lk( pool_mtx ) ;
+                    for( auto const & td : pool )
+                    {
+                        if( td->thread.get_id() == id ) return true ;
+                    }
+                    return false ;
+                }
+
+                void_t yield( void_t ) noexcept
+                {
+                    {
+                        natus::concurrent::lock_t lk( pool_mtx ) ;
+                        threads_running-- ;
+                    }
+                    pool_cv.notify_one() ;
+                }
+
+                void_t resume( void_t ) noexcept
+                {
+                    natus::concurrent::lock_t lk( pool_mtx ) ;
+                    threads_running++ ;
+                }
+
+            public: // worker thread access
 
                 bool_t wait_for_thread_wakeup( void_t ) noexcept
                 {
@@ -92,7 +123,6 @@ namespace natus
                     }
                     return true ;
                 }
-                
             } ;
             natus_typedef( shared_data ) ;
             shared_data_ptr_t _sd = nullptr ;
@@ -127,7 +157,7 @@ namespace natus
                             if( !_sd->wait_for_tasks() ) break ;
 
                             // go into taking tasks loop
-                            while( true )
+                            while( _sd->threads_running <= _sd->threads_max )
                             {
                                 natus::concurrent::task_res_t task ;
 
@@ -173,9 +203,32 @@ namespace natus
 
         public:
 
-            bool_t yield( natus::concurrent::sync_object_res_t ) noexcept
+            // yield as long as the yield function returns true
+            bool_t yield( std::function< bool_t ( void_t ) > yield_funk ) noexcept
             {
-                return false ;
+                if( !_sd->contains_thread_id( std::this_thread::get_id() ) ) return false ;
+                
+                // swap in a new thread from the pool
+                _sd->yield() ;
+                while( yield_funk() ) std::this_thread::yield() ;
+                // put back one thread back to sleep
+                _sd->resume() ;
+
+                return true ;
+            }
+
+            // yield while so is NOT signaled
+            bool_t yield( natus::concurrent::sync_object_res_t so ) noexcept
+            {
+                if( !_sd->contains_thread_id( std::this_thread::get_id() ) ) return false ;
+
+                // swap in a new thread from the pool
+                _sd->yield() ;
+                while( !so->is_signaled() ) std::this_thread::yield() ;
+                // put back one thread back to sleep
+                _sd->resume() ;
+                
+                return true ;
             }
 
             void_t schedule( natus::concurrent::task_res_t t ) noexcept
