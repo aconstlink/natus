@@ -19,7 +19,7 @@ set( sources
     
     "guards/malloc_guard.hpp"
     
-    "arena/exp_arena.hpp"
+    "arena.hpp"
     )
 
 natus_vs_src_dir( sources )
