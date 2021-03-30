@@ -31,6 +31,8 @@
 
 #include <natus/audio/backend/oal/oal.h>
 
+#include <natus/concurrent/global.h>
+
 using namespace natus::application ;
 
 //***
@@ -302,6 +304,8 @@ bool_t app::platform_update( void_t )
 
     if( this_t::before_update() )
     {
+        natus::concurrent::global_t::update() ;
+
         this_t::update_data_t dat ;
         this_t::compute_and_reset_timing( dat ) ;
 
@@ -455,44 +459,51 @@ bool_t app::after_logic( void_t ) noexcept
 //***
 bool_t app::before_update( void_t ) 
 {
-    *_access = false ;
+    auto const milli_passed = std::chrono::duration_cast< std::chrono::milliseconds > ( this_t::update_clock_t::now() - _tp_update ) ;
 
-    size_t id = 0 ;
-    for( auto & pwi : _windows )
+    if( milli_passed >= _update_dur )
     {
-        // check messages from the window
+        *_access = false ;
+
+        size_t id = 0 ;
+        for( auto & pwi : _windows )
         {
-            natus::application::window_message_receiver_t::state_vector sv ;
-            if( pwi.msg_recv->swap_and_reset( sv ) )
+            // check messages from the window
             {
-
-                natus::graphics::backend_t::window_info_t wi ;
-                if( sv.resize_changed )
+                natus::application::window_message_receiver_t::state_vector sv ;
+                if( pwi.msg_recv->swap_and_reset( sv ) )
                 {
-                    wi.width = sv.resize_msg.w ;
-                    wi.height = sv.resize_msg.h ;
 
-                    natus::tool::imgui_t::window_data_t wd ;
-                    wd.width = int_t( wi.width ) ;
-                    wd.height = int_t( wi.height ) ;
-                    pwi.imgui->update( wd ) ;
+                    natus::graphics::backend_t::window_info_t wi ;
+                    if( sv.resize_changed )
+                    {
+                        wi.width = sv.resize_msg.w ;
+                        wi.height = sv.resize_msg.h ;
+
+                        natus::tool::imgui_t::window_data_t wd ;
+                        wd.width = int_t( wi.width ) ;
+                        wd.height = int_t( wi.height ) ;
+                        pwi.imgui->update( wd ) ;
+                    }
+
+                    this_t::window_event_info_t wei ;
+                    wei.w = uint_t( wi.width ) ;
+                    wei.h = uint_t( wi.height ) ;
+                    this->on_event( id++, wei ) ;
                 }
+            }
 
-                this_t::window_event_info_t wei ;
-                wei.w = uint_t( wi.width ) ;
-                wei.h = uint_t( wi.height ) ;
-                this->on_event( id++, wei ) ;
+            // check and send message to the window
+            if( pwi.msg_send->has_any_change() )
+            {
+                pwi.wnd->check_for_messages() ;
             }
         }
 
-        // check and send message to the window
-        if( pwi.msg_send->has_any_change() )
-        {
-            pwi.wnd->check_for_messages() ;
-        }
+        return true ;
     }
 
-    return true ;
+    return false ;
 }
 
 //***

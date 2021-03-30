@@ -166,6 +166,8 @@ namespace natus
 
             typedef std::chrono::high_resolution_clock update_clock_t ;
             update_clock_t::time_point _tp_update = update_clock_t::now() ;
+            std::chrono::milliseconds _update_dur = std::chrono::milliseconds( 8 ) ;
+            std::chrono::milliseconds _update_residual = std::chrono::milliseconds( 0 ) ;
 
             typedef std::chrono::high_resolution_clock physics_clock_t ;
             physics_clock_t::time_point _tp_physics = physics_clock_t::now() ;

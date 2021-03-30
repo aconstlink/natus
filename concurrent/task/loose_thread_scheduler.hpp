@@ -129,6 +129,8 @@ namespace natus
                 }
             }
 
+            // can be called anytime tasks need to be send away
+            // for execution.
             void_t update( void_t ) noexcept
             {
                 tasks_t tasks ;
