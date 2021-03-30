@@ -1,6 +1,7 @@
 
 #include "tri_render_2d.h"
 
+#include <natus/concurrent/parallel_for.hpp>
 #include <natus/math/utility/constants.hpp>
 
 using namespace natus::gfx ;
@@ -375,21 +376,47 @@ void_t tri_render_2d::prepare_for_rendering( void_t ) noexcept
                 _go->vertex_buffer().update<this_t::vertex>( start, start+num_verts, 
                     [&]( this_t::vertex * array, size_t const ne )
                 {
+                    #if 1
+                    natus::concurrent::parallel_for<size_t>( natus::concurrent::range_1d<size_t>(0, ne),
+                        [&]( natus::concurrent::range_1d<size_t> const & r )
+                    {
+                        for( size_t v=r.begin(); v<r.end(); ++v )
+                        {
+                            array[v].pos = tris[ v / 3 ].array[ v % 3 ] ;
+                        }
+                    } ) ;
+                    #else
                     for( size_t v=0; v<ne; ++v )
                     {
                         array[v].pos = tris[ v / 3 ].array[ v % 3 ] ;
                     }
+                    #endif
+
+                    
                 } ) ;
                 start += num_verts ;
             }
         
             // copy color data
             {
+                #if 1
+                natus::concurrent::parallel_for<size_t>( natus::concurrent::range_1d<size_t>(0, tris.size()),
+                    [&]( natus::concurrent::range_1d<size_t> const & r )
+                {
+                    for( size_t l=r.begin(); l<r.end(); ++l )
+                    {
+                        size_t const idx = lstart + l ;
+                        _ao->data_buffer().update< natus::math::vec4f_t >( idx, tris[l].color ) ;
+                    }
+                } ) ;
+                #else
                 for( size_t i=0; i<tris.size();++i)
                 {
                     size_t const idx = lstart + i ;
                     _ao->data_buffer().update< natus::math::vec4f_t >( idx, tris[i].color ) ;
                 }
+                #endif
+                
                 lstart += tris.size() ;
             }
             _layers[i].tris.clear() ;
