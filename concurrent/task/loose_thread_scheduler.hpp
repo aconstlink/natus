@@ -68,6 +68,17 @@ namespace natus
                 natus::memory::global_t::dealloc( _sd ) ;
             }
 
+            this_ref_t operator = ( this_rref_t rhv ) noexcept
+            {
+                {
+                    natus::concurrent::lock_t lk(rhv._sd->mtx) ;
+                    rhv._sd->owner = this ;
+                }
+                natus_move_member_ptr( _sd, rhv ) ;
+                _tasks = std::move( rhv._tasks ) ;
+                return *this ;
+            }
+
         private:
 
             void_t place_future( std::future< void_t > && f_ ) noexcept
@@ -132,8 +143,9 @@ namespace natus
                 }
             }
 
-            void_t yield( natus::concurrent::sync_object_res_t ) noexcept 
+            void_t yield( std::function< bool_t ( void_t ) > funk ) noexcept 
             {
+                while( funk() ) std::this_thread::yield() ;
             }
         };
         natus_typedef( loose_thread_scheduler ) ;

@@ -133,6 +133,29 @@ namespace natus
         public:
 
             thread_pool( void_t ) 
+            {}
+
+            thread_pool( this_rref_t rhv ) noexcept
+            {
+                natus_move_member_ptr( _sd, rhv ) ;
+                _thread_funk = rhv._thread_funk ;
+            }
+
+            ~thread_pool( void_t ) noexcept
+            {
+            }
+
+            this_ref_t operator = ( this_rref_t rhv ) noexcept
+            {
+                natus_move_member_ptr( _sd, rhv ) ;
+                _thread_funk = rhv._thread_funk ;
+
+                return *this ;
+            }
+
+        public:
+
+            void_t init( void_t ) 
             {
                 size_t const num_threads = std::thread::hardware_concurrency() ;
                 size_t const thread_pool_size = num_threads<<2 ;
@@ -190,17 +213,6 @@ namespace natus
                     _sd->pool[i]->thread = std::move( thd ) ;
                 }
             }
-
-            thread_pool( this_rref_t rhv ) noexcept
-            {
-                natus_move_member_ptr( _sd, rhv ) ;
-                rhv._thread_funk = rhv._thread_funk ;
-            }
-
-            ~thread_pool( void_t ) noexcept
-            {
-            }
-
         public:
 
             // yield as long as the yield function returns true

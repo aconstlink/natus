@@ -3,7 +3,7 @@
 #include "range_1d.hpp"
 
 #include "global.h"
-
+#include "semaphore.hpp"
 #include <thread>
 
 namespace natus
@@ -16,7 +16,60 @@ namespace natus
         template< typename T >
         void_t parallel_for( natus::concurrent::range_1d< T > const& r, natus::concurrent::funk_t<T> f )
         {
-            f( r ) ;
+            natus_typedefs( natus::concurrent::range_1d<T>, range ) ;
+
+            //
+            // make simple for if input space is too small
+            //
+            if( size_t( r.difference() ) < 100 )
+            {
+                f(r) ;
+                return ;
+            }
+
+            // 
+            // do parallel_for
+            //
+
+            size_t const num_splits = std::thread::hardware_concurrency() ;
+
+            T const per_task = r.difference() / T( num_splits ) ;
+            T const rest_task = r.difference() - per_task * T( num_splits ) ;
+            
+            natus::concurrent::semaphore_t sem_counter( num_splits + (rest_task > 0 ? 1 : 0) ) ;
+
+            T start = r.begin() ;
+
+            for( size_t i=0; i<num_splits; ++i ) 
+            {
+                T end = start + per_task ;
+                range_t const lr( start, end ) ;
+
+                natus::concurrent::global_t::schedule( natus::concurrent::make_task( [&, lr]( natus::concurrent::task_res_t )
+                {
+                    f( lr ) ;
+                    --sem_counter ;
+                } ), natus::concurrent::schedule_type::pool ) ;
+
+                start = end ;
+            }
+
+            if( rest_task > 0 )
+            {
+                T end = start + rest_task ;
+                range_t lr( start, end ) ;
+
+                natus::concurrent::global_t::schedule( natus::concurrent::make_task( [&]( natus::concurrent::task_res_t )
+                {
+                    f( lr ) ;
+                    --sem_counter ;
+                } ), natus::concurrent::schedule_type::pool );
+            }
+
+            natus::concurrent::global_t::yield( [&]( void_t )
+            {
+                return sem_counter != 0 ;
+            } ) ;
 
             #if 0
             size_t const num_threads = ::std::thread::hardware_concurrency() ;

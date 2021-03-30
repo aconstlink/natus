@@ -36,7 +36,7 @@ namespace natus
             // if the thread is part of the thread pool, the thread
             // will be exchanged with another worker until the old thread  
             // resumes execution.
-            static void_t yield( natus::concurrent::sync_object_res_t ) noexcept ;
+            static void_t yield( std::function< bool_t ( void_t ) > funk ) noexcept ;
 
             static void_t schedule( natus::concurrent::task_res_t, natus::concurrent::schedule_type const ) noexcept ;
         };

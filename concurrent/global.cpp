@@ -15,6 +15,15 @@ struct global::singleton_data
 {
     natus::concurrent::thread_pool_t tp ;
     natus::concurrent::loose_thread_scheduler_t lts ;
+
+    singleton_data( void_t ) noexcept
+    {}
+
+    singleton_data( singleton_data && rhv ) noexcept
+    {
+        tp = std::move( rhv.tp ) ;
+        lts = std::move( rhv.lts ) ;
+    }
 };
 
 global::singleton_data * global::init( void_t ) noexcept
@@ -24,8 +33,9 @@ global::singleton_data * global::init( void_t ) noexcept
 
     _dptr = natus::memory::global_t::alloc( this_t::singleton_data(),
         "[natus::concurrent::global::init] : global singleton lazy initialization" ) ;
+    _dptr->tp.init() ;
 
-    natus::log::global_t::status( "[online] : natus concurrent global" ) ;
+    natus::log::global_t::status( "[online] : natus concurrent" ) ;
 
     return this_t::_dptr ;
 }
@@ -39,15 +49,16 @@ void_t global::update( void_t )
     this_t::init()->lts.update() ;
 }
 
-void_t global::yield( natus::concurrent::sync_object_res_t so ) noexcept 
+void_t global::yield( std::function< bool_t ( void_t ) > funk ) noexcept 
 {
-    if( !_dptr->tp.yield( so ) ) _dptr->lts.yield( so ) ;
+    if( !_dptr->tp.yield( funk ) ) _dptr->lts.yield( funk ) ;
 }
 
 void_t global::schedule( natus::concurrent::task_res_t t, natus::concurrent::schedule_type const st ) noexcept 
 {
     if( st == natus::concurrent::schedule_type::pool )
     {
+        this_t::init()->tp.schedule( t ) ;
     }
     else if( st == natus::concurrent::schedule_type::loose )
     {
