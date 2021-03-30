@@ -299,10 +299,13 @@ void_t tri_render_2d::release( void_t ) noexcept
 void_t tri_render_2d::draw( size_t const l, natus::math::vec2f_cref_t p0, natus::math::vec2f_cref_t p1,
     natus::math::vec2f_cref_t p2, natus::math::vec4f_cref_t color ) noexcept
 {
-    if( _layers.size() <= l+1 ) 
     {
-        _layers.resize( l+1 ) ;
-        _render_data.resize( l+1 ) ;
+        natus::concurrent::lock_guard_t lk( _layers_mtx ) ;
+        if( _layers.size() <= l+1 ) 
+        {
+            _layers.resize( l+1 ) ;
+            _render_data.resize( l+1 ) ;
+        }
     }
 
     this_t::tri_t ln ;
@@ -311,8 +314,15 @@ void_t tri_render_2d::draw( size_t const l, natus::math::vec2f_cref_t p0, natus:
     ln.pts.p2 = p2 ;
     ln.color = color ;
 
-    _layers[l].tris.emplace_back( std::move( ln ) ) ;
-    ++_num_tris ;
+    {
+        natus::concurrent::lock_guard_t lk( _layers[l].mtx ) ;
+        _layers[l].tris.emplace_back( std::move( ln ) ) ;
+    }
+
+    {
+        natus::concurrent::lock_guard_t lk( _num_tris_mtx ) ;
+        ++_num_tris ;
+    }
 }
 
 void_t tri_render_2d::draw_rect( size_t const l, 

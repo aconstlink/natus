@@ -78,10 +78,21 @@ void_t particle_system::update( float_t const dt ) noexcept
 {
     // update particle
     {
+        #if !NATUS_PHYSICS_USE_PARALLEL_FOR
         for( auto & p : _particles )
         {
             p.age -= dt ;
         }
+        #else
+        natus::concurrent::parallel_for<size_t>( natus::concurrent::range_1d<size_t>( 0, _particles.size() ),
+            [&]( natus::concurrent::range_1d<size_t> const & r )
+            {
+                for( size_t i=r.begin(); i<r.end(); ++i )
+                {
+                    _particles[i].age -= dt ;
+                }
+            } ) ;
+        #endif
     }
 
     // reorder particles
@@ -144,12 +155,26 @@ void_t particle_system::update( float_t const dt ) noexcept
             
     // do physics
     {
+        #if !NATUS_PHYSICS_USE_PARALLEL_FOR
         for( auto & p : _particles )
         {
             p.acl = p.force / p.mass ;
             p.vel += natus::math::vec2f_t( dt ) * p.acl ;
             p.pos += natus::math::vec2f_t( dt ) * p.vel ;
         }
+        #else
+        natus::concurrent::parallel_for<size_t>( natus::concurrent::range_1d<size_t>( 0, _particles.size() ),
+            [&]( natus::concurrent::range_1d<size_t> const & r )
+            {
+                for( size_t i=r.begin(); i<r.end(); ++i )
+                {
+                    auto & p = _particles[i] ;
+                    p.acl = p.force / p.mass ;
+                    p.vel += natus::math::vec2f_t( dt ) * p.acl ;
+                    p.pos += natus::math::vec2f_t( dt ) * p.vel ;
+                }
+            } ) ;
+        #endif
     }
 
     // compute extend

@@ -1,6 +1,7 @@
 
 #include "line_render_2d.h"
 
+#include <natus/concurrent/parallel_for.hpp>
 #include <natus/math/utility/constants.hpp>
 
 using namespace natus::gfx ;
@@ -300,10 +301,13 @@ void_t line_render_2d::release( void_t ) noexcept
 
 void_t line_render_2d::draw( size_t const l, natus::math::vec2f_cref_t p0, natus::math::vec2f_cref_t p1, natus::math::vec4f_cref_t color ) noexcept
 {
-    if( _layers.size() <= l+1 ) 
     {
-        _layers.resize( l+1 ) ;
-        _render_data.resize( l+1 ) ;
+        natus::concurrent::lock_guard_t lk( _layers_mtx ) ;
+        if( _layers.size() <= l+1 ) 
+        {
+            _layers.resize( l+1 ) ;
+            _render_data.resize( l+1 ) ;
+        }
     }
 
     this_t::line_t ln ;
@@ -311,8 +315,15 @@ void_t line_render_2d::draw( size_t const l, natus::math::vec2f_cref_t p0, natus
     ln.p2.p1 = p1 ;
     ln.color = color ;
 
-    _layers[l].lines.emplace_back( std::move( ln ) ) ;
-    ++_num_lines ;
+    {
+        natus::concurrent::lock_guard_t lk( _layers[l].mtx ) ;
+        _layers[l].lines.emplace_back( std::move( ln ) ) ;
+    }
+
+    {
+        natus::concurrent::lock_guard_t lk( _num_lines_mtx ) ;
+        ++_num_lines ;
+    }
 }
         
 void_t line_render_2d::draw_rect( size_t const l, 
@@ -366,21 +377,44 @@ void_t line_render_2d::prepare_for_rendering( void_t ) noexcept
                 _go->vertex_buffer().update<this_t::vertex>( start, start+num_verts, 
                     [&]( this_t::vertex * array, size_t const ne )
                 {
+                    #if 1
+                    natus::concurrent::parallel_for<size_t>( natus::concurrent::range_1d<size_t>(0, ne),
+                        [&]( natus::concurrent::range_1d<size_t> const & r )
+                    {
+                        for( size_t l=r.begin(); l<r.end(); ++l )
+                        {
+                            array[ l ].pos = lines[ l / 2 ].a2[ l % 2 ] ;
+                        }
+                    } ) ;
+                    #else
                     for( size_t l=0; l<ne; ++l )
                     {
                         array[ l ].pos = lines[ l / 2 ].a2[ l % 2 ] ;
                     }
+                    #endif
                 } ) ;
                 start += num_verts ;
             }
         
             // copy color data
             {
+                #if 1
+                natus::concurrent::parallel_for<size_t>( natus::concurrent::range_1d<size_t>(0, lines.size()),
+                    [&]( natus::concurrent::range_1d<size_t> const & r )
+                {
+                    for( size_t l=r.begin(); l<r.end(); ++l )
+                    {
+                        size_t const idx = lstart + l ;
+                        _ao->data_buffer().update< natus::math::vec4f_t >( idx, lines[l].color ) ;
+                    }
+                } ) ;
+                #else
                 for( size_t i=0; i<lines.size();++i)
                 {
                     size_t const idx = lstart + i ;
                     _ao->data_buffer().update< natus::math::vec4f_t >( idx, lines[i].color ) ;
                 }
+                #endif
                 lstart += lines.size() ;
             }
             

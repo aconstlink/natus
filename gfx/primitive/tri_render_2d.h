@@ -49,17 +49,38 @@ namespace natus
                     std::memcpy( reinterpret_cast<void_ptr_t>(this),
                         reinterpret_cast<void_cptr_t>(&rhv), sizeof(tri) ) ;
                 }
+
+                tri & operator = ( tri const & rhv ) noexcept
+                {
+                    std::memcpy( reinterpret_cast<void_ptr_t>(this),
+                        reinterpret_cast<void_cptr_t>(&rhv), sizeof(tri) ) ;
+                    return *this ;
+                }
+                tri & operator = ( tri && rhv ) noexcept
+                {
+                    std::memcpy( reinterpret_cast<void_ptr_t>(this),
+                        reinterpret_cast<void_cptr_t>(&rhv), sizeof(tri) ) ;
+                    return *this ;
+                }
             };
             natus_typedef( tri ) ;
 
             struct layer
             {
+                natus::concurrent::mutex_t mtx ;
                 natus::ntd::vector< tri_t > tris ;
+
+                layer( void_t ) noexcept {}
+                layer( layer const & rhv ) noexcept { tris = rhv.tris ; }
+                layer( layer && rhv ) noexcept { tris = std::move(rhv.tris) ; }
+                ~layer( void_t ) noexcept {}
             };
             natus_typedef( layer ) ;
 
+            natus::concurrent::mutex_t _layers_mtx ;
             natus::ntd::vector< layer_t > _layers ;
 
+            natus::concurrent::mutex_t _num_tris_mtx ;
             size_t _num_tris = 0 ;
 
         private: // graphics

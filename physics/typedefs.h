@@ -10,6 +10,8 @@
 
 #include <string>
 
+#define NATUS_PHYSICS_USE_PARALLEL_FOR 1 
+
 namespace natus
 {
     namespace physics

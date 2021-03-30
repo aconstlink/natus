@@ -50,17 +50,38 @@ namespace natus
                     v4 = std::move( rhv.v4 ) ;
                     color = std::move( rhv.color ) ;
                 }
+
+                line & operator = ( line const & rhv ) noexcept
+                {
+                    v4 = rhv.v4 ;
+                    color = rhv.color ;
+                    return *this ;
+                }
+                line & operator = ( line && rhv ) noexcept
+                {
+                    v4 = std::move( rhv.v4 ) ;
+                    color = std::move( rhv.color ) ;
+                    return *this ;
+                }
             };
             natus_typedef( line ) ;
 
             struct layer
             {
+                natus::concurrent::mutex_t mtx ;
                 natus::ntd::vector< line_t > lines ;
+
+                layer( void_t ) noexcept {}
+                layer( layer const & rhv ) noexcept { lines = rhv.lines ; }
+                layer( layer && rhv ) noexcept { lines = std::move(rhv.lines) ; }
+                ~layer( void_t ) noexcept {}
             };
             natus_typedef( layer ) ;
 
+            natus::concurrent::mutex_t _layers_mtx ;
             natus::ntd::vector< layer_t > _layers ;
 
+            natus::concurrent::mutex_t _num_lines_mtx ;
             size_t _num_lines = 0 ;
 
         private: // graphics

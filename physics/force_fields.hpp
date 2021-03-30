@@ -3,6 +3,7 @@
 
 #include "particle.h"
 
+#include <natus/concurrent/parallel_for.hpp>
 #include <natus/ntd/vector.hpp>
 #include <natus/math/utility/constants.hpp>
 
@@ -53,12 +54,25 @@ namespace natus
 
             virtual void_t apply( size_t const beg, size_t const n, natus::ntd::vector< particle_t > & particles ) const noexcept 
             {
+                #if !NATUS_PHYSICS_USE_PARALLEL_FOR
                 for( size_t i=beg; i<beg+n; ++i )
                 {
                     physics::particle_ref_t p = particles[i] ;
                     if( !this_t::is_inside( p ) ) continue ;
                     p.force += _force ;
                 }
+                #else
+                natus::concurrent::parallel_for<size_t>( natus::concurrent::range_1d<size_t>( beg, beg+n ),
+                    [&]( natus::concurrent::range_1d<size_t> const & r )
+                    {
+                        for( size_t i=r.begin(); i<r.end(); ++i )
+                        {
+                            physics::particle_ref_t p = particles[i] ;
+                            if( !this_t::is_inside( p ) ) continue ;
+                            p.force += _force ;
+                        }
+                    } ) ;
+                #endif
             }
         } ;
         natus_res_typedef( constant_force_field ) ;
@@ -85,12 +99,25 @@ namespace natus
 
             virtual void_t apply( size_t const beg, size_t const n, natus::ntd::vector< particle_t > & particles ) const noexcept 
             {
+                #if !NATUS_PHYSICS_USE_PARALLEL_FOR
                 for( size_t i=beg; i<beg+n; ++i )
                 {
                     physics::particle_ref_t p = particles[i] ;
                     if( !this_t::is_inside( p ) ) continue ;
                     p.force += _accl * p.mass ;
                 }
+                #else
+                natus::concurrent::parallel_for<size_t>( natus::concurrent::range_1d<size_t>( beg, beg+n ),
+                    [&]( natus::concurrent::range_1d<size_t> const & r )
+                    {
+                        for( size_t i=r.begin(); i<r.end(); ++i )
+                        {
+                            physics::particle_ref_t p = particles[i] ;
+                            if( !this_t::is_inside( p ) ) continue ;
+                            p.force += _accl * p.mass ;
+                        }
+                    } ) ;
+                #endif
             }
         } ;
         natus_res_typedef( acceleration_field ) ;
@@ -107,12 +134,25 @@ namespace natus
 
             virtual void_t apply( size_t const beg, size_t const n, natus::ntd::vector< particle_t > & particles ) const noexcept 
             {
+                #if !NATUS_PHYSICS_USE_PARALLEL_FOR
                 for( size_t i=beg; i<beg+n; ++i )
                 {
                     physics::particle_ref_t p = particles[i] ;
                     if( !this_t::is_inside( p ) ) continue ;
                     p.force -= natus::math::vec2f_t( _friction ) * p.force ;
                 }
+                #else
+                natus::concurrent::parallel_for<size_t>( natus::concurrent::range_1d<size_t>( beg, beg+n ),
+                    [&]( natus::concurrent::range_1d<size_t> const & r )
+                    {
+                        for( size_t i=r.begin(); i<r.end(); ++i )
+                        {
+                            physics::particle_ref_t p = particles[i] ;
+                            if( !this_t::is_inside( p ) ) continue ;
+                            p.force -= natus::math::vec2f_t( _friction ) * p.force ;
+                        }
+                    } ) ;
+                #endif
             }
         } ;
         natus_res_typedef( friction_force_field ) ;
@@ -134,12 +174,25 @@ namespace natus
 
             virtual void_t apply( size_t const beg, size_t const n, natus::ntd::vector< particle_t > & particles ) const noexcept 
             {
+                #if !NATUS_PHYSICS_USE_PARALLEL_FOR
                 for( size_t i=beg; i<beg+n; ++i )
                 {
                     physics::particle_ref_t p = particles[i] ;
                     if( !this_t::is_inside( p ) ) continue ;
                     p.force -= natus::math::vec2f_t( _friction ) * p.vel  ;
                 }
+                #else
+                natus::concurrent::parallel_for<size_t>( natus::concurrent::range_1d<size_t>( beg, beg+n ),
+                    [&]( natus::concurrent::range_1d<size_t> const & r )
+                    {
+                        for( size_t i=r.begin(); i<r.end(); ++i )
+                        {
+                            physics::particle_ref_t p = particles[i] ;
+                    if( !this_t::is_inside( p ) ) continue ;
+                    p.force -= natus::math::vec2f_t( _friction ) * p.vel  ;
+                        }
+                    } ) ;
+                #endif
             }
         } ;
         natus_res_typedef( viscosity_force_field ) ;
@@ -198,6 +251,7 @@ namespace natus
 
             virtual void_t apply( size_t const beg, size_t const n, natus::ntd::vector< particle_t > & particles ) const noexcept 
             {
+                #if !NATUS_PHYSICS_USE_PARALLEL_FOR
                 for( size_t i=beg; i<beg+n; ++i )
                 {
                     physics::particle_ref_t p = particles[i] ;
@@ -212,6 +266,26 @@ namespace natus
                     p.vel += ortho.normalize() * s ;
 
                 }
+                #else
+                natus::concurrent::parallel_for<size_t>( natus::concurrent::range_1d<size_t>( beg, beg+n ),
+                    [&]( natus::concurrent::range_1d<size_t> const & r )
+                    {
+                        for( size_t i=r.begin(); i<r.end(); ++i )
+                        {
+                            physics::particle_ref_t p = particles[i] ;
+                            if( !this_t::is_inside( p ) ) continue ;
+                    
+                            auto const v = (p.pos / _frequency).fracted() ;
+                            auto const f = v.dot(v) * natus::math::constants<float_t>::pi() * 2.0f ;
+
+                            float_t const s = _amplitude * std::sin(  f   ) ;                    
+                            natus::math::vec2f_t ortho = p.vel.ortho() ;
+                            //p.force += ortho.normalize() * s * p.mass;
+                            p.vel += ortho.normalize() * s ;
+                        }
+                    } ) ;
+                #endif
+
             }
         } ;
         natus_res_typedef( sin_velocity_field ) ;
