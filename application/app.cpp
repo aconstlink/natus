@@ -276,6 +276,7 @@ natus::application::result app::request_change( this_t::window_info_in_t )
 bool_t app::platform_init( void_t ) 
 {
     this->on_init() ;
+    _tp_platform = this_t::platform_clock_t::now() ;
     _tp_update = this_t::update_clock_t::now() ;
     _tp_render = this_t::render_clock_t::now() ;
     _tp_physics = this_t::physics_clock_t::now() ;
@@ -286,6 +287,27 @@ bool_t app::platform_init( void_t )
 //***
 bool_t app::platform_update( void_t ) 
 {
+    #if 0
+    {
+        while( (this_t::platform_clock_t::now() - _tp_platform) < _platform_dur )
+        {
+            std::this_thread::yield() ;
+        }
+        _tp_platform = this_t::platform_clock_t::now() ;
+    }
+    #elif 1
+    {
+        
+        auto const dur = (this_t::platform_clock_t::now() - _tp_platform) ;
+        if( dur < _platform_dur )
+        {
+            auto const dif = _platform_dur - std::chrono::duration_cast<std::chrono::milliseconds>(dur) ;
+            std::this_thread::sleep_for( dif ) ;
+        }
+        _tp_platform = this_t::platform_clock_t::now() ;
+    }
+    #endif
+
     if( this_t::before_device() )
     {
         if( _windows.size() != 0 )

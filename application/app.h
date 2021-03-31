@@ -164,6 +164,10 @@ namespace natus
             typedef std::chrono::high_resolution_clock render_clock_t ;
             render_clock_t::time_point _tp_render = render_clock_t::now() ;
 
+            typedef std::chrono::high_resolution_clock platform_clock_t ;
+            platform_clock_t::time_point _tp_platform = platform_clock_t::now() ;
+            std::chrono::microseconds _platform_dur = std::chrono::microseconds( 2000 ) ;
+
             typedef std::chrono::high_resolution_clock update_clock_t ;
             update_clock_t::time_point _tp_update = update_clock_t::now() ;
             std::chrono::milliseconds _update_dur = std::chrono::milliseconds( 8 ) ;
