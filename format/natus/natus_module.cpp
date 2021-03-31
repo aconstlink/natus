@@ -253,6 +253,15 @@ natus::format::future_item_t natus_module::import_from( natus::io::location_cref
                             {
                                 sprite_sheet_t::animation_t animation ;
 
+                                // attribute: object
+                                {
+                                    rapidxml::xml_attribute<> * attr = ani_xml->first_attribute( "object" ) ;
+                                    if( attr != nullptr )
+                                    {
+                                        animation.object = natus::ntd::string_t( attr->value() ) ;
+                                    }
+                                }
+
                                 // attribute: name
                                 {
                                     rapidxml::xml_attribute<> * attr = ani_xml->first_attribute( "name" ) ;

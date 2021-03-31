@@ -166,5 +166,51 @@ namespace natus
             void_t render( size_t const ) noexcept ;
         };
         natus_res_typedef( sprite_render_2d ) ;
+
+        struct sprite_sheet
+        {
+            struct animation
+            {
+                struct sprite
+                {
+                    size_t idx ;
+                    size_t begin ;
+                    size_t end ;
+                };
+                size_t duration ;
+                natus::ntd::string_t name ;
+                natus::ntd::vector< sprite > sprites ;
+            };
+
+            struct object
+            {
+                natus::ntd::string_t name ;
+                natus::ntd::vector< animation > animations ;
+            };
+            natus::ntd::vector< object > objects ;
+            
+
+            struct sprite
+            {
+                natus::math::vec4f_t rect ;
+                natus::math::vec2f_t pivot ;
+            };
+            natus::ntd::vector< sprite > rects ;
+
+            sprite determine_sprite( size_t const obj_id, size_t const ani_id, size_t const milli_time ) const noexcept
+            {
+                for( auto const & s : objects[obj_id].animations[ani_id].sprites )
+                {
+                    if( milli_time >= s.begin && milli_time < s.end )
+                    {
+                        return rects[s.idx] ;
+                    }
+                }
+
+                return sprite() ;
+            }
+        };
+        natus_typedef( sprite_sheet ) ;
+        natus_res_typedefs( natus::ntd::vector< sprite_sheet_t >, sprite_sheets ) ;
     }
 }

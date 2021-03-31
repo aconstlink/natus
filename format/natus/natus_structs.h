@@ -64,6 +64,7 @@ namespace natus
                     };
                     natus_typedef( frame ) ;
 
+                    natus::ntd::string_t object ;
                     natus::ntd::string_t name ;
                     natus::ntd::vector< frame_t > frames ;
                 };
