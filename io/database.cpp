@@ -159,6 +159,7 @@ struct database::record_cache
 
 bool_t database::cache_access::wait_for_operation( natus::io::database::load_completion_funk_t funk ) 
 {
+    if( !_res.is_valid() ) return false ;
     return _res->wait_for_operation( funk ) ;
 }
 
