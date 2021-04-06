@@ -295,13 +295,15 @@ bool_t app::platform_update( void_t )
         }
         _tp_platform = this_t::platform_clock_t::now() ;
     }
-    #elif 1
+    #elif 0
+    // this causes severe frame time lag but reduces cpu consumption alot!
+    // dont use at the moment
     {
         
         auto const dur = (this_t::platform_clock_t::now() - _tp_platform) ;
         if( dur < _platform_dur )
         {
-            auto const dif = _platform_dur - std::chrono::duration_cast<std::chrono::milliseconds>(dur) ;
+            auto const dif = _platform_dur - std::chrono::duration_cast<std::chrono::microseconds>(dur) ;
             std::this_thread::sleep_for( dif ) ;
         }
         _tp_platform = this_t::platform_clock_t::now() ;
@@ -348,7 +350,6 @@ bool_t app::platform_update( void_t )
     {
         this_t::physics_data_t dat ;
         this_t::compute_and_reset_timing( dat ) ;
-        this->on_physics( dat ) ;
         // how to handle the missed time?
         {
             size_t const l = _physics_residual / _physics_dur ;
@@ -919,12 +920,11 @@ void_t app::compute_and_reset_timing( update_data & d ) noexcept
 bool_t app::compute_and_reset_timing( physics_data & d ) noexcept 
 {
     auto const micro = std::chrono::duration_cast< std::chrono::microseconds >( this_t::physics_clock_t::now() - _tp_physics )  ;
+    _tp_physics = this_t::physics_clock_t::now() ;
 
-    _physics_residual += micro - _physics_dur ;
+    _physics_residual += micro ;
 
     float_t const dt = float_t( double_t( _physics_dur.count() ) / 1000000.0 ) ;
-
-    _tp_physics = this_t::physics_clock_t::now() ;
 
     d.micro_dt = _physics_dur.count() ;
     d.sec_dt = dt ;
