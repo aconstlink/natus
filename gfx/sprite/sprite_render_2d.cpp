@@ -383,7 +383,7 @@ void_t sprite_render_2d::set_texture( natus::ntd::string_cref_t name ) noexcept
 
 void_t sprite_render_2d::draw( size_t const l, natus::math::vec2f_cref_t pos, natus::math::mat2f_cref_t frame, natus::math::vec2f_cref_t scale, natus::math::vec4f_cref_t uv_rect, size_t const slot, natus::math::vec2f_cref_t pivot, natus::math::vec4f_cref_t color ) noexcept 
 {
-    if( _layers.size() <= l+1 ) 
+    if( _layers.size() < l+1 ) 
     {
         _layers.resize( l+1 ) ;
     }
@@ -499,9 +499,9 @@ void_t sprite_render_2d::prepare_for_rendering( void_t ) noexcept
 
         size_t lstart = 0 ;
 
-        for( size_t i=0; i<_layers.size(); ++i )
+        for( size_t l=0; l<_layers.size(); ++l )
         {
-            auto const & sprites = _layers[i].sprites ;
+            auto const & sprites = _layers[l].sprites ;
             
             for( size_t i=0; i<sprites.size(); ++i )
             {
@@ -534,7 +534,7 @@ void_t sprite_render_2d::prepare_for_rendering( void_t ) noexcept
             }
             lstart += sprites.size() * sizeof_data ;
             
-            _layers[i].sprites.clear() ;
+            _layers[l].sprites.clear() ;
         }
         
         data_realloc = _ao->data_buffer().get_sib() > bsib ;
@@ -603,7 +603,10 @@ void_t sprite_render_2d::add_variable_set( natus::graphics::render_object_ref_t 
         auto* var = vars->data_variable<natus::math::mat4f_t>( "u_proj" ) ;
         var->set( natus::math::mat4f_t().identity() ) ;
     }
-
+    {
+        auto* var = vars->texture_variable( "u_tex" ) ;
+        var->set( _image_name ) ;
+    }
     rc.add_variable_set( std::move( vars ) ) ;
 }
 
