@@ -26,9 +26,11 @@ namespace natus
 
             typedef std::function< void_t ( natus::graphics::backend_ptr_t ) > runtime_command_t ;
             natus_typedefs( natus::ntd::vector< runtime_command_t >, commands ) ;
-            commands_t _configures ;
+            size_t _configures_id = 0 ;
+            commands_t _configures[2] ;
             natus::concurrent::mutex_t _configures_mtx ;
-            commands_t _runtimes ;
+            size_t _runtimes_id = 0 ;
+            commands_t _runtimes[2] ;
             natus::concurrent::mutex_t _runtimes_mtx ;
 
         private: // sync
