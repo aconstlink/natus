@@ -161,36 +161,24 @@ namespace natus
             size_t _audio_count = 0 ;
             size_t _logic_count = 0 ;
 
-            typedef std::chrono::high_resolution_clock render_clock_t ;
-            render_clock_t::time_point _tp_render = render_clock_t::now() ;
-
             typedef std::chrono::high_resolution_clock platform_clock_t ;
             platform_clock_t::time_point _tp_platform = platform_clock_t::now() ;
-            std::chrono::microseconds _platform_dur = std::chrono::microseconds( 2000 ) ;
-
-            typedef std::chrono::high_resolution_clock update_clock_t ;
-            update_clock_t::time_point _tp_update = update_clock_t::now() ;
-            std::chrono::milliseconds _update_dur = std::chrono::milliseconds( 8 ) ;
-            std::chrono::milliseconds _update_residual = std::chrono::milliseconds( 0 ) ;
-
-            typedef std::chrono::high_resolution_clock physics_clock_t ;
-            physics_clock_t::time_point _tp_physics = physics_clock_t::now() ;
-            std::chrono::microseconds _physics_dur = std::chrono::microseconds( 8000 ) ;
+            
+            std::chrono::microseconds _render_residual = std::chrono::microseconds( 0 ) ;
+            std::chrono::microseconds _audio_residual = std::chrono::microseconds( 0 ) ;
+            std::chrono::microseconds _update_interval = std::chrono::microseconds( 8000 ) ;
+            std::chrono::microseconds _update_residual = std::chrono::microseconds( 0 ) ;
+            std::chrono::microseconds _physics_interval = std::chrono::microseconds( 8000 ) ;
             std::chrono::microseconds _physics_residual = std::chrono::microseconds( 0 ) ;
-
-            typedef std::chrono::high_resolution_clock logic_clock_t ;
-            logic_clock_t::time_point _tp_logic = logic_clock_t::now() ;
-            std::chrono::milliseconds _logic_dur = std::chrono::milliseconds( 8 ) ;
-            std::chrono::milliseconds _logic_residual = std::chrono::milliseconds( 0 ) ;
+            std::chrono::microseconds _logic_interval = std::chrono::microseconds( 8000 ) ;
+            std::chrono::microseconds _logic_residual = std::chrono::microseconds( 0 ) ;
+            std::chrono::microseconds _device_interval = std::chrono::microseconds( 10000 ) ;
+            std::chrono::microseconds _device_residual = std::chrono::microseconds( 0 ) ;
 
         private: // device
 
             natus::device::three_device_res_t _dev_mouse ;
             natus::device::ascii_device_res_t _dev_ascii ;
-
-            typedef std::chrono::high_resolution_clock device_clock_t ;
-            device_clock_t::time_point _device_tp = device_clock_t::now() ;
-            size_t _device_milli_update = 10 ;
 
         public:
 
@@ -222,7 +210,7 @@ namespace natus
                 // how many seconds passed
                 float_t sec_dt ;
                 // how many milli seconds passed
-                size_t milli_dt ;
+                size_t micro_dt ;
             };
             struct audio_data {} ;
             struct device_data {};
@@ -232,7 +220,7 @@ namespace natus
                 // how many seconds passed
                 float_t sec_dt ;
                 // how many milli seconds passed
-                size_t milli_dt ;
+                size_t micro_dt ;
             };
 
             natus_typedef( update_data ) ;
@@ -321,26 +309,20 @@ namespace natus
 
         private: // system specific update code
 
-            bool_t before_update( void_t ) ;
-            bool_t after_update( void_t ) ;
-            bool_t before_physics( void_t ) ;
-            bool_t after_physics( void_t ) ;
-            bool_t before_render( void_t ) ;
-            bool_t after_render( void_t ) ;
-            bool_t before_audio( void_t ) ;
-            bool_t after_audio( void_t ) ;
-            bool_t before_tool( void_t ) noexcept ;
-            bool_t after_tool( void_t ) noexcept ;
-            bool_t before_device( void_t ) noexcept ;
-            bool_t after_device( void_t ) noexcept ;
-            bool_t before_logic( void_t ) noexcept ;
-            bool_t after_logic( void_t ) noexcept ;
-
-
-            void_t compute_and_reset_timing( render_data & rd ) noexcept ;
-            void_t compute_and_reset_timing( update_data & rd ) noexcept ;
-            bool_t compute_and_reset_timing( physics_data & rd ) noexcept ;
-            bool_t compute_and_reset_timing( logic_data & rd ) noexcept ;
+            bool_t before_update( std::chrono::microseconds const & ) noexcept ;
+            bool_t after_update( size_t const iter ) ;
+            bool_t before_physics( std::chrono::microseconds const & ) noexcept ;
+            bool_t after_physics( size_t const iter ) ;
+            bool_t before_render( std::chrono::microseconds const & ) noexcept ;
+            bool_t after_render( size_t const iter ) ;
+            bool_t before_audio( std::chrono::microseconds const & ) noexcept ;
+            bool_t after_audio( size_t const iter ) ;
+            bool_t before_tool( std::chrono::microseconds const & ) noexcept ;
+            bool_t after_tool( size_t const iter ) noexcept ;
+            bool_t before_device( std::chrono::microseconds const & ) noexcept ;
+            bool_t after_device( size_t const iter ) noexcept ;
+            bool_t before_logic( std::chrono::microseconds const & ) noexcept ;
+            bool_t after_logic( size_t const iter ) noexcept ;
 
         private:
 
