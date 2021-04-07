@@ -277,10 +277,6 @@ bool_t app::platform_init( void_t )
 {
     this->on_init() ;
     _tp_platform = this_t::platform_clock_t::now() ;
-    _tp_update = this_t::update_clock_t::now() ;
-    _tp_render = this_t::render_clock_t::now() ;
-    _tp_physics = this_t::physics_clock_t::now() ;
-    _tp_logic = this_t::logic_clock_t::now() ;
     return true ;
 }
 
@@ -310,7 +306,25 @@ bool_t app::platform_update( void_t )
     }
     #endif
 
-    if( this_t::before_device() )
+    
+    {
+        while( std::chrono::duration_cast<std::chrono::nanoseconds>( this_t::platform_clock_t::now() - _tp_platform ).count() < 1000 )
+            std::this_thread::yield() ;
+    }
+
+    std::chrono::microseconds dt_micro ;
+    float_t dt_sec = 0.0f ;
+
+    {
+        dt_micro = std::chrono::duration_cast<std::chrono::microseconds>( this_t::platform_clock_t::now() - _tp_platform ) ;
+        dt_sec = float_t( double_t( dt_micro.count() ) / 1000000.0 ) ;
+        _tp_platform = this_t::platform_clock_t::now() ;
+    }
+
+    if( dt_micro.count() == 0 ) 
+        int bp = 0 ;
+
+    if( this_t::before_device( dt_micro ) )
     {
         if( _windows.size() != 0 )
         {
@@ -323,63 +337,69 @@ bool_t app::platform_update( void_t )
             this->on_device( dat ) ;
         }
 
-        this_t::after_device() ;
+        this_t::after_device(0) ;
     }
 
-    if( this_t::before_update() )
+    if( this_t::before_update( dt_micro ) )
     {
         natus::concurrent::global_t::update() ;
 
         this_t::update_data_t dat ;
-        this_t::compute_and_reset_timing( dat ) ;
+        dat.micro_dt = _update_interval.count() ;
+        dat.sec_dt = float_t( double_t(_update_interval.count()) / 1000000.0 ) ;
 
-        this->on_update( dat ) ;
-        this_t::after_update() ;
+        size_t const num_iter = _update_residual / _update_interval ;
+        for( size_t i=0; i<num_iter; ++i )
+            this->on_update( dat ) ;
+
+        this_t::after_update( num_iter ) ;
     }
 
-    if( this_t::before_logic() )
+    if( this_t::before_logic( dt_micro ) )
     {
         this_t::logic_data_t dat ;
-        this_t::compute_and_reset_timing( dat ) ;
+        dat.micro_dt = _logic_interval.count() ;
+        dat.sec_dt = float_t( double_t(_logic_interval.count()) / 1000000.0 ) ;
 
-        this->on_logic( dat ) ;
-        this_t::after_logic() ;
+        size_t const num_iter = _logic_residual / _logic_interval ;
+        for( size_t i=0; i<num_iter; ++i )
+            this->on_logic( dat ) ;
+
+        this_t::after_logic( num_iter ) ;
     }
 
-    if( this_t::before_physics() )
+    if( this_t::before_physics( dt_micro ) )
     {
         this_t::physics_data_t dat ;
-        this_t::compute_and_reset_timing( dat ) ;
-        // how to handle the missed time?
-        {
-            size_t const l = _physics_residual / _physics_dur ;
-            for( size_t i=0; i<l; ++i )
-            {
-                this->on_physics( dat ) ;
-            }
-            _physics_residual -= _physics_dur * l ;
-        }
-        this_t::after_physics() ;
+        dat.micro_dt = _physics_interval.count() ;
+        dat.sec_dt = float_t( double_t(_physics_interval.count()) / 1000000.0 ) ;
+
+        size_t const num_iter = _physics_residual / _physics_interval ;
+        for( size_t i=0; i<num_iter; ++i )
+            this->on_physics( dat ) ;
+
+        this_t::after_physics( num_iter ) ;
     }
 
-    if( this_t::before_audio() )
+    if( this_t::before_audio( dt_micro ) )
     {
         this_t::audio_data_t dat ;
         this->on_audio( dat ) ;
-        this_t::after_audio() ;
+        this_t::after_audio(0) ;
     }
 
-    if( this_t::before_render() )
+    if( this_t::before_render( dt_micro ) )
     {
-        // do the actual rendering of the app
+
         
         this_t::render_data_t dat ;
-        this_t::compute_and_reset_timing( dat ) ;
+        dat.micro_dt = _render_residual.count() ;
+        dat.sec_dt = float_t( double_t(_render_residual.count()) / 1000000.0 ) ;
 
         this->on_graphics( dat ) ;
 
         // do the tool ui only if rendering is possible
-        if( this_t::before_tool() )
+        if( this_t::before_tool( dt_micro ) )
         {
             if( _windows.size() != 0 )
             {
@@ -396,22 +416,20 @@ bool_t app::platform_update( void_t )
                     }
                 } ) ;
                 _windows[ 0 ].imgui->end() ;
-                
 
                 if( render ) _windows[ 0 ].imgui->render( _windows[ 0 ].async ) ;
-
             }
-            this_t::after_tool() ;
+            this_t::after_tool(0) ;
         }
 
-        this_t::after_render() ;
+        this_t::after_render(0) ;
     }
 
     return true ;
 }
 
 //***
-bool_t app::before_tool( void_t ) noexcept
+bool_t app::before_tool( std::chrono::microseconds const & ) noexcept
 {
     natus::device::global_t::system()->search( [&] ( natus::device::idevice_res_t dev_in )
     {
@@ -439,19 +457,18 @@ bool_t app::before_tool( void_t ) noexcept
 }
 
 //***
-bool_t app::after_tool( void_t ) noexcept
+bool_t app::after_tool( size_t const iter ) noexcept
 {
     return true ;
 }
 
 //***
-bool_t app::before_device( void_t ) noexcept 
+bool_t app::before_device( std::chrono::microseconds const & dt ) noexcept 
 {
-    size_t const milli_passed = std::chrono::duration_cast< std::chrono::milliseconds > ( this_t::device_clock_t::now() - _device_tp ).count() ;
+    _device_residual += dt ;
 
-    if( milli_passed >= _device_milli_update )
+    if( _device_residual >= _device_interval )
     {
-        _device_tp = this_t::device_clock_t::now() ;
         natus::device::global_t::system()->update() ;
         return true ;
     }
@@ -460,31 +477,32 @@ bool_t app::before_device( void_t ) noexcept
 }
 
 //***
-bool_t app::after_device( void_t ) noexcept 
+bool_t app::after_device( size_t const iter ) noexcept 
 {
+    _device_residual = decltype(_device_residual)(0) ;
     return true ;
 }
 
 //***
-bool_t app::before_logic( void_t ) noexcept 
+bool_t app::before_logic( std::chrono::microseconds const & dt ) noexcept 
 {
-   auto const dt = std::chrono::duration_cast< std::chrono::milliseconds >( this_t::logic_clock_t::now() - _tp_logic ) + _logic_residual ;
-
-    return dt >= _logic_dur ;
+    _logic_residual += dt ;
+    return _logic_residual >= _logic_interval  ;
 }
 
 //***
-bool_t app::after_logic( void_t ) noexcept 
+bool_t app::after_logic( size_t const iter ) noexcept 
 {
+    _logic_residual -= iter * _logic_interval ;
     return true ;
 }
 
 //***
-bool_t app::before_update( void_t ) 
+bool_t app::before_update( std::chrono::microseconds const & dt ) noexcept
 {
-    auto const milli_passed = std::chrono::duration_cast< std::chrono::milliseconds > ( this_t::update_clock_t::now() - _tp_update ) ;
+    _update_residual += dt ;
 
-    if( milli_passed >= _update_dur )
+    if( _update_residual >= _update_interval )
     {
         *_access = false ;
 
@@ -530,29 +548,32 @@ bool_t app::before_update( void_t )
 }
 
 //***
-bool_t app::after_update( void_t )
+bool_t app::after_update( size_t const iter )
 {
     *_access = true ;
     ++_update_count ;
+    _update_residual -= iter * _update_interval ;
     return true ;
 }
 
 //***
-bool_t app::before_physics( void_t ) 
+bool_t app::before_physics( std::chrono::microseconds const & dt ) noexcept
 {
-    auto const micro = std::chrono::duration_cast< std::chrono::microseconds >( this_t::physics_clock_t::now() - _tp_physics )  ;
-
-    return micro >= _physics_dur ;
+    _physics_residual += dt ;
+    return _physics_residual >= _physics_interval ;
 }
 
-bool_t app::after_physics( void_t ) 
+bool_t app::after_physics( size_t const iter ) 
 {
+    _physics_residual -= iter * _physics_interval ;
     return true ;
 }
 
 //***
-bool_t app::before_render( void_t )
+bool_t app::before_render( std::chrono::microseconds const & dt ) noexcept
 {
+    _render_residual += dt ;
+
     size_t windows = _windows.size() ;
 
     // check if async system is ready
@@ -566,7 +587,7 @@ bool_t app::before_render( void_t )
 }
 
 //***
-bool_t app::after_render( void_t )
+bool_t app::after_render( size_t const )
 {
     ++_render_count ;
     for( auto& pwi : _windows )
@@ -574,12 +595,15 @@ bool_t app::after_render( void_t )
         pwi.async->leave_frame() ;
     }
 
+    _render_residual = decltype(_render_residual)(0) ;
     return true ;
 }
 
 //***
-bool_t app::before_audio( void_t ) 
+bool_t app::before_audio( std::chrono::microseconds const & dt ) noexcept
 {
+    _audio_residual += dt ;
+
     size_t audio = _audios.size() ;
 
     // check if async system is ready
@@ -593,13 +617,15 @@ bool_t app::before_audio( void_t )
 }
 
 //***
-bool_t app::after_audio( void_t ) 
+bool_t app::after_audio( size_t const ) 
 {
     ++_audio_count ;
     for( auto& pwi : _audios )
     {
         pwi.async->leave_frame() ;
     }
+
+    _audio_residual = decltype(_audio_residual)(0) ;
     return true ;
 }
 
@@ -892,58 +918,4 @@ natus::application::gfx_context_res_t app::create_null_window( natus::applicatio
         natus::graphics::async_t( std::move( backend ) ) ) ;
 
     return std::move( ctx ) ;
-}
-
-
-void_t app::compute_and_reset_timing( render_data & rd ) noexcept 
-{
-    size_t const milli = std::chrono::duration_cast< std::chrono::milliseconds >( this_t::render_clock_t::now() - _tp_render ).count() ;
-    float_t const dt = float_t( double_t( milli ) / 1000.0 ) ;
-
-    _tp_render = this_t::render_clock_t::now() ;
-
-    rd.milli_dt = milli ;
-    rd.sec_dt = dt ;
-}
-
-void_t app::compute_and_reset_timing( update_data & d ) noexcept 
-{
-    size_t const micro = std::chrono::duration_cast< std::chrono::microseconds >( this_t::update_clock_t::now() - _tp_update ).count() ;
-    float_t const dt = float_t( double_t( micro ) / 1000000.0 ) ;
-
-    _tp_update = this_t::update_clock_t::now() ;
-
-    d.micro_dt = micro ;
-    d.sec_dt = dt ;
-}
-
-bool_t app::compute_and_reset_timing( physics_data & d ) noexcept 
-{
-    auto const micro = std::chrono::duration_cast< std::chrono::microseconds >( this_t::physics_clock_t::now() - _tp_physics )  ;
-    _tp_physics = this_t::physics_clock_t::now() ;
-
-    _physics_residual += micro ;
-
-    float_t const dt = float_t( double_t( _physics_dur.count() ) / 1000000.0 ) ;
-
-    d.micro_dt = _physics_dur.count() ;
-    d.sec_dt = dt ;
-
-    return true ;
-}
-
-bool_t app::compute_and_reset_timing( logic_data & d ) noexcept 
-{
-    auto const milli = std::chrono::duration_cast< std::chrono::milliseconds >( this_t::logic_clock_t::now() - _tp_logic ) + _logic_residual ;
-
-    _logic_residual = milli - _logic_dur ;
-
-    float_t const dt = float_t( double_t( _logic_dur.count() ) / 1000.0 ) ;
-
-    _tp_logic = this_t::logic_clock_t::now() ;
-
-    d.milli_dt = _logic_dur.count() ;
-    d.sec_dt = dt ;
-
-    return true ;
 }
