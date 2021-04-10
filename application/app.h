@@ -191,36 +191,32 @@ namespace natus
 
             struct update_data 
             {
-                // how many seconds passed
                 float_t sec_dt ;
-                // how many micro seconds passed
                 size_t micro_dt ;
+                size_t milli_dt ;
             };
 
             struct physics_data 
             {
-                // how many seconds passed
                 float_t sec_dt ;
-                // how many micro seconds passed
                 size_t micro_dt ;
+                size_t milli_dt ;
             };
 
             struct render_data 
             {
-                // how many seconds passed
                 float_t sec_dt ;
-                // how many milli seconds passed
                 size_t micro_dt ;
+                size_t milli_dt ;
             };
             struct audio_data {} ;
             struct device_data {};
 
             struct logic_data 
             {
-                // how many seconds passed
                 float_t sec_dt ;
-                // how many milli seconds passed
                 size_t micro_dt ;
+                size_t milli_dt ;
             };
 
             natus_typedef( update_data ) ;

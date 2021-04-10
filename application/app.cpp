@@ -347,6 +347,7 @@ bool_t app::platform_update( void_t )
         this_t::update_data_t dat ;
         dat.micro_dt = _update_interval.count() ;
         dat.sec_dt = float_t( double_t(_update_interval.count()) / 1000000.0 ) ;
+        dat.milli_dt = dat.micro_dt / 1000 ;
 
         size_t const num_iter = _update_residual / _update_interval ;
         for( size_t i=0; i<num_iter; ++i )
@@ -360,6 +361,7 @@ bool_t app::platform_update( void_t )
         this_t::logic_data_t dat ;
         dat.micro_dt = _logic_interval.count() ;
         dat.sec_dt = float_t( double_t(_logic_interval.count()) / 1000000.0 ) ;
+        dat.milli_dt = dat.micro_dt / 1000 ;
 
         size_t const num_iter = _logic_residual / _logic_interval ;
         for( size_t i=0; i<num_iter; ++i )
@@ -373,6 +375,7 @@ bool_t app::platform_update( void_t )
         this_t::physics_data_t dat ;
         dat.micro_dt = _physics_interval.count() ;
         dat.sec_dt = float_t( double_t(_physics_interval.count()) / 1000000.0 ) ;
+        dat.milli_dt = dat.micro_dt / 1000 ;
 
         size_t const num_iter = _physics_residual / _physics_interval ;
         for( size_t i=0; i<num_iter; ++i )
@@ -390,11 +393,10 @@ bool_t app::platform_update( void_t )
 
     if( this_t::before_render( dt_micro ) )
     {
-
-        
         this_t::render_data_t dat ;
         dat.micro_dt = _render_residual.count() ;
         dat.sec_dt = float_t( double_t(_render_residual.count()) / 1000000.0 ) ;
+        dat.milli_dt = dat.micro_dt / 1000 ;
 
         this->on_graphics( dat ) ;
 
