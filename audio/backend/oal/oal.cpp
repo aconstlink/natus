@@ -136,6 +136,23 @@ struct natus::audio::oal_backend::pimpl
 
         for( auto& b : buffers )
         {
+            if( b.sid != ALuint(-1) )
+            {
+                {
+                    alSourceStop( b.sid ) ;
+                    auto const res = alGetError() ;
+                    natus::log::global_t::error( res != ALC_NO_ERROR,
+                        "[OpenAL Backend] : alSourceStop" ) ;
+                }
+
+                {
+                    alDeleteSources( 1, &b.sid ) ;
+                    auto const res = alGetError() ;
+                    natus::log::global::error( res != AL_NO_ERROR, "[OpenAL Backend] : alDeleteSources" ) ;
+                    b.sid = ALuint( -1 ) ;
+                }
+            }
+
             if( b.id != ALuint( -1 ) )
             {
                 alDeleteBuffers( 1, &b.id ) ;
@@ -836,6 +853,16 @@ natus::audio::result oal_backend::execute( natus::audio::buffer_object_res_t obj
 
     _pimpl->execute( id->get_oid(), *obj, det ) ;
 
+    return natus::audio::result::ok ;
+}
+
+natus::audio::result oal_backend::release( natus::audio::capture_object_res_t ) noexcept 
+{
+    return natus::audio::result::ok ;
+}
+
+natus::audio::result oal_backend::release( natus::audio::buffer_object_res_t ) noexcept 
+{
     return natus::audio::result::ok ;
 }
 

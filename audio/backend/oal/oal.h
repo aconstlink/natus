@@ -34,10 +34,12 @@ namespace natus
                 natus::audio::capture_object_res_t ) noexcept ;
 
             virtual natus::audio::result capture( natus::audio::capture_object_res_t, bool_t const b = true ) noexcept ;
+            virtual natus::audio::result release( natus::audio::capture_object_res_t ) noexcept ;
 
             virtual natus::audio::result configure( natus::audio::buffer_object_res_t ) noexcept ;
             virtual natus::audio::result update( natus::audio::buffer_object_res_t ) noexcept ;
             virtual natus::audio::result execute( natus::audio::buffer_object_res_t, natus::audio::backend::execute_detail_cref_t ) noexcept ;
+            virtual natus::audio::result release( natus::audio::buffer_object_res_t ) noexcept ;
 
         public:
 

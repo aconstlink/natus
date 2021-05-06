@@ -43,11 +43,12 @@ namespace natus
             virtual natus::audio::result configure( natus::audio::capture_type const, 
                 natus::audio::capture_object_res_t ) noexcept = 0 ;
             virtual natus::audio::result capture( natus::audio::capture_object_res_t, bool_t const b = true ) noexcept = 0 ;
+            virtual natus::audio::result release( natus::audio::capture_object_res_t ) noexcept = 0 ;
 
             virtual natus::audio::result configure( natus::audio::buffer_object_res_t ) noexcept = 0 ;
             virtual natus::audio::result update( natus::audio::buffer_object_res_t ) noexcept = 0 ;
             virtual natus::audio::result execute( natus::audio::buffer_object_res_t, natus::audio::backend::execute_detail_cref_t ) noexcept = 0 ;
-
+            virtual natus::audio::result release( natus::audio::buffer_object_res_t ) noexcept = 0 ;
 
             virtual void_t init( void_t ) noexcept = 0 ;
             virtual void_t release( void_t ) noexcept = 0 ;
