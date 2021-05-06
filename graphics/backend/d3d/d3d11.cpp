@@ -24,16 +24,29 @@ using namespace natus::graphics ;
 template< typename T >
 class guard
 {
+    natus_this_typedefs( guard< T > ) ;
+
 private:
 
     T * _ptr = nullptr ;
+
+    void_t invalidate( void_t ) noexcept
+    {
+        if( _ptr != nullptr ) _ptr->Release() ;
+        _ptr = nullptr ;
+    }
 
 public:
 
     guard( void_t ) noexcept {}
     ~guard( void_t ) noexcept
     {
-        if( _ptr != nullptr ) _ptr->Release() ;
+        this_t::invalidate() ;
+    }
+
+    operator T const * ( void_t ) const noexcept
+    {
+        return _ptr ;
     }
 
     operator T* ( void_t ) noexcept
@@ -62,6 +75,31 @@ public:
         _ptr = nullptr ;
         return ret ;
     }
+
+    bool_t operator != ( T * other ) const noexcept 
+    {
+        return _ptr != other ;
+    }
+
+    bool_t operator == ( T * other ) const noexcept 
+    {
+        return _ptr == other ;
+    }
+
+    // just replaces the pointer
+    this_ref_t operator = ( T * other ) noexcept
+    {
+        _ptr = other ;
+        return *this ;
+    }
+
+    // invalidates this and takes other
+    this_ref_t operator = ( this_rref_t other ) noexcept
+    {
+        this_t::invalidate() ;
+        _ptr = other.move_out() ;
+        return *this ;
+    }
 } ;
 
 struct d3d11_backend::pimpl
@@ -84,13 +122,13 @@ struct d3d11_backend::pimpl
         size_t sib_vb = 0 ;
         size_t sib_ib = 0 ;
 
-        ID3D11Buffer* vb = nullptr ;
-        ID3D11Buffer* ib = nullptr ;
+        guard< ID3D11Buffer > vb ;
+        guard< ID3D11Buffer > ib ;
 
         // per vertex sib
         UINT stride = 0 ;
 
-        natus::graphics::primitive_type pt ;
+        natus::graphics::primitive_type pt = natus::graphics::primitive_type::undefined ;
 
         struct layout_element
         {
@@ -105,6 +143,36 @@ struct d3d11_backend::pimpl
             }
         };
         natus::ntd::vector< layout_element > elements ;
+
+        geo_data( void_t ) noexcept{}
+        geo_data( geo_data const & ) = delete ;
+        geo_data( geo_data && rhv ) noexcept
+        {
+            valid = rhv.valid ;
+            name = rhv.name ;
+
+            natus_move_member_ptr( vb_mem, rhv ) ;
+            natus_move_member_ptr( ib_mem, rhv ) ;
+
+            num_elements_vb = rhv.num_elements_vb ;
+            num_elements_ib = rhv.num_elements_ib ;
+
+            sib_vb = rhv.sib_vb ;
+            sib_ib = rhv.sib_ib ;
+
+            vb = std::move( rhv.vb ) ;
+            ib = std::move( rhv.ib ) ;
+            
+            stride = rhv.stride ;
+
+            pt = rhv.pt ;
+
+            elements = std::move( rhv.elements ) ;
+        }
+        ~geo_data( void_t ) noexcept
+        {
+            invalidate() ;
+        }
 
         DXGI_FORMAT get_format_from_element( natus::graphics::vertex_attribute const va ) const noexcept
         {
@@ -131,6 +199,33 @@ struct d3d11_backend::pimpl
             }
             return UINT( ret ) ;
         }
+
+        void_t invalidate( void_t ) noexcept
+        {
+            valid = false ;
+            name = "" ;
+
+            natus::memory::global_t::dealloc_raw( vb_mem ) ;
+            natus::memory::global_t::dealloc_raw( ib_mem ) ;
+
+            vb_mem = nullptr ;
+            ib_mem = nullptr ;
+
+            num_elements_vb = 0 ;
+            num_elements_ib = 0 ;
+
+            sib_vb = 0 ;
+            sib_ib = 0 ;
+
+            vb = guard< ID3D11Buffer >() ;
+            ib = guard< ID3D11Buffer >() ;
+
+            stride = 0 ;
+
+            pt = natus::graphics::primitive_type::undefined ;
+
+            elements.clear() ;
+        }
     };
     natus_typedef( geo_data ) ;
 
@@ -140,12 +235,12 @@ struct d3d11_backend::pimpl
         natus::ntd::string_t name ;
 
         // vs, gs, ps, else?
-        ID3D11VertexShader * vs = nullptr ;
-        ID3D11GeometryShader * gs = nullptr ;
-        ID3D11PixelShader * ps = nullptr ;
+        guard< ID3D11VertexShader > vs ;
+        guard< ID3D11GeometryShader > gs ;
+        guard< ID3D11PixelShader > ps ;
 
         // required for later vertex layout creation
-        ID3DBlob* vs_blob = nullptr;
+        guard< ID3DBlob > vs_blob ;
 
         struct vertex_input_binding
         {
@@ -206,6 +301,51 @@ struct d3d11_backend::pimpl
 
         buffer_variables_t vs_buffers ;
         buffer_variables_t ps_buffers ;
+
+        shader_data( void_t ) noexcept {}
+        shader_data( shader_data const & ) = delete ;
+        shader_data( shader_data && rhv ) noexcept
+        {
+            valid = rhv.valid ;
+            name = std::move( rhv.name ) ;
+
+            vs = std::move( rhv.vs ) ;
+            gs = std::move( rhv.gs ) ;
+            ps = std::move( rhv.ps ) ;
+            vs_blob = std::move( rhv.vs_blob ) ;
+            
+            vertex_inputs = std::move( rhv.vertex_inputs ) ;
+            
+            vs_cbuffers = std::move( rhv.vs_cbuffers ) ;
+            gs_cbuffers = std::move( rhv.gs_cbuffers ) ;
+            ps_cbuffers = std::move( rhv.ps_cbuffers ) ;
+
+            vs_textures = std::move( rhv.vs_textures ) ;
+            ps_textures = std::move( rhv.ps_textures ) ;
+
+            vs_buffers = std::move( rhv.vs_buffers ) ;
+            ps_buffers = std::move( rhv.ps_buffers ) ;
+        }
+
+        void_t invalidate( void_t ) noexcept
+        {
+            valid = false ;
+            name = "" ;
+
+            vs = guard< ID3D11VertexShader >() ;
+            gs = guard< ID3D11GeometryShader >() ;
+            ps = guard< ID3D11PixelShader >() ;
+            vs_blob = guard< ID3DBlob >() ;
+            
+            vertex_inputs.clear() ;
+            vs_cbuffers.clear() ;
+            gs_cbuffers.clear() ;
+            ps_cbuffers.clear() ;
+            vs_textures.clear() ;
+            ps_textures.clear() ;
+            vs_buffers.clear() ;
+            ps_buffers.clear() ;
+        }
     } ;
     natus_typedef( shader_data ) ;
 
@@ -214,9 +354,9 @@ struct d3d11_backend::pimpl
         bool_t valid = false ;
         natus::ntd::string_t name ;
 
-        ID3D11ShaderResourceView * view = nullptr ;
-        ID3D11Texture2D * texture = nullptr ;
-        ID3D11SamplerState * sampler = nullptr ;
+        guard< ID3D11ShaderResourceView > view ;
+        guard< ID3D11Texture2D > texture ;
+        guard< ID3D11SamplerState > sampler ;
 
         // 0.0 : do not flip uv.v
         // 1.0 : do flip uv.v
@@ -225,6 +365,32 @@ struct d3d11_backend::pimpl
         // the user needs to access this variable for
         // flipping information.
         float_t requires_y_flip = 0.0f ;
+
+        image_data( void_t ) noexcept{}
+        image_data( image_data const & ) = delete ;
+        image_data( image_data && rhv ) noexcept
+        {
+            valid = rhv.valid ;
+            rhv.valid = false ;
+            name = std::move( rhv.name ) ;
+            view = std::move( rhv.view ) ;
+            texture = std::move( rhv.texture ) ;
+            sampler = std::move( rhv.sampler ) ;
+        }
+
+        ~image_data( void_t ) noexcept
+        {
+            invalidate() ;
+        }
+
+        void_t invalidate( void_t ) noexcept
+        {
+            valid = false ;
+            name = "" ;
+            view = guard< ID3D11ShaderResourceView >() ;
+            texture = guard< ID3D11Texture2D >() ;
+            sampler = guard< ID3D11SamplerState >() ;
+        }
     };
     natus_typedef( image_data ) ;
 
@@ -232,17 +398,78 @@ struct d3d11_backend::pimpl
     {
         bool_t valid = false ;
         natus::ntd::string_t name ;
-        ID3D11Buffer* buffer = nullptr ;
-        ID3D11ShaderResourceView * view = nullptr ;
+        guard< ID3D11Buffer > buffer ;
+        guard< ID3D11ShaderResourceView > view ;
+
+        array_data( void_t ) noexcept{}
+        array_data( array_data const & ) = delete ;
+        array_data( array_data && rhv ) noexcept
+        {
+            valid = rhv.valid ;
+            rhv.valid = false ;
+            name = std::move( rhv.name ) ;
+            buffer = std::move( rhv.buffer ) ;
+            view = std::move( rhv.view ) ;
+        }
+        ~array_data( void_t ) noexcept
+        {
+            invalidate() ;
+        }
+
+        void_t invalidate( void_t ) noexcept
+        {
+            valid = false ;
+            name = "" ;
+            buffer = guard< ID3D11Buffer >() ;
+            view = guard< ID3D11ShaderResourceView >() ;
+        }
     };
     natus_typedef( array_data ) ;
 
     struct render_state_sets
     {
         natus::graphics::render_state_sets_t rss ;
-        ID3D11DepthStencilState* depth_stencil_state = nullptr ;
+        ID3D11DepthStencilState * depth_stencil_state = nullptr ;
         ID3D11RasterizerState * raster_state = nullptr ;
-        ID3D11BlendState* blend_state = nullptr ;
+        ID3D11BlendState * blend_state = nullptr ;
+
+        render_state_sets( void_t ) noexcept {}
+        render_state_sets( render_state_sets const & rhv ) noexcept
+        {
+            rss = rhv.rss ;
+            depth_stencil_state = rhv.depth_stencil_state ; 
+            raster_state = rhv.raster_state ;
+            blend_state = rhv.blend_state ;
+        }
+        render_state_sets( render_state_sets && rhv ) noexcept
+        {
+            rss = std::move( rhv.rss ) ;
+            natus_move_member_ptr( depth_stencil_state, rhv ) ;
+            natus_move_member_ptr( raster_state, rhv ) ;
+            natus_move_member_ptr( blend_state, rhv ) ;
+        }
+        ~render_state_sets( void_t ) noexcept
+        {
+            // need to copy construct!
+            //invalidate() ;
+        }
+        
+        void_t invalidate( void_t ) noexcept
+        {
+            rss = natus::graphics::render_state_sets_t() ;
+            guard< ID3D11DepthStencilState >() = depth_stencil_state ;
+            guard< ID3D11RasterizerState >() = raster_state ;
+            guard< ID3D11BlendState >() = blend_state ;
+        }
+
+        render_state_sets & operator = ( render_state_sets const & rhv ) noexcept
+        {
+            rss = rhv.rss ;
+            depth_stencil_state = rhv.depth_stencil_state ; 
+            raster_state = rhv.raster_state ;
+            blend_state = rhv.blend_state ;
+            return *this ;
+        }
     };
     natus_typedef( render_state_sets ) ;
 
@@ -346,6 +573,53 @@ struct d3d11_backend::pimpl
 
         natus::ntd::vector< std::pair< natus::graphics::variable_set_res_t,
             cbuffers_t > > var_sets_data_ps ;
+
+        render_data( void_t ) noexcept {}
+        render_data( render_data const & ) = delete ;
+        render_data( render_data && rhv ) noexcept
+        {
+            valid = rhv.valid ;
+            name = std::move( rhv.name ) ;
+            geo_id = rhv.geo_id ;
+            rhv.geo_id = size_t( -1 ) ;
+            shd_id = rhv.shd_id ;
+            rhv.shd_id = size_t( -1 ) ;
+
+            natus_move_member_ptr( vertex_layout, rhv ) ;
+            natus_move_member_ptr( raster_state, rhv ) ;
+            natus_move_member_ptr( blend_state, rhv ) ;
+
+            var_sets_imgs_vs = std::move( rhv.var_sets_imgs_vs ) ;
+            var_sets_imgs_ps = std::move( rhv.var_sets_imgs_ps ) ;
+            var_sets_buffers_vs = std::move( rhv.var_sets_buffers_vs ) ;
+            var_sets_buffers_ps = std::move( rhv.var_sets_buffers_ps ) ;
+            var_sets_data = std::move( rhv.var_sets_data ) ;
+            var_sets_data_ps = std::move( rhv.var_sets_data_ps ) ;
+        }
+        ~render_data( void_t ) noexcept
+        {
+            invalidate() ;
+        }
+
+        void_t invalidate( void_t ) noexcept
+        {
+            valid = false ;
+            name = "" ;
+            geo_id = size_t( -1 ) ;
+            shd_id = size_t( -1 ) ;
+
+            vertex_layout = nullptr ;
+
+            raster_state = nullptr ;
+            blend_state = nullptr ;
+
+            var_sets_imgs_vs.clear() ;
+            var_sets_imgs_ps.clear() ;
+            var_sets_buffers_vs.clear() ;
+            var_sets_buffers_ps.clear() ;
+            var_sets_data.clear() ;
+            var_sets_data_ps.clear() ;
+        }
     };
     natus_typedef( render_data ) ;
 
@@ -370,21 +644,12 @@ struct d3d11_backend::pimpl
 
         ID3D11DepthStencilView * ds_view = nullptr ;
 
-        #if 0
-
-        GLuint gl_id = GLuint( -1 ) ;
-
-        size_t nt = 0 ;
-        GLuint colors[ 8 ] = {
-            GLuint( -1 ), GLuint( -1 ), GLuint( -1 ), GLuint( -1 ),
-            GLuint( -1 ), GLuint( -1 ), GLuint( -1 ), GLuint( -1 ) } ;
-
-        GLuint depth = GLuint( -1 ) ;
-
-        void_ptr_t mem_ptr = nullptr ;
-
-        natus::math::vec2ui_t dims ;
-        #endif
+        void_t invalidate( void_t ) noexcept
+        {
+            for( size_t i=0; i<9; ++i ) image_ids[i] = size_t( -1 ) ;
+            for( size_t i=0; i<8; ++i ) if( rt_view[i] ) rt_view[i]->Release() ;
+            if( ds_view ) ds_view->Release() ;
+        }
     };
     natus_typedef( framebuffer_data ) ;
 
@@ -406,16 +671,16 @@ public: // variables
     image_datas_t images ;
 
     typedef natus::ntd::vector< this_t::array_data > array_datas_t ;
-    array_datas_t _arrays ;
+    array_datas_t arrays ;
 
     typedef natus::ntd::vector< this_t::framebuffer_data > framebuffer_datas_t ;
-    framebuffer_datas_t _framebuffers ;
+    framebuffer_datas_t framebuffers ;
     size_t _cur_fb_active = size_t( -1 ) ;
 
     natus::graphics::render_state_sets_t render_states ;
 
     typedef natus::ntd::vector< this_t::state_data_t > states_t ;
-    states_t _states ;
+    states_t state_sets ;
 
     natus::ntd::stack< this_t::render_state_sets, 10 > _state_stack ;
 
@@ -491,29 +756,54 @@ public: // functions
         }
     }
 
+    // @todo is the move required? pimpl is only used via
+    // pointer movement.
     pimpl( pimpl && rhv ) noexcept
     {
         natus_move_member_ptr( _ctx, rhv ) ;
         geo_datas = std::move( rhv.geo_datas ) ;
-        _state_stack = std::move( rhv._state_stack ) ;
-        _states = std::move( rhv._states ) ;
         images = std::move( rhv.images ) ;
+        shaders = std::move( rhv.shaders ) ;
+        arrays = std::move( rhv.arrays ) ;
+        render_states = std::move( rhv.render_states ) ;
+        renders = std::move( renders ) ;
+
+        _state_stack = std::move( rhv._state_stack ) ;
+        state_sets = std::move( rhv.state_sets ) ;
+        _cur_fb_active = rhv._cur_fb_active ;
     }
     
     ~pimpl( void_t ) 
     {
-        for( auto & g : geo_datas )
-        {
-            natus::memory::global_t::dealloc_raw( g.vb_mem ) ;
-            natus::memory::global_t::dealloc_raw( g.ib_mem ) ;
-        }
+        for( auto & g : geo_datas ) g.invalidate() ;
+        geo_datas.clear() ;
+
+        for( auto & s : shaders ) s.invalidate() ;
+        shaders.clear() ;
+
+        for( auto & r : renders ) r.invalidate() ;
+        renders.clear() ;
+
+        for( auto & i : images ) i.invalidate() ;
+        images.clear() ;
+
+        for( auto & a : arrays ) a.invalidate() ;
+        arrays.clear() ;
+
+        for( auto & f : framebuffers ) f.invalidate() ;
+        framebuffers.clear() ;
+
+        //for( auto & s : state_sets ) s.invalidate() ;
+        state_sets.clear() ;
+
+        _cur_fb_active = size_t( -1 ) ;
     }
 
     size_t construct_state( size_t oid, natus::graphics::state_object_ref_t obj ) noexcept
     {
-        oid = determine_oid( obj.name(), _states ) ;
+        oid = determine_oid( obj.name(), state_sets ) ;
 
-        auto& states = _states[ oid ] ;
+        auto& states = state_sets[ oid ] ;
 
         states.states.resize( obj.size() ) ;
 
@@ -569,7 +859,7 @@ public: // functions
             }
             else 
             {
-                framebuffer_data_ref_t fb = framebuffer_data_ref_t( _framebuffers[ _cur_fb_active ] ) ;
+                framebuffer_data_ref_t fb = framebuffer_data_ref_t( framebuffers[ _cur_fb_active ] ) ;
 
                 bool_t const clear_color = new_states.rss.clear_s.ss.do_color_clear ;
                 bool_t const clear_depth = new_states.rss.clear_s.ss.do_depth_clear ;
@@ -715,7 +1005,7 @@ public: // functions
         else
         {
             this_t::render_state_sets rss ;
-            rss.rss = _state_stack.top().rss + _states[ new_id.first ].states[ new_id.second ] ;
+            rss.rss = _state_stack.top().rss + state_sets[ new_id.first ].states[ new_id.second ] ;
             
             this->handle_render_state( rss, false ) ;
             _state_stack.push( rss ) ;
@@ -724,8 +1014,8 @@ public: // functions
 
     size_t construct_framebuffer( size_t oid, natus::graphics::framebuffer_object_ref_t obj ) noexcept
     {
-        oid = determine_oid( obj.name(), _framebuffers ) ;
-        auto & fb = _framebuffers[ oid ] ;
+        oid = determine_oid( obj.name(), framebuffers ) ;
+        auto & fb = framebuffers[ oid ] ;
 
         ID3D11Device * dev = _ctx->dev() ;
 
@@ -1022,7 +1312,7 @@ public: // functions
 
     bool_t activate_framebuffer( size_t const oid ) noexcept
     {
-        framebuffer_data_ref_t fb = framebuffer_data_ref_t( _framebuffers[ oid ] ) ;
+        framebuffer_data_ref_t fb = framebuffer_data_ref_t( framebuffers[ oid ] ) ;
 
         _ctx->ctx()->OMSetRenderTargets( UINT( fb.num_color ), fb.rt_view, fb.ds_view ) ;
 
@@ -1106,7 +1396,7 @@ public: // functions
 
                 std::memcpy( config.vb_mem, obj.vertex_buffer().data(), byte_width ) ;
 
-                HRESULT const hr = _ctx->dev()->CreateBuffer( &bd, &init_data, &config.vb ) ;
+                HRESULT const hr = _ctx->dev()->CreateBuffer( &bd, &init_data, config.vb ) ;
                 if( FAILED( hr ) )
                 {
                     natus::log::global_t::error( natus_log_fn( "D3D11_BIND_VERTEX_BUFFER" ) ) ;
@@ -1114,7 +1404,7 @@ public: // functions
             }
             else
             {
-                HRESULT const hr = _ctx->dev()->CreateBuffer( &bd, nullptr, &config.vb ) ;
+                HRESULT const hr = _ctx->dev()->CreateBuffer( &bd, nullptr, config.vb ) ;
                 if( FAILED( hr ) )
                 {
                     natus::log::global_t::error( natus_log_fn( "D3D11_BIND_VERTEX_BUFFER" ) ) ;
@@ -1154,7 +1444,7 @@ public: // functions
 
                 std::memcpy( config.ib_mem, obj.index_buffer().data(), byte_width ) ;
 
-                HRESULT const hr = _ctx->dev()->CreateBuffer( &bd, &init_data, &config.ib ) ;
+                HRESULT const hr = _ctx->dev()->CreateBuffer( &bd, &init_data, config.ib ) ;
                 if( FAILED( hr ) )
                 {
                     natus::log::global_t::error( natus_log_fn( "D3D11_BIND_INDEX_BUFFER" ) ) ;
@@ -1162,7 +1452,7 @@ public: // functions
             }
             else
             {
-                HRESULT const hr = _ctx->dev()->CreateBuffer( &bd, nullptr, &config.ib ) ;
+                HRESULT const hr = _ctx->dev()->CreateBuffer( &bd, nullptr, config.ib ) ;
                 if( FAILED( hr ) )
                 {
                     natus::log::global_t::error( natus_log_fn( "D3D11_BIND_INDEX_BUFFER" ) ) ;
@@ -1195,7 +1485,7 @@ public: // functions
                 
                 config.vb->Release() ;
                 {
-                    auto const hr = _ctx->dev()->CreateBuffer( &bd, &init_data, &config.vb ) ;
+                    auto const hr = _ctx->dev()->CreateBuffer( &bd, &init_data, config.vb ) ;
                     if( FAILED( hr ) )
                     {
                         natus::log::global_t::error( natus_log_fn( "CreateBuffer( vertex_buffer )" ) ) ;
@@ -1241,7 +1531,7 @@ public: // functions
 
                 config.ib->Release() ;
                 {
-                    auto const hr = _ctx->dev()->CreateBuffer( &bd, &init_data, &config.ib ) ;
+                    auto const hr = _ctx->dev()->CreateBuffer( &bd, &init_data, config.ib ) ;
                     if( FAILED( hr ) )
                     {
                         natus::log::global_t::error( natus_log_fn( "CreateBuffer( index_buffer )" ) ) ;
@@ -1462,7 +1752,7 @@ public: // functions
         if( pVSBlob != nullptr )
         {
             auto const hr = _ctx->dev()->CreateVertexShader( 
-                pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), nullptr, &shd.vs ) ;
+                pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), nullptr, shd.vs ) ;
             
             natus::log::global_t::error( FAILED( hr ), "[d3d11] : CreateVertexShader" ) ;
 
@@ -1475,7 +1765,7 @@ public: // functions
         if( pGSBlob != nullptr )
         {
             auto const hr = _ctx->dev()->CreateGeometryShader(
-                pGSBlob->GetBufferPointer(), pGSBlob->GetBufferSize(), nullptr, &shd.gs ) ;
+                pGSBlob->GetBufferPointer(), pGSBlob->GetBufferSize(), nullptr, shd.gs ) ;
                 
             natus::log::global_t::error( FAILED( hr ), "[d3d11] : CreateGeometryShader" ) ;
             pGSBlob->Release();
@@ -1486,7 +1776,7 @@ public: // functions
         if( pPSBlob != nullptr )
         {
             auto const hr = _ctx->dev()->CreatePixelShader(
-                pPSBlob->GetBufferPointer(), pPSBlob->GetBufferSize(), nullptr, &shd.ps ) ;
+                pPSBlob->GetBufferPointer(), pPSBlob->GetBufferSize(), nullptr, shd.ps ) ;
 
             natus::log::global_t::error( FAILED( hr ), "[d3d11] : CreatePixelShader" ) ;
             pPSBlob->Release();
@@ -1800,9 +2090,9 @@ public: // functions
                     natus::ntd::string_t const name = dv->get() ;
 
                     size_t i = 0 ;
-                    for( ; i < _arrays.size(); ++i ) if( _arrays[ i ].name == name ) break ;
+                    for( ; i < arrays.size(); ++i ) if( arrays[ i ].name == name ) break ;
 
-                    if( i == _arrays.size() ) continue ;
+                    if( i == arrays.size() ) continue ;
                     
                     this_t::render_data_t::buffer_variable_t bv ;
                     bv.id = i ;
@@ -1826,9 +2116,9 @@ public: // functions
                     natus::ntd::string_t const name = dv->get() ;
 
                     size_t i = 0 ;
-                    for( ; i < _arrays.size(); ++i ) if( _arrays[ i ].name == name ) break ;
+                    for( ; i < arrays.size(); ++i ) if( arrays[ i ].name == name ) break ;
 
-                    if( i == _arrays.size() ) continue ;
+                    if( i == arrays.size() ) continue ;
                     
                     this_t::render_data_t::buffer_variable_t bv ;
                     bv.id = i ;
@@ -1884,7 +2174,7 @@ public: // functions
             sampDesc.MinLOD = 0;
             sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
 
-            auto const hr = dev->CreateSamplerState( &sampDesc, &img.sampler );
+            auto const hr = dev->CreateSamplerState( &sampDesc, img.sampler );
             if( FAILED( hr ) )
             {
                 natus::log::global_t::error( natus_log_fn( "CreateSamplerState" ) ) ;
@@ -1929,7 +2219,7 @@ public: // functions
                     init_datas[i].SysMemSlicePitch = UINT( width * height * bpp ) ;
                 }
 
-                auto const hr = dev->CreateTexture2D( &desc, init_datas.get(), &img.texture ) ;
+                auto const hr = dev->CreateTexture2D( &desc, init_datas.get(), img.texture ) ;
                 if( FAILED( hr ) )
                 {
                     natus::log::global_t::error( natus_log_fn( "CreateTexture2D" ) ) ;
@@ -1957,7 +2247,7 @@ public: // functions
                     res_desc.Texture2DArray.FirstArraySlice = UINT(0) ;
                 }
 
-                auto const hr = dev->CreateShaderResourceView( img.texture, &res_desc, &img.view ) ;
+                auto const hr = dev->CreateShaderResourceView( img.texture, &res_desc, img.view ) ;
                 if( FAILED( hr ) )
                 {
                     natus::log::global_t::error( natus_log_fn( "CreateShaderResourceView for texture : [" + img.name + "]" ) ) ;
@@ -1970,7 +2260,7 @@ public: // functions
 
     size_t construct_array_data( size_t oid, natus::graphics::array_object_ref_t obj ) 
     {
-        oid = this_t::determine_oid( obj.name(), _arrays ) ;
+        oid = this_t::determine_oid( obj.name(), arrays ) ;
 
         // only vec4 float allowed
         {
@@ -1988,7 +2278,7 @@ public: // functions
             }
         }
 
-        this_t::array_data_ref_t data = _arrays[ oid ] ;
+        this_t::array_data_ref_t data = arrays[ oid ] ;
         data.name = obj.name() ;
 
         ID3D11Device * dev = _ctx->dev() ;
@@ -2022,7 +2312,7 @@ public: // functions
             bd.BindFlags = D3D11_BIND_VERTEX_BUFFER | D3D10_BIND_SHADER_RESOURCE ;
             bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE ;
 
-            HRESULT const hr = dev->CreateBuffer( &bd, nullptr, &data.buffer ) ;
+            HRESULT const hr = dev->CreateBuffer( &bd, nullptr, data.buffer ) ;
             if( FAILED( hr ) )
             {
                 natus::log::global_t::error( natus_log_fn( "D3D11_BIND_DATA_BUFFER" ) ) ;
@@ -2043,7 +2333,7 @@ public: // functions
             res_desc.Buffer.FirstElement= 0 ;
             res_desc.Buffer.NumElements = UINT( byte_width ) / elem_sib ;
 
-            auto const hr = dev->CreateShaderResourceView( data.buffer, &res_desc, &data.view ) ;
+            auto const hr = dev->CreateShaderResourceView( data.buffer, &res_desc, data.view ) ;
             if( FAILED( hr ) )
             {
                 natus::log::global_t::error( natus_log_fn( "CreateShaderResourceView for buffer : [" + data.name + "]" ) ) ;
@@ -2055,7 +2345,7 @@ public: // functions
 
     bool_t update( size_t const id, natus::graphics::array_object_ref_t obj, bool_t const is_config )
     {
-        auto & data = _arrays[ id ] ;
+        auto & data = arrays[ id ] ;
         
         D3D11_BUFFER_DESC bd ;
         data.buffer->GetDesc( &bd ) ;
@@ -2159,7 +2449,7 @@ public: // functions
         }
 
         
-        this_t::shader_data_cref_t shd = shaders[ rnd.shd_id ] ;
+        this_t::shader_data_ref_t shd = shaders[ rnd.shd_id ] ;
         this_t::geo_data_ref_t geo = geo_datas[ rnd.geo_id ] ;
 
         if( shd.vs == nullptr )
@@ -2187,7 +2477,7 @@ public: // functions
         {
             UINT const stride = geo.stride ;
             UINT const offset = 0 ;
-            ctx->IASetVertexBuffers( 0, 1, &geo.vb, &stride, &offset );
+            ctx->IASetVertexBuffers( 0, 1, geo.vb, &stride, &offset );
         }
         
         ctx->IASetPrimitiveTopology( natus::graphics::d3d11::convert( geo.pt ) ) ;
@@ -2197,18 +2487,18 @@ public: // functions
 
         for( auto& img : rnd.var_sets_imgs_ps[ varset_id ].second )
         {
-            ctx->PSSetShaderResources( img.slot, 1, &(images[ img.id ].view) ) ;
-            ctx->PSSetSamplers( img.slot, 1, &(images[ img.id ].sampler) ) ;
+            ctx->PSSetShaderResources( img.slot, 1, images[ img.id ].view ) ;
+            ctx->PSSetSamplers( img.slot, 1, images[ img.id ].sampler ) ;
         }
 
         for( auto& buf : rnd.var_sets_buffers_vs[ varset_id ].second )
         {
-            ctx->VSSetShaderResources( buf.slot, 1, &(_arrays[ buf.id ].view) ) ;
+            ctx->VSSetShaderResources( buf.slot, 1, arrays[ buf.id ].view ) ;
         }
 
         for( auto& buf : rnd.var_sets_buffers_ps[ varset_id ].second )
         {
-            ctx->PSSetShaderResources( buf.slot, 1, &(_arrays[ buf.id ].view) ) ;
+            ctx->PSSetShaderResources( buf.slot, 1, arrays[ buf.id ].view ) ;
         }
 
         if( geo.ib != nullptr )
@@ -2234,14 +2524,14 @@ public: // functions
         {
             auto const ids_new = std::make_pair( size_t( 0 ), size_t( 0 ) ) ;
 
-            natus::math::vec4ui_t vp = _states[ ids_new.first ].states[ ids_new.second ].view_s.ss.vp ;
+            natus::math::vec4ui_t vp = state_sets[ ids_new.first ].states[ ids_new.second ].view_s.ss.vp ;
             vp.z( uint_t( vp_width ) ) ;
             vp.w( uint_t( vp_height ) ) ;
-            _states[ ids_new.first ].states[ ids_new.second ].view_s.ss.vp = vp ;
+            state_sets[ ids_new.first ].states[ ids_new.second ].view_s.ss.vp = vp ;
 
             {
                 this_t::render_state_sets rss ;
-                rss.rss = _states[ ids_new.first ].states[ ids_new.second ] ;
+                rss.rss = state_sets[ ids_new.first ].states[ ids_new.second ] ;
                 _state_stack.push( rss ) ;
                 this->handle_render_state( rss, false ) ;
             }
@@ -2670,6 +2960,41 @@ natus::graphics::result d3d11_backend::configure( natus::graphics::array_object_
         if( natus::core::is_not( res ) ) return natus::graphics::result::failed ;
     }
 
+    return natus::graphics::result::ok ;
+}
+
+natus::graphics::result d3d11_backend::release( natus::graphics::geometry_object_res_t ) noexcept 
+{
+    return natus::graphics::result::ok ;
+}
+
+natus::graphics::result d3d11_backend::release( natus::graphics::render_object_res_t ) noexcept 
+{
+    return natus::graphics::result::ok ;
+}
+
+natus::graphics::result d3d11_backend::release( natus::graphics::shader_object_res_t ) noexcept
+{
+    return natus::graphics::result::ok ;
+}
+
+natus::graphics::result d3d11_backend::release( natus::graphics::image_object_res_t ) noexcept 
+{
+    return natus::graphics::result::ok ;
+}
+
+natus::graphics::result d3d11_backend::release( natus::graphics::framebuffer_object_res_t ) noexcept 
+{
+    return natus::graphics::result::ok ;
+}
+
+natus::graphics::result d3d11_backend::release( natus::graphics::state_object_res_t ) noexcept
+{
+    return natus::graphics::result::ok ;
+}
+
+natus::graphics::result d3d11_backend::release( natus::graphics::array_object_res_t ) noexcept
+{
     return natus::graphics::result::ok ;
 }
 

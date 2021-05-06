@@ -58,6 +58,41 @@ natus::graphics::result null_backend::configure( natus::graphics::array_object_r
     return natus::graphics::result::ok ;
 }
 
+natus::graphics::result null_backend::release( natus::graphics::geometry_object_res_t ) noexcept 
+{
+    return natus::graphics::result::ok ;
+}
+
+natus::graphics::result null_backend::release( natus::graphics::render_object_res_t ) noexcept 
+{
+    return natus::graphics::result::ok ;
+}
+
+natus::graphics::result null_backend::release( natus::graphics::shader_object_res_t ) noexcept
+{
+    return natus::graphics::result::ok ;
+}
+
+natus::graphics::result null_backend::release( natus::graphics::image_object_res_t ) noexcept 
+{
+    return natus::graphics::result::ok ;
+}
+
+natus::graphics::result null_backend::release( natus::graphics::framebuffer_object_res_t ) noexcept 
+{
+    return natus::graphics::result::ok ;
+}
+
+natus::graphics::result null_backend::release( natus::graphics::state_object_res_t ) noexcept
+{
+    return natus::graphics::result::ok ;
+}
+
+natus::graphics::result null_backend::release( natus::graphics::array_object_res_t ) noexcept
+{
+    return natus::graphics::result::ok ;
+}
+
 //***
 natus::graphics::result null_backend::connect( natus::graphics::render_object_res_t, natus::graphics::variable_set_res_t ) noexcept 
 {

@@ -68,6 +68,14 @@ namespace natus
             virtual natus::graphics::result configure( natus::graphics::state_object_res_t ) noexcept = 0 ;
             virtual natus::graphics::result configure( natus::graphics::array_object_res_t ) noexcept = 0 ;
 
+            virtual natus::graphics::result release( natus::graphics::geometry_object_res_t ) noexcept = 0 ;
+            virtual natus::graphics::result release( natus::graphics::render_object_res_t ) noexcept = 0 ;
+            virtual natus::graphics::result release( natus::graphics::shader_object_res_t ) noexcept = 0 ;
+            virtual natus::graphics::result release( natus::graphics::image_object_res_t ) noexcept = 0 ;
+            virtual natus::graphics::result release( natus::graphics::framebuffer_object_res_t ) noexcept = 0 ;
+            virtual natus::graphics::result release( natus::graphics::state_object_res_t ) noexcept = 0 ;
+            virtual natus::graphics::result release( natus::graphics::array_object_res_t ) noexcept = 0 ;
+
             // @obsolete
             virtual natus::graphics::result connect( natus::graphics::render_object_res_t, natus::graphics::variable_set_res_t ) noexcept = 0 ;
 

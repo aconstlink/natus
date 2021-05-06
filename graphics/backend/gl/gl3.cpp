@@ -2364,6 +2364,41 @@ natus::graphics::result gl3_backend::configure( natus::graphics::array_object_re
     return natus::graphics::result::ok ;
 }
 
+natus::graphics::result gl3_backend::release( natus::graphics::geometry_object_res_t ) noexcept 
+{
+    return natus::graphics::result::ok ;
+}
+
+natus::graphics::result gl3_backend::release( natus::graphics::render_object_res_t ) noexcept 
+{
+    return natus::graphics::result::ok ;
+}
+
+natus::graphics::result gl3_backend::release( natus::graphics::shader_object_res_t ) noexcept
+{
+    return natus::graphics::result::ok ;
+}
+
+natus::graphics::result gl3_backend::release( natus::graphics::image_object_res_t ) noexcept 
+{
+    return natus::graphics::result::ok ;
+}
+
+natus::graphics::result gl3_backend::release( natus::graphics::framebuffer_object_res_t ) noexcept 
+{
+    return natus::graphics::result::ok ;
+}
+
+natus::graphics::result gl3_backend::release( natus::graphics::state_object_res_t ) noexcept
+{
+    return natus::graphics::result::ok ;
+}
+
+natus::graphics::result gl3_backend::release( natus::graphics::array_object_res_t ) noexcept
+{
+    return natus::graphics::result::ok ;
+}
+
 //***
 natus::graphics::result gl3_backend::connect( natus::graphics::render_object_res_t config, natus::graphics::variable_set_res_t vs ) noexcept
 {
