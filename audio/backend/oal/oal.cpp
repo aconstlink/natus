@@ -571,6 +571,42 @@ struct natus::audio::oal_backend::pimpl
         return oid ;
     }
 
+    void_t release_buffer_object( size_t const oid ) noexcept
+    {
+        auto & b = buffers[ oid ] ;
+        if( b.sid != ALuint(-1) )
+        {
+            {
+                alSourceStop( b.sid ) ;
+                auto const res = alGetError() ;
+                natus::log::global_t::error( res != ALC_NO_ERROR,
+                    "[OpenAL Backend] : alSourceStop" ) ;
+            }
+
+            {
+                alDeleteSources( 1, &b.sid ) ;
+                auto const res = alGetError() ;
+                natus::log::global::error( res != AL_NO_ERROR, "[OpenAL Backend] : alDeleteSources" ) ;
+                b.sid = ALuint( -1 ) ;
+            }
+        }
+
+        if( b.id != ALuint( -1 ) )
+        {
+            alDeleteBuffers( 1, &b.id ) ;
+            auto const res = alGetError() ;
+            natus::log::global::error( res != AL_NO_ERROR, "[OpenAL Backend] : alDeleteBuffers" ) ;
+            b.id = ALuint( -1 ) ;
+        }
+        natus::memory::global_t::dealloc_raw( (void_ptr_t)b.data ) ;
+
+        b.data = nullptr ;
+        b.format = 0 ;
+        b.name = "" ;
+        b.samplerate = 0 ;
+        b.sib = 0 ;
+    }
+
     bool_t update( size_t const oid, natus::audio::buffer_object_ref_t buffer ) noexcept
     {
         auto & alb = buffers[ oid ] ;
@@ -861,8 +897,12 @@ natus::audio::result oal_backend::release( natus::audio::capture_object_res_t ) 
     return natus::audio::result::ok ;
 }
 
-natus::audio::result oal_backend::release( natus::audio::buffer_object_res_t ) noexcept 
+natus::audio::result oal_backend::release( natus::audio::buffer_object_res_t obj ) noexcept 
 {
+    natus::audio::id_res_t id = obj->get_id() ;
+    
+    _pimpl->release_buffer_object( id->get_oid() ) ;
+
     return natus::audio::result::ok ;
 }
 
