@@ -608,10 +608,26 @@ struct d3d11_backend::pimpl
             geo_id = size_t( -1 ) ;
             shd_id = size_t( -1 ) ;
 
-            vertex_layout = nullptr ;
+            std::memset( layout, 0, sizeof( D3D11_INPUT_ELEMENT_DESC ) * size_t( natus::graphics::vertex_attribute::num_attributes ) ) ;
+            if( vertex_layout != nullptr )
+            {
+                vertex_layout->Release() ;
+                vertex_layout = nullptr ;
+            }
 
-            raster_state = nullptr ;
-            blend_state = nullptr ;
+            if( raster_state != nullptr ) 
+            {
+                raster_state->Release() ;
+                raster_state = nullptr ;
+            }
+            
+            if( blend_state != nullptr )
+            {
+                blend_state->Release() ;
+                blend_state = nullptr ;
+            }
+
+
 
             var_sets_imgs_vs.clear() ;
             var_sets_imgs_ps.clear() ;
@@ -816,6 +832,9 @@ public: // functions
         } ) ;
 
         return oid ;
+    }
+    void_t release_state( size_t const oid ) noexcept 
+    {
     }
 
     void_t handle_render_state( this_t::render_state_sets & new_states, bool_t const popped )
@@ -1309,6 +1328,11 @@ public: // functions
 
         return oid ;
     }
+    void_t release_framebuffer( size_t const oid ) noexcept 
+    {
+        auto & fb = framebuffers[ oid ] ;
+        fb.invalidate() ;
+    }
 
     bool_t activate_framebuffer( size_t const oid ) noexcept
     {
@@ -1348,6 +1372,7 @@ public: // functions
         oid = this_t::determine_oid( obj.name(), renders ) ;
 
         auto & config = geo_datas[ oid ] ;
+        config.valid = true ;
         config.name = obj.name() ;
 
         config.pt = obj.primitive_type() ;
@@ -1462,10 +1487,21 @@ public: // functions
 
         return oid ;
     }
+    void_t release_geometry( size_t const oid ) noexcept 
+    {
+        for( auto & r : renders )
+        {
+            if( r.geo_id == oid ) r.geo_id = size_t( -1 ) ;
+        }
+
+        auto & o = geo_datas[ oid ] ;
+        o.invalidate() ;
+    }
 
     bool_t update( size_t const id, natus::graphics::geometry_object_res_t geo )
     {
         auto& config = geo_datas[ id ] ;
+        if( !config.valid ) return false ;
 
         // vb: check memory space
         {
@@ -1629,6 +1665,8 @@ public: // functions
 
                 // find shader variables in constant buffer
                 {
+                    shd.vs_textures.clear() ;
+                    shd.vs_buffers.clear() ;
                     shd.vs_cbuffers = this_t::determine_cbuffer( pVSBlob ) ;
                     this_t::determine_texture( pVSBlob, shd.vs_textures, shd.vs_buffers ) ;
                 }
@@ -1716,6 +1754,8 @@ public: // functions
 
                 // find shader variables in constant buffer
                 {
+                    shd.ps_textures.clear() ;
+                    shd.ps_buffers.clear() ;
                     shd.ps_cbuffers = this_t::determine_cbuffer( pPSBlob ) ;
                     this_t::determine_texture( pPSBlob, shd.ps_textures, shd.ps_buffers ) ;
                 }
@@ -1787,6 +1827,7 @@ public: // functions
         // the final layout elements for the d3d input layout
         // is done if the render configuration is known.
         {
+            shd.vertex_inputs.clear() ;
             obj.for_each_vertex_input_binding( [&] (
                 natus::graphics::vertex_attribute const va, natus::ntd::string_cref_t name )
             {
@@ -1796,6 +1837,17 @@ public: // functions
         }
 
         return oid ;
+    }
+    void_t release_shader_data( size_t const oid ) noexcept 
+    {
+        for( auto & r : renders )
+        {
+            if( r.shd_id == oid ) r.shd_id = size_t( -1 ) ;
+        }
+        
+        auto & o = shaders[ oid ] ;
+        o.invalidate() ;
+
     }
 
     //***********************
@@ -1815,6 +1867,11 @@ public: // functions
         std::memset( rd.layout, 0, ARRAYSIZE( rd.layout ) ) ;
 
         return oid ;
+    }
+    void_t release_render_data( size_t const oid ) noexcept 
+    {
+        auto & o = renders[ oid ] ;
+        o.invalidate() ;
     }
 
     bool_t update( size_t const id, natus::graphics::render_object_ref_t rc )
@@ -2257,6 +2314,11 @@ public: // functions
 
         return oid ;
     }
+    void_t release_image_data( size_t const oid ) noexcept 
+    {
+        auto & o = images[ oid ] ;
+        o.invalidate() ;
+    }
 
     size_t construct_array_data( size_t oid, natus::graphics::array_object_ref_t obj ) 
     {
@@ -2342,6 +2404,11 @@ public: // functions
 
         return oid ;
     }
+    void_t release_array_data( size_t const oid ) noexcept 
+    {
+        auto & o = arrays[ oid ] ;
+        o.invalidate() ;
+    }
 
     bool_t update( size_t const id, natus::graphics::array_object_ref_t obj, bool_t const is_config )
     {
@@ -2375,6 +2442,8 @@ public: // functions
     bool_t update( size_t const id, natus::graphics::render_object_ref_t obj, size_t const varset_id )
     {
         this_t::render_data_ref_t rnd = renders[ id ] ;
+
+        if( !rnd.valid ) return false ;
 
         ID3D11DeviceContext * ctx = _ctx->ctx() ;
 
@@ -2804,20 +2873,23 @@ void_t d3d11_backend::set_window_info( window_info_cref_t wi ) noexcept
 }
 
 //****
-natus::graphics::result d3d11_backend::configure( natus::graphics::geometry_object_res_t gconf ) noexcept 
+natus::graphics::result d3d11_backend::configure( natus::graphics::geometry_object_res_t obj ) noexcept 
 {
-    natus::graphics::id_res_t id = gconf->get_id() ;
-
-    if( gconf->name().empty() )
+    if( !obj.is_valid() || obj->name().empty() )
+    {
+        natus::log::global_t::error( natus_log_fn( "Object must be valid and requires a name" ) ) ;
         return natus::graphics::result::invalid_argument ;
-    
+    }
+
+    natus::graphics::id_res_t id = obj->get_id() ;
+
     {
         id->set_oid( this_t::get_bid(), _pimpl->construct_geo( 
-            id->get_oid( this_t::get_bid() ), *gconf ) ) ;
+            id->get_oid( this_t::get_bid() ), *obj ) ) ;
     }
     
     {
-        auto const res = _pimpl->update( id->get_oid( this_t::get_bid() ), gconf ) ;
+        auto const res = _pimpl->update( id->get_oid( this_t::get_bid() ), obj ) ;
         if( natus::core::is_not( res ) )
         {
             return natus::graphics::result::failed ;
@@ -2828,19 +2900,25 @@ natus::graphics::result d3d11_backend::configure( natus::graphics::geometry_obje
 }
 
 //****
-natus::graphics::result d3d11_backend::configure( natus::graphics::render_object_res_t config ) noexcept 
+natus::graphics::result d3d11_backend::configure( natus::graphics::render_object_res_t obj ) noexcept 
 {
-    natus::graphics::id_res_t id = config->get_id() ;
+    if( !obj.is_valid() || obj->name().empty() )
+    {
+        natus::log::global_t::error( natus_log_fn( "Object must be valid and requires a name" ) ) ;
+        return natus::graphics::result::invalid_argument ;
+    }
+
+    natus::graphics::id_res_t id = obj->get_id() ;
     
     {
         id->set_oid( this_t::get_bid(),
-            _pimpl->construct_render_config( id->get_oid( this_t::get_bid() ), *config ) ) ;
+            _pimpl->construct_render_config( id->get_oid( this_t::get_bid() ), *obj ) ) ;
     }
 
     size_t const oid = id->get_oid( this_t::get_bid() ) ;
 
     {
-        auto const res = _pimpl->update( oid, *config ) ;
+        auto const res = _pimpl->update( oid, *obj ) ;
         if( natus::core::is_not( res ) )
         {
             return natus::graphics::result::failed ;
@@ -2851,14 +2929,19 @@ natus::graphics::result d3d11_backend::configure( natus::graphics::render_object
 }
 
 //***
-natus::graphics::result d3d11_backend::configure( natus::graphics::shader_object_res_t config ) noexcept
+natus::graphics::result d3d11_backend::configure( natus::graphics::shader_object_res_t obj ) noexcept
 {
-    natus::graphics::id_res_t id = config->get_id() ;
+    if( !obj.is_valid() || obj->name().empty() )
+    {
+        natus::log::global_t::error( natus_log_fn( "Object must be valid and requires a name" ) ) ;
+        return natus::graphics::result::invalid_argument ;
+    }
 
+    natus::graphics::id_res_t id = obj->get_id() ;
     
     {
         id->set_oid( this_t::get_bid(),
-            _pimpl->construct_shader_config( id->get_oid( this_t::get_bid() ), *config ) ) ;
+            _pimpl->construct_shader_config( id->get_oid( this_t::get_bid() ), *obj ) ) ;
     }
 
     #if 0
@@ -2876,13 +2959,19 @@ natus::graphics::result d3d11_backend::configure( natus::graphics::shader_object
 }
 
 //***
-natus::graphics::result d3d11_backend::configure( natus::graphics::image_object_res_t config ) noexcept 
+natus::graphics::result d3d11_backend::configure( natus::graphics::image_object_res_t obj ) noexcept 
 {
-    natus::graphics::id_res_t id = config->get_id() ;
+    if( !obj.is_valid() || obj->name().empty() )
+    {
+        natus::log::global_t::error( natus_log_fn( "Object must be valid and requires a name" ) ) ;
+        return natus::graphics::result::invalid_argument ;
+    }
+
+    natus::graphics::id_res_t id = obj->get_id() ;
     
     {
         id->set_oid( this_t::get_bid(), _pimpl->construct_image_config( 
-            id->get_oid( this_t::get_bid() ), *config ) ) ;
+            id->get_oid( this_t::get_bid() ), *obj ) ) ;
     }
 
     size_t const oid = id->get_oid( this_t::get_bid() ) ;
@@ -2963,38 +3052,109 @@ natus::graphics::result d3d11_backend::configure( natus::graphics::array_object_
     return natus::graphics::result::ok ;
 }
 
-natus::graphics::result d3d11_backend::release( natus::graphics::geometry_object_res_t ) noexcept 
+natus::graphics::result d3d11_backend::release( natus::graphics::geometry_object_res_t obj ) noexcept 
 {
+    if( !obj.is_valid() || obj->name().empty() )
+    {
+        natus::log::global_t::error( natus_log_fn( "Object must be valid and requires a name" ) ) ;
+        return natus::graphics::result::invalid_argument ;
+    }
+
+    natus::graphics::id_res_t id = obj->get_id() ;
+
+    _pimpl->release_geometry( id->get_oid( this_t::get_bid() ) ) ;
+    id->set_oid( this_t::get_bid(), size_t( -1 ) ) ;
+
     return natus::graphics::result::ok ;
 }
 
-natus::graphics::result d3d11_backend::release( natus::graphics::render_object_res_t ) noexcept 
+natus::graphics::result d3d11_backend::release( natus::graphics::render_object_res_t obj ) noexcept 
 {
+    if( !obj.is_valid() || obj->name().empty() )
+    {
+        natus::log::global_t::error( natus_log_fn( "Object must be valid and requires a name" ) ) ;
+        return natus::graphics::result::invalid_argument ;
+    }
+
+    natus::graphics::id_res_t id = obj->get_id() ;
+    _pimpl->release_render_data( obj->get_id()->get_oid( this_t::get_bid() ) ) ;
+    id->set_oid( this_t::get_bid(), size_t( -1 ) ) ;
+
     return natus::graphics::result::ok ;
 }
 
-natus::graphics::result d3d11_backend::release( natus::graphics::shader_object_res_t ) noexcept
+natus::graphics::result d3d11_backend::release( natus::graphics::shader_object_res_t obj ) noexcept
 {
+    if( !obj.is_valid() || obj->name().empty() )
+    {
+        natus::log::global_t::error( natus_log_fn( "Object must be valid and requires a name" ) ) ;
+        return natus::graphics::result::invalid_argument ;
+    }
+
+    natus::graphics::id_res_t id = obj->get_id() ;
+    _pimpl->release_shader_data( obj->get_id()->get_oid( this_t::get_bid() ) ) ;
+    id->set_oid( this_t::get_bid(), size_t( -1 ) ) ;
+
     return natus::graphics::result::ok ;
 }
 
-natus::graphics::result d3d11_backend::release( natus::graphics::image_object_res_t ) noexcept 
+natus::graphics::result d3d11_backend::release( natus::graphics::image_object_res_t obj ) noexcept 
 {
+    if( !obj.is_valid() || obj->name().empty() )
+    {
+        natus::log::global_t::error( natus_log_fn( "Object must be valid and requires a name" ) ) ;
+        return natus::graphics::result::invalid_argument ;
+    }
+
+    natus::graphics::id_res_t id = obj->get_id() ;
+    _pimpl->release_image_data( obj->get_id()->get_oid( this_t::get_bid() ) ) ;
+    id->set_oid( this_t::get_bid(), size_t( -1 ) ) ;
+
     return natus::graphics::result::ok ;
 }
 
-natus::graphics::result d3d11_backend::release( natus::graphics::framebuffer_object_res_t ) noexcept 
+natus::graphics::result d3d11_backend::release( natus::graphics::framebuffer_object_res_t obj ) noexcept 
 {
+    if( !obj.is_valid() || obj->name().empty() )
+    {
+        natus::log::global_t::error( natus_log_fn( "Object must be valid and requires a name" ) ) ;
+        return natus::graphics::result::invalid_argument ;
+    }
+
+    natus::graphics::id_res_t id = obj->get_id() ;
+    _pimpl->release_framebuffer( obj->get_id()->get_oid( this_t::get_bid() ) ) ;
+    id->set_oid( this_t::get_bid(), size_t( -1 ) ) ;
+
     return natus::graphics::result::ok ;
 }
 
-natus::graphics::result d3d11_backend::release( natus::graphics::state_object_res_t ) noexcept
+natus::graphics::result d3d11_backend::release( natus::graphics::state_object_res_t obj ) noexcept
 {
+    if( !obj.is_valid() || obj->name().empty() )
+    {
+        natus::log::global_t::error( natus_log_fn( "Object must be valid and requires a name" ) ) ;
+        return natus::graphics::result::invalid_argument ;
+    }
+
+    natus::graphics::id_res_t id = obj->get_id() ;
+    _pimpl->release_state( obj->get_id()->get_oid( this_t::get_bid() ) ) ;
+    id->set_oid( this_t::get_bid(), size_t( -1 ) ) ;
+
     return natus::graphics::result::ok ;
 }
 
-natus::graphics::result d3d11_backend::release( natus::graphics::array_object_res_t ) noexcept
+natus::graphics::result d3d11_backend::release( natus::graphics::array_object_res_t obj ) noexcept
 {
+    if( !obj.is_valid() || obj->name().empty() )
+    {
+        natus::log::global_t::error( natus_log_fn( "Object must be valid and requires a name" ) ) ;
+        return natus::graphics::result::invalid_argument ;
+    }
+
+    natus::graphics::id_res_t id = obj->get_id() ;
+    _pimpl->release_array_data( obj->get_id()->get_oid( this_t::get_bid() ) ) ;
+    id->set_oid( this_t::get_bid(), size_t( -1 ) ) ;
+
     return natus::graphics::result::ok ;
 }
 
