@@ -270,7 +270,7 @@ struct gl3_backend::pimpl
     natus_typedef( framebuffer_data ) ;
 
     typedef natus::ntd::vector< this_t::shader_data > shader_datas_t ;
-    shader_datas_t shaders ;
+    shader_datas_t _shaders ;
 
     typedef natus::ntd::vector< this_t::render_data > render_datas_t ;
     render_datas_t rconfigs ;
@@ -782,37 +782,37 @@ struct gl3_backend::pimpl
     size_t construct_shader_config( size_t oid,
         natus::graphics::shader_object_ref_t obj ) noexcept
     {
-        oid = determine_oid( obj.name(), shaders ) ;
+        oid = determine_oid( obj.name(), _shaders ) ;
 
         //
         // Do Configuration
         //
 
         // program
-        if( shaders[ oid ].pg_id == GLuint( -1 ) )
+        if( _shaders[ oid ].pg_id == GLuint( -1 ) )
         {
             GLuint const id = glCreateProgram() ;
             natus::ogl::error::check_and_log(
                 natus_log_fn( "Shader Program creation" ) ) ;
 
-            shaders[ oid ].pg_id = id ;
+            _shaders[ oid ].pg_id = id ;
         }
         {
-            this_t::detach_shaders( shaders[ oid ].pg_id ) ;
-            this_t::delete_all_variables( shaders[ oid ] ) ;
+            this_t::detach_shaders( _shaders[ oid ].pg_id ) ;
+            this_t::delete_all_variables( _shaders[ oid ] ) ;
         }
 
         // vertex shader
-        if( shaders[oid].vs_id == GLuint(-1) )
+        if( _shaders[oid].vs_id == GLuint(-1) )
         {
             GLuint const id = glCreateShader( GL_VERTEX_SHADER ) ;
             natus::ogl::error::check_and_log(
                 natus_log_fn( "Vertex Shader creation" ) ) ;
 
-            shaders[ oid ].vs_id = id ;
+            _shaders[ oid ].vs_id = id ;
         }
         {
-            glAttachShader( shaders[ oid ].pg_id, shaders[oid].vs_id ) ;
+            glAttachShader( _shaders[ oid ].pg_id, _shaders[oid].vs_id ) ;
             natus::ogl::error::check_and_log(
                 natus_log_fn( "Attaching vertex shader" ) ) ;
         }
@@ -832,7 +832,7 @@ struct gl3_backend::pimpl
         // geometry shader
         if( ss.has_geometry_shader() )
         {
-            GLuint id = shaders[ oid ].gs_id ;
+            GLuint id = _shaders[ oid ].gs_id ;
 
             if( id == GLuint(-1) )
             {
@@ -840,10 +840,10 @@ struct gl3_backend::pimpl
                 natus::ogl::error::check_and_log(
                     natus_log_fn( "Geometry Shader creation" ) ) ;
 
-                shaders[ oid ].gs_id = id ;
+                _shaders[ oid ].gs_id = id ;
             }
 
-            GLuint const pid = shaders[ oid ].pg_id ;
+            GLuint const pid = _shaders[ oid ].pg_id ;
 
             glAttachShader( pid, id ) ;
             natus::ogl::error::check_and_log(
@@ -878,17 +878,17 @@ struct gl3_backend::pimpl
                     */
             }
         }
-        else if( shaders[ oid ].gs_id != GLuint(-1) )
+        else if( _shaders[ oid ].gs_id != GLuint(-1) )
         {
-            glDeleteShader( shaders[ oid ].gs_id ) ;
+            glDeleteShader( _shaders[ oid ].gs_id ) ;
             natus::ogl::error::check_and_log( natus_log_fn( "glDeleteShader" ) ) ;
-            shaders[ oid ].gs_id = GLuint( -1 ) ;
+            _shaders[ oid ].gs_id = GLuint( -1 ) ;
         }
 
         // pixel shader
         if( ss.has_pixel_shader() )
         {
-            GLuint id = shaders[ oid ].ps_id ;
+            GLuint id = _shaders[ oid ].ps_id ;
             if( id == GLuint(-1) )
             {
                 id = glCreateShader( GL_FRAGMENT_SHADER ) ;
@@ -896,16 +896,16 @@ struct gl3_backend::pimpl
                     natus_log_fn( "Fragment Shader creation" ) ) ;
             }
 
-            glAttachShader( shaders[ oid ].pg_id, id ) ;
+            glAttachShader( _shaders[ oid ].pg_id, id ) ;
             natus::ogl::error::check_and_log( natus_log_fn( "Attaching pixel shader" ) ) ;
 
-            shaders[ oid ].ps_id = id ;
+            _shaders[ oid ].ps_id = id ;
         }
-        else if( shaders[ oid ].ps_id != GLuint( -1 ) )
+        else if( _shaders[ oid ].ps_id != GLuint( -1 ) )
         {
-            glDeleteShader( shaders[ oid ].ps_id ) ;
+            glDeleteShader( _shaders[ oid ].ps_id ) ;
             natus::ogl::error::check_and_log( natus_log_fn( "glDeleteShader" ) ) ;
-            shaders[ oid ].ps_id = GLuint( -1 ) ;
+            _shaders[ oid ].ps_id = GLuint( -1 ) ;
         }
 
         return oid ;
@@ -1279,7 +1279,7 @@ struct gl3_backend::pimpl
 
     bool_t update( size_t const id, natus::graphics::shader_object_cref_t sc )
     {
-        auto& sconfig = shaders[ id ] ;
+        auto& sconfig = _shaders[ id ] ;
 
         {
             sc.for_each_vertex_input_binding( [&]( 
@@ -1334,7 +1334,7 @@ struct gl3_backend::pimpl
                 for( auto& item : vs )
                     this_t::connect( rd, item ) ;
 
-                this_t::render_object_variable_memory( rd, shaders[ rd.shd_id ] ) ;
+                this_t::render_object_variable_memory( rd, _shaders[ rd.shd_id ] ) ;
                 for( size_t vs_id=0; vs_id<rd.var_sets.size(); ++vs_id )
                 {
                     this_t::update_variables( i, vs_id ) ;
@@ -1396,24 +1396,24 @@ struct gl3_backend::pimpl
 
         // find shader
         {
-            auto const iter = ::std::find_if( shaders.begin(), shaders.end(),
+            auto const iter = ::std::find_if( _shaders.begin(), _shaders.end(),
                 [&] ( this_t::shader_data const& d )
             {
                 return d.name == rc.get_shader() ;
             } ) ;
-            if( iter == shaders.end() )
+            if( iter == _shaders.end() )
             {
                 natus::log::global_t::warning( natus_log_fn(
                     "no shader with name [" + rc.get_shader() + "] for render_data [" + rc.name() + "]" ) ) ;
                 return false ;
             }
 
-            config.shd_id = std::distance( shaders.begin(), iter ) ;
+            config.shd_id = std::distance( _shaders.begin(), iter ) ;
         }
         
         // for binding attributes, the shader and the geometry is required.
         {
-            this_t::shader_data_ref_t shd = shaders[ config.shd_id ] ;
+            this_t::shader_data_ref_t shd = _shaders[ config.shd_id ] ;
             this_t::geo_data_ref_t geo = geo_configs[ config.geo_id ] ;
             this_t::bind_attributes( shd, geo ) ;
         }
@@ -1427,7 +1427,7 @@ struct gl3_backend::pimpl
             } ) ;
         }
         
-        this_t::render_object_variable_memory( config, shaders[ config.shd_id ] ) ;
+        this_t::render_object_variable_memory( config, _shaders[ config.shd_id ] ) ;
 
         return true ;
     }
@@ -1740,7 +1740,7 @@ struct gl3_backend::pimpl
     {
         auto& config = rconfigs[ id ] ;
 
-        this_t::shader_data_ref_t shd = shaders[ config.shd_id ] ;
+        this_t::shader_data_ref_t shd = _shaders[ config.shd_id ] ;
 
         this_t::connect( config, vs ) ;
 
@@ -1758,7 +1758,7 @@ struct gl3_backend::pimpl
         auto item_buf = ::std::make_pair( vs,
             natus::ntd::vector< this_t::render_data::uniform_array_data_link >() ) ;
 
-        this_t::shader_data_ref_t shd = shaders[ config.shd_id ] ;
+        this_t::shader_data_ref_t shd = _shaders[ config.shd_id ] ;
 
         size_t id = 0 ;
         for( auto& uv : shd.uniforms )
@@ -1940,7 +1940,7 @@ struct gl3_backend::pimpl
     bool_t update_variables( size_t const rd_id, size_t const varset_id )
     {
         this_t::render_data & config = rconfigs[ rd_id ] ;
-        this_t::shader_data & sconfig = shaders[ config.shd_id ] ;
+        this_t::shader_data & sconfig = _shaders[ config.shd_id ] ;
 
         {
             glUseProgram( sconfig.pg_id ) ;
@@ -2003,7 +2003,7 @@ struct gl3_backend::pimpl
         GLsizei const num_elements = GLsizei(-1) )
     {
         this_t::render_data & config = rconfigs[ id ] ;
-        this_t::shader_data & sconfig = shaders[ config.shd_id ] ;
+        this_t::shader_data & sconfig = _shaders[ config.shd_id ] ;
         this_t::geo_data & gconfig = geo_configs[ config.geo_id ] ;
 
         if( !sconfig.is_compilation_ok )
