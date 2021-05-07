@@ -220,7 +220,7 @@ struct gl3_backend::pimpl
     };
     natus_typedef( render_data ) ;
 
-    struct image_config
+    struct image_data
     {
         natus::ntd::string_t name ;
 
@@ -234,6 +234,7 @@ struct gl3_backend::pimpl
 
         // sampler ids for gl>=3.3
     };
+    natus_typedef( image_data ) ;
 
     struct array_data
     {
@@ -268,27 +269,27 @@ struct gl3_backend::pimpl
     };
     natus_typedef( framebuffer_data ) ;
 
-    typedef natus::ntd::vector< this_t::shader_data > shaders_t ;
-    shaders_t shaders ;
+    typedef natus::ntd::vector< this_t::shader_data > shader_datas_t ;
+    shader_datas_t shaders ;
 
-    typedef natus::ntd::vector< this_t::render_data > rconfigs_t ;
-    rconfigs_t rconfigs ;
+    typedef natus::ntd::vector< this_t::render_data > render_datas_t ;
+    render_datas_t rconfigs ;
 
-    typedef natus::ntd::vector< this_t::geo_data > geo_configs_t ;
-    geo_configs_t geo_configs ;
+    typedef natus::ntd::vector< this_t::geo_data > geo_datas_t ;
+    geo_datas_t geo_configs ;
 
-    typedef natus::ntd::vector< this_t::image_config > image_configs_t ;
-    image_configs_t img_configs ;
+    typedef natus::ntd::vector< this_t::image_data_t > image_datas_t ;
+    image_datas_t img_configs ;
 
-    typedef natus::ntd::vector< this_t::framebuffer_data_t > framebuffers_t ;
-    framebuffers_t _framebuffers ;
+    typedef natus::ntd::vector< this_t::framebuffer_data_t > framebuffer_datas_t ;
+    framebuffer_datas_t _framebuffers ;
 
-    typedef natus::ntd::vector< this_t::state_data_t > states_t ;
-    states_t _states ;
+    typedef natus::ntd::vector< this_t::state_data_t > state_datas_t ;
+    state_datas_t _states ;
     natus::ntd::stack< natus::graphics::render_state_sets_t, 10 > _state_stack ;
 
-    typedef natus::ntd::vector< this_t::array_data_t > arrays_t ;
-    arrays_t _arrays ;
+    typedef natus::ntd::vector< this_t::array_data_t > array_datas_t ;
+    array_datas_t _arrays ;
 
     GLsizei vp_width = 0 ;
     GLsizei vp_height = 0 ;
@@ -1223,7 +1224,7 @@ struct gl3_backend::pimpl
         // the name is unique
         {
             auto iter = ::std::find_if( img_configs.begin(), img_configs.end(),
-                [&] ( this_t::image_config const& config )
+                [&] ( this_t::image_data_cref_t config )
             {
                 return config.name == name ;
             } ) ;
@@ -1661,7 +1662,7 @@ struct gl3_backend::pimpl
     //          This param should be true if an image is configured or re-configured.
     bool_t update( size_t const id, natus::graphics::image_object_ref_t confin, bool_t const is_config = false )
     {
-        this_t::image_config& config = img_configs[ id ] ;
+        this_t::image_data_ref_t config = img_configs[ id ] ;
 
         glBindTexture( config.type, config.tex_id ) ;
         if( natus::ogl::error::check_and_log( natus_log_fn( "glBindTexture" ) ) )
