@@ -31,9 +31,6 @@ struct gl3_backend::pimpl
         GLuint ib_id = GLuint( -1 ) ;
         GLuint va_id = GLuint( -1 ) ;
 
-        void_ptr_t vb_mem = nullptr ;
-        void_ptr_t ib_mem = nullptr ;
-
         size_t num_elements_vb = 0 ;
         size_t num_elements_ib = 0 ;
 
@@ -263,8 +260,6 @@ struct gl3_backend::pimpl
 
         GLuint depth = GLuint( -1 ) ;
 
-        void_ptr_t mem_ptr = nullptr ;
-
         natus::math::vec2ui_t dims ;
     };
     natus_typedef( framebuffer_data ) ;
@@ -324,6 +319,45 @@ struct gl3_backend::pimpl
 
             /*size_t const oid =*/ this_t::construct_state( size_t( -1 ), obj ) ;
         }
+    }
+    ~pimpl( void_t ) noexcept
+    {
+        for( size_t i = 0; i<_framebuffers.size(); ++i )
+        {
+            this_t::release_framebuffer( i ) ;
+        }
+
+        for( size_t i = 0; i<_renders.size(); ++i )
+        {
+            this_t::release_render_data( i ) ;
+        }
+
+        for( size_t i = 0; i<_shaders.size(); ++i )
+        {
+            this_t::release_shader_data( i ) ;
+        }
+
+        for( size_t i = 0; i<_geometries.size(); ++i )
+        {
+            this_t::release_geometry( i ) ;
+        }
+
+        for( size_t i = 0; i<_images.size(); ++i )
+        {
+            this_t::release_image_data( i ) ;
+        }
+
+        for( size_t i = 0; i<_arrays.size(); ++i )
+        {
+            this_t::release_array_data( i ) ;
+        }
+
+        _geometries.clear() ;
+        _shaders.clear() ;
+        _renders.clear() ;
+        _framebuffers.clear() ;
+        _arrays.clear() ;
+        _images.clear() ;
     }
 
     template< typename T >
@@ -743,6 +777,75 @@ struct gl3_backend::pimpl
         return oid ;
     }
 
+    bool_t release_framebuffer( size_t const oid ) noexcept
+    {
+        auto & fbd = _framebuffers[ oid ] ;
+
+        if( !fbd.valid ) return false ;
+
+        // find image ids in images and remove them
+        {
+            for( size_t i=0; i<8; ++i )
+            {
+                if( fbd.colors[i] == GLuint(-1) ) continue ;
+
+                for( auto & img : _images )
+                {
+                    if( img.tex_id == fbd.colors[i] )
+                    {                        
+                        img.tex_id = GLuint(-1) ;
+                        img.name = "released framebuffer color buffer" ;
+                        img.sib = 0 ;
+                        break ;
+                    }
+                }
+            }
+        }
+        
+
+        {
+            glDeleteFramebuffers( 1, &fbd.gl_id ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glDeleteFramebuffers" ) ) ;
+        }
+
+        {
+            glDeleteTextures( 8, fbd.colors ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glDeleteTextures" ) ) ;
+        }
+
+        if( fbd.depth != GLuint(-1) )
+        {
+            // find image id in images and remove them
+            {
+                for( auto & img : _images )
+                {
+                    if( img.tex_id == fbd.depth )
+                    {                        
+                        img.tex_id = GLuint(-1) ;
+                        img.name = "released framebuffer color buffer" ;
+                        img.sib = 0 ;
+                        break ;
+                    }
+                }
+            }
+
+            {
+                glDeleteTextures( 1, &fbd.depth ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glDeleteTextures" ) ) ;
+            }
+        }
+
+        fbd.name = "" ;
+        fbd.valid = false ;
+        fbd.gl_id = GLuint( -1 ) ;
+        fbd.depth = GLuint( -1 ) ;
+        for( size_t i=0; i<8; ++i ) fbd.colors[i] = GLuint( -1 ) ;
+
+        fbd.dims = natus::math::vec2ui_t() ;
+
+        return true ;
+    }
+
     bool_t activate_framebuffer( size_t const oid )
     {
         framebuffer_data_ref_t fb = _framebuffers[ oid ] ;
@@ -909,6 +1012,48 @@ struct gl3_backend::pimpl
         }
 
         return oid ;
+    }
+
+    bool_t release_shader_data( size_t const oid ) noexcept
+    {
+        auto & shd = _shaders[ oid ] ;
+
+        // delete program
+        {
+            glDeleteProgram( shd.pg_id ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glDeleteProgram" ) ) ;
+        }
+
+        // delete shaders
+        {
+            glDeleteShader( shd.vs_id ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glDeleteShader" ) ) ;
+        }
+
+        if( shd.gs_id != GLuint(-1) )
+        {
+            glDeleteShader( shd.gs_id ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glDeleteShader" ) ) ;
+        }
+
+        if( shd.ps_id != GLuint(-1) )
+        {
+            glDeleteShader( shd.ps_id ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glDeleteShader" ) ) ;
+        }
+
+        shd.valid = false ;
+        shd.pg_id = GLuint( -1 ) ;
+        shd.gs_id = GLuint( -1 ) ;
+        shd.vs_id = GLuint( -1 ) ;
+        shd.ps_id = GLuint( -1 ) ;
+        shd.name = "released shader" ;
+        
+        shd.is_compilation_ok = false ;
+        shd.uniforms.clear() ;
+        shd.attributes.clear() ;
+
+        return true ;
     }
 
     //***********************
@@ -1277,6 +1422,26 @@ struct gl3_backend::pimpl
         return i ;
     }
 
+    bool_t release_image_data( size_t const oid ) noexcept
+    {
+        auto & id = _images[ oid ] ;
+
+        id.name = "released image" ;
+        id.type = GL_NONE ;
+
+        if( id.tex_id != GLuint( -1 ) )
+        {
+            glDeleteTextures( 1, &id.tex_id ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glDeleteTextures" ) ) ;
+
+            id.tex_id = GLuint( -1 ) ;
+        }
+        
+        id.sib = 0 ;
+
+        return true ;
+    }
+
     bool_t update( size_t const id, natus::graphics::shader_object_cref_t sc )
     {
         auto& sconfig = _shaders[ id ] ;
@@ -1362,6 +1527,32 @@ struct gl3_backend::pimpl
         }
 
         return oid ;
+    }
+
+    bool_t release_render_data( size_t const oid ) noexcept
+    {
+        auto & rd = _renders[ oid ] ;
+
+        rd.valid = false ;
+        rd.name = "released" ;
+
+        if( rd.geo_id != size_t( -1 ) ) 
+        {
+            _geometries[ rd.geo_id ].remove_render_data_id( oid ) ;
+            rd.geo_id = GLuint( -1 ) ;
+        }
+        
+        rd.shd_id = GLuint( -1 ) ;
+        rd.rss.clear() ;
+        rd.var_sets.clear() ;
+        rd.var_sets_array.clear() ;
+        rd.var_sets_data.clear() ;
+        rd.var_sets_texture.clear() ;
+
+        natus::memory::global_t::dealloc( rd.mem_block ) ;
+        rd.mem_block = nullptr ;
+
+        return true ;
     }
 
     bool_t update( size_t const id, natus::graphics::render_object_ref_t rc )
@@ -1567,6 +1758,51 @@ struct gl3_backend::pimpl
         natus::log::global_t::error( error, natus_log_fn("Error ocurred for ["+ obj.name() +"]") ) ;
 
         return oid ;
+    }
+
+    bool_t release_geometry( size_t const oid ) noexcept
+    {
+        auto & geo = _geometries[ oid ] ;
+
+        geo.name = "released" ;
+        geo.valid = false ;
+        
+        geo.elements.clear() ;
+        geo.ib_elem_sib = 0 ;
+        geo.stride = 0 ;
+
+        if( geo.vb_id != GLuint( -1 ) )
+        {
+            glDeleteBuffers( 1, &geo.vb_id ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glDeleteBuffers" ) ) ;
+            geo.vb_id = GLuint( -1 ) ;
+        }
+
+        if( geo.ib_id != GLuint( -1 ) )
+        {
+            glDeleteBuffers( 1, &geo.ib_id ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glDeleteBuffers" ) ) ;
+            geo.ib_id = GLuint( -1 ) ;
+        }
+
+        if( geo.va_id != GLuint( -1 ) )
+        {
+            glDeleteVertexArrays( 1, &geo.va_id ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glDeleteVertexArrays" ) ) ;
+            geo.va_id = GLuint( -1 ) ;
+        }
+
+        geo.ib_elem_sib = 0 ;
+
+        for( auto const & rd_id : geo.rd_ids )
+        {
+            if( rd_id == size_t( -1 ) ) continue ;
+            auto & rd = _renders[ rd_id ] ;
+            rd.geo_id = GLuint( -1 ) ;
+        }
+        geo.rd_ids.clear() ;
+
+        return true ;
     }
 
     bool_t update( size_t const id, natus::graphics::geometry_object_res_t geo, bool_t const is_config = false )
@@ -1888,6 +2124,31 @@ struct gl3_backend::pimpl
         }
 
         return oid ;
+    }
+
+    bool_t release_array_data( size_t const oid ) noexcept
+    {
+        auto & data = _arrays[ oid ] ;
+
+        if( data.buf_id == GLuint(-1) )
+        {
+            glDeleteBuffers( 1, &data.buf_id ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glDeleteBuffers" ) ) ;
+            data.buf_id = GLuint( -1 ) ;
+        }
+
+        if( data.tex_id == GLuint(-1) )
+        {
+            glDeleteTextures( 1, &data.tex_id ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glDeleteTextures" ) ) ;
+            data.tex_id = GLuint( -1 ) ;
+        }
+
+        data.valid = false ;
+        data.name = "released" ;
+        data.sib = 0 ;
+
+        return true ;
     }
 
     size_t update( size_t oid, natus::graphics::array_object_ref_t obj, bool_t const is_config = false ) 
@@ -2365,38 +2626,122 @@ natus::graphics::result gl3_backend::configure( natus::graphics::array_object_re
     return natus::graphics::result::ok ;
 }
 
-natus::graphics::result gl3_backend::release( natus::graphics::geometry_object_res_t ) noexcept 
+natus::graphics::result gl3_backend::release( natus::graphics::geometry_object_res_t obj ) noexcept 
 {
+    if( !obj.is_valid() || obj->name().empty() )
+    {
+        natus::log::global_t::error( natus_log_fn( "Object must be valid and requires a name" ) ) ;
+        return natus::graphics::result::invalid_argument ;
+    }
+
+    {
+        natus::graphics::id_res_t id = obj->get_id() ;
+        _pimpl->release_geometry( id->get_oid( this_t::get_bid() ) ) ;
+        id->set_oid( this_t::get_bid(), size_t( -1 ) ) ;
+    }
+
     return natus::graphics::result::ok ;
 }
 
-natus::graphics::result gl3_backend::release( natus::graphics::render_object_res_t ) noexcept 
+natus::graphics::result gl3_backend::release( natus::graphics::render_object_res_t obj ) noexcept 
 {
+    if( !obj.is_valid() || obj->name().empty() )
+    {
+        natus::log::global_t::error( natus_log_fn( "Object must be valid and requires a name" ) ) ;
+        return natus::graphics::result::invalid_argument ;
+    }
+
+    {
+        natus::graphics::id_res_t id = obj->get_id() ;
+        _pimpl->release_render_data( id->get_oid( this_t::get_bid() ) ) ;
+        id->set_oid( this_t::get_bid(), size_t( -1 ) ) ;
+    }
+
     return natus::graphics::result::ok ;
 }
 
-natus::graphics::result gl3_backend::release( natus::graphics::shader_object_res_t ) noexcept
+natus::graphics::result gl3_backend::release( natus::graphics::shader_object_res_t obj ) noexcept
 {
+    if( !obj.is_valid() || obj->name().empty() )
+    {
+        natus::log::global_t::error( natus_log_fn( "Object must be valid and requires a name" ) ) ;
+        return natus::graphics::result::invalid_argument ;
+    }
+
+    {
+        natus::graphics::id_res_t id = obj->get_id() ;
+        _pimpl->release_shader_data( id->get_oid( this_t::get_bid() ) ) ;
+        id->set_oid( this_t::get_bid(), size_t( -1 ) ) ;
+    }
+
     return natus::graphics::result::ok ;
 }
 
-natus::graphics::result gl3_backend::release( natus::graphics::image_object_res_t ) noexcept 
+natus::graphics::result gl3_backend::release( natus::graphics::image_object_res_t obj ) noexcept 
 {
+    if( !obj.is_valid() || obj->name().empty() )
+    {
+        natus::log::global_t::error( natus_log_fn( "Object must be valid and requires a name" ) ) ;
+        return natus::graphics::result::invalid_argument ;
+    }
+
+    {
+        natus::graphics::id_res_t id = obj->get_id() ;
+        _pimpl->release_image_data( id->get_oid( this_t::get_bid() ) ) ;
+        id->set_oid( this_t::get_bid(), size_t( -1 ) ) ;
+    }
+
     return natus::graphics::result::ok ;
 }
 
-natus::graphics::result gl3_backend::release( natus::graphics::framebuffer_object_res_t ) noexcept 
+natus::graphics::result gl3_backend::release( natus::graphics::framebuffer_object_res_t obj ) noexcept 
 {
+    if( !obj.is_valid() || obj->name().empty() )
+    {
+        natus::log::global_t::error( natus_log_fn( "Object must be valid and requires a name" ) ) ;
+        return natus::graphics::result::invalid_argument ;
+    }
+
+    {
+        natus::graphics::id_res_t id = obj->get_id() ;
+        _pimpl->release_framebuffer( id->get_oid( this_t::get_bid() ) ) ;
+        id->set_oid( this_t::get_bid(), size_t( -1 ) ) ;
+    }
+
     return natus::graphics::result::ok ;
 }
 
-natus::graphics::result gl3_backend::release( natus::graphics::state_object_res_t ) noexcept
+natus::graphics::result gl3_backend::release( natus::graphics::state_object_res_t obj ) noexcept
 {
+    if( !obj.is_valid() || obj->name().empty() )
+    {
+        natus::log::global_t::error( natus_log_fn( "Object must be valid and requires a name" ) ) ;
+        return natus::graphics::result::invalid_argument ;
+    }
+
+    {
+        natus::graphics::id_res_t id = obj->get_id() ;
+        //_pimpl->relese( id->get_oid( this_t::get_bid() ) ) ;
+        id->set_oid( this_t::get_bid(), size_t( -1 ) ) ;
+    }
+
     return natus::graphics::result::ok ;
 }
 
-natus::graphics::result gl3_backend::release( natus::graphics::array_object_res_t ) noexcept
+natus::graphics::result gl3_backend::release( natus::graphics::array_object_res_t obj ) noexcept
 {
+    if( !obj.is_valid() || obj->name().empty() )
+    {
+        natus::log::global_t::error( natus_log_fn( "Object must be valid and requires a name" ) ) ;
+        return natus::graphics::result::invalid_argument ;
+    }
+
+    {
+        natus::graphics::id_res_t id = obj->get_id() ;
+        _pimpl->release_array_data( id->get_oid( this_t::get_bid() ) ) ;
+        id->set_oid( this_t::get_bid(), size_t( -1 ) ) ;
+    }
+
     return natus::graphics::result::ok ;
 }
 
