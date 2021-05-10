@@ -83,6 +83,7 @@ namespace natus
 
             /// render thread update function - DO NOT USE.
             void_t system_update( void_t ) noexcept ;
+            void_t end_of_time( void_t ) noexcept ;
 
         public: // sync
 

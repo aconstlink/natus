@@ -1018,28 +1018,39 @@ struct gl3_backend::pimpl
     {
         auto & shd = _shaders[ oid ] ;
 
-        // delete program
-        {
-            glDeleteProgram( shd.pg_id ) ;
-            natus::ogl::error::check_and_log( natus_log_fn( "glDeleteProgram" ) ) ;
-        }
+        if( !shd.valid ) return true ;
 
         // delete shaders
         {
+            glDetachShader( shd.pg_id, shd.vs_id ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glDetachShader" ) ) ;
+
             glDeleteShader( shd.vs_id ) ;
             natus::ogl::error::check_and_log( natus_log_fn( "glDeleteShader" ) ) ;
         }
 
         if( shd.gs_id != GLuint(-1) )
         {
+            glDetachShader( shd.pg_id, shd.gs_id ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glDetachShader" ) ) ;
+
             glDeleteShader( shd.gs_id ) ;
             natus::ogl::error::check_and_log( natus_log_fn( "glDeleteShader" ) ) ;
         }
 
         if( shd.ps_id != GLuint(-1) )
         {
+            glDetachShader( shd.pg_id, shd.ps_id ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glDetachShader" ) ) ;
+
             glDeleteShader( shd.ps_id ) ;
             natus::ogl::error::check_and_log( natus_log_fn( "glDeleteShader" ) ) ;
+        }
+
+        // delete program
+        {
+            glDeleteProgram( shd.pg_id ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glDeleteProgram" ) ) ;
         }
 
         shd.valid = false ;

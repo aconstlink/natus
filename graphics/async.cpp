@@ -1,5 +1,6 @@
 
 #include "async.h"
+#include "backend/null/null.h"
 
 using namespace natus::graphics ;
 
@@ -436,6 +437,11 @@ void_t async::system_update( void_t ) noexcept
             coms.clear() ;
         }
     }
+}
+
+void_t async::end_of_time( void_t ) noexcept 
+{
+    _backend = natus::graphics::null_backend_res_t() ;
 }
 
 //***

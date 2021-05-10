@@ -230,6 +230,8 @@ app::window_async_t app::create_window(
             ctx_->swap() ;
         }
         natus::log::global_t::status( natus_log_fn("thread end") ) ;
+        
+        async_->end_of_time() ;
         ctx_->deactivate() ;
     } ) ;
     pwi.async = async ;
