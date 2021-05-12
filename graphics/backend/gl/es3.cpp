@@ -2231,6 +2231,125 @@ natus::graphics::result es3_backend::configure( natus::graphics::array_object_re
     return natus::graphics::result::ok ;
 }
 
+natus::graphics::result es3_backend::release( natus::graphics::geometry_object_res_t obj ) noexcept 
+{
+    if( !obj.is_valid() || obj->name().empty() )
+    {
+        natus::log::global_t::error( natus_log_fn( "Object must be valid and requires a name" ) ) ;
+        return natus::graphics::result::invalid_argument ;
+    }
+
+    {
+        natus::graphics::id_res_t id = obj->get_id() ;
+        _pimpl->release_geometry( id->get_oid( this_t::get_bid() ) ) ;
+        id->set_oid( this_t::get_bid(), size_t( -1 ) ) ;
+    }
+
+    return natus::graphics::result::ok ;
+}
+
+natus::graphics::result es3_backend::release( natus::graphics::render_object_res_t obj ) noexcept 
+{
+    if( !obj.is_valid() || obj->name().empty() )
+    {
+        natus::log::global_t::error( natus_log_fn( "Object must be valid and requires a name" ) ) ;
+        return natus::graphics::result::invalid_argument ;
+    }
+
+    {
+        natus::graphics::id_res_t id = obj->get_id() ;
+        _pimpl->release_render_data( id->get_oid( this_t::get_bid() ) ) ;
+        id->set_oid( this_t::get_bid(), size_t( -1 ) ) ;
+    }
+
+    return natus::graphics::result::ok ;
+}
+
+natus::graphics::result es3_backend::release( natus::graphics::shader_object_res_t obj ) noexcept
+{
+    if( !obj.is_valid() || obj->name().empty() )
+    {
+        natus::log::global_t::error( natus_log_fn( "Object must be valid and requires a name" ) ) ;
+        return natus::graphics::result::invalid_argument ;
+    }
+
+    {
+        natus::graphics::id_res_t id = obj->get_id() ;
+        _pimpl->release_shader_data( id->get_oid( this_t::get_bid() ) ) ;
+        id->set_oid( this_t::get_bid(), size_t( -1 ) ) ;
+    }
+
+    return natus::graphics::result::ok ;
+}
+
+natus::graphics::result es3_backend::release( natus::graphics::image_object_res_t obj ) noexcept 
+{
+    if( !obj.is_valid() || obj->name().empty() )
+    {
+        natus::log::global_t::error( natus_log_fn( "Object must be valid and requires a name" ) ) ;
+        return natus::graphics::result::invalid_argument ;
+    }
+
+    {
+        natus::graphics::id_res_t id = obj->get_id() ;
+        _pimpl->release_image_data( id->get_oid( this_t::get_bid() ) ) ;
+        id->set_oid( this_t::get_bid(), size_t( -1 ) ) ;
+    }
+
+    return natus::graphics::result::ok ;
+}
+
+natus::graphics::result es3_backend::release( natus::graphics::framebuffer_object_res_t obj ) noexcept 
+{
+    if( !obj.is_valid() || obj->name().empty() )
+    {
+        natus::log::global_t::error( natus_log_fn( "Object must be valid and requires a name" ) ) ;
+        return natus::graphics::result::invalid_argument ;
+    }
+
+    {
+        natus::graphics::id_res_t id = obj->get_id() ;
+        _pimpl->release_framebuffer( id->get_oid( this_t::get_bid() ) ) ;
+        id->set_oid( this_t::get_bid(), size_t( -1 ) ) ;
+    }
+
+    return natus::graphics::result::ok ;
+}
+
+natus::graphics::result es3_backend::release( natus::graphics::state_object_res_t obj ) noexcept
+{
+    if( !obj.is_valid() || obj->name().empty() )
+    {
+        natus::log::global_t::error( natus_log_fn( "Object must be valid and requires a name" ) ) ;
+        return natus::graphics::result::invalid_argument ;
+    }
+
+    {
+        natus::graphics::id_res_t id = obj->get_id() ;
+        //_pimpl->relese( id->get_oid( this_t::get_bid() ) ) ;
+        id->set_oid( this_t::get_bid(), size_t( -1 ) ) ;
+    }
+
+    return natus::graphics::result::ok ;
+}
+
+natus::graphics::result es3_backend::release( natus::graphics::array_object_res_t obj ) noexcept
+{
+    if( !obj.is_valid() || obj->name().empty() )
+    {
+        natus::log::global_t::error( natus_log_fn( "Object must be valid and requires a name" ) ) ;
+        return natus::graphics::result::invalid_argument ;
+    }
+
+    {
+        natus::graphics::id_res_t id = obj->get_id() ;
+        _pimpl->release_array_data( id->get_oid( this_t::get_bid() ) ) ;
+        id->set_oid( this_t::get_bid(), size_t( -1 ) ) ;
+    }
+
+    return natus::graphics::result::ok ;
+}
+
 //***
 natus::graphics::result es3_backend::connect( natus::graphics::render_object_res_t config, natus::graphics::variable_set_res_t vs ) noexcept
 {
