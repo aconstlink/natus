@@ -753,6 +753,74 @@ struct es3_backend::pimpl
         return oid ;
     }
 
+    bool_t release_framebuffer( size_t const oid ) noexcept
+    {
+        auto & fbd = _framebuffers[ oid ] ;
+
+        if( !fbd.valid ) return false ;
+
+        // find image ids in images and remove them
+        {
+            for( size_t i=0; i<8; ++i )
+            {
+                if( fbd.colors[i] == GLuint(-1) ) continue ;
+
+                for( auto & img : img_configs )
+                {
+                    if( img.tex_id == fbd.colors[i] )
+                    {
+                        img.tex_id = GLuint(-1) ;
+                        img.name = "released framebuffer color buffer" ;
+                        img.sib = 0 ;
+                        break ;
+                    }
+                }
+            }
+        }
+
+        {
+            glDeleteFramebuffers( 1, &fbd.gl_id ) ;
+            natus::es::error::check_and_log( natus_log_fn( "glDeleteFramebuffers" ) ) ;
+        }
+
+        {
+            glDeleteTextures( 8, fbd.colors ) ;
+            natus::es::error::check_and_log( natus_log_fn( "glDeleteTextures" ) ) ;
+        }
+
+        if( fbd.depth != GLuint(-1) )
+        {
+            // find image id in images and remove them
+            {
+                for( auto & img : img_configs )
+                {
+                    if( img.tex_id == fbd.depth )
+                    {
+                        img.tex_id = GLuint(-1) ;
+                        img.name = "released framebuffer color buffer" ;
+                        img.sib = 0 ;
+                        break ;
+                    }
+                }
+            }
+
+            {
+                glDeleteTextures( 1, &fbd.depth ) ;
+                natus::es::error::check_and_log( natus_log_fn( "glDeleteTextures" ) ) ;
+            }
+        }
+
+        fbd.name = "released" ;
+        fbd.valid = false ;
+        fbd.gl_id = GLuint( -1 ) ;
+        fbd.depth = GLuint( -1 ) ;
+        for( size_t i=0; i<8; ++i ) fbd.colors[i] = GLuint( -1 ) ;
+
+        fbd.dims = natus::math::vec2ui_t() ;
+
+        return true ;
+    }
+
     bool_t activate_framebuffer( size_t const oid  )
     {
         framebuffer_data_ref_t fb = _framebuffers[ oid ] ;
@@ -859,6 +927,59 @@ struct es3_backend::pimpl
         }
 
         return oid ;
+    }
+
+    bool_t release_shader_data( size_t const oid ) noexcept
+    {
+        auto & shd = shaders[ oid ] ;
+
+        if( !shd.valid ) return true ;
+
+        // delete shaders
+        {
+            glDetachShader( shd.pg_id, shd.vs_id ) ;
+            natus::es::error::check_and_log( natus_log_fn( "glDetachShader" ) ) ;
+
+            glDeleteShader( shd.vs_id ) ;
+            natus::es::error::check_and_log( natus_log_fn( "glDeleteShader" ) ) ;
+        }
+
+        if( shd.gs_id != GLuint(-1) )
+        {
+            glDetachShader( shd.pg_id, shd.gs_id ) ;
+            natus::es::error::check_and_log( natus_log_fn( "glDetachShader" ) ) ;
+
+            glDeleteShader( shd.gs_id ) ;
+            natus::es::error::check_and_log( natus_log_fn( "glDeleteShader" ) ) ;
+        }
+
+        if( shd.ps_id != GLuint(-1) )
+        {
+            glDetachShader( shd.pg_id, shd.ps_id ) ;
+            natus::es::error::check_and_log( natus_log_fn( "glDetachShader" ) ) ;
+
+            glDeleteShader( shd.ps_id ) ;
+            natus::es::error::check_and_log( natus_log_fn( "glDeleteShader" ) ) ;
+        }
+
+        // delete program
+        {
+            glDeleteProgram( shd.pg_id ) ;
+            natus::es::error::check_and_log( natus_log_fn( "glDeleteProgram" ) ) ;
+        }
+
+        shd.valid = false ;
+        shd.pg_id = GLuint( -1 ) ;
+        shd.gs_id = GLuint( -1 ) ;
+        shd.vs_id = GLuint( -1 ) ;
+        shd.ps_id = GLuint( -1 ) ;
+        shd.name = "released shader" ;
+
+        shd.is_compilation_ok = false ;
+        shd.uniforms.clear() ;
+        shd.attributes.clear() ;
+
+        return true ;
     }
 
     //***********************
@@ -1195,6 +1316,26 @@ struct es3_backend::pimpl
         return oid ;
     }
 
+    bool_t release_image_data( size_t const oid ) noexcept
+    {
+        auto & id = img_configs[ oid ] ;
+
+        id.name = "released image" ;
+        id.type = GL_NONE ;
+
+        if( id.tex_id != GLuint( -1 ) )
+        {
+            glDeleteTextures( 1, &id.tex_id ) ;
+            natus::es::error::check_and_log( natus_log_fn( "glDeleteTextures" ) ) ;
+
+            id.tex_id = GLuint( -1 ) ;
+        }
+
+        id.sib = 0 ;
+
+        return true ;
+    }
+
     //***********************
     size_t construct_render_config( size_t oid, natus::graphics::render_object_ref_t obj )
     {
@@ -1211,6 +1352,31 @@ struct es3_backend::pimpl
         }
 
         return oid ;
+    }
+
+    bool_t release_render_data( size_t const oid ) noexcept
+    {
+        auto & rd = rconfigs[ oid ] ;
+
+        rd.valid = false ;
+        rd.name = "released" ;
+
+        if( rd.geo_id != size_t( -1 ) ) 
+        {
+            geo_datas[ rd.geo_id ].remove_render_data_id( oid ) ;
+            rd.geo_id = size_t( -1 ) ;
+        }
+
+        rd.shd_id = GLuint( -1 ) ;
+        rd.var_sets.clear() ;
+        rd.var_sets_array.clear() ;
+        rd.var_sets_data.clear() ;
+        rd.var_sets_texture.clear() ;
+
+        natus::memory::global_t::dealloc( rd.mem_block ) ;
+        rd.mem_block = nullptr ;
+
+        return true ;
     }
 
     bool_t update( size_t const id, natus::graphics::shader_object_cref_t sc )
@@ -1485,6 +1651,51 @@ struct es3_backend::pimpl
         return oid ;
     }
 
+    bool_t release_geometry( size_t const oid ) noexcept
+    {
+        auto & geo = geo_datas[ oid ] ;
+
+        geo.name = "released" ;
+        geo.valid = false ;
+
+        geo.elements.clear() ;
+        geo.ib_elem_sib = 0 ;
+        geo.stride = 0 ;
+
+        if( geo.vb_id != GLuint( -1 ) )
+        {
+            glDeleteBuffers( 1, &geo.vb_id ) ;
+            natus::es::error::check_and_log( natus_log_fn( "glDeleteBuffers" ) ) ;
+            geo.vb_id = GLuint( -1 ) ;
+        }
+
+        if( geo.ib_id != GLuint( -1 ) )
+        {
+            glDeleteBuffers( 1, &geo.ib_id ) ;
+            natus::es::error::check_and_log( natus_log_fn( "glDeleteBuffers" ) ) ;
+            geo.ib_id = GLuint( -1 ) ;
+        }
+
+        if( geo.va_id != GLuint( -1 ) )
+        {
+            glDeleteVertexArrays( 1, &geo.va_id ) ;
+            natus::es::error::check_and_log( natus_log_fn( "glDeleteVertexArrays" ) ) ;
+            geo.va_id = GLuint( -1 ) ;
+        }
+
+        geo.ib_elem_sib = 0 ;
+
+        for( auto const & rd_id : geo.rd_ids )
+        {
+            if( rd_id == size_t( -1 ) ) continue ;
+            auto & rd = rconfigs[ rd_id ] ;
+            rd.geo_id = GLuint( -1 ) ;
+        }
+        geo.rd_ids.clear() ;
+
+        return true ;
+    }
+
     bool_t update( size_t const id, natus::graphics::geometry_object_res_t geo, bool_t const is_config = false )
     {
         auto& config = geo_datas[ id ] ;
@@ -1652,7 +1863,7 @@ struct es3_backend::pimpl
     {
         auto& config = rconfigs[ id ] ;
 
-        this_t::shader_data_ref_t shd = shaders[ config.shd_id ] ;
+        //this_t::shader_data_ref_t shd = shaders[ config.shd_id ] ;
 
         this_t::connect( config, vs ) ;
 
@@ -1775,6 +1986,25 @@ struct es3_backend::pimpl
         }
 
         return oid ;
+    }
+
+    bool_t release_array_data( size_t const oid ) noexcept
+    {
+        auto & data = _arrays[ oid ] ;
+
+        if( data.img_id != size_t( -1 ) )
+        {
+            glDeleteTextures( 1, &img_configs[data.img_id].tex_id ) ;
+            natus::es::error::check_and_log( natus_log_fn( "glDeleteTextures" ) ) ;
+            img_configs[data.img_id].tex_id = GLuint( -1 ) ;
+        }
+
+        data.valid = false ;
+        data.name = "released" ;
+        data.img_id = size_t(-1) ;
+        data.sib = 0 ;
+
+        return true ;
     }
 
     size_t update( size_t oid, natus::graphics::array_object_ref_t obj, bool_t const is_config = false ) 
@@ -1970,7 +2200,7 @@ struct es3_backend::pimpl
         // render section
         {
             GLenum const pt = gconfig.pt ;
-            GLuint const ib = gconfig.ib_id ;
+            //GLuint const ib = gconfig.ib_id ;
             //GLuint const vb = config.geo->vb_id ;
 
             if( gconfig.num_elements_ib )

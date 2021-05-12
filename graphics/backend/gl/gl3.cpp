@@ -1550,7 +1550,7 @@ struct gl3_backend::pimpl
         if( rd.geo_id != size_t( -1 ) ) 
         {
             _geometries[ rd.geo_id ].remove_render_data_id( oid ) ;
-            rd.geo_id = GLuint( -1 ) ;
+            rd.geo_id = size_t( -1 ) ;
         }
         
         rd.shd_id = GLuint( -1 ) ;

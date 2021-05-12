@@ -182,7 +182,7 @@ namespace natus
 
                 this_t tmp_img( _if, _iet, this_t::dims_t( w, h, d ) ) ;
 
-                tmp_img.update( [&]( this_ptr_t, dims_in_t dims, void_ptr_t data ) 
+                tmp_img.update( [&]( this_ptr_t, dims_in_t /*dims*/, void_ptr_t data ) 
                 {
                     size_t base = 0 ;
                     for( size_t z = 0; z<_depth; ++z )
