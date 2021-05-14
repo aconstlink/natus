@@ -376,6 +376,7 @@ struct d3d11_backend::pimpl
             view = std::move( rhv.view ) ;
             texture = std::move( rhv.texture ) ;
             sampler = std::move( rhv.sampler ) ;
+            requires_y_flip = rhv.requires_y_flip ;
         }
 
         ~image_data( void_t ) noexcept
@@ -390,6 +391,7 @@ struct d3d11_backend::pimpl
             view = guard< ID3D11ShaderResourceView >() ;
             texture = guard< ID3D11Texture2D >() ;
             sampler = guard< ID3D11SamplerState >() ;
+            requires_y_flip = 0.0f ;
         }
     };
     natus_typedef( image_data ) ;
