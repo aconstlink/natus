@@ -10,12 +10,13 @@ namespace natus
         {
             unknown,
             openal,
+            xaudio2
         };
 
         namespace detail
         {
             natus::ntd::string_t const __backend_type_names[] = {
-                "unknown", "openal" } ;
+                "unknown", "openal", "xaudio2" } ;
         }
 
         static natus::ntd::string_cref_t to_string( natus::audio::backend_type const bt )
@@ -24,6 +25,6 @@ namespace natus
         }
 
         /// including unknown
-        static size_t const max_backends = 2 ;
+        static size_t const max_backends = 3 ;
     }
 }

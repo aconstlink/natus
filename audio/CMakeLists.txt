@@ -23,9 +23,16 @@ set( sources
     "backend/types.h"
     "backend/oal/oal.h"
     "backend/oal/oal.cpp"
-    
     )
 
+if( NATUS_TARGET_OS_WIN )
+  list( APPEND sources 
+    "backend/wasapi/wasapi_capture_helper.h"
+    "backend/wasapi/wasapi_capture_helper.cpp"
+    "backend/xaudio/xaudio2.h"
+    "backend/xaudio/xaudio2.cpp"
+)
+endif()
 natus_vs_src_dir( sources )
 
 add_library( ${cur_lib_name} ${NATUS_LIBRARY_BUILD_TYPE} ${sources} )

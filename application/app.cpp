@@ -29,6 +29,9 @@
 #include <natus/device/global.h>
 #include <natus/device/layouts/three_mouse.hpp>
 
+#if defined( NATUS_TARGET_OS_WIN )
+#include <natus/audio/backend/xaudio/xaudio2.h>
+#endif
 #include <natus/audio/backend/oal/oal.h>
 
 #include <natus/concurrent/global.h>
@@ -67,11 +70,30 @@ app::~app( void_t )
 }
 
 //***
-natus::audio::async_access_t app::create_audio_engine( void_t )  noexcept
+natus::audio::async_access_t app::create_audio_engine( natus::audio::backend_type bt )  noexcept
 {
     this_t::per_audio_info_t pai ;
-    natus::audio::backend_res_t backend = natus::audio::oal_backend_res_t(
-        natus::audio::oal_backend_t() ) ;
+    natus::audio::backend_res_t backend ;
+
+    // 1. xaudio2
+    #if defined( NATUS_TARGET_OS_WIN )
+    if( bt == natus::audio::backend_type::unknown || bt == natus::audio::backend_type::xaudio2 )
+    {
+        //bt = natus::audio::backend_type::xaudio2 ;
+        //backend = natus::audio::xaudio2_backend_res_t(
+          //  natus::audio::xaudio2_backend_t() ) ;
+        bt = natus::audio::backend_type::openal ;
+    }
+    #else
+    bt = natus::audio::backend_type::openal ;
+    #endif
+
+    // fallback oal
+    if( bt == natus::audio::backend_type::openal )
+    {
+        backend = natus::audio::oal_backend_res_t(
+            natus::audio::oal_backend_t() ) ;
+    }
 
     pai.async = natus::audio::async_res_t(
         natus::audio::async_t( backend ) ) ;
