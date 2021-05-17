@@ -1,6 +1,8 @@
 
 #include "xaudio2.h"
 
+#include <xaudio2.h>
+
 using namespace natus::audio ;
 
 struct natus::audio::xaudio2_backend::pimpl

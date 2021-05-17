@@ -80,7 +80,7 @@ add_subdirectory( "externals/aconstlink" )
 
 if( NATUS_TARGET_OS_WIN )
     find_package( XInput REQUIRED )
-    #find_package( XAudio2 REQUIRED )
+    find_package( XAudio2 REQUIRED )
  #   find_package( Wddk REQUIRED )
 elseif( NATUS_OS_LINUX )
 endif()
