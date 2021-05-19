@@ -45,7 +45,7 @@ namespace natus
 
             bool_t init( void_t ) noexcept ;
             void_t release( void_t ) noexcept ;
-            void_t capture( natus::ntd::vector< float_t > & samples ) noexcept ;
+            bool_t capture( natus::ntd::vector< float_t > & samples ) noexcept ;
 
 
         };

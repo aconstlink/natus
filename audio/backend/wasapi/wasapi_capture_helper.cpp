@@ -94,15 +94,15 @@ bool_t wasapi_capture_helper::init( void_t ) noexcept
 
                 if( fmt_ext->SubFormat == KSDATAFORMAT_SUBTYPE_PCM )
                 {
-                    int const bp = 0 ;
-
                     // create integral type buffer
                     if( pwfx->wBitsPerSample == 8 )
                     {
                         copy_funk = [=]( BYTE const * buffer, UINT32 const num_frames, natus::ntd::vector< float_t > & samples )
                         {
-                            samples.resize( num_frames ) ;
-                            for( size_t i=0; i<num_frames; ++i )
+                            size_t const start = samples.size() ;
+                            size_t const end = start + num_frames ;
+                            samples.resize( end ) ;
+                            for( size_t i=start; i<end; ++i )
                             {
                                 samples[i] = float_t(double_t(int8_cptr_t(buffer)[i])/125.0) ;
                             }
@@ -112,8 +112,10 @@ bool_t wasapi_capture_helper::init( void_t ) noexcept
                     {
                         copy_funk = [=]( BYTE const * buffer, UINT32 const num_frames, natus::ntd::vector< float_t > & samples )
                         {
-                            samples.resize( num_frames ) ;
-                            for( size_t i=0; i<num_frames; ++i )
+                            size_t const start = samples.size() ;
+                            size_t const end = start + num_frames ;
+                            samples.resize( end ) ;
+                            for( size_t i=start; i<end; ++i )
                             {
                                 samples[i] = float_t(double_t(int16_cptr_t(buffer)[i])/32768.0) ;
                             }
@@ -123,8 +125,10 @@ bool_t wasapi_capture_helper::init( void_t ) noexcept
                     {
                         copy_funk = [=]( BYTE const * buffer, UINT32 const num_frames, natus::ntd::vector< float_t > & samples )
                         {
-                            samples.resize( num_frames ) ;
-                            for( size_t i=0; i<num_frames; ++i )
+                            size_t const start = samples.size() ;
+                            size_t const end = start + num_frames ;
+                            samples.resize( end ) ;
+                            for( size_t i=start; i<end; ++i )
                             {
                                 samples[i] = float_t(double_t(int32_cptr_t(buffer)[i])/2147483648.0) ;
                             }
@@ -135,8 +139,10 @@ bool_t wasapi_capture_helper::init( void_t ) noexcept
                 {
                     copy_funk = [=]( BYTE const * buffer, UINT32 const num_frames, natus::ntd::vector< float_t > & samples )
                     {
-                        samples.resize( num_frames ) ;
-                        for( size_t i=0; i<num_frames; ++i )
+                        size_t const start = samples.size() ;
+                        size_t const end = start + num_frames ;
+                        samples.resize( end ) ;
+                        for( size_t i=start; i<end; ++i )
                         {
                             samples[i] = float_cptr_t(buffer)[i] ;
                         }
@@ -220,7 +226,7 @@ void_t wasapi_capture_helper::release( void_t ) noexcept
 }
 
 //*************************************************************************
-void_t wasapi_capture_helper::capture( natus::ntd::vector< float_t > & samples ) noexcept 
+bool_t wasapi_capture_helper::capture( natus::ntd::vector< float_t > & samples ) noexcept 
 {
     UINT32 packetLength = 0 ;
 
@@ -230,8 +236,9 @@ void_t wasapi_capture_helper::capture( natus::ntd::vector< float_t > & samples )
         if( res != S_OK )
         {
             natus::log::global::error( natus_log_fn( "GetNextPacketSize" ) ) ;
-            return ;
+            return false;
         }
+        if( packetLength == 0 ) return false ;
     }
 
     while( packetLength != 0 )
@@ -275,6 +282,8 @@ void_t wasapi_capture_helper::capture( natus::ntd::vector< float_t > & samples )
             }
         }
     }
+
+    return true ;
 }
 
 //*************************************************************************
