@@ -1,0 +1,54 @@
+#pragma once
+
+#include "../backend.h"
+
+#include <mmdeviceapi.h>
+#include <audioclient.h>
+#include <windows.h>
+
+namespace natus
+{
+    namespace audio
+    {
+        // audio capture of system output/mix using wasapi based on:
+        // https://docs.microsoft.com/en-us/windows/win32/coreaudio/loopback-recording
+        // https://docs.microsoft.com/en-us/windows/win32/coreaudio/capturing-a-stream
+        class NATUS_AUDIO_API wasapi_capture_helper
+        {
+            natus_this_typedefs( wasapi_capture_helper ) ;
+
+            typedef std::function< void_t ( BYTE const * buffer, UINT32 const num_frames, natus::ntd::vector< float_t > & ) > copy_funk_t ;
+            copy_funk_t _copy_funk ;
+
+        private:
+
+            const CLSID CLSID_MMDeviceEnumerator = __uuidof(MMDeviceEnumerator);
+            const IID IID_IMMDeviceEnumerator = __uuidof(IMMDeviceEnumerator);
+            const IID IID_IAudioClient = __uuidof(IAudioClient);
+            const IID IID_IAudioCaptureClient = __uuidof(IAudioCaptureClient);
+
+            size_t const REFTIMES_PER_SEC = 10000000 ;
+            size_t const REFTIMES_PER_MILLISEC  = 10000 ;
+
+            IMMDeviceEnumerator *pEnumerator = NULL ;
+            IMMDevice *pDevice = NULL ;
+            IAudioClient *pAudioClient = NULL;
+            IAudioCaptureClient *pCaptureClient = NULL;
+
+        public:
+
+            wasapi_capture_helper( void_t ) noexcept ;
+            wasapi_capture_helper( this_rref_t ) noexcept ;
+            ~wasapi_capture_helper( void_t ) noexcept ;
+
+        public:
+
+            bool_t init( void_t ) noexcept ;
+            void_t release( void_t ) noexcept ;
+            void_t capture( natus::ntd::vector< float_t > & samples ) noexcept ;
+
+
+        };
+        natus_typedef( wasapi_capture_helper ) ;
+    }
+}
