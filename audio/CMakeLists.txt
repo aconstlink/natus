@@ -18,11 +18,14 @@ set( sources
     "object/buffer_object.h"
     "object/synth_object.h"
 
+    "backend/audio_capture_helper.h"
+    "backend/audio_capture_helper.cpp"
     "backend/backend.h"
     "backend/backend.cpp"
     "backend/types.h"
     "backend/oal/oal.h"
     "backend/oal/oal.cpp"
+    "backend/null/null_audio_capture_helper.h"
     )
 
 if( NATUS_TARGET_OS_WIN )

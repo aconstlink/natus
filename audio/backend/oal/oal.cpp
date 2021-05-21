@@ -4,6 +4,7 @@
 #include "../../id.hpp"
 #include "../../enums.h"
 
+#include "../audio_capture_helper.h"
 
 #include <natus/ntd/vector.hpp>
 #include <natus/math/dsp/fft.hpp>
@@ -22,6 +23,8 @@ namespace this_file
 {
     struct global_capture
     {
+        natus::audio::audio_capture_helper_res_t sys_audio ;
+
         ALCdevice* dev = nullptr ;
 
         size_t num_channels = 0 ;

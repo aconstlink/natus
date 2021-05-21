@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../backend.h"
+#include "../audio_capture_helper.h"
 
 #include <mmdeviceapi.h>
 #include <audioclient.h>
@@ -13,7 +13,7 @@ namespace natus
         // audio capture of system output/mix using wasapi based on:
         // https://docs.microsoft.com/en-us/windows/win32/coreaudio/loopback-recording
         // https://docs.microsoft.com/en-us/windows/win32/coreaudio/capturing-a-stream
-        class NATUS_AUDIO_API wasapi_capture_helper
+        class NATUS_AUDIO_API wasapi_capture_helper : public natus::audio::audio_capture_helper
         {
             natus_this_typedefs( wasapi_capture_helper ) ;
 
@@ -39,16 +39,16 @@ namespace natus
 
             wasapi_capture_helper( void_t ) noexcept ;
             wasapi_capture_helper( this_rref_t ) noexcept ;
-            ~wasapi_capture_helper( void_t ) noexcept ;
+            virtual ~wasapi_capture_helper( void_t ) noexcept ;
 
         public:
 
-            bool_t init( void_t ) noexcept ;
-            void_t release( void_t ) noexcept ;
-            bool_t capture( natus::ntd::vector< float_t > & samples ) noexcept ;
-
-
+            virtual bool_t init( void_t ) noexcept override ;
+            virtual void_t release( void_t ) noexcept override ;
+            virtual void_t start( void_t ) noexcept override ;
+            virtual void_t stop( void_t ) noexcept override ;
+            virtual bool_t capture( natus::ntd::vector< float_t > & samples ) noexcept override ;
         };
-        natus_typedef( wasapi_capture_helper ) ;
+        natus_res_typedef( wasapi_capture_helper ) ;
     }
 }

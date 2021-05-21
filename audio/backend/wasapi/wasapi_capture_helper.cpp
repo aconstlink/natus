@@ -9,8 +9,12 @@ wasapi_capture_helper::wasapi_capture_helper( void_t ) noexcept
 }
 
 //*************************************************************************
-wasapi_capture_helper::wasapi_capture_helper( this_rref_t ) noexcept
+wasapi_capture_helper::wasapi_capture_helper( this_rref_t rhv ) noexcept
 {
+    natus_move_member_ptr( pEnumerator, rhv ) ;
+    natus_move_member_ptr( pDevice, rhv ) ;
+    natus_move_member_ptr( pAudioClient, rhv ) ;
+    natus_move_member_ptr( pCaptureClient, rhv ) ;
 }
 
 //*************************************************************************
@@ -72,11 +76,6 @@ bool_t wasapi_capture_helper::init( void_t ) noexcept
         // format see: mmreg.h
         WAVEFORMATEX *pwfx = NULL ;
         WAVEFORMATEXTENSIBLE * fmt_ext = NULL ;
-
-        //IAudioClient *pAudioClient = NULL;
-        
-        
-        //REFERENCE_TIME hnsActualDuration;
 
         copy_funk_t copy_funk = [=]( BYTE const * buffer, UINT32 const num_frames, natus::ntd::vector< float_t > & ){} ;
         
@@ -185,6 +184,7 @@ bool_t wasapi_capture_helper::init( void_t ) noexcept
         }
     }
 
+    #if 0
     {
         auto const res = pAudioClient->Start() ;
         if( res != S_OK )
@@ -193,6 +193,7 @@ bool_t wasapi_capture_helper::init( void_t ) noexcept
             return false ;
         }
     }
+    #endif
 
     //size_t const num_bits_per_sample = pwfx->wBitsPerSample ;
 
@@ -222,6 +223,28 @@ void_t wasapi_capture_helper::release( void_t ) noexcept
     {
         pEnumerator->Release() ;
         pEnumerator = nullptr ;
+    }
+}
+
+//*************************************************************************
+void_t wasapi_capture_helper::start( void_t ) noexcept 
+{
+    if( pAudioClient == nullptr ) return ;
+    auto const res = pAudioClient->Start() ;
+    if( res != S_OK )
+    {
+        natus::log::global::error( natus_log_fn("AudioClient Start" ) ) ;
+    }
+}
+
+//*************************************************************************
+void_t wasapi_capture_helper::stop( void_t ) noexcept
+{
+    if( pAudioClient == nullptr ) return ;
+    auto const res = pAudioClient->Stop() ;
+    if( res != S_OK )
+    {
+        natus::log::global::error( natus_log_fn("AudioClient Stop" ) ) ;
     }
 }
 
