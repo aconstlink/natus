@@ -24,7 +24,7 @@ wasapi_capture_helper::~wasapi_capture_helper( void_t ) noexcept
 }
 
 //*************************************************************************
-bool_t wasapi_capture_helper::init( void_t ) noexcept 
+bool_t wasapi_capture_helper::init( natus::audio::channels const, natus::audio::frequency const ) noexcept 
 {
     this_t::release() ;
 
@@ -87,6 +87,9 @@ bool_t wasapi_capture_helper::init( void_t ) noexcept
                 return false ;
             }
 
+            size_t const src_max_channels = size_t( pwfx->nChannels ) ;
+            size_t const src_channels = std::min( size_t(pwfx->nChannels), size_t( 2 ) ) ;
+
             if( pwfx->wFormatTag == WAVE_FORMAT_EXTENSIBLE )
             {
                 fmt_ext = (WAVEFORMATEXTENSIBLE*)pwfx ;
@@ -98,12 +101,19 @@ bool_t wasapi_capture_helper::init( void_t ) noexcept
                     {
                         copy_funk = [=]( BYTE const * buffer, UINT32 const num_frames, natus::ntd::vector< float_t > & samples )
                         {
+                            size_t const num_samples = size_t( num_frames ) / src_max_channels ;
+
                             size_t const start = samples.size() ;
-                            size_t const end = start + num_frames ;
+                            size_t const end = start + num_samples ;
                             samples.resize( end ) ;
                             for( size_t i=start; i<end; ++i )
                             {
-                                samples[i] = float_t(double_t(int8_cptr_t(buffer)[i])/125.0) ;
+                                size_t const src_idx = (i-start) * src_max_channels ;
+
+                                float_t avg = 0.0f ;
+                                for( size_t c = 0; c<src_channels; ++c ) avg += float_t(double_t(int8_cptr_t(buffer)[src_idx])/125.0) ;
+                                avg /= float_t(src_channels) ;
+                                samples[i] = avg ;
                             }
                         } ;
                     }
@@ -111,12 +121,19 @@ bool_t wasapi_capture_helper::init( void_t ) noexcept
                     {
                         copy_funk = [=]( BYTE const * buffer, UINT32 const num_frames, natus::ntd::vector< float_t > & samples )
                         {
+                            size_t const num_samples = size_t( num_frames ) / src_max_channels ;
+
                             size_t const start = samples.size() ;
-                            size_t const end = start + num_frames ;
+                            size_t const end = start + num_samples ;
                             samples.resize( end ) ;
                             for( size_t i=start; i<end; ++i )
                             {
-                                samples[i] = float_t(double_t(int16_cptr_t(buffer)[i])/32768.0) ;
+                                size_t const src_idx = (i-start) * src_max_channels ;
+
+                                float_t avg = 0.0f ;
+                                for( size_t c = 0; c<src_channels; ++c ) avg += float_t(double_t(int16_cptr_t(buffer)[src_idx])/32768.0) ;
+                                avg /= float_t(src_channels) ;
+                                samples[i] = avg ;
                             }
                         } ;
                     }
@@ -124,12 +141,19 @@ bool_t wasapi_capture_helper::init( void_t ) noexcept
                     {
                         copy_funk = [=]( BYTE const * buffer, UINT32 const num_frames, natus::ntd::vector< float_t > & samples )
                         {
+                            size_t const num_samples = size_t( num_frames ) / src_max_channels ;
+
                             size_t const start = samples.size() ;
-                            size_t const end = start + num_frames ;
+                            size_t const end = start + num_samples ;
                             samples.resize( end ) ;
                             for( size_t i=start; i<end; ++i )
                             {
-                                samples[i] = float_t(double_t(int32_cptr_t(buffer)[i])/2147483648.0) ;
+                                size_t const src_idx = (i-start) * src_max_channels ;
+
+                                float_t avg = 0.0f ;
+                                for( size_t c = 0; c<src_channels; ++c ) avg += float_t(double_t(int32_cptr_t(buffer)[src_idx])/2147483648.0) ;
+                                avg /= float_t(src_channels) ;
+                                samples[i] = avg ;
                             }
                         } ;
                     }
@@ -138,12 +162,19 @@ bool_t wasapi_capture_helper::init( void_t ) noexcept
                 {
                     copy_funk = [=]( BYTE const * buffer, UINT32 const num_frames, natus::ntd::vector< float_t > & samples )
                     {
+                        size_t const num_samples = size_t( num_frames ) / src_max_channels ;
+
                         size_t const start = samples.size() ;
-                        size_t const end = start + num_frames ;
+                        size_t const end = start + num_samples ;
                         samples.resize( end ) ;
                         for( size_t i=start; i<end; ++i )
                         {
-                            samples[i] = float_cptr_t(buffer)[i] ;
+                            size_t const src_idx = (i-start) * src_max_channels ;
+
+                            float_t avg = 0.0f ;
+                            for( size_t c = 0; c<src_channels; ++c ) avg += float_cptr_t(buffer)[src_idx] ;
+                            avg /= float_t(src_channels) ;
+                            samples[i] = avg ;
                         }
                     } ;
                 }

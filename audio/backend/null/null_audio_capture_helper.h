@@ -13,7 +13,7 @@ namespace natus
 
         public:
 
-            virtual bool_t init( void_t ) noexcept override { return true ; }
+            virtual bool_t init( natus::audio::channels const, natus::audio::frequency const ) noexcept override { return true ; }
             virtual void_t release( void_t ) noexcept override {}
             virtual void_t start( void_t ) noexcept override {} ;
             virtual void_t stop( void_t ) noexcept override {} ;

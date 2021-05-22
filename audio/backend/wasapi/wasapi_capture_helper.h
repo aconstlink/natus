@@ -27,6 +27,8 @@ namespace natus
             const IID IID_IAudioClient = __uuidof(IAudioClient);
             const IID IID_IAudioCaptureClient = __uuidof(IAudioCaptureClient);
 
+            // this is in 100 nanosecond units, so this should be 1 second
+            // this should be left at 1 second.
             size_t const REFTIMES_PER_SEC = 10000000 ;
             size_t const REFTIMES_PER_MILLISEC  = 10000 ;
 
@@ -43,7 +45,7 @@ namespace natus
 
         public:
 
-            virtual bool_t init( void_t ) noexcept override ;
+            virtual bool_t init( natus::audio::channels const, natus::audio::frequency const ) noexcept override ;
             virtual void_t release( void_t ) noexcept override ;
             virtual void_t start( void_t ) noexcept override ;
             virtual void_t stop( void_t ) noexcept override ;

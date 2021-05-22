@@ -4,6 +4,7 @@
 #include "../api.h"
 #include "../typedefs.h"
 #include "../result.h"
+#include "../enums.h"
 #include <natus/ntd/vector.hpp>
 
 namespace natus
@@ -17,7 +18,8 @@ namespace natus
 
         public:
 
-            virtual bool_t init( void_t ) noexcept = 0  ;
+            virtual bool_t init( natus::audio::channels const = natus::audio::channels::mono, 
+                natus::audio::frequency const = natus::audio::frequency::freq_48k ) noexcept = 0  ;
             virtual void_t release( void_t ) noexcept = 0 ;
             virtual void_t start( void_t ) noexcept = 0 ;
             virtual void_t stop( void_t ) noexcept = 0 ;
