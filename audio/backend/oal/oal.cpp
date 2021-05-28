@@ -263,6 +263,11 @@ struct natus::audio::oal_backend::pimpl
             gc.complex_frequencies.resize( size ) ;
         }
 
+        {
+            gc.sys_audio = natus::audio::audio_capture_helper_t::create() ;
+            gc.sys_audio->init() ;
+        }
+
         _gc = natus::memory::global_t::alloc( this_file::global_capture_t( std::move( gc ) ),
             "[OpenAL Backend] : global_capture" ) ;
     }
@@ -282,18 +287,165 @@ struct natus::audio::oal_backend::pimpl
 
         if( _do_captures == 0 && do_capture )
         {
-            alcCaptureStart( dev ) ;
+            //alcCaptureStart( dev ) ;
+            _gc->sys_audio->start() ;
             ++_do_captures ;
         }
         else if( _do_captures == 1 && !do_capture )
         {
-            alcCaptureStop( dev ) ;
+            //alcCaptureStop( dev ) ;
+            _gc->sys_audio->stop() ;
             _do_captures = 0 ;
         }
 
         return _do_captures != 0 ;
     }
 
+    void_t capture_what_u_hear_samples( void_t )
+    {
+        auto & fbuffer = _gc->raw_samples ;
+        _gc->sys_audio->capture( fbuffer ) ;
+
+        // test sine wave
+        #if 0
+        {
+            static size_t count = 0 ;
+            static bool_t swap = true ;
+            count = swap ? 100 : 50;
+            //swap = !swap ;
+
+            static float_t t0 = 0.0f ;
+            t0 += 0.001f ;
+            t0 = t0 >= 1.0f ? 0.0f : t0 ;
+
+            //natus::log::global_t::status( "t0 : " + std::to_string( t0 ) ) ;
+
+            float_t const t1 = 1.0f - std::abs( t0 * 2.0f - 1.0f ) ;
+
+            static float_t freqz = 0.0f ;
+            float_t freq0 = natus::math::interpolation<float_t>::linear( 1.0f, 100.0f, t1 ) ;
+            fbuffer.resize( size_t( count ) ) ;
+
+            #if 0 
+            {
+                for( size_t i = 0; i < fbuffer.size(); ++i )
+                {
+                    float_t const s = float_t( i ) / float_t( count - 1 ) ;
+                    fbuffer[ i ] = 20.0f * std::sin( freq0 * s * 2.0f * natus::math::constants<float_t>::pi() )
+                        ;// +10.0f * std::sin( 150.0f * s * 2.0f * natus::math::constants<float_t>::pi() );
+
+                    // saw-tooth
+                    //float_t const ss = 1.0f - std::abs( natus::math::fn<float_t>::mod( s*freq0, 1.0f ) * 2.0f - 1.0f ) ;
+                    //fbuffer[ i ] = 10.0f * ss ;
+                }
+            }
+            #endif
+            #if 1
+            {
+                static size_t j = 0 ;
+                static size_t num_samples = 10100 ;
+
+                freq0 = 80.0f ;
+                for( size_t i = 0; i < count; ++i )
+                {
+                    float_t freq = natus::math::interpolation<float_t>::linear( freqz, freq0, float_t( i ) / float_t( count - 1 ) ) ;
+                    size_t const idx = ( j + i ) % num_samples ;
+                    float_t const s = float_t( idx ) / float_t( num_samples - 1 ) ;
+                    fbuffer[ i ] = 20.0f * std::sin( freq * s * 2.0f * natus::math::constants<float_t>::pi() )
+                        ;// +10.0f * std::sin( 150.0f * s * 2.0f * natus::math::constants<float_t>::pi() );
+
+                    // saw-tooth
+                    //float_t const ss = 1.0f - std::abs( natus::math::fn<float_t>::mod( s*freq0, 1.0f ) * 2.0f - 1.0f ) ;
+                    //fbuffer[ i ] = 10.0f * ss ;
+                }
+                j = ( j + count ) % num_samples ;
+            }
+            #endif
+
+            freqz = freq0 ;
+        }
+        #endif
+
+        // shift in new values and min/max
+        {
+            size_t const n = fbuffer.size() ;
+            //float_cptr_t values = fbuffer.data() ;
+
+            // shift and copy
+            {
+                size_t const nn = std::min( _gc->samples.size(), n ) ;
+
+                size_t const n0 = _gc->samples.size() - nn ;
+                size_t const n1 = n - nn ;
+
+                float_ptr_t samples = _gc->samples.data() ;
+
+                // shift by n values
+                {
+                    //std::memcpy( samples, samples + nn, n0 * sizeof( float_t ) ) ;
+                    for( size_t i = 0; i < n0; ++i ) samples[ i ] = samples[ nn + i ] ;
+                }
+                // copy the new values
+                {
+                    //std::memcpy( samples + n0, values + n1, nn * sizeof( float_t ) ) ;
+                    for( size_t i = 0; i < nn; ++i ) samples[ n0 + i ] = fbuffer[ n1 + i ] ;
+                }
+            }
+
+            // calc new min/max
+            {
+                natus::math::vec2f_t mm = natus::math::vec2f_t(
+                    std::numeric_limits<float_t>::max(),
+                    std::numeric_limits<float_t>::min() ) ;
+
+                for( float_t const s : _gc->samples )
+                {
+                    mm = natus::math::vec2f_t( std::min( mm.x(), s ), std::max( mm.y(), s ) ) ;
+                }
+
+                _gc->mm = mm ;
+            }
+        }
+
+        // compute the frequency bands using the fft
+        {
+            size_t const num_samples = _gc->samples.size() ;
+            for( size_t i = 0; i < _gc->samples.size(); ++i )
+            {
+                _gc->complex_frequencies[ i ] = this_file::global_capture::fft_t::complex_t( _gc->samples[ i ], 0.0f ) ;
+            }
+            this_file::global_capture::fft_t::compute( _gc->complex_frequencies ) ;
+
+            float_t const div = 2.0f / float_t( num_samples ) ;
+
+            for( size_t i = 0; i < num_samples >> 1; ++i )
+            {
+                float_t const a = std::abs( _gc->complex_frequencies[ i ] ) ;
+
+                _gc->frequencies[ i ] = a * div ;
+
+                _gc->frequencies[ i ] *= _gc->frequencies[ i ] ;
+
+                // for db calculation
+                //_frequencies[ i ] = 10.0f * std::log10( _frequencies[ i ] ) ;
+                //_gc->frequencies[ i ] = (_gc->frequencies[ i ] < (1.0f * div)) ? 0.0f : _gc->frequencies[ i ] ;
+
+            }
+            // the zero frequency should not receive the multiplier 2
+            _gc->frequencies[ 0 ] /= 2.0f ;
+
+            // band width
+            {
+                //float_t const sampling_rate = float_t( natus::audio::to_number( _gc->frequency ) ) ;
+                //float_t const buffer_window = float_t( _gc->samples.size() ) ;
+                //float_t const mult = float_t( sampling_rate ) / float_t( buffer_window ) ;
+            }
+        }
+
+        //natus::log::global_t::status("Count : " + std::to_string(count) ) ;
+    }
+
+    #if 0
     void_t capture_what_u_hear_samples( void_t )
     {
         ALCdevice* dev = _gc->dev ;
@@ -480,6 +632,8 @@ struct natus::audio::oal_backend::pimpl
 
         //natus::log::global_t::status("Count : " + std::to_string(count) ) ;
     }
+
+    #endif
 
     size_t construct_capture_object( natus::audio::capture_object_ref_t /*cap*/ )
     {

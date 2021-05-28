@@ -101,7 +101,7 @@ bool_t wasapi_capture_helper::init( natus::audio::channels const, natus::audio::
                     {
                         copy_funk = [=]( BYTE const * buffer, UINT32 const num_frames, natus::ntd::vector< float_t > & samples )
                         {
-                            size_t const num_samples = size_t( num_frames ) / src_max_channels ;
+                            size_t const num_samples = size_t( num_frames ) ;
 
                             size_t const start = samples.size() ;
                             size_t const end = start + num_samples ;
@@ -121,7 +121,7 @@ bool_t wasapi_capture_helper::init( natus::audio::channels const, natus::audio::
                     {
                         copy_funk = [=]( BYTE const * buffer, UINT32 const num_frames, natus::ntd::vector< float_t > & samples )
                         {
-                            size_t const num_samples = size_t( num_frames ) / src_max_channels ;
+                            size_t const num_samples = size_t( num_frames )  ;
 
                             size_t const start = samples.size() ;
                             size_t const end = start + num_samples ;
@@ -141,7 +141,7 @@ bool_t wasapi_capture_helper::init( natus::audio::channels const, natus::audio::
                     {
                         copy_funk = [=]( BYTE const * buffer, UINT32 const num_frames, natus::ntd::vector< float_t > & samples )
                         {
-                            size_t const num_samples = size_t( num_frames ) / src_max_channels ;
+                            size_t const num_samples = size_t( num_frames ) ;
 
                             size_t const start = samples.size() ;
                             size_t const end = start + num_samples ;
@@ -162,7 +162,7 @@ bool_t wasapi_capture_helper::init( natus::audio::channels const, natus::audio::
                 {
                     copy_funk = [=]( BYTE const * buffer, UINT32 const num_frames, natus::ntd::vector< float_t > & samples )
                     {
-                        size_t const num_samples = size_t( num_frames ) / src_max_channels ;
+                        size_t const num_samples = size_t( num_frames ) ;
 
                         size_t const start = samples.size() ;
                         size_t const end = start + num_samples ;
@@ -294,6 +294,8 @@ bool_t wasapi_capture_helper::capture( natus::ntd::vector< float_t > & samples )
         }
         if( packetLength == 0 ) return false ;
     }
+
+    samples.clear() ;
 
     while( packetLength != 0 )
     {
