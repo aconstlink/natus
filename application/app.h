@@ -228,12 +228,12 @@ namespace natus
 
         public:
 
-            virtual natus::application::result on_init( void_t ) noexcept noexcept noexcept = 0 ;
+            virtual natus::application::result on_init( void_t ) noexcept = 0 ;
             virtual natus::application::result on_update( update_data_in_t ) noexcept { return natus::application::result::ok ; }
             virtual natus::application::result on_graphics( render_data_in_t ) noexcept = 0 ;
             virtual natus::application::result on_audio( audio_data_in_t ) noexcept { return natus::application::result::ok ; }
             virtual natus::application::result on_device( device_data_in_t ) noexcept { return natus::application::result::ok ; }
-            virtual natus::application::result on_shutdown( void_t ) noexcept noexcept = 0 ;
+            virtual natus::application::result on_shutdown( void_t ) noexcept = 0 ;
             virtual natus::application::result on_logic( logic_data_in_t ) noexcept { return natus::application::result::ok ; }
 
             virtual natus::application::result on_event( window_id_t const, this_t::window_event_info_in_t ) noexcept
