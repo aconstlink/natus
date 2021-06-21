@@ -28,8 +28,8 @@ namespace natus
             
         public:
 
-            void_t make_entry( natus::profile::entry_cref_t ) noexcept ;
-            void_t make_entry( natus::profile::entry_rref_t ) noexcept ;
+            void_t add_entry( natus::profile::entry_cref_t ) noexcept ;
+            void_t add_entry( natus::profile::entry_rref_t ) noexcept ;
 
             void_t unique_entry( natus::profile::entry_cref_t ) noexcept ;
             void_t unique_entry( natus::profile::entry_rref_t ) noexcept ;

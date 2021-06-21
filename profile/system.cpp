@@ -4,7 +4,7 @@
 using namespace natus::profile ;
 
 //********************************************
-void_t system::make_entry( natus::profile::entry_cref_t e ) noexcept 
+void_t system::add_entry( natus::profile::entry_cref_t e ) noexcept 
 {
     natus::concurrent::lock_guard_t lk( _mtx ) ;
 
@@ -12,7 +12,7 @@ void_t system::make_entry( natus::profile::entry_cref_t e ) noexcept
 }
 
 //********************************************
-void_t system::make_entry( natus::profile::entry_rref_t e ) noexcept 
+void_t system::add_entry( natus::profile::entry_rref_t e ) noexcept 
 {
     natus::concurrent::lock_guard_t lk( _mtx ) ;
 
@@ -27,7 +27,7 @@ void_t system::unique_entry( natus::profile::entry_cref_t e ) noexcept
 
         for( auto & e_ : _entries )
         {
-            if( e_.get_key() == e.get_key() )
+            if( e_.get_name() == e.get_name() )
             {
                 e_ = e ;
                 return ;
@@ -35,7 +35,7 @@ void_t system::unique_entry( natus::profile::entry_cref_t e ) noexcept
         }
     }
 
-    this_t::make_entry( e ) ;
+    this_t::add_entry( e ) ;
 }
 
 //********************************************
@@ -46,7 +46,7 @@ void_t system::unique_entry( natus::profile::entry_rref_t e ) noexcept
 
         for( auto & e_ : _entries )
         {
-            if( e_.get_key() == e.get_key() )
+            if( e_.get_name() == e.get_name() )
             {
                 e_ = e ;
                 return ;
@@ -54,7 +54,7 @@ void_t system::unique_entry( natus::profile::entry_rref_t e ) noexcept
         }
     }
 
-    this_t::make_entry( std::move( e ) ) ;
+    this_t::add_entry( std::move( e ) ) ;
 }
 
 //********************************************

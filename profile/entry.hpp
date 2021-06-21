@@ -18,21 +18,13 @@ namespace natus
             bool_t _started = false ;
 
             natus::ntd::string_t _name = "noname" ;
-            natus::ntd::string_t _thread = "default" ;
-            natus::ntd::string_t _group = "default" ;
 
             clock_t::time_point _begin ;
             clock_t::time_point _end ;
 
         public:
 
-            entry( natus::ntd::string_t const thread, natus::ntd::string_t group, natus::ntd::string_t name  ) noexcept : 
-                _thread( thread ), _group( group ), _name( name )
-            {
-                this_t::begin() ;
-            }
-
-            entry( natus::ntd::string_t name ) noexcept : _name( name )
+            entry( natus::ntd::string_t name  ) noexcept : _name( name )
             {
                 this_t::begin() ;
             }
@@ -40,8 +32,6 @@ namespace natus
             entry( this_cref_t rhv ) noexcept
             {
                 _name = rhv._name ;
-                _thread = rhv._thread ;
-                _group = rhv._group ;
                 _begin = rhv._begin ;
                 _end = rhv._end ;
                 _started = rhv._started ;
@@ -52,8 +42,6 @@ namespace natus
             entry( this_rref_t rhv ) noexcept
             {
                 _name = std::move( rhv._name ) ;
-                _thread = std::move( rhv._thread ) ;
-                _group = std::move( rhv._group ) ;
                 _begin = std::move( rhv._begin ) ;
                 _end = std::move( rhv._end ) ;
                 _started = rhv._started ;
@@ -64,8 +52,6 @@ namespace natus
             this_ref_t operator = ( this_cref_t rhv ) noexcept
             {
                 _name = rhv._name ;
-                _thread = rhv._thread ;
-                _group = rhv._group ;
                 _begin = rhv._begin ;
                 _end = rhv._end ;
                 _started = rhv._started ;
@@ -78,8 +64,6 @@ namespace natus
             this_ref_t operator = ( this_rref_t rhv ) noexcept
             {
                 _name = std::move( rhv._name ) ;
-                _thread = std::move( rhv._thread ) ;
-                _group = std::move( rhv._group ) ;
                 _begin = std::move( rhv._begin ) ;
                 _end = std::move( rhv._end ) ;
                 _started = rhv._started ;
@@ -112,16 +96,6 @@ namespace natus
                 return _name ;
             }
 
-            natus::ntd::string_cref_t get_thread( void_t ) const noexcept 
-            {
-                return _thread ;
-            }
-
-            natus::ntd::string_cref_t get_group( void_t ) const noexcept 
-            {
-                return _group ;
-            }
-
             this_t::clock_t::time_point get_begin( void_t ) const noexcept
             {
                 return _begin ;
@@ -136,11 +110,6 @@ namespace natus
             D get_duration( void_t ) const noexcept
             {
                 return std::chrono::duration_cast< D >( _end - _begin ) ;
-            }
-
-            natus::ntd::string_t get_key( void_t ) const noexcept
-            {
-                return _thread + "." + _group + "." + _name ;
             }
         };
         natus_typedef( entry ) ;
