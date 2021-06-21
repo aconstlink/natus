@@ -3,8 +3,13 @@
 set( sources 
     "api.h"
     "typedefs.h"
-    "header_only.cpp"
     "macros.h"
+
+    "global.h"
+    "global.cpp"
+    "system.h"
+    "system.cpp"
+    "entry.hpp"
     )
 
 natus_vs_src_dir( sources )

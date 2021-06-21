@@ -16,7 +16,7 @@
 
 namespace natus
 {
-    namespace nsl
+    namespace profile
     {
         using namespace natus::core::types ;
     }

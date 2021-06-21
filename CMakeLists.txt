@@ -98,7 +98,6 @@ set( subdirs_header_only
     "ntd"
     "math"
     "nsl"
-    "profiling"
     "property"
     "collide"
     )
@@ -125,6 +124,7 @@ list( APPEND subdirs
     "font"
     "tool"
     "physics"
+    "profile"
     ${subdirs_header_only}
     )
 
