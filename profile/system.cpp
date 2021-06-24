@@ -58,9 +58,16 @@ void_t system::unique_entry( natus::profile::entry_rref_t e ) noexcept
 }
 
 //********************************************
-system::entries_t system::get_entries( void_t ) noexcept 
+system::entries_t system::get_and_reset_entries( void_t ) noexcept 
 {
     // here the entries are temporary, 
     // maybe there are unique/persistent entries too
     return std::move( _entries ) ;
+}
+
+//********************************************
+void_t system::reset( void_t ) noexcept 
+{
+    natus::concurrent::lock_guard_t lk( _mtx ) ;
+    _entries.clear() ;
 }

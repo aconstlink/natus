@@ -90,13 +90,14 @@ add_library( ${cur_alias_name} ALIAS ${cur_lib_name} )
 target_compile_options( ${cur_lib_name} PUBLIC ${NATUS_WINDOW_SYSTEM_DEFINES} )
 
 target_link_libraries( ${cur_lib_name}
-    PUBLIC natus_graphics_options 
+    PUBLIC natus_graphics_options
     PUBLIC natus::tool
     PUBLIC natus::gfx
     PUBLIC natus::audio
     PUBLIC natus::system
     PUBLIC natus::graphics
     PUBLIC natus::concurrent
+    PUBLIC natus::profile
     PUBLIC natus::log
     PUBLIC natus::memory
     PUBLIC natus::device
