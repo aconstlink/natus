@@ -12,6 +12,12 @@ set( sources
     "imgui/custom_widgets.h"
     "imgui/custom_widgets.cpp"
 
+    "imgui/timeline.h"
+    "imgui/timeline.cpp"
+    "imgui/keyframe_editor.h"
+    "imgui/keyframe_editor.cpp"
+    "imgui/player_controller.h"
+    "imgui/player_controller.cpp"
     )
 
 natus_vs_src_dir( sources )
