@@ -293,6 +293,24 @@ namespace natus
 
             natus::audio::async_access_t create_audio_engine( natus::audio::backend_type bt = natus::audio::backend_type::unknown ) noexcept ;
 
+        protected:
+
+            enum class time_state
+            {
+                unknown, 
+                run, 
+                hold,
+                step_forward
+            };
+
+            time_state get_time_state( void_t ) const noexcept ;
+            void_t set_time_state( time_state const ) noexcept ;
+
+        private:
+
+            time_state _time_state = time_state::run ;
+            time_state _time_state_user = time_state::run ;
+
         private:
 
             void_t destroy_window( this_t::per_window_info_ref_t ) ;
