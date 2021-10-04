@@ -1,13 +1,17 @@
 
-os: Visual Studio 2019
+image: 
+  - Visual Studio 2019
+  - Ubuntu
 
 install:
   - cd %APPVEYOR_BUILD_FOLDER%
   - git submodule update --init --recursive
 
 build_script:
-  - md build
+  - cmd: md build
+  - sh: mkdir build
   - cd build
-  - cmake -G "Visual Studio 16 2019" -A x64 ..
+  - cmd: cmake -G "Visual Studio 16 2019" -A x64 ..
+  - sh: cmake -G "Unix Makefiles" -A x64 -DNATUS_TARGET_GRAPHICS_API=null ..
   - cmake --build . --config Release
   
