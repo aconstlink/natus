@@ -8,6 +8,8 @@ install:
   - sh: cd $APPVEYOR_BUILD_FOLDER
   - git submodule update --init --recursive
 
+platform: x64
+
 build_script:
   - cmd: md build
   - sh: mkdir build
