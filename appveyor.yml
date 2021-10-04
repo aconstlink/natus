@@ -8,7 +8,13 @@ install:
   - sh: cd $APPVEYOR_BUILD_FOLDER
   - git submodule update --init --recursive
 
-platform: x64
+platform: 
+  - x64
+  - Any CPU
+
+configuration:
+  - Debug
+  - Release
 
 build_script:
   - cmd: md build
