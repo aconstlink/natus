@@ -10,7 +10,7 @@ install:
 
 platform: 
   - x64
-  - Any CPU
+#  - Any CPU
 
 configuration:
   - Debug
