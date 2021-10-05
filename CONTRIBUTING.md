@@ -15,8 +15,6 @@ So not everything what comes to your mind might be available for implementation.
 
 ## Passed any Doubts?
 
-**Anyway, the project welcomes you and we are happy you came to this point!**
-
 It is very important to communicate what you want to do BEFORE you do it. 
 
 If you still have any doubts, do not hesitate contacting me.
