@@ -21,7 +21,7 @@ There are also games done with natus [here in the games repository.](https://git
 
 Windows prerequisites:  
  - Windows 10 SDK
- - Visual Studio 2019 Community
+ - Visual Studio 2019 (Community) or later
  - CMake
 
 
