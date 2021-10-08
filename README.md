@@ -15,6 +15,7 @@ natus is a software framework for real-time interactive audio/visual application
 
 
 Examples of using the engine already exists here in the [test project repository](https://github.com/aconstlink/natus_tests).
+I also try to recreate some already done games [here in the games repository.](https://github.com/aconstlink/games).
 
 ## Prerequisites
 
