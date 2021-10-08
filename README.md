@@ -59,14 +59,5 @@ cmake ../../natus
 3. Generate (out of source)
 4. Open START_HERE.bat (required for finding dlls)(not in engine only builds)
 
-## Usage  
-:construction:
-
-## Roadmap
-The [Projects Tab](https://github.com/aconstlink/natus/projects) provides some sort of roadmap of the project. There is no particular priority, but if you really need anything, just leave a comment or just ask to [contribute](CONTRIBUTING.md) something you would like to do.
-
-## Contributing  
-Please see [CONTRIBUTING](CONTRIBUTING.md)
-
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)
