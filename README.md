@@ -1,6 +1,6 @@
 # natus 
 
-natus is a software framework for real-time interactive audio/visual applications. Ok, ok. Not yet but it will be. :art: :construction:
+natus is a personal endeavour into and a software framework for real-time interactive audio/visual applications. 
 
 
 
