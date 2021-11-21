@@ -103,7 +103,39 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_t co
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {
                 if( args.size() != 3 ) return "mix ( INVALID_ARGS ) " ;
-                return "mix (" + args[ 0 ] + " , " + args[ 1 ] + " , " + args[ 2 ] + " ) " ;
+                return "mix ( " + args[ 0 ] + " , " + args[ 1 ] + " , " + args[ 2 ] + " ) " ;
+            }
+        },
+        {
+            natus::ntd::string_t( "inc" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 1 ) return "++ ( INVALID_ARGS ) " ;
+                return "++ ( " + args[ 0 ] + " ) " ;
+            }
+        },
+        {
+            natus::ntd::string_t( "dec" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 1 ) return "-- ( INVALID_ARGS ) " ;
+                return "-- ( " + args[ 0 ] + " ) " ;
+            }
+        },
+        {
+            natus::ntd::string_t( "inc_post" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 1 ) return "++ ( INVALID_ARGS ) " ;
+                return "( " + args[ 0 ] + " ) ++ " ;
+            }
+        },
+        {
+            natus::ntd::string_t( "dec_post" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 1 ) return "-- ( INVALID_ARGS ) " ;
+                return "( " + args[ 0 ] + " ) -- " ;
             }
         }
     } ;
@@ -117,6 +149,7 @@ natus::ntd::string_t generator::map_variable_type( natus::nsl::type_cref_t type 
     static mapping_t const __mappings[] =
     {
         mapping_t( natus::nsl::type_t(), "unknown" ),
+        mapping_t( natus::nsl::type_t::as_void(), "void" ),
         mapping_t( natus::nsl::type_t::as_float(), "float" ),
         mapping_t( natus::nsl::type_t::as_vec2(), "vec2" ),
         mapping_t( natus::nsl::type_t::as_vec3(), "vec3" ),
