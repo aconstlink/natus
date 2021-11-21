@@ -552,11 +552,14 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
     {
         for( auto const& v : genable.vars )
         {
-            size_t const p0 = shd.find( v.sym_long.expand() ) ;
-            if( p0 == std::string::npos ) continue ;
-            size_t const p1 = shd.find_first_of( " ", p0 ) ;
-
-            shd = shd.substr( 0, p0 ) + v.value + shd.substr( p1 ) ;
+            size_t p0 = shd.find( v.sym_long.expand() ) ; 
+                    
+            while( p0 != std::string::npos ) 
+            {
+                size_t const p1 = shd.find_first_of( " ", p0 ) ;
+                shd = shd.substr( 0, p0 ) + v.value + shd.substr( p1 ) ;
+                p0 = shd.find( v.sym_long.expand(), p1 ) ;
+            }
         }
     }
 
@@ -566,11 +569,14 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
         {
             for( auto const& d : f.deps )
             {
-                size_t const p0 = shd.find( d.expand() ) ;
-                if( p0 == std::string::npos ) continue ;
-                size_t const p1 = shd.find_first_of( " ", p0 ) ;
-
-                shd = shd.substr( 0, p0 ) + d.expand( "_" ) + shd.substr( p1 ) ;
+                size_t p0 = shd.find( d.expand() ) ; 
+                    
+                while( p0 != std::string::npos ) 
+                {
+                    size_t const p1 = shd.find_first_of( " ", p0 ) ;
+                    shd = shd.substr( 0, p0 ) + d.expand( "_" ) + shd.substr( p1 ) ;
+                    p0 = shd.find( d.expand(), p1 ) ;
+                }
             }
         }
     }
@@ -579,11 +585,14 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
     {
         for( auto const& d : s.deps )
         {
-            size_t const p0 = shd.find( d.expand() ) ;
-            if( p0 == std::string::npos ) continue ;
-            size_t const p1 = shd.find_first_of( " ", p0 ) ;
-
-            shd = shd.substr( 0, p0 ) + d.expand( "_" ) + shd.substr( p1 ) ;
+            size_t p0 = shd.find( d.expand() ) ; 
+                    
+            while( p0 != std::string::npos ) 
+            {
+                size_t const p1 = shd.find_first_of( " ", p0 ) ;
+                shd = shd.substr( 0, p0 ) + d.expand( "_" ) + shd.substr( p1 ) ;
+                p0 = shd.find( d.expand(), p1 ) ;
+            }
         }
     }
 
