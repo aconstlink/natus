@@ -146,6 +146,7 @@ namespace natus
         enum class type_base
         {
             unknown,
+            tvoid,
             tfloat,
             tint,
             tuint,
@@ -211,6 +212,11 @@ namespace natus
                 return 
                     ext == natus::nsl::type_ext::texture_1d || 
                     ext == natus::nsl::type_ext::texture_2d ;
+            }
+
+            static this_t as_void( void_t ) noexcept
+            {
+                return { type_base::tvoid, type_struct::unknown, type_ext::singular } ;
             }
 
             static this_t as_float( void_t ) noexcept
@@ -283,6 +289,7 @@ namespace natus
         {
             typedef std::pair< natus::ntd::string_t, natus::nsl::type_t > __mapping_t ;
             static __mapping_t const __mappings[] = {
+                __mapping_t( "void_t", type_t::as_void() ),
                 __mapping_t( "float_t", type_t::as_float() ),
                 __mapping_t( "int_t", type_t::as_int() ),
                 __mapping_t( "uint_t", type_t::as_uint() ),

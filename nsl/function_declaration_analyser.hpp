@@ -50,20 +50,36 @@ namespace natus
                         {
                             size_t const num_parts = std::distance( beg, iter ) - 1 ;
 
-                            if( num_parts != 2 )
+                            // empty arg list
+                            if( num_parts == 0 )
+                            {
+                                signature_t::arg_t arg ;
+                                arg.name = "" ;
+                                arg.type = natus::nsl::to_type( "void_t" ) ;
+                                _args.emplace_back( std::move( arg ) ) ;
+                            }
+                            // or void_t maybe
+                            else if( num_parts == 1 )
+                            {
+                                signature_t::arg_t arg ;
+                                arg.name = "" ;
+                                arg.type = natus::nsl::to_type( *( iter - 1 ) ) ;
+                                _args.emplace_back( std::move( arg ) ) ;
+                            }
+                            else if( num_parts >= 2 )
+                            {
+                                signature_t::arg_t arg ;
+                                arg.name = *( iter - 1 ) ;
+                                arg.type = natus::nsl::to_type( *( iter - 2 ) ) ;
+                                _args.emplace_back( std::move( arg ) ) ;
+                            }
+                            else 
                             {
                                 // error. args must type and name only.
                                 natus::log::global_t::error( "[parser] : arg must type and name only. Found: " +
                                     *iter ) ;
 
                                 _args.emplace_back( signature_t::arg_t() ) ;
-                            }
-                            else 
-                            {
-                                signature_t::arg_t arg ;
-                                arg.name = *( iter - 1 ) ;
-                                arg.type = natus::nsl::to_type( *( iter - 2 ) ) ;
-                                _args.emplace_back( std::move( arg ) ) ;
                             }
 
                             beg = iter ;

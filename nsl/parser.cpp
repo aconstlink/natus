@@ -347,6 +347,12 @@ parser::statements_t parser::replace_operators( statements_rref_t ss ) const
     {
         natus::ntd::string_t what ;
         natus::ntd::string_t with ;
+
+        // a + b -> false
+        // a /= b -> false
+        // ++a -> true
+        // ^b -> true
+        bool_t single = false ;
     };
 
     typedef std::function< bool_t ( char const t, size_t const l ) > is_stop_t ;
@@ -357,7 +363,7 @@ parser::statements_t parser::replace_operators( statements_rref_t ss ) const
         {
             size_t const p0 = line.find( r.what, off ) ;
             if( p0 == std::string::npos ) break ;
-
+            
             natus::ntd::string_t arg0, arg1 ;
 
             size_t beg = 0 ;
@@ -378,14 +384,20 @@ parser::statements_t parser::replace_operators( statements_rref_t ss ) const
                 }
                 // if the beginning is hit, there is one position missing.
                 if( p1 == size_t( -1 ) ) --p1 ;
-                arg0 = line.substr( p1 + 2, ( cut ) -( p1 + 2 ) ) ;
-                beg = p1 + 2 ;
+
+                // p3 is the (at stop char) + the char + a white space
+                size_t const p3 = p1 + 2 ;
+
+                // the condition may happen if the algo above has no arg0 for operator found
+                if( p3 > cut ) arg0 = "" ;
+                else arg0 = line.substr( p1 + 2, cut - ( p1 + 2 ) ) ;
+
+                beg = p3 ;
             }
 
             // arg1, right of what
             {
                 size_t level = 0 ;
-                size_t const cut = p0 + r.what.size() + 1 ;
 
                 size_t p1 = p0 + r.what.size() - 1 ;
                 while( ++p1 != line.size() )
@@ -395,15 +407,30 @@ parser::statements_t parser::replace_operators( statements_rref_t ss ) const
 
                     if( is_stop( line[ p1 ], level ) ) break ;
                 }
-                arg1 = line.substr( cut, ( p1 - 1 ) - cut ) ;
+
+                // +1 : jump over the whitespace
+                size_t const cut = p0 + r.what.size() + 1 ;
+                if( p1 == cut ) arg1 = "" ;
+                else arg1 = line.substr( cut, ( p1 - 1 ) - cut ) ;
+
                 end = p1 ;
             }
 
             if( arg0.empty() )
             {
+                if( r.single )
+                    line = line.replace( beg, end - beg,
+                        r.with + " ( " + arg1 + " ) " ) ;
+                else
+                    line = line.replace( beg, end - beg,
+                        r.with + " ( " + arg1 + " ) " ) ;
+            } 
+            else if ( arg1.empty() && r.single)
+            {
                 line = line.replace( beg, end - beg,
-                    r.with + " ( " + arg1 + " ) " ) ;
-            } else
+                        r.with + "_post ( " + arg0 + " ) " ) ;
+            }
+            else
             {
                 line = line.replace( beg, end - beg,
                     r.with + " ( " + arg0 + " , " + arg1 + " ) " ) ;
@@ -460,9 +487,9 @@ parser::statements_t parser::replace_operators( statements_rref_t ss ) const
             return false ;
         } ;
 
-        for( auto const& r : repls )
+        for( auto& line : ss )
         {
-            for( auto& line : ss )
+            for( auto const& r : repls )
             {
                 do_replacement( line, r, is_stop ) ;
             }
@@ -473,6 +500,8 @@ parser::statements_t parser::replace_operators( statements_rref_t ss ) const
     {
         natus::ntd::vector< repl > repls =
         {
+            { "++", "inc", true },
+            { "--", "dec", true },
             { "*", "mul" },
             { "'", "mmul" },
             { "/", "div" },
@@ -493,9 +522,9 @@ parser::statements_t parser::replace_operators( statements_rref_t ss ) const
             return false ;
         } ;
 
-        for( auto const& r : repls )
+        for( auto & line : ss )
         {
-            for( auto& line : ss )
+            for( auto const & r : repls )
             {
                 do_replacement( line, r, is_stop ) ;
             }
@@ -1006,15 +1035,13 @@ natus::ntd::string_t parser::remove_comment_lines( natus::ntd::string_rref_t s )
 {
     // 1. clear all //
     {
-        size_t off = 0 ;
         size_t p0 = s.find( "//" ) ;
         while( p0 != std::string::npos )
         {
             size_t const p1 = s.find_first_of( '\n', p0 ) ;
             s = s.substr( 0, p0 ) + s.substr( p1 ) ;
 
-            off = p0 ;
-            p0 = s.find( "//", off ) ;
+            p0 = s.find( "//", p0 ) ;
         }
     }
 
