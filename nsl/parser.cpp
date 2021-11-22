@@ -502,8 +502,8 @@ parser::statements_t parser::replace_operators( statements_rref_t ss ) const
         {
             { "++", "inc", true },
             { "--", "dec", true },
-            { "*", "mul" },
-            { "'", "mmul" },
+            { "*", "mmul" },    // math multiplication
+            { "'", "cmul" },    // component-wise multiplication
             { "/", "div" },
             { "+", "add" },
             { "-", "sub" },

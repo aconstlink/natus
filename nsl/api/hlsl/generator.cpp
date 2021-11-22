@@ -12,7 +12,7 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_t co
     natus::nsl::repl_syms_t repls =
     {
         {
-            natus::ntd::string_t( "mul" ),
+            natus::ntd::string_t( "cmul" ),
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {
                 if( args.size() != 2 ) return "mul ( INVALID_ARGS ) " ;
