@@ -300,7 +300,7 @@ void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept
 
 
     
-
+    #if 0
     {
         ImGui::BeginTooltip() ;
             
@@ -311,7 +311,7 @@ void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept
 
         ImGui::EndTooltip() ;
     }
-    
+    #endif
 
     ImGui::End() ;
 }

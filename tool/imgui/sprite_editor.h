@@ -58,6 +58,16 @@ namespace natus
                 // zoom == 1 means the window pixel size 
                 // match image pixel size => 1:1
                 float_t zoom = -0.5f ;
+
+                struct sequence_item 
+                {
+                    size_t bound_idx ; // index into bounds
+                    size_t pivot_idx ; // index into pivots
+                    size_t milli ; // how long to show image
+                };
+                natus_typedef( sequence_item ) ;
+                natus_typedefs( natus::ntd::vector< sequence_item_t >, sequence ) ;
+                natus::ntd::map< natus::ntd::string_t, sequence_t > sequences ;
                 
             };
             natus_typedef( sprite_sheet ) ;
