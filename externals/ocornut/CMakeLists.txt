@@ -19,6 +19,7 @@ set( SOURCES
     "imgui/imgui_demo.cpp"
     "imgui/imgui_draw.cpp"
     "imgui/imgui_widgets.cpp"
+    "imgui/imgui_tables.cpp"
 )
 
 #add_definitions( -DIMGUI_DEFINE_MATH_OPERATORS )
