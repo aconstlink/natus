@@ -66,6 +66,14 @@ namespace natus
                 return *this ;
             }
 
+            this_ref_t translate_to( natus::math::vec3f_cref_t d ) noexcept
+            {
+                auto t = _camera->get_transformation() ;
+                t.set_translation( d ) ;
+                _camera->set_transformaion( t ) ;
+                return *this ;
+            }
+
             natus::math::vec3f_t get_position( void_t ) const noexcept
             {
                 return _camera->get_transformation().get_translation() ;

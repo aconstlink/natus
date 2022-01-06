@@ -529,6 +529,24 @@ namespace natus
             }
 
             //***************************************************
+            // modulo self with rhv and return this
+            this_ref_t mod( this_cref_t rhv ) noexcept
+            {
+                _elem[0] = natus::math::fn< type_t >::mod( _elem[0], rhv.x() ) ;
+                _elem[1] = natus::math::fn< type_t >::mod( _elem[1], rhv.y() ) ;
+            }
+
+            //***************************************************
+            // modulo with rhv and return result vector
+            this_t modd( this_cref_t rhv ) noexcept
+            {
+                return this_t(
+                    natus::math::fn< type_t >::mod( _elem[0], rhv.x() ),
+                    natus::math::fn< type_t >::mod( _elem[1], rhv.y() )
+                ) ;
+            }
+
+            //***************************************************
             vec2_ref_t floor( void_t ) 
             {
                 _elem[ 0 ] = ::std::floor( _elem[ 0 ] ) ;
@@ -542,6 +560,22 @@ namespace natus
                 return this_t(
                     ::std::floor( _elem[ 0 ] ),
                     ::std::floor( _elem[ 1 ] ) ) ;
+            }
+
+            //***************************************************
+            vec2_ref_t ceil( void_t ) 
+            {
+                _elem[ 0 ] = std::ceil( _elem[ 0 ] ) ;
+                _elem[ 1 ] = std::ceil( _elem[ 1 ] ) ;
+                return *this ;
+            }
+
+            //***************************************************
+            vec2_t ceiled( void_t ) const
+            {
+                return this_t(
+                    std::ceil( _elem[ 0 ] ),
+                    std::ceil( _elem[ 1 ] ) ) ;
             }
 
             //***************************************************
