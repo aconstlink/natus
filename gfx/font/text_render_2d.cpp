@@ -143,7 +143,7 @@ void_t text_render_2d::init( natus::font::glyph_atlas_res_t ga, size_t const ng 
                     uniform samplerBuffer u_glyph_infos ;
 
                     // 1: vec4( pos.xy, offset, scale )
-                    // 2: vec4( color.xyz, 0.0f )
+                    // 2: vec4( color.xyz, advancement_x )
                     uniform samplerBuffer u_text_infos ;
 
                     // group offset for separated group rendering
@@ -176,8 +176,8 @@ void_t text_render_2d::init( natus::font::glyph_atlas_res_t ga, size_t const ng 
                         //
                         vec3 pos = vec3( sign( in_pos ) * 0.5 + 0.5, 0.0 ) ;
                         pos *= vec3( g1.zw * g2.zw * vec2(t1.w), 1.0 ) ;
-                        pos += vec3( t1.xy  + vec2( 0.0f, g2.y*t1.w), 0.0 ) ;
-                        gl_Position = u_proj * u_view * vec4( pos, 1.0 ) ;
+                        pos += vec3( vec2( t2.w, g2.y*t1.w), 0.0 ) ;
+                        gl_Position = u_proj * u_view * vec4( t1.xy, 0.0, 1.0 ) + vec4( pos, 0.0 ) ;
 
                         var_color = t2.xyz ;
                     } )" ) ).
@@ -643,6 +643,7 @@ natus::gfx::result text_render_2d::draw_text( size_t const group, size_t const f
             tgi.pos = pos_ ;
             tgi.point_size_scale = point_size_scale ;
             tgi.offset = idx ;
+            tgi.adv_x = adv.x() ;
 
             _gis[group].glyph_infos.emplace_back( tgi ) ;
         }
@@ -687,7 +688,7 @@ natus::gfx::result text_render_2d::prepare_for_rendering( void_t )
 
                 natus::math::vec4f_t const v1( gi.pos,
                     natus::math::vec2f_t( float_t( gi.offset ), gi.point_size_scale ) ) ;
-                natus::math::vec4f_t const v2( gi.color, 0.0f ) ;
+                natus::math::vec4f_t const v2( gi.color, gi.adv_x ) ;
 
                 _text_infos->data_buffer().update<the_data>( start + g, { v1, v2 } ) ;
             }

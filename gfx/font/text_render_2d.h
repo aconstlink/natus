@@ -78,6 +78,7 @@ namespace natus
                 natus::math::vec3f_t color ;
 
                 float_t point_size_scale ;
+                float_t adv_x ;
             };
             natus_typedef( glyph_info ) ;
 
