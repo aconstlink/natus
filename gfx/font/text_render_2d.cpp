@@ -255,9 +255,9 @@ void_t text_render_2d::init( natus::font::glyph_atlas_res_t ga, size_t const ng 
                         // calc position and scale
                         //
                         vec3 pos = vec3( sign( in_pos ) * 0.5 + 0.5, 0.0 ) ;
-                        pos *= vec3( g1.zw * g2.zw * t1.w, 1.0 ) ;
-                        pos += vec3( t1.xy + vec2( 0.0f, g2.y*t1.w), 0.0 ) ;
-                        gl_Position = u_proj * u_view * vec4( pos, 1.0 ) ;
+                        pos *= vec3( g1.zw * g2.zw * vec2(t1.w), 1.0 ) ;
+                        pos += vec3( vec2( t2.w, g2.y*t1.w), 0.0 ) ;
+                        gl_Position = u_proj * u_view * vec4( t1.xy, 0.0, 1.0 ) + vec4( pos, 0.0 ) ;
 
                         var_color = t2.xyz ;
                     } )" ) ).
@@ -309,7 +309,7 @@ void_t text_render_2d::init( natus::font::glyph_atlas_res_t ga, size_t const ng 
                     Buffer< float4 > u_glyph_infos ;
 
                     // 1: vec4( pos.xy, offset, scale )
-                    // 2: vec4( color.xyz, 0.0f )
+                    // 2: vec4( color.xyz, x advancement )
                     Buffer< float4 > u_text_infos ;
 
                     VS_OUTPUT VS( float2 in_pos : POSITION, uint in_id: SV_VertexID )
@@ -337,10 +337,11 @@ void_t text_render_2d::init( natus::font::glyph_atlas_res_t ga, size_t const ng 
                         //
                         float3 pos = float3( sign( in_pos ) * 0.5 + 0.5, 0.0 ) ;
                         pos *= float3( g1.zw * g2.zw * t1.w, 1.0 ) ;
-                        pos += float3( t1.xy + float2( 0.0f, g2.y*t1.w), 0.0 ) ;
+                        pos += float3( float2( t2.w, g2.y*t1.w), 0.0 ) ;
                         
-                        output.pos = mul( float4( pos, 1.0 ), u_view ) ;
+                        output.pos = mul( float4( t1.xy, 0.0, 1.0 ), u_view ) ;
                         output.pos = mul( output.pos, u_proj ) ;
+                        output.pos += float4( pos, 0.0 ) ;
 
                         output.color = t2.xyz ;
 
