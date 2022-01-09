@@ -134,6 +134,12 @@ namespace natus
                 return this_t( _elem[ 1 ], _elem[ 1 ] ) ;
             }
 
+            //***************************************************
+            this_t yx( void_t ) const 
+            {
+                return this_t( _elem[ 1 ], _elem[ 0 ] ) ;
+            }
+
         public: // operator ()
 
             //***************************************************
