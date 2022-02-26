@@ -23,34 +23,62 @@ quad::~quad( void_t ) noexcept
 
 void_t quad::set_view_proj( natus::math::mat4f_cref_t view, natus::math::mat4f_cref_t proj ) noexcept 
 {
+    _ro->for_each( [&]( size_t const, natus::graphics::variable_set_res_t const & vars )
     {
-        auto * var = _vars->data_variable< natus::math::mat4f_t >( "u_view" ) ;
-        var->set( view ) ;
-    }
+        vars->data_variable< natus::math::mat4f_t >( "u_view" )->set( view ) ;
+        vars->data_variable< natus::math::mat4f_t >( "u_proj" )->set( proj ) ;
+    } ) ;
+}
+
+void_t quad::set_position( natus::math::vec2f_cref_t pos ) noexcept 
+{
+    _ro->for_each( [&]( size_t const, natus::graphics::variable_set_res_t const & vars )
     {
-        auto * var = _vars->data_variable< natus::math::mat4f_t >( "u_proj" ) ;
-        var->set( proj ) ;
-    }
+        auto * var = vars->data_variable< natus::math::mat4f_t >( "u_world" ) ;
+        natus::math::mat4f_t world = var->get() ;
+        world.set_column( 3, natus::math::vec3f_t( pos, 0.0f ) ) ;
+        var->set( world ) ;
+    } ) ;
+}
+
+void_t quad::set_position( size_t const vs, natus::math::vec2f_cref_t pos ) noexcept 
+{
+    if( vs >= _ro->get_num_variable_sets() ) return ; // could add new one
+
+    auto * var = _ro->get_variable_set( vs )->data_variable< natus::math::mat4f_t >( "u_world" ) ;
+
+    natus::math::mat4f_t world = var->get() ;
+    world.set_column( 3, natus::math::vec3f_t( pos, 0.0f ) ) ;
+    var->set( world ) ;
 }
 
 void_t quad::set_scale( natus::math::vec2f_cref_t s ) noexcept 
 {
-    _world[0] = s.x() ;
-    _world[5] = s.y() ;
-
+    _ro->for_each( [&]( size_t const, natus::graphics::variable_set_res_t const & vars )
     {
-        auto * var = _vars->data_variable< natus::math::mat4f_t >( "u_world" ) ;
-        var->set( _world ) ;
-    }
+        auto * var = vars->data_variable< natus::math::mat4f_t >( "u_world" ) ;
+        natus::math::mat4f_t world = var->get() ;
+        world[0] = s.x() ;
+        world[5] = s.y() ;
+        var->set( world ) ;
+    } ) ;
 }
 
 void_t quad::set_texture( natus::ntd::string_cref_t name ) noexcept 
 {
-    auto * var = _vars->texture_variable( "u_tex" ) ;
-    var->set( name ) ;
+    _ro->for_each( [&]( size_t const, natus::graphics::variable_set_res_t const & vars )
+    {
+        vars->texture_variable( "u_tex" )->set( name ) ;
+    } ) ;
 }
 
-void_t quad::init( natus::graphics::async_views_t asyncs ) noexcept 
+void_t quad::set_texture( size_t const vs, natus::ntd::string_cref_t name ) noexcept 
+{
+    if( vs >= _ro->get_num_variable_sets() ) return ; // could add new one
+    _ro->get_variable_set( vs )->texture_variable( "u_tex" )->set( name ) ;
+}
+
+void_t quad::init( natus::graphics::async_views_t asyncs, size_t const nvs ) noexcept 
 {
     // root render states
     {
@@ -134,7 +162,7 @@ void_t quad::init( natus::graphics::async_views_t asyncs ) noexcept
                     void main()
                     {
                         var_tx = sign( in_pos.xy ) * vec2( 0.5 ) + vec2( 0.5 )  ;
-                        gl_Position = u_world * u_view * u_proj * vec4( sign( in_pos ), 1.0 ) ;
+                        gl_Position =  u_proj * u_view * u_world * vec4( sign( in_pos ), 1.0 ) ;
                     } )" ) ).
 
                     set_pixel_shader( natus::graphics::shader_t( R"(
@@ -252,47 +280,29 @@ void_t quad::init( natus::graphics::async_views_t asyncs ) noexcept
             rc.link_shader( _name + ".shader" ) ;
         }
 
-        // add variable set 
-        #if 0 // maybe there need to be defaults
-        {
-            natus::graphics::variable_set_res_t vars = natus::graphics::variable_set_t() ;
-            {
-                auto* var = vars->texture_variable( "u_tex_0" ) ;
-                var->set( "the_scene.0" ) ;
-                //var->set( "checker_board" ) ;
-            }
-            {
-                auto* var = vars->texture_variable( "u_tex_1" ) ;
-                var->set( "the_scene.1" ) ;
-                //var->set( "checker_board" ) ;
-            }
+        _ro->remove_variable_sets() ;
 
-            rc.add_variable_set( std::move( vars ) ) ;
-        }
-        #endif
-
+        for( size_t i = 0 ; i<nvs; ++i )
         {
+            natus::graphics::variable_set_res_t vars = natus::graphics::variable_set_t() ; 
+
             {
-                auto * var = _vars->data_variable< natus::math::mat4f_t >( "u_world" ) ;
+                auto * var = vars->data_variable< natus::math::mat4f_t >( "u_world" ) ;
                 var->set( _world ) ;
             }
             {
-                auto * var = _vars->data_variable< natus::math::mat4f_t >( "u_view" ) ;
+                auto * var = vars->data_variable< natus::math::mat4f_t >( "u_view" ) ;
                 var->set( _view ) ;
             }
             {
-                auto * var = _vars->data_variable< natus::math::mat4f_t >( "u_proj" ) ;
+                auto * var = vars->data_variable< natus::math::mat4f_t >( "u_proj" ) ;
                 var->set( _proj ) ;
             }
+            rc.add_variable_set( vars ) ;
         }
 
         _ro = std::move( rc ) ;
-
-        _ro->remove_variable_sets().add_variable_set( _vars ) ;
-        asyncs.for_each( [&]( natus::graphics::async_view_t a )
-        {
-            a.configure( _ro ) ;
-        } ) ;
+        asyncs.for_each( [&]( natus::graphics::async_view_t a ) { a.configure( _ro ) ; } ) ;
     }
 }
 
@@ -305,7 +315,58 @@ void_t quad::render( natus::graphics::async_views_t asyncs ) noexcept
     asyncs.for_each( [&]( natus::graphics::async_view_t a )
     {
         a.push( _rs ) ;
-        a.render( _ro ) ;
+        _ro->for_each( [&]( size_t const i, natus::graphics::variable_set_res_t const & )
+        {
+            natus::graphics::backend::render_detail rd ;
+            rd.varset = i ;
+
+            a.render( _ro, rd ) ;
+        } ) ;
+        
         a.pop( natus::graphics::backend::pop_type::render_state ) ;
     } ) ;
+}
+
+void_t quad::render( size_t const i, natus::graphics::async_views_t asyncs ) noexcept 
+{
+    asyncs.for_each( [&]( natus::graphics::async_view_t a )
+    {
+        a.push( _rs ) ;
+        {
+            natus::graphics::backend::render_detail rd ;
+            rd.varset = i ;
+
+            a.render( _ro, rd ) ;
+        }
+        a.pop( natus::graphics::backend::pop_type::render_state ) ;
+    } ) ;
+}
+
+void_t quad::add_variable_sets( natus::graphics::async_views_t asyncs, size_t const nvs ) noexcept
+{
+    for( size_t i = 0 ; i<nvs; ++i )
+    {
+        natus::graphics::variable_set_res_t vars = natus::graphics::variable_set_t() ; 
+
+        {
+            auto * var = vars->data_variable< natus::math::mat4f_t >( "u_world" ) ;
+            var->set( _world ) ;
+        }
+        {
+            auto * var = vars->data_variable< natus::math::mat4f_t >( "u_view" ) ;
+            var->set( _view ) ;
+        }
+        {
+            auto * var = vars->data_variable< natus::math::mat4f_t >( "u_proj" ) ;
+            var->set( _proj ) ;
+        }
+        _ro->add_variable_set( vars ) ;
+    }
+
+    asyncs.for_each( [&]( natus::graphics::async_view_t a ) { a.configure( _ro ) ; } ) ;
+}
+
+size_t quad::get_num_variable_sets( void_t ) const noexcept 
+{
+    return _ro->get_num_variable_sets() ;
 }
