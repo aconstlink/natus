@@ -44,8 +44,11 @@ namespace natus
             void_t set_position( natus::math::vec2f_cref_t ) noexcept ;
             void_t set_position( size_t const vs, natus::math::vec2f_cref_t ) noexcept ;
             void_t set_scale( natus::math::vec2f_cref_t ) noexcept ;
-            void_t set_texture( natus::ntd::string_cref_t ) noexcept ;
-            void_t set_texture( size_t const i, natus::ntd::string_cref_t ) noexcept ;
+            bool_t set_texture( natus::ntd::string_cref_t ) noexcept ;
+            bool_t set_texture( size_t const i, natus::ntd::string_cref_t ) noexcept ;
+
+            bool_t set_texcoord( natus::math::vec4f_cref_t ) noexcept ;
+            bool_t set_texcoord( size_t const i, natus::math::vec4f_cref_t ) noexcept ;
 
             void_t init( natus::graphics::async_views_t, size_t const vs = 1 ) noexcept ;
             void_t release( natus::graphics::async_views_t ) noexcept ;

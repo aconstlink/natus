@@ -64,18 +64,36 @@ void_t quad::set_scale( natus::math::vec2f_cref_t s ) noexcept
     } ) ;
 }
 
-void_t quad::set_texture( natus::ntd::string_cref_t name ) noexcept 
+bool_t quad::set_texture( natus::ntd::string_cref_t name ) noexcept 
 {
     _ro->for_each( [&]( size_t const, natus::graphics::variable_set_res_t const & vars )
     {
         vars->texture_variable( "u_tex" )->set( name ) ;
     } ) ;
+    return true ;
 }
 
-void_t quad::set_texture( size_t const vs, natus::ntd::string_cref_t name ) noexcept 
+bool_t quad::set_texture( size_t const vs, natus::ntd::string_cref_t name ) noexcept 
 {
-    if( vs >= _ro->get_num_variable_sets() ) return ; // could add new one
+    if( vs >= _ro->get_num_variable_sets() ) return false ; 
     _ro->get_variable_set( vs )->texture_variable( "u_tex" )->set( name ) ;
+    return true ;
+}
+
+bool_t quad::set_texcoord( natus::math::vec4f_cref_t tc ) noexcept 
+{
+     _ro->for_each( [&]( size_t const, natus::graphics::variable_set_res_t const & vars )
+    {
+        vars->data_variable<natus::math::vec4f_t>( "u_tc" )->set( tc ) ;
+    } ) ;
+    return true ;
+}
+
+bool_t quad::set_texcoord( size_t const vs, natus::math::vec4f_cref_t tc ) noexcept 
+{
+    if( vs >= _ro->get_num_variable_sets() ) return false ;
+    _ro->get_variable_set( vs )->data_variable<natus::math::vec4f_t>( "u_tc" )->set( tc ) ;
+    return true ;
 }
 
 void_t quad::init( natus::graphics::async_views_t asyncs, size_t const nvs ) noexcept 
@@ -159,9 +177,16 @@ void_t quad::init( natus::graphics::async_views_t asyncs, size_t const nvs ) noe
                     uniform mat4 u_world ;
                     uniform mat4 u_view ;
                     uniform mat4 u_proj ;
+                    uniform vec4 u_tc ;
                     void main()
                     {
-                        var_tx = sign( in_pos.xy ) * vec2( 0.5 ) + vec2( 0.5 )  ;
+                        vec2 tc[4] = vec2[](
+                            vec2( u_tc.x, u_tc.y ),
+                            vec2( u_tc.x, u_tc.w ),
+                            vec2( u_tc.z, u_tc.w ),
+                            vec2( u_tc.z, u_tc.y )
+                        ) ;
+                        var_tx = tc[ gl_VertexID ] ;
                         gl_Position =  u_proj * u_view * u_world * vec4( sign( in_pos ), 1.0 ) ;
                     } )" ) ).
 
@@ -192,7 +217,13 @@ void_t quad::init( natus::graphics::async_views_t asyncs, size_t const nvs ) noe
                     uniform mat4 u_proj ;
                     void main()
                     {
-                        var_tx = sign( in_pos.xy ) * vec2( 0.5 ) + vec2( 0.5 )  ;
+                        vec2 tc[4] = vec2[](
+                            vec2( u_tc.x, u_tc.y ),
+                            vec2( u_tc.x, u_tc.w ),
+                            vec2( u_tc.z, u_tc.w ),
+                            vec2( u_tc.z, u_tc.y )
+                        ) ;
+                        var_tx = tc[ gl_VertexID ] ;
                         gl_Position = u_world * u_view * u_proj * vec4( sign( in_pos ), 1.0 ) ;
                     } )" ) ).
 
@@ -222,6 +253,7 @@ void_t quad::init( natus::graphics::async_views_t asyncs, size_t const nvs ) noe
                         float4x4 u_proj ;
                         float4x4 u_view ;
                         float4x4 u_world ;
+                        float4 u_tc ;
                     }
 
                     struct VS_OUTPUT
@@ -230,14 +262,21 @@ void_t quad::init( natus::graphics::async_views_t asyncs, size_t const nvs ) noe
                         float2 tx : TEXCOORD0 ;
                     };
 
-                    VS_OUTPUT VS( float4 in_pos : POSITION )
+                    VS_OUTPUT VS( float4 in_pos : POSITION, uint in_id : SV_VertexID )
                     {
+                        float2 tc[4] = {
+                            float2( u_tc.x, u_tc.y ),
+                            float2( u_tc.x, u_tc.w ),
+                            float2( u_tc.z, u_tc.w ),
+                            float2( u_tc.z, u_tc.y )
+                        } ;
+
                         VS_OUTPUT output = (VS_OUTPUT)0;
                         output.pos = float4( sign( in_pos.xyz ), 1.0f ) ;
                         output.pos = mul( output.pos, u_world ) ;
                         output.pos = mul( output.pos, u_view ) ;
                         output.pos = mul( output.pos, u_proj ) ;
-                        output.tx = sign( in_pos.xy ) * float2( 0.5, 0.5 ) + float2( 0.5, 0.5 ) ;
+                        output.tx = tc[in_id] ; //sign( in_pos.xy ) * float2( 0.5, 0.5 ) + float2( 0.5, 0.5 ) ;
                         return output;
                     } )" ) ).
 
@@ -297,6 +336,10 @@ void_t quad::init( natus::graphics::async_views_t asyncs, size_t const nvs ) noe
             {
                 auto * var = vars->data_variable< natus::math::mat4f_t >( "u_proj" ) ;
                 var->set( _proj ) ;
+            }
+            {
+                auto * var = vars->data_variable< natus::math::vec4f_t >( "u_tc" ) ;
+                var->set( natus::math::vec4f_t(0.0f,0.0f,1.0f,1.0f) ) ;
             }
             rc.add_variable_set( vars ) ;
         }
@@ -359,6 +402,10 @@ void_t quad::add_variable_sets( natus::graphics::async_views_t asyncs, size_t co
         {
             auto * var = vars->data_variable< natus::math::mat4f_t >( "u_proj" ) ;
             var->set( _proj ) ;
+        }
+        {
+            auto * var = vars->data_variable< natus::math::vec4f_t >( "u_tc" ) ;
+            var->set( natus::math::vec4f_t(0.0f,0.0f,1.0f,1.0f) ) ;
         }
         _ro->add_variable_set( vars ) ;
     }
