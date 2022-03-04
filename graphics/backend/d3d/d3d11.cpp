@@ -856,6 +856,17 @@ public: // functions
                 vp.MaxDepth = 1.0f ;
                 vp.TopLeftX = FLOAT( vp_.x() ) ;
                 vp.TopLeftY = FLOAT( vp_.y() ) ;
+                
+                // this solution here only works because
+                // - framebuffers do not stack. They must be used and unused.
+                // - render states targeting a framebuffer must be activated 
+                //   within the use/unuse functions by the user.
+                if( _cur_fb_active == size_t(-1) || popped ) 
+                    vp.TopLeftY = vp_height - vp.Height - vp.TopLeftY ;
+                else 
+                    vp.TopLeftY = framebuffers[_cur_fb_active].height - vp.Height - vp.TopLeftY ;
+                
+
                 _ctx->ctx()->RSSetViewports( 1, &vp ) ;
             }
         }
