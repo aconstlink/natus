@@ -18,6 +18,8 @@ namespace natus
 
         private:
 
+            natus::graphics::async_views_t _asyncs ;
+
             natus::ntd::string_t _name ;
             
             natus::math::mat4f_t _view = natus::math::mat4f_t().identity() ;
@@ -55,7 +57,7 @@ namespace natus
             void_t render( natus::graphics::async_views_t ) noexcept ;
             void_t render( size_t const, natus::graphics::async_views_t ) noexcept ;
 
-            void_t add_variable_sets( natus::graphics::async_views_t, size_t const vs ) noexcept ;
+            void_t add_variable_sets( size_t const vs ) noexcept ;
             size_t get_num_variable_sets( void_t ) const noexcept ;
         };
         natus_res_typedef( quad ) ;

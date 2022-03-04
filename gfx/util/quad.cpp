@@ -15,6 +15,7 @@ quad::quad( this_rref_t rhv ) noexcept
     _ro = std::move( rhv._ro ) ;
     _go = std::move( rhv._go ) ;
     _name = std::move( rhv._name ) ;
+    _asyncs = std::move( rhv._asyncs ) ;
 }
 
 quad::~quad( void_t ) noexcept 
@@ -70,6 +71,10 @@ bool_t quad::set_texture( natus::ntd::string_cref_t name ) noexcept
     {
         vars->texture_variable( "u_tex" )->set( name ) ;
     } ) ;
+    _asyncs.for_each( [&]( natus::graphics::async_view_t a )
+    {
+        a.configure( _ro ) ;
+    } ) ;
     return true ;
 }
 
@@ -98,6 +103,8 @@ bool_t quad::set_texcoord( size_t const vs, natus::math::vec4f_cref_t tc ) noexc
 
 void_t quad::init( natus::graphics::async_views_t asyncs, size_t const nvs ) noexcept 
 {
+    _asyncs = asyncs ;
+
     // root render states
     {
         natus::graphics::state_object_t so = natus::graphics::state_object_t(
@@ -187,6 +194,7 @@ void_t quad::init( natus::graphics::async_views_t asyncs, size_t const nvs ) noe
                             vec2( u_tc.z, u_tc.y )
                         ) ;
                         var_tx = tc[ gl_VertexID ] ;
+                        //var_tx = sign( in_pos.xy ) * vec2( 0.5, 0.5 ) + vec2( 0.5, 0.5 ) ;
                         gl_Position =  u_proj * u_view * u_world * vec4( sign( in_pos ), 1.0 ) ;
                     } )" ) ).
 
@@ -276,7 +284,8 @@ void_t quad::init( natus::graphics::async_views_t asyncs, size_t const nvs ) noe
                         output.pos = mul( output.pos, u_world ) ;
                         output.pos = mul( output.pos, u_view ) ;
                         output.pos = mul( output.pos, u_proj ) ;
-                        output.tx = tc[in_id] ; //sign( in_pos.xy ) * float2( 0.5, 0.5 ) + float2( 0.5, 0.5 ) ;
+                        output.tx = tc[in_id] ; 
+                        //output.tx = sign( in_pos.xy ) * float2( 0.5, 0.5 ) + float2( 0.5, 0.5 ) ;
                         return output;
                     } )" ) ).
 
@@ -385,7 +394,7 @@ void_t quad::render( size_t const i, natus::graphics::async_views_t asyncs ) noe
     } ) ;
 }
 
-void_t quad::add_variable_sets( natus::graphics::async_views_t asyncs, size_t const nvs ) noexcept
+void_t quad::add_variable_sets( size_t const nvs ) noexcept
 {
     for( size_t i = 0 ; i<nvs; ++i )
     {
@@ -410,7 +419,7 @@ void_t quad::add_variable_sets( natus::graphics::async_views_t asyncs, size_t co
         _ro->add_variable_set( vars ) ;
     }
 
-    asyncs.for_each( [&]( natus::graphics::async_view_t a ) { a.configure( _ro ) ; } ) ;
+    _asyncs.for_each( [&]( natus::graphics::async_view_t a ) { a.configure( _ro ) ; } ) ;
 }
 
 size_t quad::get_num_variable_sets( void_t ) const noexcept 
