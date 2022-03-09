@@ -1382,7 +1382,7 @@ public: // functions
 
     size_t construct_geo( size_t oid, natus::graphics::geometry_object_ref_t obj )
     {
-        oid = this_t::determine_oid( obj.name(), renders ) ;
+        oid = this_t::determine_oid( obj.name(), geo_datas ) ;
 
         auto & config = geo_datas[ oid ] ;
         config.valid = true ;

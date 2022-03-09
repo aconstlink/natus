@@ -232,7 +232,7 @@ void_t quad::init( natus::graphics::async_views_t asyncs, size_t const nvs ) noe
                             vec2( u_tc.z, u_tc.y )
                         ) ;
                         var_tx = tc[ gl_VertexID ] ;
-                        gl_Position = u_world * u_view * u_proj * vec4( sign( in_pos ), 1.0 ) ;
+                        gl_Position = u_proj * u_view * u_world * vec4( sign( in_pos ), 1.0 ) ;
                     } )" ) ).
 
                     set_pixel_shader( natus::graphics::shader_t( R"(
