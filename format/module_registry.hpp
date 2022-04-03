@@ -127,6 +127,23 @@ namespace natus
                 return fac->create_module( loc.extension() )->import_from( loc, db, ps ) ;
             }
 
+            natus::format::future_item_t export_to( natus::io::location_cref_t loc, natus::io::database_res_t db, natus::format::item_res_t what ) noexcept
+            {
+                natus::concurrent::mrsw_t::reader_lock_t lk( _ac ) ;
+
+                auto fac = this_t::get_export_factory( loc ) ;
+                if( !fac.is_valid() )
+                {
+                    return std::async( std::launch::deferred, [&] ( void_t )
+                    {
+                        natus::log::global_t::warning( "Can not create factory for extension : " + loc.extension() ) ;
+                        return natus::format::item_res_t( natus::format::status_item_t( "Can not create factory for extension : " + loc.extension() ) ) ;
+                    } ) ;
+                }
+                
+                return fac->create_module( loc.extension() )->export_to( loc, db, what ) ;
+            }
+
         private:
 
             natus::format::imodule_factory_res_t get_import_factory( natus::io::location_cref_t loc ) const noexcept
@@ -136,6 +153,18 @@ namespace natus
                     return d.ext == loc.extension(false) ;
                 } ) ;
                 if( iter == _imports.end() )
+                    return natus::format::imodule_factory_res_t() ;
+
+                return iter->fac ;
+            }
+
+            natus::format::imodule_factory_res_t get_export_factory( natus::io::location_cref_t loc ) const noexcept
+            {
+                auto iter = std::find_if( _exports.begin(), _exports.end(), [&] ( this_t::data_cref_t d ) 
+                { 
+                    return d.ext == loc.extension(false) ;
+                } ) ;
+                if( iter == _exports.end() )
                     return natus::format::imodule_factory_res_t() ;
 
                 return iter->fac ;

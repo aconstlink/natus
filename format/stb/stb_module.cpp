@@ -150,6 +150,17 @@ natus::format::future_item_t stb_image_module::import_from( natus::io::location_
 }
 
 // ***
+natus::format::future_item_t stb_image_module::export_to( natus::io::location_cref_t loc, 
+                natus::io::database_res_t, natus::format::item_res_t ) noexcept 
+{
+    return std::async( std::launch::async, [=] ( void_t )
+    {
+        return natus::format::item_res_t( natus::format::status_item_res_t(
+                natus::format::status_item_t( "Export not implemented" ) ) ) ;
+    } ) ;
+}
+
+// ***
 natus::format::future_item_t stb_audio_module::import_from( natus::io::location_cref_t loc, natus::io::database_res_t db ) noexcept
 {
     return stb_audio_module::import_from( loc, db, natus::property::property_sheet_t() ) ;
@@ -237,6 +248,17 @@ natus::format::future_item_t stb_audio_module::import_from( natus::io::location_
 }
 
 // ***
+natus::format::future_item_t stb_audio_module::export_to( natus::io::location_cref_t loc, 
+                natus::io::database_res_t, natus::format::item_res_t ) noexcept 
+{
+    return std::async( std::launch::async, [=] ( void_t )
+    {
+        return natus::format::item_res_t( natus::format::status_item_res_t(
+                natus::format::status_item_t( "Export not implemented" ) ) ) ;
+    } ) ;
+}
+
+// ***
 natus::format::future_item_t stb_font_module::import_from( natus::io::location_cref_t loc, natus::io::database_res_t db ) noexcept
 {
     return stb_font_module::import_from( loc, db, natus::property::property_sheet_t() ) ;
@@ -309,5 +331,16 @@ natus::format::future_item_t stb_font_module::import_from( natus::io::location_c
 
         return natus::format::item_res_t( natus::format::glyph_atlas_item_res_t(
             natus::format::glyph_atlas_item_t( std::move( ga ) ) ) ) ;
+    } ) ;
+}
+
+// ***
+natus::format::future_item_t stb_font_module::export_to( natus::io::location_cref_t loc, 
+                natus::io::database_res_t, natus::format::item_res_t ) noexcept 
+{
+    return std::async( std::launch::async, [=] ( void_t )
+    {
+        return natus::format::item_res_t( natus::format::status_item_res_t(
+                natus::format::status_item_t( "Export not implemented" ) ) ) ;
     } ) ;
 }

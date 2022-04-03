@@ -311,3 +311,13 @@ natus::format::future_item_t natus_module::import_from( natus::io::location_cref
              natus::format::natus_item_t( std::move( nd ) ) ) ) ;
     } ) ;
 }
+
+natus::format::future_item_t natus_module::export_to( natus::io::location_cref_t loc, 
+                natus::io::database_res_t, natus::format::item_res_t ) noexcept 
+{
+    return std::async( std::launch::async, [=] ( void_t )
+    {
+        return natus::format::item_res_t( natus::format::status_item_res_t(
+                natus::format::status_item_t( "Export not implemented" ) ) ) ;
+    } ) ;
+}

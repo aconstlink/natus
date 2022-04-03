@@ -70,18 +70,18 @@ namespace this_file
 // ***
 void_t wav_module_register::register_module( natus::format::module_registry_res_t reg )
 {
-    reg->register_import_factory( { "wav" }, wav_image_factory_res_t( wav_image_factory_t() ) ) ;
-    reg->register_export_factory( { "wav" }, wav_image_factory_res_t( wav_image_factory_t() ) ) ;
+    reg->register_import_factory( { "wav" }, wav_audio_factory_res_t( wav_audio_factory_t() ) ) ;
+    reg->register_export_factory( { "wav" }, wav_audio_factory_res_t( wav_audio_factory_t() ) ) ;
 }
 
 // ***
-natus::format::future_item_t wav_image_module::import_from( natus::io::location_cref_t loc, natus::io::database_res_t db ) noexcept
+natus::format::future_item_t wav_audio_module::import_from( natus::io::location_cref_t loc, natus::io::database_res_t db ) noexcept
 {
-    return wav_image_module::import_from( loc, db, natus::property::property_sheet_t() ) ;
+    return wav_audio_module::import_from( loc, db, natus::property::property_sheet_t() ) ;
 }
 
 // ***
-natus::format::future_item_t wav_image_module::import_from( natus::io::location_cref_t loc, 
+natus::format::future_item_t wav_audio_module::import_from( natus::io::location_cref_t loc, 
                 natus::io::database_res_t db, natus::property::property_sheet_res_t ) noexcept 
 {
     return std::async( std::launch::async, [=] ( void_t )
@@ -357,5 +357,16 @@ natus::format::future_item_t wav_image_module::import_from( natus::io::location_
 
         return natus::format::item_res_t( natus::format::audio_item_res_t(
             natus::format::audio_item_t( std::move( bo ) ) ) ) ;
+    } ) ;
+}
+
+// ***
+natus::format::future_item_t wav_audio_module::export_to( natus::io::location_cref_t loc, 
+                natus::io::database_res_t, natus::format::item_res_t ) noexcept 
+{
+    return std::async( std::launch::async, [=] ( void_t )
+    {
+        return natus::format::item_res_t( natus::format::status_item_res_t(
+                natus::format::status_item_t( "Export not implemented" ) ) ) ;
     } ) ;
 }

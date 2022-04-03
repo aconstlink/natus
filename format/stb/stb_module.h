@@ -22,6 +22,9 @@ namespace natus
 
             virtual natus::format::future_item_t import_from( natus::io::location_cref_t loc, 
                 natus::io::database_res_t, natus::property::property_sheet_res_t ) noexcept ;
+
+            virtual natus::format::future_item_t export_to( natus::io::location_cref_t loc, 
+                natus::io::database_res_t, natus::format::item_res_t ) noexcept ;
             
         };
         natus_typedef( stb_image_module ) ;
@@ -37,6 +40,9 @@ namespace natus
 
             virtual natus::format::future_item_t import_from( natus::io::location_cref_t loc, 
                 natus::io::database_res_t, natus::property::property_sheet_res_t ) noexcept ;
+
+            virtual natus::format::future_item_t export_to( natus::io::location_cref_t loc, 
+                natus::io::database_res_t, natus::format::item_res_t ) noexcept ;
         };
         natus_typedef( stb_audio_module ) ;
         typedef natus::format::module_factory<stb_audio_module_t> stb_audio_factory_t ;
@@ -51,6 +57,9 @@ namespace natus
 
             virtual natus::format::future_item_t import_from( natus::io::location_cref_t loc, 
                 natus::io::database_res_t, natus::property::property_sheet_res_t ) noexcept ;
+
+            virtual natus::format::future_item_t export_to( natus::io::location_cref_t loc, 
+                natus::io::database_res_t, natus::format::item_res_t ) noexcept ;
         };
         natus_typedef( stb_font_module ) ;
         typedef natus::format::module_factory<stb_font_module_t> stb_font_factory_t ;

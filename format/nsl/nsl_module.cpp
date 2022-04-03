@@ -54,3 +54,14 @@ natus::format::future_item_t nsl_module::import_from( natus::io::location_cref_t
              natus::format::nsl_item_t( std::move( doc ) ) ) ) ;
     } ) ;
 }
+
+// ***
+natus::format::future_item_t nsl_module::export_to( natus::io::location_cref_t loc, 
+                natus::io::database_res_t, natus::format::item_res_t ) noexcept 
+{
+    return std::async( std::launch::async, [=] ( void_t )
+    {
+        return natus::format::item_res_t( natus::format::status_item_res_t(
+                natus::format::status_item_t( "Export not implemented" ) ) ) ;
+    } ) ;
+}

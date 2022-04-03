@@ -29,6 +29,9 @@ namespace natus
             virtual natus::format::future_item_t import_from( natus::io::location_cref_t loc, 
                 natus::io::database_res_t, natus::property::property_sheet_res_t ) noexcept ;
 
+            virtual natus::format::future_item_t export_to( natus::io::location_cref_t loc, 
+                natus::io::database_res_t, natus::format::item_res_t ) noexcept ;
+
         };
         natus_typedef( natus_module ) ;
         typedef natus::format::module_factory<natus_module> natus_factory_t ;
