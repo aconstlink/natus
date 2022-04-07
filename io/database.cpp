@@ -491,7 +491,8 @@ bool_t database::unpack( void_t )
 //***
 natus::io::store_handle_t database::store( natus::io::location_cref_t loc, char_cptr_t d, size_t const s ) noexcept
 {
-    auto const p  = _db.working.append( loc.as_path() ) ;
+    auto p  = _db.working ;
+    p.append( loc.as_path() ) ;
     return natus::io::global_t::store( p, d, s ) ;
 }
 
