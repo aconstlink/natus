@@ -71,7 +71,7 @@ natus::format::future_item_t natus_module::import_from( natus::io::location_cref
 
             if( !res )
             {
-                natus::log::global_t::warning( "[nsl_module] : failed to load file [" + loc.as_string() + "]" ) ;
+                natus::log::global_t::warning( "[natus_module] : failed to load file [" + loc.as_string() + "]" ) ;
 
                 return natus::format::item_res_t( natus::format::status_item_res_t(
                     natus::format::status_item_t( "failed to load file" ) ) ) ;
@@ -191,16 +191,12 @@ natus::format::future_item_t natus_module::import_from( natus::io::location_cref
                                         // attribute pivot
                                         {
                                             rapidxml::xml_attribute<> * attr = node->first_attribute( "pivot" ) ;
-                                            if( attr == nullptr ) 
+                                            if( attr != nullptr ) 
                                             {
-                                                natus::ntd::string_t msg = "[natus_module] : node [animation] "
-                                                "requires [rect] attribute in document [" + loc.as_string() + "]" ;
-                                                continue ;
+                                                std::array< int_t, 2 > parsed ;
+                                                this_file::parse( natus::ntd::string_t(attr->value()), parsed ) ;
+                                                animation.pivot = natus::math::vec2i_t( parsed[0], parsed[1] ) ;
                                             }
-
-                                            std::array< int_t, 2 > parsed ;
-                                            this_file::parse( natus::ntd::string_t(attr->value()), parsed ) ;
-                                            animation.pivot = natus::math::vec2i_t( parsed[0], parsed[1] ) ;
                                         }
                                     }
                                     sprite.animation = std::move( animation ) ;
@@ -208,11 +204,23 @@ natus::format::future_item_t natus_module::import_from( natus::io::location_cref
 
                                 // collision
                                 {
+                                    sprite_sheet_t::sprite_t::collision_t collision ;
                                     rapidxml::xml_node<> * node = sprite_xml->first_node("collision") ;
                                     if( node != nullptr )
                                     {
-                                        int bp = 0 ;
+                                        // attribute rect
+                                        {
+                                            rapidxml::xml_attribute<> * attr = node->first_attribute( "rect" ) ;
+                                            if( attr != nullptr ) 
+                                            {
+                                                std::array< uint_t, 4 > parsed ;
+                                                this_file::parse( natus::ntd::string_t(attr->value()), parsed ) ;
+                                                collision.rect = natus::math::vec4ui_t( parsed[0], parsed[1],
+                                                    parsed[2], parsed[3] ) ;
+                                            }
+                                        }
                                     }
+                                    sprite.collision = std::move( collision ) ;
                                 }
 
                                 // hits
@@ -223,11 +231,14 @@ natus::format::future_item_t natus_module::import_from( natus::io::location_cref
                                         for( rapidxml::xml_node<> * hit = node->first_node("hit"); hit != nullptr; 
                                             hit = hit->next_sibling() )
                                         {
+                                            sprite_sheet_t::sprite_t::hit_t h ;
+
                                             // attribute: name
                                             {
                                                 rapidxml::xml_attribute<> * attr = hit->first_attribute( "name" ) ;
                                                 if( attr != nullptr )
                                                 {
+                                                    h.name = natus::ntd::string_t( attr->value() ) ;
                                                 }
                                             }
 
@@ -236,8 +247,14 @@ natus::format::future_item_t natus_module::import_from( natus::io::location_cref
                                                 rapidxml::xml_attribute<> * attr = hit->first_attribute( "rect" ) ;
                                                 if( attr != nullptr )
                                                 {
+                                                    std::array< uint_t, 4 > parsed ;
+                                                    this_file::parse( natus::ntd::string_t(attr->value()), parsed ) ;
+                                                    h.rect = natus::math::vec4ui_t( parsed[0], parsed[1],
+                                                        parsed[2], parsed[3] ) ;
                                                 }
                                             }
+
+                                            sprite.hits.emplace_back( std::move( h ) ) ;
                                         }
                                     }
                                 }
