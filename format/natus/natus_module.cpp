@@ -7,7 +7,11 @@
 #include <natus/math/vector/vector4.hpp>
 
 #include <rapidxml.hpp>
+#include <rapidxml_print.hpp>
+#include <rapidxml_utils.hpp>
+
 #include <array>
+#include <sstream>
 
 using namespace natus::format ;
 
@@ -313,11 +317,154 @@ natus::format::future_item_t natus_module::import_from( natus::io::location_cref
 }
 
 natus::format::future_item_t natus_module::export_to( natus::io::location_cref_t loc, 
-                natus::io::database_res_t, natus::format::item_res_t ) noexcept 
+                natus::io::database_res_t db, natus::format::item_res_t what ) noexcept 
 {
     return std::async( std::launch::async, [=] ( void_t )
     {
+        natus::format::natus_item_res_t ntm = what ;
+        if( !ntm.is_valid() )
+        {
+            return natus::format::item_res_t( natus::format::status_item_res_t(
+                natus::format::status_item_t( "Invalid item type. Natus item expected." ) ) ) ;
+        }
+
+        auto const & ndoc = ntm->doc ;
+        rapidxml::xml_document<> doc ;
+
+        auto * root = doc.allocate_node( rapidxml::node_element, "natus" ) ;
+        
+        {
+            auto * rsheets = doc.allocate_node( rapidxml::node_element, "sprite_sheets" ) ;
+            
+            for( auto const & ss : ndoc.sprite_sheets )
+            {
+                auto * rsheet = doc.allocate_node( rapidxml::node_element, "sprite_sheet" ) ;
+                {
+                    rsheet->append_attribute( doc.allocate_attribute( "name", ss.name.c_str() ) ) ;
+                }
+
+                {
+                    auto * img = doc.allocate_node( rapidxml::node_element, "image" ) ;
+                    img->append_attribute( doc.allocate_attribute( "src", ss.image.src.c_str() ) ) ;
+                    rsheet->append_node( img ) ;
+                }
+
+                // sprites
+                {
+                    auto * n = doc.allocate_node( rapidxml::node_element, "sprites" ) ;
+                    for( auto const & s : ss.sprites )
+                    {
+                        auto * n2 = doc.allocate_node( rapidxml::node_element, "sprite" ) ;
+                        {
+                            n2->append_attribute( doc.allocate_attribute( "name", s.name.c_str() ) ) ;
+                            {
+                                auto * n3 = doc.allocate_node( rapidxml::node_element, "animation" ) ;
+                                {
+                                    auto const value = std::to_string( s.animation.rect.x() ) + " " +
+                                        std::to_string( s.animation.rect.y() ) + " " + 
+                                        std::to_string( s.animation.rect.z() ) + " " + 
+                                        std::to_string( s.animation.rect.w() ) ;
+
+                                    n3->append_attribute( doc.allocate_attribute( "rect", doc.allocate_string( value.c_str() ) ) ) ;
+                                }
+                                {
+                                    auto const value = std::to_string( s.animation.pivot.x() ) + " " +
+                                        std::to_string( s.animation.pivot.y() ) ;
+
+                                    n3->append_attribute( doc.allocate_attribute( "pivot", doc.allocate_string( value.c_str() ) ) ) ;
+                                }
+                                n2->append_node( n3 ) ;
+                            }
+                            {
+                                auto * n3 = doc.allocate_node( rapidxml::node_element, "collision" ) ;
+                                {
+                                    auto const value = std::to_string( s.collision.rect.x() ) + " " +
+                                        std::to_string( s.collision.rect.y() ) + " " + 
+                                        std::to_string( s.collision.rect.z() ) + " " + 
+                                        std::to_string( s.collision.rect.w() ) ;
+
+                                    n3->append_attribute( doc.allocate_attribute( "rect", doc.allocate_string( value.c_str() ) ) ) ;
+                                }
+                                n2->append_node( n3 ) ;
+                            }
+                            {
+                                auto * n3 = doc.allocate_node( rapidxml::node_element, "hits" ) ;
+                                for( auto const & h : s.hits )
+                                {
+                                    auto * n4 = doc.allocate_node( rapidxml::node_element, "hit" ) ;
+                                    {
+                                        n4->append_attribute( doc.allocate_attribute( "name", h.name.c_str() ) ) ;
+                                    }
+                                    {
+                                        auto const value = std::to_string( h.rect.x() ) + " " +
+                                            std::to_string( h.rect.y() ) + " " + 
+                                            std::to_string( h.rect.z() ) + " " + 
+                                            std::to_string( h.rect.w() ) ;
+
+                                        n4->append_attribute( doc.allocate_attribute( "rect", doc.allocate_string( value.c_str() ) ) ) ;
+                                    }
+                                    n3->append_node( n4 ) ;
+                                }
+                                n2->append_node( n3 ) ;
+                            }
+                            n->append_node( n2 ) ;
+                        }
+                    }
+                    rsheet->append_node( n ) ;
+                }
+
+                // animations
+                {
+                    auto * n = doc.allocate_node( rapidxml::node_element, "animations" ) ;
+                    for( auto const & a : ss.animations )
+                    {
+                        auto * ani = doc.allocate_node( rapidxml::node_element, "animation" ) ;
+                        {
+                            ani->append_attribute( doc.allocate_attribute( "name", doc.allocate_string( a.name.c_str() ) ) ) ;
+                        }
+
+                        for( auto const & f : a.frames )
+                        {
+                            auto * fr = doc.allocate_node( rapidxml::node_element, "frame" ) ;
+                            {
+                                fr->append_attribute( doc.allocate_attribute( "sprite", f.sprite.c_str() ) ) ;
+                            }
+                            {
+                                fr->append_attribute( doc.allocate_attribute( "duration", doc.allocate_string( std::to_string( f.duration ).c_str() ) ) ) ;
+                            }
+                            ani->append_node( fr ) ;
+                        }
+                        n->append_node( ani ) ;
+                    }
+                    rsheet->append_node( n ) ;
+                }
+                rsheets->append_node( rsheet ) ;
+            }
+            root->append_node( rsheets ) ;
+        }
+
+        doc.append_node( root ) ;
+
+        std::stringstream ss ;
+        ss << doc ;
+
+        ntd::string_t output = ss.str() ;
+        
+        // tabs to spaces
+        {
+            size_t o = 0 ;
+            while( true )
+            {
+                auto const a = output.find_first_of( '\t', o ) ;
+                if( a == std::string::npos ) break ;
+
+                output.replace( a, 1, "    " ) ;
+                o = a ;
+            }
+        }
+        auto const res = db->store( loc.as_string(), output.c_str(), output.size() ).wait_for_operation() ;
+
         return natus::format::item_res_t( natus::format::status_item_res_t(
-                natus::format::status_item_t( "Export not implemented" ) ) ) ;
+                natus::format::status_item_t( res == natus::io::result::ok ? "Exported natus document" : "Failed to export natus document ") ) ) ;
     } ) ;
 }
