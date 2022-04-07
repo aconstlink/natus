@@ -242,7 +242,7 @@ namespace natus
 
 
             // store from memory
-            natus::io::store_handle_t store( natus::ntd::string_cref_t location , char_cptr_t, size_t const ) ;
+            natus::io::store_handle_t store( natus::io::location_cref_t location , char_cptr_t, size_t const ) noexcept ;
             
             // load to memory
             // @param loc the file location
