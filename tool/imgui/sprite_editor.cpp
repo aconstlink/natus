@@ -3,6 +3,8 @@
 
 #include <natus/format/future_items.hpp>
 #include <natus/format/global.h>
+#include <natus/format/natus/natus_structs.h>
+#include <natus/format/natus/natus_module.h>
 
 #include <natus/math/vector/vector2.hpp>
 
@@ -67,28 +69,71 @@ void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept
                 continue ;
             }
 
-            natus::format::image_item_res_t ii = item.fitem.get() ;
-            if( ii.is_valid() )
+            natus::format::item_res_t ir = item.fitem.get() ;
+            if( natus::format::item_res_t::castable<natus::format::image_item_res_t>(ir) )
             {
+                natus::format::image_item_res_t ii = ir ;
+
                 natus::graphics::image_t img = *ii->img ;
                 
-                this_t::sprite_sheet_t ss ;
-                ss.dname = item.disp_name ;
-                ss.name = item.name ;
-                ss.img_loc = item.loc ;
-                ss.dims = natus::math::vec2ui_t( img.get_dims() ) ;
-
-                ss.img = natus::graphics::image_object_t( ss.name, std::move( img ) )
-                    .set_wrap( natus::graphics::texture_wrap_mode::wrap_s, natus::graphics::texture_wrap_type::clamp_border )
-                    .set_wrap( natus::graphics::texture_wrap_mode::wrap_t, natus::graphics::texture_wrap_type::clamp_border )
-                    .set_filter( natus::graphics::texture_filter_mode::min_filter, natus::graphics::texture_filter_type::nearest )
-                    .set_filter( natus::graphics::texture_filter_mode::mag_filter, natus::graphics::texture_filter_type::nearest );
-
+               
                 //ss.region = natus::math::vec4f_t(ss.dims,ss.dims) * natus::math::vec4f_t( 0.5f ) * natus::math::vec4f_t( -1.0f, -1.0f, 1.0f, 1.0f ) ;
 
-                imgui.async().configure( ss.img ) ;
+                
 
-                _sprite_sheets.emplace_back( std::move( ss ) ) ;
+                auto iter = std::find_if( _sprite_sheets.begin(), _sprite_sheets.end(), [&]( this_t::sprite_sheet_cref_t sh )
+                {
+                    return sh.name == item.name ;
+                } ) ;
+
+
+                if( iter != _sprite_sheets.end() )
+                {
+                    iter->dims = natus::math::vec2ui_t( img.get_dims() ) ;
+
+                    iter->img = natus::graphics::image_object_t( iter->name, std::move( img ) )
+                        .set_wrap( natus::graphics::texture_wrap_mode::wrap_s, natus::graphics::texture_wrap_type::clamp_border )
+                        .set_wrap( natus::graphics::texture_wrap_mode::wrap_t, natus::graphics::texture_wrap_type::clamp_border )
+                        .set_filter( natus::graphics::texture_filter_mode::min_filter, natus::graphics::texture_filter_type::nearest )
+                        .set_filter( natus::graphics::texture_filter_mode::mag_filter, natus::graphics::texture_filter_type::nearest );
+
+                    iter->zoom = -0.5f ;
+                    imgui.async().configure( iter->img ) ;
+                }
+            }
+            else if( natus::format::item_res_t::castable<natus::format::natus_item_res_t>(ir) )
+            {
+                natus::format::natus_item_res_t ni = ir ;
+
+                natus::format::natus_document_t doc = ni->doc ;
+
+                
+                for( auto const & ss : doc.sprite_sheets )
+                {
+                    this_t::sprite_sheet_t tss ;
+                    tss.name = ss.name ;
+                    tss.dims = natus::math::vec2ui_t( 1 ) ;
+
+                    // load image
+                    {
+                        this_t::load_item_t li ;
+                        li.disp_name = ss.name ;
+                        li.name = ss.name ;
+                        li.loc = natus::io::location_t::from_path( natus::io::path_t( ss.image.src ) ) ; 
+                        
+                        natus::format::module_registry_res_t mod_reg = natus::format::global_t::registry() ;
+                        li.fitem = mod_reg->import_from( li.loc, _db ) ;
+
+                        _loads.emplace_back( std::move( li ) ) ;
+                    }
+
+                    for( auto const & s : ss.sprites )
+                    {
+                        tss.bounds.emplace_back( s.animation.rect ) ;
+                    }
+
+                    _sprite_sheets.emplace_back( std::move( tss ) ) ;
+                }
             }
         }
     }
@@ -98,6 +143,13 @@ void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept
     if( _sprite_sheets.size() == 0 )
     {
         ImGui::Text( "No Sprite Sheets" ) ;
+        ImGui::End() ;
+        return ;
+    }
+
+    if( _sprite_sheets[_cur_item].dims.equal( natus::math::vec2ui_t(1) ).any() )
+    {
+        ImGui::Text( "Not ready yet" ) ;
         ImGui::End() ;
         return ;
     }
@@ -744,6 +796,13 @@ void_t sprite_editor::draw_rect( natus::math::vec4f_cref_t rect, natus::math::ve
     ImGui::GetWindowDrawList()->AddRectFilled( a_, b_, IM_COL32( color.x(), color.y(), color.z(), color.w() ) ) ;
 }
 
+void_t sprite_editor::draw_rect_info( natus::math::vec4f_cref_t rect, natus::math::vec4ui_cref_t img_rect ) noexcept
+{
+    ImGui::BeginTooltip() ;
+    ImGui::Text( "Img Rect: %d %d %d %d", img_rect.x(), img_rect.y(), img_rect.z(), img_rect.w() ) ;
+    ImGui::EndTooltip() ;
+}
+
 size_t sprite_editor::draw_rects( natus::ntd::vector< natus::math::vec4ui_t > const & rects,
         natus::math::vec4ui_cref_t color, natus::math::vec4ui_cref_t over_color) 
 {
@@ -759,6 +818,7 @@ size_t sprite_editor::draw_rects( natus::ntd::vector< natus::math::vec4ui_t > co
         if( this_t::is_ip_mouse_in_bound( rects[i] ) )
         {
             this_t::draw_rect( rect, over_color ) ;
+            this_t::draw_rect_info( rect, rects[i] ) ;
             ret = i ;
         }
         else

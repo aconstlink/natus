@@ -178,6 +178,8 @@ namespace natus
             void_t draw_scales( natus::math::vec4f_cref_t, natus::math::vec4ui_cref_t prect, 
                 natus::math::vec4ui_t = natus::math::vec4ui_t(255) ) ;
 
+            void_t draw_rect_info( natus::math::vec4f_cref_t, natus::math::vec4ui_cref_t ) noexcept ;
+                
             size_t draw_rects( natus::ntd::vector< natus::math::vec4ui_t > const & rects,
                 natus::math::vec4ui_cref_t color = natus::math::vec4ui_t(255),
                 natus::math::vec4ui_cref_t over_color = natus::math::vec4ui_t(255) ) ;
