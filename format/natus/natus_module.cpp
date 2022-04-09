@@ -462,10 +462,8 @@ natus::format::future_item_t natus_module::export_to( natus::io::location_cref_t
 
         doc.append_node( root ) ;
 
-        std::stringstream ss ;
-        ss << doc ;
-
-        ntd::string_t output = ss.str() ;
+        ntd::string_t output ;
+        print(std::back_inserter(output), doc, 0);
         
         // tabs to spaces
         {
