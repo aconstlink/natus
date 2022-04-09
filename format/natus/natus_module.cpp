@@ -7,7 +7,7 @@
 #include <natus/math/vector/vector4.hpp>
 
 #include <rapidxml.hpp>
-#include <rapidxml_print.hpp>
+#include <rapidxml_ext.hpp>
 #include <rapidxml_utils.hpp>
 
 #include <array>
