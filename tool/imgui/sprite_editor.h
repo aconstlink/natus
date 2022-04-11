@@ -18,7 +18,16 @@ namespace natus
         {
             natus_this_typedefs( sprite_editor ) ;
 
-      
+        private:
+
+            enum class mode
+            {
+                bounds,
+                pivot,
+                hit,
+                damage
+            };
+
         private:
 
             natus::io::database_res_t _db ;
@@ -77,7 +86,6 @@ namespace natus
 
             int_t _pixel_ratio ;
             natus::math::vec2i_t _cur_pixel ;
-
             
             natus::math::vec2f_t _screen_pos_image ;
             natus::math::vec2f_t _cur_mouse ;
@@ -88,6 +96,8 @@ namespace natus
 
             // offset from window orig to content region
             natus::math::vec2ui_t _croff ;
+
+            this_t::mode _cur_mode = this_t::mode::bounds ;
 
         private:
 

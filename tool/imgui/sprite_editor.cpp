@@ -76,16 +76,10 @@ void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept
 
                 natus::graphics::image_t img = *ii->img ;
                 
-               
-                //ss.region = natus::math::vec4f_t(ss.dims,ss.dims) * natus::math::vec4f_t( 0.5f ) * natus::math::vec4f_t( -1.0f, -1.0f, 1.0f, 1.0f ) ;
-
-                
-
                 auto iter = std::find_if( _sprite_sheets.begin(), _sprite_sheets.end(), [&]( this_t::sprite_sheet_cref_t sh )
                 {
                     return sh.name == item.name ;
                 } ) ;
-
 
                 if( iter != _sprite_sheets.end() )
                 {
@@ -106,12 +100,12 @@ void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept
                 natus::format::natus_item_res_t ni = ir ;
 
                 natus::format::natus_document_t doc = ni->doc ;
-
                 
                 for( auto const & ss : doc.sprite_sheets )
                 {
                     this_t::sprite_sheet_t tss ;
                     tss.name = ss.name ;
+                    tss.dname = ss.name ;
                     tss.dims = natus::math::vec2ui_t( 1 ) ;
 
                     // load image
@@ -147,6 +141,7 @@ void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept
         return ;
     }
 
+    // if width or height is 1, the image is not loaded yet
     if( _sprite_sheets[_cur_item].dims.equal( natus::math::vec2ui_t(1) ).any() )
     {
         ImGui::Text( "Not ready yet" ) ;
@@ -154,22 +149,52 @@ void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept
         return ;
     }
 
-    // list box for sprite sheet selection
     {
         ImGui::BeginGroup() ;
         
-        ImGui::SetNextItemWidth( ImGui::GetWindowWidth() * 0.3f ) ;
-        ImGui::LabelText( "", "Sprite Sheets" ) ;
-
-        natus::ntd::vector< const char * > names( _sprite_sheets.size() ) ;
-        for( size_t i=0; i<_sprite_sheets.size(); ++i ) names[i] = _sprite_sheets[i].dname.c_str() ;
-        
-        ImGui::SetNextItemWidth( ImGui::GetWindowWidth() * 0.3f ) ;
-        if( ImGui::ListBox( "", &_cur_item, names.data(), names.size() ) )
+        // sprite sheets list box
         {
-            //origin = natus::math::vec2f_t() ;
-            //zoom = -0.5f ;
+            ImGui::SetNextItemWidth( ImGui::GetWindowWidth() * 0.3f ) ;
+            ImGui::LabelText( "", "Sprite Sheets" ) ;
+
+            natus::ntd::vector< const char * > names( _sprite_sheets.size() ) ;
+            for( size_t i=0; i<_sprite_sheets.size(); ++i ) names[i] = _sprite_sheets[i].dname.c_str() ;
+        
+            ImGui::SetNextItemWidth( ImGui::GetWindowWidth() * 0.3f ) ;
+            if( ImGui::ListBox( "", &_cur_item, names.data(), names.size() ) )
+            {}
         }
+
+        if( _cur_mode == this_t::mode::bounds )
+        {
+            ImGui::SetNextItemWidth( ImGui::GetWindowWidth() * 0.3f ) ;
+            ImGui::LabelText( "", "Boxes" ) ;
+
+            natus::ntd::vector< natus::ntd::string_t > names( _sprite_sheets[_cur_item].bounds.size() ) ;
+            natus::ntd::vector< char_cptr_t > names2( _sprite_sheets[_cur_item].bounds.size() ) ;
+            for( size_t i=0; i<_sprite_sheets[_cur_item].bounds.size(); ++i )
+            {
+                auto const & b = _sprite_sheets[_cur_item].bounds[i] ;
+                names[i] = std::to_string(i) + "( " + std::to_string(b.x()) + ", " + std::to_string(b.y()) + ", "
+                    + std::to_string(b.z()) + ", " + std::to_string(b.w()) + " )";
+                names2[i] = names[i].c_str() ;
+            }
+
+            static int sel = 0 ;
+            ImGui::SetNextItemWidth( ImGui::GetWindowWidth() * 0.3f ) ;
+            if( ImGui::ListBox( "bounds", &sel, names2.data(), names2.size() ) )
+            {}
+        }
+        else if( _cur_mode == this_t::mode::pivot )
+        {
+        }
+        else if( _cur_mode == this_t::mode::hit )
+        {
+        }
+        else if( _cur_mode == this_t::mode::damage )
+        {
+        }
+
         ImGui::EndGroup() ;
     }
 
@@ -199,6 +224,7 @@ void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept
             if( ImGui::BeginTabItem("Bounds") )
             {
                 this_t::handle_mouse_drag_for_bounds( _bounds_drag_info, ss.bounds ) ;
+                _cur_mode = this_t::mode::bounds ;
                 this_t::handle_mouse_drag_for_anim_pivot( _cur_item ) ;
 
                 natus::math::vec4ui_t res ;
@@ -243,8 +269,10 @@ void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept
                 ImGui::EndTabItem() ;
             }
 
-            if( ImGui::BeginTabItem("Animation") )
+            if( ImGui::BeginTabItem("Pivot") )
             {
+                _cur_mode = this_t::mode::pivot ;
+
                 this_t::handle_mouse_drag_for_anim_pivot( _cur_item ) ;
 
                 this_t::show_image( imgui, _cur_item ) ;
@@ -272,6 +300,8 @@ void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept
 
             if( ImGui::BeginTabItem("Hit") )
             {
+                _cur_mode = this_t::mode::hit ;
+
                 this_t::handle_mouse_drag_for_bounds( _hits_drag_info, ss.hits ) ;
 
                 natus::math::vec4ui_t res ;
@@ -308,6 +338,8 @@ void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept
 
             if( ImGui::BeginTabItem("Damage") )
             {
+                _cur_mode = this_t::mode::damage ;
+
                 this_t::handle_mouse_drag_for_bounds( _damages_drag_info, ss.damages ) ;
 
                 natus::math::vec4ui_t res ;
