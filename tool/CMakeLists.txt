@@ -11,6 +11,8 @@ set( sources
     "imgui/sprite_editor.cpp"
     "imgui/custom_widgets.h"
     "imgui/custom_widgets.cpp"
+    "imgui/imgui_custom.h"
+    "imgui/imgui_custom.cpp"
 
     "imgui/timeline.h"
     "imgui/timeline.cpp"
