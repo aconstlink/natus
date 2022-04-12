@@ -1,5 +1,6 @@
 
 #include "sprite_editor.h"
+#include "imgui_custom.h"
 
 #include <natus/format/future_items.hpp>
 #include <natus/format/global.h>
@@ -123,7 +124,14 @@ void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept
 
                     for( auto const & s : ss.sprites )
                     {
+                        this_t::sprite_sheet_t::sprite_t ts ;
+                        ts.name = s.name ;
+                        ts.bound_idx = tss.bounds.size() ;
+                        ts.pivot_idx = tss.anim_pivots.size() ;
+
+                        tss.sprites.emplace_back( std::move( ts ) ) ;
                         tss.bounds.emplace_back( s.animation.rect ) ;
+                        tss.anim_pivots.emplace_back( s.animation.pivot + (s.animation.rect.xy() + s.animation.rect.zw()) / 2 ) ;
                     }
 
                     _sprite_sheets.emplace_back( std::move( tss ) ) ;
@@ -165,25 +173,38 @@ void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept
             {}
         }
 
+        _cur_hovered = size_t(-1) ;
+
         if( _cur_mode == this_t::mode::bounds )
         {
             ImGui::SetNextItemWidth( ImGui::GetWindowWidth() * 0.3f ) ;
             ImGui::LabelText( "", "Boxes" ) ;
 
-            natus::ntd::vector< natus::ntd::string_t > names( _sprite_sheets[_cur_item].bounds.size() ) ;
-            natus::ntd::vector< char_cptr_t > names2( _sprite_sheets[_cur_item].bounds.size() ) ;
-            for( size_t i=0; i<_sprite_sheets[_cur_item].bounds.size(); ++i )
+            size_t i = 0 ;
+            natus::ntd::vector< natus::ntd::string_t > names( _sprite_sheets[_cur_item].sprites.size() ) ;
+            natus::ntd::vector< char_cptr_t > names2( _sprite_sheets[_cur_item].sprites.size() ) ;
+            for( auto const & s : _sprite_sheets[_cur_item].sprites )
             {
-                auto const & b = _sprite_sheets[_cur_item].bounds[i] ;
+                auto const & b = _sprite_sheets[_cur_item].bounds[s.bound_idx] ;
                 names[i] = std::to_string(i) + "( " + std::to_string(b.x()) + ", " + std::to_string(b.y()) + ", "
                     + std::to_string(b.z()) + ", " + std::to_string(b.w()) + " )";
-                names2[i] = names[i].c_str() ;
+                //names2[i] = names[i].c_str() ;
+                names2[i] = s.name.c_str() ;
+                ++i ;
             }
 
             static int sel = 0 ;
             ImGui::SetNextItemWidth( ImGui::GetWindowWidth() * 0.3f ) ;
-            if( ImGui::ListBox( "bounds", &sel, names2.data(), names2.size() ) )
-            {}
+            int hovered = -1 ;
+            if( natus::tool::imgui_custom::ListBox( "bounds", &sel, &hovered, names2.data(), names2.size() ) )
+            {
+                
+            }
+            if( hovered != -1 )
+            {
+                //natus::log::global_t::status( std::to_string(hovered) ) ;
+                _cur_hovered = size_t(hovered) ;
+            }
         }
         else if( _cur_mode == this_t::mode::pivot )
         {
@@ -230,7 +251,12 @@ void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept
                 natus::math::vec4ui_t res ;
                 if( this_t::handle_rect( _bounds_drag_info, res ) )
                 {
-                    res = res ;
+                    this_t::sprite_sheet_t::sprite_t ts ;
+                    ts.name = std::to_string( ss.sprites.size() ) ;
+                    ts.bound_idx = ss.bounds.size() ;
+                    ts.pivot_idx = ss.anim_pivots.size() ;
+                    ss.sprites.emplace_back( std::move( ts ) ) ;
+
                     ss.bounds.emplace_back( res ) ;
                     ss.anim_pivots.emplace_back( res.xy() + (res.zw() - res.xy()) / natus::math::vec2ui_t(2) ) ;
                 }
@@ -246,7 +272,7 @@ void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept
 
                 // draw rects
                 {
-                    auto const idx = this_t::draw_rects( ss.bounds, natus::math::vec4ui_t(255, 255, 255, 150), 
+                    auto const idx = this_t::draw_rects( ss.bounds, _cur_hovered, natus::math::vec4ui_t(255, 255, 255, 150), 
                         natus::math::vec4ui_t(0, 0, 255, 150) ) ;
 
                     if( idx != size_t(-1) )
@@ -320,7 +346,7 @@ void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept
 
                 // draw bound rects
                 {
-                    this_t::draw_rects( ss.hits, natus::math::vec4ui_t(255, 0, 0, 150), 
+                    this_t::draw_rects( ss.hits, _cur_hovered, natus::math::vec4ui_t(255, 0, 0, 150), 
                         natus::math::vec4ui_t(0, 255, 255, 150) ) ;
                 }
 
@@ -358,7 +384,7 @@ void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept
 
                 // draw bound rects
                 {
-                    this_t::draw_rects( ss.damages, natus::math::vec4ui_t(255, 0, 0, 150), 
+                    this_t::draw_rects( ss.damages, _cur_hovered, natus::math::vec4ui_t(255, 0, 0, 150), 
                         natus::math::vec4ui_t(0, 255, 255, 150) ) ;
                 }
 
@@ -835,7 +861,7 @@ void_t sprite_editor::draw_rect_info( natus::math::vec4f_cref_t rect, natus::mat
     ImGui::EndTooltip() ;
 }
 
-size_t sprite_editor::draw_rects( natus::ntd::vector< natus::math::vec4ui_t > const & rects,
+size_t sprite_editor::draw_rects( natus::ntd::vector< natus::math::vec4ui_t > const & rects, size_t const hovered,
         natus::math::vec4ui_cref_t color, natus::math::vec4ui_cref_t over_color) 
 {
     size_t ret = size_t( -1 ) ;
@@ -853,6 +879,8 @@ size_t sprite_editor::draw_rects( natus::ntd::vector< natus::math::vec4ui_t > co
             this_t::draw_rect_info( rect, rects[i] ) ;
             ret = i ;
         }
+        else if( hovered == i )
+            this_t::draw_rect( rect, over_color ) ;
         else
         {
             this_t::draw_rect( rect, color ) ;

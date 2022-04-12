@@ -42,6 +42,17 @@ namespace natus
                 // image dimensions
                 natus::math::vec2ui_t dims ;
 
+                struct sprite
+                {
+                    natus::ntd::string_t name ;
+                    size_t bound_idx = size_t(-1) ;
+                    size_t pivot_idx = size_t(-1) ;
+                    size_t hit_idx = size_t(-1) ;
+                    size_t damage_idx = size_t(-1) ;
+                };
+                natus_typedef( sprite ) ;
+                natus::ntd::vector< sprite_t > sprites ;
+
                 // pixel bounds
                 // format : x0, y0, x1, y1
                 natus::ntd::vector< natus::math::vec4ui_t > bounds ;
@@ -98,6 +109,7 @@ namespace natus
             natus::math::vec2ui_t _croff ;
 
             this_t::mode _cur_mode = this_t::mode::bounds ;
+            size_t _cur_hovered = size_t(-1) ;
 
         private:
 
@@ -190,7 +202,7 @@ namespace natus
 
             void_t draw_rect_info( natus::math::vec4f_cref_t, natus::math::vec4ui_cref_t ) noexcept ;
                 
-            size_t draw_rects( natus::ntd::vector< natus::math::vec4ui_t > const & rects,
+            size_t draw_rects( natus::ntd::vector< natus::math::vec4ui_t > const & rects, size_t const hovered=size_t(-1),
                 natus::math::vec4ui_cref_t color = natus::math::vec4ui_t(255),
                 natus::math::vec4ui_cref_t over_color = natus::math::vec4ui_t(255) ) ;
 
