@@ -169,7 +169,7 @@ void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept
             for( size_t i=0; i<_sprite_sheets.size(); ++i ) names[i] = _sprite_sheets[i].dname.c_str() ;
         
             ImGui::SetNextItemWidth( ImGui::GetWindowWidth() * 0.3f ) ;
-            if( ImGui::ListBox( "", &_cur_item, names.data(), names.size() ) )
+            if( ImGui::ListBox( "sprite sheets", &_cur_item, names.data(), names.size() ) )
             {}
         }
 
