@@ -13,6 +13,8 @@ bool natus::tool::imgui_custom::ListBox(const char* label, int* current_item, in
     {
         for( size_t i=0; i<items_count; ++i )
         {
+            selected = i == *current_item ;
+
             if( ImGui::Selectable( items[i], &selected ) )
             {
                 *current_item = i ;

@@ -56,6 +56,60 @@ void_t sprite_editor::add_sprite_sheet( natus::ntd::string_cref_t name,
 }
 
 // ****
+void_t sprite_editor::store( natus::io::database_res_t db ) noexcept 
+{
+    natus::format::module_registry_res_t mod_reg = natus::format::global_t::registry() ;
+
+    natus::format::natus_document doc ;
+        
+    for( auto const & tss : _sprite_sheets )
+    {
+        natus::format::natus_document_t::sprite_sheet_t ss ;
+        ss.name = tss.name ;
+
+        {
+                natus::format::natus_document_t::sprite_sheet_t::image_t img ;
+                img.src = tss.img_loc.as_string() ;
+                ss.image = img ;
+        }
+
+        ss.sprites.reserve( tss.sprites.size() ) ;
+        for( auto const & ts : tss.sprites )
+        {
+            natus::format::natus_document_t::sprite_sheet_t::sprite_t sp ;
+            sp.name = ts.name ;
+            sp.animation.rect = tss.bounds[ ts.bound_idx ] ;
+            sp.animation.pivot = tss.anim_pivots[ ts.pivot_idx ] ;
+
+            ss.sprites.emplace_back( sp ) ;
+        }
+        
+        for( auto const & ta : tss.animations )
+        {
+            natus::format::natus_document_t::sprite_sheet_t::animation_t ani ;
+            ani.name = ta.name ;
+
+            for( auto const & tf : ta.frames )
+            {
+                natus::format::natus_document_t::sprite_sheet_t::animation_t::frame_t fr ;
+                fr.sprite = tss.sprites[ tf.sidx ].name ;
+                fr.duration = tf.duration ;
+                ani.frames.emplace_back( std::move( fr ) ) ;
+            }
+
+            ss.animations.emplace_back( std::move( ani ) ) ;
+        }
+
+        doc.sprite_sheets.emplace_back( ss ) ;
+    }
+        
+    auto item = mod_reg->export_to( ss_loc, db, 
+        natus::format::natus_item_res_t( natus::format::natus_item_t( std::move( doc ) ) ) ) ;
+
+    natus::format::status_item_res_t r =  item.get() ;
+}
+
+// ****
 void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept 
 {
     // checking future items
@@ -99,6 +153,7 @@ void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept
             else if( natus::format::item_res_t::castable<natus::format::natus_item_res_t>(ir) )
             {
                 natus::format::natus_item_res_t ni = ir ;
+                ss_loc = item.loc ;
 
                 natus::format::natus_document_t doc = ni->doc ;
                 
@@ -114,12 +169,14 @@ void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept
                         this_t::load_item_t li ;
                         li.disp_name = ss.name ;
                         li.name = ss.name ;
-                        li.loc = natus::io::location_t::from_path( natus::io::path_t( ss.image.src ) ) ; 
+                        li.loc = ss.image.src ; //natus::io::location_t::from_path( natus::io::path_t( ss.image.src ) ) ; 
                         
                         natus::format::module_registry_res_t mod_reg = natus::format::global_t::registry() ;
                         li.fitem = mod_reg->import_from( li.loc, _db ) ;
 
                         _loads.emplace_back( std::move( li ) ) ;
+
+                        tss.img_loc = ss.image.src ;
                     }
 
                     for( auto const & s : ss.sprites )
@@ -131,7 +188,26 @@ void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept
 
                         tss.sprites.emplace_back( std::move( ts ) ) ;
                         tss.bounds.emplace_back( s.animation.rect ) ;
-                        tss.anim_pivots.emplace_back( s.animation.pivot + (s.animation.rect.xy() + s.animation.rect.zw()) / 2 ) ;
+                        tss.anim_pivots.emplace_back( s.animation.pivot ) ;
+                    }
+
+                    for( auto const & a : ss.animations )
+                    {
+                        this_t::sprite_sheet::animation_t ta ;
+                        ta.name = a.name ;
+                        for( auto const & f : a.frames )
+                        {
+                            this_t::sprite_sheet_t::animation_frame_t taf ;
+                            taf.duration = f.duration ;
+                            auto const iter = std::find_if( tss.sprites.begin(), tss.sprites.end(), [&]( this_t::sprite_sheet_t::sprite_cref_t s )
+                            {
+                                return s.name == f.sprite ;
+                            }) ;
+                            taf.sidx = std::distance( tss.sprites.begin(), iter ) ;
+
+                            if( taf.sidx < tss.sprites.size() ) ta.frames.emplace_back( std::move( taf ) ) ;
+                        }
+                        tss.animations.emplace_back( std::move( ta ) ) ;
                     }
 
                     _sprite_sheets.emplace_back( std::move( tss ) ) ;
@@ -160,6 +236,26 @@ void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept
     {
         ImGui::BeginGroup() ;
         
+        {
+            if( ImGui::Button( "Export" ) )
+            {
+                this_t::store( _db ) ;
+            }
+
+            if( _cur_mode == this_t::mode::pivot )
+            {
+                ImGui::SameLine() ;
+                if( ImGui::Button( "Reset Pivots" ) )
+                {
+                    for( auto const & s : _sprite_sheets[_cur_item].sprites )
+                    {
+                        auto const & b = _sprite_sheets[_cur_item].bounds[s.bound_idx] ;
+                        _sprite_sheets[_cur_item].anim_pivots[s.pivot_idx] = (b.zw() + b.xy())/2 ;
+                    }
+                }
+            }
+        }
+
         // sprite sheets list box
         {
             ImGui::SetNextItemWidth( ImGui::GetWindowWidth() * 0.3f ) ;

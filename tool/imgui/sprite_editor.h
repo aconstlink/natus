@@ -30,6 +30,7 @@ namespace natus
 
         private:
 
+            natus::io::location_t ss_loc ;
             natus::io::database_res_t _db ;
 
             struct sprite_sheet
@@ -52,6 +53,21 @@ namespace natus
                 };
                 natus_typedef( sprite ) ;
                 natus::ntd::vector< sprite_t > sprites ;
+
+                struct animation_frame
+                {
+                    size_t duration = size_t( -1 ) ;
+                    size_t sidx = size_t( -1 ) ;
+                };
+                natus_typedef( animation_frame ) ;
+
+                struct animation
+                {
+                    natus::ntd::string_t name ;
+                    natus::ntd::vector< animation_frame > frames ;
+                };
+                natus_typedef( animation ) ;
+                natus::ntd::vector< animation_t > animations ;
 
                 // pixel bounds
                 // format : x0, y0, x1, y1
@@ -157,6 +173,8 @@ namespace natus
                 natus::io::location_cref_t loc ) noexcept ;
 
             void_t render( natus::tool::imgui_view_t ) noexcept ;
+
+            void_t store( natus::io::database_res_t db ) noexcept ;
 
         private:
 
