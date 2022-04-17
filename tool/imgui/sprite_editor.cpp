@@ -278,23 +278,27 @@ void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept
 
             size_t i = 0 ;
             natus::ntd::vector< natus::ntd::string_t > names( _sprite_sheets[_cur_item].sprites.size() ) ;
-            natus::ntd::vector< char_cptr_t > names2( _sprite_sheets[_cur_item].sprites.size() ) ;
             for( auto const & s : _sprite_sheets[_cur_item].sprites )
             {
                 auto const & b = _sprite_sheets[_cur_item].bounds[s.bound_idx] ;
                 names[i] = std::to_string(i) + "( " + std::to_string(b.x()) + ", " + std::to_string(b.y()) + ", "
                     + std::to_string(b.z()) + ", " + std::to_string(b.w()) + " )";
-                //names2[i] = names[i].c_str() ;
-                names2[i] = s.name.c_str() ;
+                names[i] = s.name ;
                 ++i ;
             }
 
             static int sel = 0 ;
+            static size_t double_clicked = size_t(-1) ;
             ImGui::SetNextItemWidth( ImGui::GetWindowWidth() * 0.3f ) ;
             int hovered = -1 ;
-            if( natus::tool::imgui_custom::ListBox( "bounds", &sel, &hovered, names2.data(), names2.size() ) )
+            size_t item_edited = size_t(-1);
+
+            if( natus::tool::imgui_custom::ListBox( "bounds", &sel, &hovered, &double_clicked, names, item_edited ) )
             {
-                
+            }
+            if( item_edited != size_t(-1) )
+            {
+                _sprite_sheets[_cur_item].sprites[item_edited].name = names[item_edited] ;
             }
             if( hovered != -1 )
             {
