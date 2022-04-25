@@ -293,12 +293,27 @@ void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept
             int hovered = -1 ;
             size_t item_edited = size_t(-1);
 
-            if( natus::tool::imgui_custom::ListBox( "bounds", &sel, &hovered, &double_clicked, names, item_edited ) )
             {
+                if( natus::tool::imgui_custom::ListBox( "bounds", &sel, &hovered, double_clicked, names, item_edited ) )
+                {
+                }
             }
+
             if( item_edited != size_t(-1) )
             {
-                _sprite_sheets[_cur_item].sprites[item_edited].name = names[item_edited] ;
+                auto & sprites = _sprite_sheets[_cur_item].sprites ;
+                auto const iter = std::find_if( sprites.begin(), sprites.end(), [&]( natus::tool::sprite_editor_t::sprite_sheet_t::sprite_cref_t s )
+                {
+                    return s.name == names[item_edited] ;
+                } ) ;
+
+                // only empty or unique names
+                if( !names[item_edited].empty() && iter == sprites.end() )
+                {
+                    _sprite_sheets[_cur_item].sprites[item_edited].name = names[item_edited] ;
+                }
+                sel = 0 ;
+                double_clicked = size_t(-1) ;
             }
             if( hovered != -1 )
             {
