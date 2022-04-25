@@ -481,6 +481,7 @@ void_t imgui::do_default_imgui_init( void_t )
     using key_t = natus::device::layouts::ascii_keyboard_t::ascii_key ;
 
     // Keyboard mapping. ImGui will use those indices to peek into the io.KeysDown[] array.
+#if 0
     io.KeyMap[ ImGuiKey_Tab ] = size_t( key_t::tab ) ;
     io.KeyMap[ ImGuiKey_LeftArrow ] = size_t( key_t::arrow_left );
     io.KeyMap[ ImGuiKey_RightArrow ] = size_t( key_t::arrow_right );
@@ -502,7 +503,7 @@ void_t imgui::do_default_imgui_init( void_t )
     io.KeyMap[ ImGuiKey_X ] = size_t( key_t::x );
     io.KeyMap[ ImGuiKey_Y ] = size_t( key_t::y );
     io.KeyMap[ ImGuiKey_Z ] = size_t( key_t::z );
-
+#endif
 
     /*
     io.SetClipboardTextFn = ;
@@ -623,8 +624,14 @@ void_t imgui::update( natus::device::ascii_device_res_t dev )
     if( !dev.is_valid() ) return ;
 
     ImGuiIO& io = ImGui::GetIO();
+    io.ClearInputKeys() ;
+    io.ClearInputCharacters() ;
 
     natus::device::layouts::ascii_keyboard_t keyboard( dev ) ;
+
+    bool_t shift = false ;
+    bool_t alt = false ;
+    bool_t ctrl = false ;
 
     for( size_t i = 0; i < size_t( key_t::num_keys ); ++i )
     {
@@ -632,34 +639,106 @@ void_t imgui::update( natus::device::ascii_device_res_t dev )
 
         if( ks == ks_t::none ) continue ;
 
-        char_t c ;
-        if( layout_t::convert_key_to_ascii_char( key_t(i), c ) )
+        if( key_t(i) == key_t::shift_left )
         {
-            io.KeysDown[ i ] = ks == ks_t::released ? false : true ;
-            if( !io.KeysDown[ i ] ) io.AddInputCharacter( c ) ;
+            io.AddKeyEvent( ImGuiKey_LeftShift, ks == ks_t::pressed || ks == ks_t::pressing ) ;
+            shift = true ;
         }
-        else if( layout_t::convert_key_to_ascii_number( key_t(i), c ) )
+        else if( key_t(i) == key_t::shift_right )
         {
-            io.KeysDown[ i ] = ks == ks_t::released ? false : true ;
-            if( !io.KeysDown[ i ] ) io.AddInputCharacter( c ) ;
+            io.AddKeyEvent( ImGuiKey_RightShift, ks == ks_t::pressed || ks == ks_t::pressing ) ;
+            shift = true ;
         }
-        else
+        else if( key_t(i) == key_t::ctrl_left )
         {
-            io.KeysDown[ i ] = ks == ks_t::pressed || ks == ks_t::pressing ;
+            io.AddKeyEvent( ImGuiKey_LeftCtrl, ks == ks_t::pressed || ks == ks_t::pressing ) ;
+            ctrl = true ;
+        }
+        else if( key_t(i) == key_t::ctrl_right )
+        {
+            io.AddKeyEvent( ImGuiKey_RightCtrl, ks == ks_t::pressed || ks == ks_t::pressing ) ;
+            ctrl = true ;
+        }
+        else if( key_t(i) == key_t::alt_left )
+        {
+            io.AddKeyEvent( ImGuiKey_LeftAlt, ks == ks_t::pressed || ks == ks_t::pressing ) ;
+            alt = true ;
+        }
+        else if( key_t(i) == key_t::alt_right )
+        {
+            io.AddKeyEvent( ImGuiKey_RightAlt, ks == ks_t::pressed || ks == ks_t::pressing ) ;
+            alt = true ;
         }
     }
 
-    io.KeyCtrl = io.KeysDown[ size_t( key_t::ctrl_left ) ] ||
-        io.KeysDown[ size_t( key_t::ctrl_right ) ];
+    for( size_t i = 0; i < size_t( key_t::num_keys ); ++i )
+    {
+        auto const ks = keyboard.get_state( key_t( i ) ) ;
 
-    io.KeyShift = io.KeysDown[ size_t( key_t::shift_left ) ] ||
-        io.KeysDown[ size_t( key_t::shift_right ) ];
+        if( ks == ks_t::none ) continue ;
 
-    io.KeyAlt = io.KeysDown[ size_t( key_t::alt_left ) ] ||
-        io.KeysDown[ size_t( key_t::alt_right ) ];
+        if( layout_t::is_key_character( key_t(i) ) )
+        {
+            auto const ik = ImGuiKey_( size_t( ImGuiKey_A ) + size_t( key_t::z ) - i ) ;
+            io.AddKeyEvent( ik, ks == ks_t::pressed || ks == ks_t::pressing ) ;
 
-    io.KeySuper = io.KeysDown[ size_t( key_t::win_win_left ) ] ||
-        io.KeysDown[ size_t( key_t::win_win_right ) ] ;
+            if( ks == ks_t::pressed )
+            {
+                char_t c ;
+                layout_t::convert_key_to_ascii_char( shift, key_t( i ), c ) ;
+                io.AddInputCharacter( c ) ;
+            }
+        }
+        else if( layout_t::is_key_number( key_t(i) ) )
+        {
+            auto const ik = ImGuiKey_( size_t( ImGuiKey_0 ) + size_t( key_t::k_9 ) - i ) ;
+            io.AddKeyEvent( ik, ks == ks_t::pressed || ks == ks_t::pressing ) ;
+
+            if( ks == ks_t::pressed )
+            {
+                char_t c ;
+                layout_t::convert_key_to_ascii_number( alt, shift, key_t( i ), c ) ;
+                io.AddInputCharacter( c ) ;
+            }
+        }
+        else if( ks == ks_t::pressed )
+        {
+            size_t ii = ImGuiKey_None ;
+            if( key_t(i) == key_t::space  ) 
+            {
+                ii = ImGuiKey_Space ;
+                io.AddInputCharacter( ' ' ) ;
+            }
+            else if( key_t(i) == key_t::k_return ) 
+            {
+                ii = ImGuiKey_Enter ;
+            }
+            else if( key_t(i) == key_t::escape ) 
+            {
+                ii = ImGuiKey_Escape ;
+            }
+            else if( key_t(i) == key_t::back_space ) 
+            {
+                ii = ImGuiKey_Backspace ;
+            }
+            else if( key_t(i) == key_t::minus && shift) 
+            {
+                ii = ImGuiKey_Minus ;
+                io.AddInputCharacter( '_' ) ;
+            }
+            else if( key_t(i) == key_t::minus) 
+            {
+                ii = ImGuiKey_Minus ;
+                io.AddInputCharacter( '-' ) ;
+            }
+            else if( key_t(i) == key_t::plus) 
+            {
+                io.AddInputCharacter( '+' ) ;
+            }
+
+            io.AddKeyEvent( ii, ks == ks_t::pressed ) ;
+        }
+    }
 }
 
 //****
