@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include "../typedefs.h"
@@ -148,21 +147,54 @@ namespace natus
                     return __keys[ i ] ;
                 }
 
-                static bool_t convert_key_to_ascii_char( ascii_key const k, natus::core::types::char_ref_t c )
+                static bool_t is_key_character( ascii_key const k ) noexcept
+                {
+                    return k >= ascii_key::a && k <= ascii_key::z ;
+                }
+
+                static bool_t is_key_number( ascii_key const k ) noexcept
+                {
+                    return k >= ascii_key::k_0 && k <= ascii_key::k_9 ;
+                }
+
+                static bool_t convert_key_to_ascii_char( bool_t const shift, ascii_key const k, natus::core::types::char_ref_t c )
                 {
                     if( k >= ascii_key::a && k <= ascii_key::z )
                     {
-                        c = 'a' + char_t( k ) - char_t( ascii_key::a ) ;
+                        c = (shift ? 'A' : 'a') + char_t( k ) - char_t( ascii_key::a ) ;
                         return true ;
                     }
                     return false ;
                 }
 
-                static bool_t convert_key_to_ascii_number( ascii_key const k, char_ref_t c )
+                static bool_t convert_key_to_special( bool_t const alt, bool_t const shift, ascii_key const k, char_ref_t c ) noexcept
                 {
+                    if( k == ascii_key::space ) 
+                    {
+                        c = ' ' ;
+                        return true ;
+                    }
+                    return false ;
+                }
+
+                static bool_t convert_key_to_ascii_number( bool_t const alt, bool_t const shift, ascii_key const k, char_ref_t c ) noexcept
+                {
+                    static char_t const shift_number[] = 
+                    {
+                       '=', '!', '"','$', '$', '%', '&','/','(',')'
+                    } ;
+
+                    static char_t const alt_number[] = 
+                    {
+                        '}', ' ', ' ',' ', ' ', ' ', ' ','{','[',']',
+                    } ;
+              
                     if( k >= ascii_key::k_0 && k <= ascii_key::k_9 )
                     {
-                        c = '0' + char_t( k ) - char_t( ascii_key::k_0 ) ;
+                        if( shift ) c = shift_number[ size_t( char_t( k ) - char_t( ascii_key::k_0 ) ) ] ;
+                        else if( alt ) c = alt_number[ size_t( char_t( k ) - char_t( ascii_key::k_0 ) ) ] ;
+                        else c = '0' + char_t( k ) - char_t( ascii_key::k_0 ) ;
+
                         return true ;
                     }
                     return false ;
