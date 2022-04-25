@@ -25,7 +25,8 @@ namespace natus
                 bounds,
                 pivot,
                 hit,
-                damage
+                damage,
+                animation
             };
 
         private:
@@ -126,6 +127,8 @@ namespace natus
 
             this_t::mode _cur_mode = this_t::mode::bounds ;
             size_t _cur_hovered = size_t(-1) ;
+            size_t _cur_sel_box = size_t(-1) ;
+            size_t _cur_sel_ani = size_t(-1) ;
 
         private:
 
@@ -220,7 +223,7 @@ namespace natus
 
             void_t draw_rect_info( natus::math::vec4f_cref_t, natus::math::vec4ui_cref_t ) noexcept ;
                 
-            size_t draw_rects( natus::ntd::vector< natus::math::vec4ui_t > const & rects, size_t const hovered=size_t(-1),
+            size_t draw_rects( natus::ntd::vector< natus::math::vec4ui_t > const & rects,  size_t const selected = size_t(-1), size_t const hovered=size_t(-1),
                 natus::math::vec4ui_cref_t color = natus::math::vec4ui_t(255),
                 natus::math::vec4ui_cref_t over_color = natus::math::vec4ui_t(255) ) ;
 
