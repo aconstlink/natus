@@ -154,7 +154,12 @@ namespace natus
 
                 static bool_t is_key_number( ascii_key const k ) noexcept
                 {
-                    return k >= ascii_key::k_0 && k <= ascii_key::k_9 ;
+                    return (k >= ascii_key::k_0 && k <= ascii_key::k_9) ;
+                }
+
+                static bool_t is_key_num_number( ascii_key const k ) noexcept
+                {
+                    return (k >= ascii_key::num_0 && k <= ascii_key::num_9)  ;
                 }
 
                 static bool_t convert_key_to_ascii_char( bool_t const shift, ascii_key const k, natus::core::types::char_ref_t c )
@@ -195,6 +200,16 @@ namespace natus
                         else if( alt ) c = alt_number[ size_t( char_t( k ) - char_t( ascii_key::k_0 ) ) ] ;
                         else c = '0' + char_t( k ) - char_t( ascii_key::k_0 ) ;
 
+                        return true ;
+                    }
+                    return false ;
+                }
+
+                static bool_t convert_key_to_ascii_num_number( ascii_key const k, char_ref_t c ) noexcept
+                {
+                    if( k >= ascii_key::num_0 && k <= ascii_key::num_9 )
+                    {
+                        c = '0' + char_t( k ) - char_t( ascii_key::num_0 ) ;
                         return true ;
                     }
                     return false ;
