@@ -129,6 +129,9 @@ namespace natus
             size_t _cur_hovered = size_t(-1) ;
             size_t _cur_sel_box = size_t(-1) ;
             size_t _cur_sel_ani = size_t(-1) ;
+            size_t _cur_sel_frame = size_t( -1 ) ;
+            size_t _cur_hovered_frame = size_t(-1) ;
+            size_t _cur_hovered_frame_rel = size_t(-1) ;
 
         private:
 

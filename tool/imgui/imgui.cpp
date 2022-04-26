@@ -701,6 +701,18 @@ void_t imgui::update( natus::device::ascii_device_res_t dev )
                 io.AddInputCharacter( c ) ;
             }
         }
+        else if( layout_t::is_key_num_number( key_t(i) ) )
+        {
+            auto const ik = ImGuiKey_( size_t( ImGuiKey_0 ) + size_t( key_t::num_9 ) - i ) ;
+            io.AddKeyEvent( ik, ks == ks_t::pressed || ks == ks_t::pressing ) ;
+
+            if( ks == ks_t::pressed )
+            {
+                char_t c ;
+                layout_t::convert_key_to_ascii_num_number( key_t( i ), c ) ;
+                io.AddInputCharacter( c ) ;
+            }
+        }
         else if( ks == ks_t::pressed )
         {
             size_t ii = ImGuiKey_None ;
