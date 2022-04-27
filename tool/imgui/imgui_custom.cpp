@@ -73,11 +73,6 @@ bool natus::tool::imgui_custom::ListBoxWithInputInt( const char* label, int* sel
             selected = i == *selected_item ;
             hovered = i == *hovered_item ;
 
-            if( hovered )
-            {
-                int bp = 0 ;
-            }
-
             {
                 ImVec2 const item_dims = ImVec2( ImGui::GetContentRegionAvail().x * 0.6f,
                     ImGui::GetItemRectSize().y * 1.0f ) ;

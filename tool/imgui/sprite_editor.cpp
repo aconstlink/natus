@@ -210,6 +210,13 @@ void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept
                         tss.animations.emplace_back( std::move( ta ) ) ;
                     }
 
+                    if( ss.animations.size() == 0 )
+                    {
+                        this_t::sprite_sheet::animation_t ta ;
+                        ta.name = "empty" ;
+                        tss.animations.emplace_back( std::move( ta ) ) ;
+                    }
+
                     _sprite_sheets.emplace_back( std::move( tss ) ) ;
                 }
             }
@@ -459,7 +466,16 @@ void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept
                             cur_ani.frames[sel].duration = names_values[sel].second ;
                         }
                     }
-                    
+
+                    // needs to be reset if mouse is not over the list
+                    {
+                        bool_t const list_hovered = ImGui::IsItemHovered() ;
+                        if( !list_hovered ) 
+                        {
+                            hovered = -1 ;
+                        }
+                    }
+
                     _cur_sel_frame = sel ;
 
                     if( item_edited != size_t(-1) )
@@ -675,6 +691,8 @@ void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept
 
                 this_t::show_image( imgui, _cur_item ) ;
 
+                bool_t const is_image_hovered = ImGui::IsItemHovered() ;
+
                 // draw rect for current mouse position
                 {
                     natus::math::vec4f_t r( _cur_pixel, _cur_pixel ) ;
@@ -684,7 +702,7 @@ void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept
 
                 // bounds in animation
                 natus::ntd::vector< natus::math::vec4ui_t > bounds ;
-                if( _cur_sel_ani != size_t(-1) )
+                if( _cur_sel_ani != size_t(-1) && _sprite_sheets[_cur_item].animations.size() > 0 )
                 {
                     auto const & sheet = _sprite_sheets[_cur_item] ;
                     auto const & animation = sheet.animations[_cur_sel_ani] ;
@@ -717,7 +735,7 @@ void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept
 
                         _cur_hovered_frame = idx ;
                     }
-                    else 
+                    else if( is_image_hovered )
                     {
                         _cur_hovered_frame = size_t(-1) ;
                     }
@@ -730,7 +748,8 @@ void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept
                     if( idx != size_t(-1) )
                     {
                         _cur_hovered_frame_rel = idx ;
-                    }else 
+                    }
+                    else if( is_image_hovered )
                     {
                         _cur_hovered_frame_rel = size_t(-1) ;
                     }
