@@ -8,7 +8,7 @@ namespace natus
 {
     namespace gfx
     {
-        class NATUS_GFX_API pinhole_camera
+        class pinhole_camera
         {
             natus_this_typedefs( pinhole_camera ) ;
 
