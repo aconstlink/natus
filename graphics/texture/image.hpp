@@ -125,6 +125,18 @@ namespace natus
                 return *this ;
             }
 
+            this_ref_t clear_data( void_t ) noexcept
+            {
+                _width = 0 ;
+                _height = 0 ;
+                _depth = 0 ;
+
+                natus::memory::global_t::dealloc( _data ) ;
+                _data = nullptr ;
+
+                return *this ;
+            }
+
             dims_t get_dims( void_t ) const noexcept
             {
                 return natus::math::vector3< size_t >( _width, _height, _depth ) ;
