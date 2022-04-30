@@ -164,6 +164,12 @@ namespace natus
 
             natus::ntd::vector< load_item_t > _loads ;
 
+        private:
+
+            struct sprite_render_pimpl ;
+            natus_typedef( sprite_render_pimpl ) ;
+            sprite_render_pimpl_ptr_t _srp = nullptr ;
+
         public:
 
             sprite_editor( void_t ) noexcept ;
@@ -178,7 +184,7 @@ namespace natus
             void_t add_sprite_sheet( natus::ntd::string_cref_t name, 
                 natus::io::location_cref_t loc ) noexcept ;
 
-            void_t render( natus::tool::imgui_view_t ) noexcept ;
+            void_t do_tool( natus::tool::imgui_view_t ) noexcept ;
 
             void_t store( natus::io::database_res_t db ) noexcept ;
 

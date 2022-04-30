@@ -2,6 +2,10 @@
 #include "sprite_editor.h"
 #include "imgui_custom.h"
 
+#include <natus/gfx/camera/pinhole_camera.h>
+#include <natus/gfx/sprite/sprite_render_2d.h>
+#include <natus/graphics/object/framebuffer_object.h>
+
 #include <natus/format/future_items.hpp>
 #include <natus/format/global.h>
 #include <natus/format/natus/natus_structs.h>
@@ -11,13 +15,28 @@
 
 using namespace natus::tool ;
 
+struct sprite_editor::sprite_render_pimpl
+{
+    bool_t initialized = false ;
+    natus::graphics::framebuffer_object_res_t fb ;
+    natus::gfx::sprite_render_2d_res_t sr ;
+    natus::gfx::pinhole_camera_t cam ;
+    natus::graphics::image_object_res_t sheets ;
+
+    natus::graphics::image_t::dims_t dims ;
+
+    natus::graphics::state_object_res_t so ;
+};
+
 sprite_editor::sprite_editor( void_t ) noexcept 
 {
+    _srp = natus::memory::global_t::alloc< sprite_editor::sprite_render_pimpl >() ;
 }
 
 sprite_editor::sprite_editor( natus::io::database_res_t db ) noexcept 
 {
     _db = db ;
+    _srp = natus::memory::global_t::alloc< sprite_editor::sprite_render_pimpl >() ;
 }
 
 sprite_editor::sprite_editor( this_rref_t rhv ) noexcept 
@@ -25,10 +44,12 @@ sprite_editor::sprite_editor( this_rref_t rhv ) noexcept
     _db = std::move( rhv._db ) ;
     _sprite_sheets = std::move( rhv._sprite_sheets ) ;
     _loads = std::move( rhv._loads ) ;
+    natus_move_member_ptr( _srp, rhv ) ;
 }
 
 sprite_editor::~sprite_editor( void_t ) noexcept 
 {
+    natus::memory::global_t::dealloc( _srp ) ;
 }
 
 sprite_editor::this_ref_t sprite_editor::operator = ( this_rref_t rhv ) noexcept 
@@ -110,7 +131,7 @@ void_t sprite_editor::store( natus::io::database_res_t db ) noexcept
 }
 
 // ****
-void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept 
+void_t sprite_editor::do_tool( natus::tool::imgui_view_t imgui ) noexcept 
 {
     // checking future items
     {
@@ -221,6 +242,109 @@ void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept
                 }
             }
         }
+    }
+
+    if( !_srp->initialized )
+    {
+        _srp->cam = natus::gfx::pinhole_camera_t() ;
+        _srp->cam.orthographic( 200.0f, 200.0f, 1.0f, 100.0f ) ;
+        _srp->cam.look_at( natus::math::vec3f_t( 0.0f, 0.0f, -50.0f ),
+                        natus::math::vec3f_t( 0.0f, 1.0f, 0.0f ), natus::math::vec3f_t( 0.0f, 0.0f, 0.0f )) ;
+        
+        // init framebuffer
+        {
+            natus::graphics::framebuffer_object_t fb( "sprite_editor.framebuffer" ) ;
+            fb.set_target( natus::graphics::color_target_type::rgba_uint_8 ).resize( 512, 512 ) ;
+            _srp->fb = natus::graphics::framebuffer_object_res_t( std::move( fb ) ) ;
+            imgui.async().configure( _srp->fb ) ;
+        }
+
+        // make image with all sprite sheet layers
+        {
+            // taking all slices
+            natus::graphics::image_t img ;
+
+            // load each slice into the image
+            for( auto & ss : _sprite_sheets )
+            {
+                img.append( ss.img->image() ) ;
+            }
+
+            natus::graphics::image_object_res_t ires = natus::graphics::image_object_t( 
+                "sprite_editor.sheets", std::move( img ) )
+                .set_type( natus::graphics::texture_type::texture_2d_array )
+                .set_wrap( natus::graphics::texture_wrap_mode::wrap_s, natus::graphics::texture_wrap_type::repeat )
+                .set_wrap( natus::graphics::texture_wrap_mode::wrap_t, natus::graphics::texture_wrap_type::repeat )
+                .set_filter( natus::graphics::texture_filter_mode::min_filter, natus::graphics::texture_filter_type::nearest )
+                .set_filter( natus::graphics::texture_filter_mode::mag_filter, natus::graphics::texture_filter_type::nearest );
+
+            imgui.async().configure( ires ) ;
+
+            _srp->sheets = std::move( ires ) ;
+        }
+
+        // init sprite_render
+        {
+            natus::graphics::async_views_t asyncs( {imgui.async()} ) ;
+            natus::gfx::sprite_render_2d_t spr ;
+            
+            spr.init( "sprite_editor.sprite_render_2d", "sprite_editor.sheets",  asyncs ) ;
+            //spr.set_texture( "sprite_editor.sheets" ) ;
+
+            _srp->sr = natus::gfx::sprite_render_2d_res_t( std::move( spr ) ) ;
+        }
+        
+        {
+            natus::graphics::state_object_t so = natus::graphics::state_object_t(
+                "sprite_editor.root_render_state" ) ;
+
+            {
+                natus::graphics::render_state_sets_t rss ;
+
+                rss.depth_s.do_change = true ;
+                rss.depth_s.ss.do_activate = false ;
+                rss.depth_s.ss.do_depth_write = false ;
+
+                //rss.polygon_s.do_change = true ;
+                rss.polygon_s.ss.do_activate = true ;
+                rss.polygon_s.ss.ff = natus::graphics::front_face::counter_clock_wise ;
+                rss.polygon_s.ss.cm = natus::graphics::cull_mode::back ;
+                rss.polygon_s.ss.fm = natus::graphics::fill_mode::fill ;
+                   
+                rss.clear_s.do_change = true ;
+                rss.clear_s.ss.do_activate = true ;
+                rss.clear_s.ss.do_depth_clear = true ;
+                rss.clear_s.ss.do_color_clear = true ;
+
+                rss.view_s.do_change = true ;
+                rss.view_s.ss.do_activate = true ;
+                rss.view_s.ss.vp = natus::math::vec4ui_t( 0,0, 512,512) ;
+                so.add_render_state_set( rss ) ;
+            }
+            _srp->so = natus::graphics::state_object_res_t( std::move( so ) ) ;
+            imgui.async().configure( _srp->so ) ;
+        }
+
+        _srp->initialized = true ;
+    }
+
+    // the order of the sprite sheets need to be preserved, so the 
+    // data in the image needs to be cleared before any other
+    // new image layer is appended 
+    if( _srp->sheets->image().get_dims().z() < _sprite_sheets.size() )
+    {
+        auto & image = _srp->sheets->image() ;
+        image.clear_data() ;
+        for( size_t i=0; i<_sprite_sheets.size(); ++i )
+        {
+            auto const & ss = _sprite_sheets[i] ;
+            if( !ss.img.is_valid() ) continue ;
+
+            image.append( ss.img->image() ) ;
+        }
+        imgui.async().configure( _srp->sheets ) ;
+
+        _srp->dims = image.get_dims() ;
     }
 
     ImGui::Begin( "Sprite Editor" ) ;
@@ -367,7 +491,21 @@ void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept
                     ImGui::SameLine() ;
                     if( ImGui::Button("+##addanimation") )
                     {
-                        // add animation
+                        auto & animations = cur_sheet.animations ;
+                        natus::tool::sprite_editor_t::sprite_sheet_t::animation_t a ;
+
+                        size_t number = 0 ;
+                        auto iter = animations.begin() ;
+                        while( iter != animations.end() )
+                        {
+                            a.name = "new animation " + std::to_string( number++ ) ;
+
+                            iter = std::find_if( animations.begin(), animations.end(), [&]( natus::tool::sprite_editor_t::sprite_sheet_t::animation_cref_t a_ )
+                            {
+                                return a_.name == a.name ;
+                            } ) ;
+                        }
+                        animations.emplace_back( std::move( a ) ) ;
                     }
                     ImGui::SameLine() ;
                     if( ImGui::Button("-##removeanimation") )
@@ -780,6 +918,79 @@ void_t sprite_editor::render( natus::tool::imgui_view_t imgui ) noexcept
     #endif
 
     ImGui::End() ;
+
+    ImGui::Begin( "Current Animation" ) ;
+    if( _cur_sel_ani != size_t(-1) )
+    {
+        ImGui::Image( imgui.texture( "sprite_editor.framebuffer.0" ),
+            ImGui::GetContentRegionAvail() ) ;
+    }
+    else
+    {
+        ImGui::Text("No animation selected") ;
+    }
+    ImGui::End() ;
+
+    if( _cur_sel_ani != size_t(-1) )
+    {
+        auto & cur_sheet = _sprite_sheets[_cur_item] ;
+        auto & cur_ani = cur_sheet.animations[_cur_sel_ani] ;
+
+        
+        static size_t milli = 0 ;
+        static double time = ImGui::GetTime() ;
+        double const dif = ImGui::GetTime() - time ;
+        milli += size_t( dif * 1000.0 ) ;
+        time = ImGui::GetTime() ;
+
+
+        {
+            size_t accum = 0 ;
+            for( auto & f : cur_ani.frames ) accum += f.duration ;
+            if( milli > accum ) milli = 0 ;
+        }
+
+        size_t idx = 0 ;
+        if( cur_ani.frames.size() > idx )
+        {
+            if( idx >= cur_ani.frames.size() ) idx = 0 ;
+            size_t accum = 0 ;
+             
+            for( size_t i=0; i<cur_ani.frames.size(); ++i ) 
+            {
+                accum += cur_ani.frames[idx].duration ;
+
+                idx = i ;
+                if( milli < accum ) break ;
+            }
+        }
+
+        if( cur_ani.frames.size() > idx )
+        {
+            auto const b = cur_sheet.bounds[ cur_sheet.sprites[ cur_ani.frames[idx].sidx ].bound_idx ] ;
+            auto const p = cur_sheet.anim_pivots[ cur_sheet.sprites[ cur_ani.frames[idx].sidx ].pivot_idx ] ;
+
+            natus::math::vec4f_t const rect = natus::math::vec4f_t( b ) / natus::math::vec4f_t( _srp->dims.xy(), _srp->dims.xy() ) ;
+            natus::math::vec2f_t const pivot = natus::math::vec2f_t( p ) / _srp->dims.xy() ;
+            
+
+            _srp->sr->draw( 0, natus::math::vec2f_t(), natus::math::mat2f_t().identity(), 
+                natus::math::vec2f_t(3000.0f), rect, _cur_item, natus::math::vec2f_t(), natus::math::vec4f_t(1.0f) ) ;
+
+            
+            imgui.async().use( _srp->fb ) ;
+            imgui.async().push( _srp->so ) ;
+            _srp->sr->set_view_proj( _srp->cam.mat_view(), _srp->cam.mat_proj() ) ;
+            _srp->sr->prepare_for_rendering() ;
+            _srp->sr->render( 0 ) ;
+            imgui.async().pop( natus::graphics::backend::pop_type::render_state ) ;
+
+            imgui.async().unuse( natus::graphics::backend::unuse_type::framebuffer ) ;
+
+        }
+
+        
+    }
 }
 
 void_t sprite_editor::handle_mouse( natus::tool::imgui_view_t imgui, int_t const selected ) 
