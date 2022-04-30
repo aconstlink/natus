@@ -21,6 +21,10 @@ sprite_render_2d::sprite_render_2d( this_rref_t rhv )
     _ro = std::move( rhv._ro ) ;
     _go = std::move( rhv._go ) ;
     _so = std::move( rhv._so ) ;
+
+    _asyncs = std::move( rhv._asyncs ) ;
+    _name = std::move( rhv._name ) ;
+    _image_name = std::move( rhv._image_name ) ;
 }
             
 sprite_render_2d::~sprite_render_2d( void_t ) 
