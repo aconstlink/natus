@@ -624,7 +624,7 @@ void_t imgui::update( natus::device::ascii_device_res_t dev )
     if( !dev.is_valid() ) return ;
 
     ImGuiIO& io = ImGui::GetIO();
-    io.ClearInputKeys() ;
+    //io.ClearInputKeys() ;
     io.ClearInputCharacters() ;
 
     natus::device::layouts::ascii_keyboard_t keyboard( dev ) ;
@@ -642,32 +642,38 @@ void_t imgui::update( natus::device::ascii_device_res_t dev )
         if( key_t(i) == key_t::shift_left )
         {
             io.AddKeyEvent( ImGuiKey_LeftShift, ks == ks_t::pressed || ks == ks_t::pressing ) ;
-            shift = true ;
+            shift = ks == ks_t::pressed || ks == ks_t::pressing ;
+            io.KeyShift = ks == ks_t::pressed || ks == ks_t::pressing ;
         }
         else if( key_t(i) == key_t::shift_right )
         {
             io.AddKeyEvent( ImGuiKey_RightShift, ks == ks_t::pressed || ks == ks_t::pressing ) ;
-            shift = true ;
+            shift = ks == ks_t::pressed || ks == ks_t::pressing ;
+            io.KeyShift = ks == ks_t::pressed || ks == ks_t::pressing ;
         }
         else if( key_t(i) == key_t::ctrl_left )
         {
             io.AddKeyEvent( ImGuiKey_LeftCtrl, ks == ks_t::pressed || ks == ks_t::pressing ) ;
-            ctrl = true ;
+            ctrl = ks == ks_t::pressed || ks == ks_t::pressing ;
+            io.KeyCtrl = ks == ks_t::pressed || ks == ks_t::pressing ;
         }
         else if( key_t(i) == key_t::ctrl_right )
         {
             io.AddKeyEvent( ImGuiKey_RightCtrl, ks == ks_t::pressed || ks == ks_t::pressing ) ;
-            ctrl = true ;
+            ctrl = ks == ks_t::pressed || ks == ks_t::pressing ;
+            io.KeyCtrl = ks == ks_t::pressed || ks == ks_t::pressing ;
         }
         else if( key_t(i) == key_t::alt_left )
         {
             io.AddKeyEvent( ImGuiKey_LeftAlt, ks == ks_t::pressed || ks == ks_t::pressing ) ;
-            alt = true ;
+            alt = ks == ks_t::pressed || ks == ks_t::pressing ;
+            io.KeyAlt = ks == ks_t::pressed || ks == ks_t::pressing ;
         }
         else if( key_t(i) == key_t::alt_right )
         {
             io.AddKeyEvent( ImGuiKey_RightAlt, ks == ks_t::pressed || ks == ks_t::pressing ) ;
-            alt = true ;
+            alt = ks == ks_t::pressed || ks == ks_t::pressing ;
+            io.KeyAlt = ks == ks_t::pressed || ks == ks_t::pressing ;
         }
     }
 
@@ -681,7 +687,7 @@ void_t imgui::update( natus::device::ascii_device_res_t dev )
         {
             auto const ik = ImGuiKey_( size_t( ImGuiKey_A ) + size_t( key_t::z ) - i ) ;
             io.AddKeyEvent( ik, ks == ks_t::pressed || ks == ks_t::pressing ) ;
-
+            
             if( ks == ks_t::pressed )
             {
                 char_t c ;
@@ -713,7 +719,7 @@ void_t imgui::update( natus::device::ascii_device_res_t dev )
                 io.AddInputCharacter( c ) ;
             }
         }
-        else if( ks == ks_t::pressed )
+        else if( ks != ks_t::none )
         {
             size_t ii = ImGuiKey_None ;
             if( key_t(i) == key_t::space  ) 
@@ -748,7 +754,7 @@ void_t imgui::update( natus::device::ascii_device_res_t dev )
                 io.AddInputCharacter( '+' ) ;
             }
 
-            io.AddKeyEvent( ii, ks == ks_t::pressed ) ;
+            io.AddKeyEvent( ii, ks == ks_t::pressed || ks == ks_t::pressing ) ;
         }
     }
 }
