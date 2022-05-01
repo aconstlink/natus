@@ -60,6 +60,72 @@ bool natus::tool::imgui_custom::ListBox(const char* label, int* current_item, in
     return selected ;
 }
 
+bool natus::tool::imgui_custom::ListBox(const char* label, int* current_item, int* hovered_item, size_t & double_clicked, 
+                natus::ntd::vector<std::pair<natus::ntd::string_t, bool_t> > & items, size_t & item_edited, int height_in_items )
+{
+    bool_t any_selected = false ;
+
+    if( ImGui::BeginListBox( label ) )
+    {
+        for( size_t i=0; i<items.size(); ++i )
+        {
+            bool_t selected = items[i].second ;
+
+            natus::memory::malloc_guard<char_t> m( items[i].first.c_str(), items[i].first.size()+1 ) ;
+            //selected = i == *current_item ;
+            
+            if( double_clicked == i )
+            {
+                natus::memory::malloc_guard<char_t> m2( 256 ) ;
+                m2[0] = '\0' ;
+
+                ImGui::SetKeyboardFocusHere() ;
+                if( ImGui::InputText( m, m2, 256 ) )
+                {}
+                
+
+                if( ImGui::IsKeyPressed( ImGuiKey_Enter ) )
+                {
+                    double_clicked = size_t( -1 ) ;
+                    items[i].first = natus::ntd::string_t( m2 ) ;
+                    item_edited = i ;
+                }
+                else if( ImGui::IsKeyPressed( ImGuiKey_Escape ) )
+                {
+                    double_clicked = size_t( -1 ) ;
+                }
+            }
+            else if( ImGui::Selectable( m, &selected, ImGuiSelectableFlags_AllowDoubleClick ) )
+            {
+                if( ImGui::GetIO().KeyCtrl )
+                {
+                    items[i].second = selected ;
+                    *current_item = i ;
+                }
+                else if( ImGui::IsMouseDoubleClicked( ImGuiMouseButton_Left ) )
+                {
+                    double_clicked = i ;
+                }
+                else 
+                {
+                    *current_item = i ;
+                    for( auto & item :  items ) item.second = false ;
+                    items[i].second = true ;
+                }
+            }
+
+            if( ImGui::IsItemHovered() )
+            {
+                *hovered_item = i ;
+            }
+            any_selected = selected || any_selected ? true : false ;
+        }
+
+        EndListBox() ;
+    }
+    return any_selected ;
+}
+
 bool natus::tool::imgui_custom::ListBoxWithInputInt( const char* label, int* selected_item, int* hovered_item, size_t & double_clicked, 
     natus::ntd::vector< std::pair< natus::ntd::string_t, int_t > > & items, size_t & item_edited, bool_t & value_changed, int height_items )
 {

@@ -398,6 +398,12 @@ void_t sprite_editor::do_tool( natus::tool::imgui_view_t imgui ) noexcept
             ImGui::SetNextItemWidth( ImGui::GetWindowWidth() * 0.3f ) ;
             if( ImGui::ListBox( "##sprite_sheets", &_cur_item, names.data(), names.size() ) )
             {}
+
+            {
+                auto const & cur_sheet = _sprite_sheets[ _cur_item ] ;
+                if( cur_sheet.animations.size() == 0 ) _cur_sel_ani = size_t( -1 ) ;
+                _cur_sel_ani = std::min( _cur_sel_ani, cur_sheet.animations.size() - 1 ) ;
+            }
         }
 
         _cur_hovered = size_t(-1) ;
@@ -455,11 +461,98 @@ void_t sprite_editor::do_tool( natus::tool::imgui_view_t imgui ) noexcept
                     _cur_hovered = size_t(hovered) ;
                 }
             }
-
-            
         }
         else if( _cur_mode == this_t::mode::pivot )
         {
+            auto & cur_sheet = _sprite_sheets[_cur_item] ;
+
+            // animations in the list
+            {
+                size_t i = 0 ;
+                natus::ntd::vector< natus::ntd::string_t > names( _sprite_sheets[_cur_item].animations.size() ) ;
+                for( auto const & a : cur_sheet.animations )
+                {
+                    names[i] = a.name + "##" + std::to_string(i) ;
+                    ++i ;
+                }
+
+                int sel = int_t(_cur_sel_ani) ;
+                static size_t double_clicked = size_t(-1) ;
+                int hovered = -1 ;
+                size_t item_edited = size_t(-1);
+
+                {
+                    ImGui::Text("Animations") ;
+                    ImGui::SetNextItemWidth( ImGui::GetWindowWidth() * 0.3f ) ;
+
+                    if( natus::tool::imgui_custom::ListBox( "##animations", &sel, &hovered, double_clicked, names, item_edited ) )
+                    {
+                    }
+                    _cur_sel_ani = size_t( sel ) ; //std::min( size_t(  ), cur_sheet.animations.size()-1 ) ;
+                }
+            }
+
+            // bounding boxes in the list for selected animation
+            {
+                _cur_sel_ani = std::min( _cur_sel_ani, cur_sheet.animations.size()-1 ) ;
+                auto & animations = cur_sheet.animations ;
+                auto & cur_ani = animations[_cur_sel_ani] ;
+
+                size_t i = 0 ;
+                natus::ntd::vector< std::pair< natus::ntd::string_t, bool_t > > names( cur_ani.frames.size() ) ;
+                natus::ntd::vector< size_t > ids( cur_ani.frames.size() ) ;
+                for( auto const & f : cur_ani.frames )
+                {
+                    if( f.sidx == size_t(-1) ) continue ;
+
+                    auto const & s = cur_sheet.sprites[ f.sidx ] ;
+                    names[i].first = s.name + "##frame_" + std::to_string(i) ;
+                    names[i].second = false ;
+                    ids[i] = f.sidx ;
+                    ++i ;
+                }
+
+                for( auto & s : _pivot_ani_frame_sel )
+                {
+                    names[s].second = true ;
+                }
+
+                int sel = int_t( std::min( _cur_sel_frame, cur_ani.frames.size()-1) ) ; 
+                static size_t double_clicked = size_t(-1) ;
+                
+                int hovered = int( _cur_hovered_frame_rel < cur_ani.frames.size() ? _cur_hovered_frame_rel :size_t(-1) ) ;
+                size_t item_edited = size_t(-1);
+
+                {
+                    ImGui::Text("Frames") ;
+                    
+                    ImGui::SetNextItemWidth( ImGui::GetWindowWidth() * 0.3f ) ;
+
+                    if( natus::tool::imgui_custom::ListBox( "##frames", &sel, &hovered, double_clicked, names, item_edited ) )
+                    {}
+
+                    {
+                        _pivot_ani_frame_sel.clear() ;
+                        for( size_t i=0; i<names.size(); ++i ) 
+                        {
+                            if( names[i].second ) _pivot_ani_frame_sel.emplace_back( i ) ;
+                        }
+                    }
+
+                    // needs to be reset if mouse is not over the list
+                    {
+                        bool_t const list_hovered = ImGui::IsItemHovered() ;
+                        if( !list_hovered ) 
+                        {
+                            hovered = -1 ;
+                        }
+                    }
+
+                    _cur_sel_frame = std::min( size_t(sel), cur_ani.frames.size()-1) ;
+                    _cur_hovered_frame_rel = hovered ;
+                    _cur_hovered_frame = hovered != size_t(-1) ? ids[hovered] : size_t(-1) ;
+                }
+            }
         }
         else if( _cur_mode == this_t::mode::hit )
         {
@@ -517,7 +610,7 @@ void_t sprite_editor::do_tool( natus::tool::imgui_view_t imgui ) noexcept
                     if( natus::tool::imgui_custom::ListBox( "##animations", &sel, &hovered, double_clicked, names, item_edited ) )
                     {
                     }
-                    _cur_sel_ani = std::min( size_t( sel ), cur_sheet.animations.size()-1 ) ;
+                    _cur_sel_ani = size_t( sel ) ; //std::min( size_t(  ), cur_sheet.animations.size()-1 ) ;
                 }
 
                 if( item_edited != size_t(-1) )
@@ -715,7 +808,6 @@ void_t sprite_editor::do_tool( natus::tool::imgui_view_t imgui ) noexcept
                     this_t::draw_rect( rect ) ;
                 }
 
-                
                 ImGui::EndTabItem() ;
             }
 
@@ -726,7 +818,8 @@ void_t sprite_editor::do_tool( natus::tool::imgui_view_t imgui ) noexcept
                 this_t::handle_mouse_drag_for_anim_pivot( _cur_item ) ;
 
                 this_t::show_image( imgui, _cur_item ) ;
-                
+                bool_t const is_image_hovered = ImGui::IsItemHovered() ;
+
                 // draw rect for current mouse position
                 {
                     natus::math::vec4f_t r( _cur_pixel, _cur_pixel ) ;
@@ -734,9 +827,59 @@ void_t sprite_editor::do_tool( natus::tool::imgui_view_t imgui ) noexcept
                     this_t::draw_rect_for_scale( rect ) ;
                 }
 
+                // bounds in animation
+                natus::ntd::vector< natus::math::vec4ui_t > bounds ;
+                if( _cur_sel_ani != size_t(-1) && _sprite_sheets[_cur_item].animations.size() > 0 )
+                {
+                    auto const & sheet = _sprite_sheets[_cur_item] ;
+                    auto const & animation = sheet.animations[_cur_sel_ani] ;
+                    auto const & frames = animation.frames ;
+                    bounds.reserve( frames.size() ) ;
+                    for( auto const & f : frames )
+                    {
+                        auto const & bb = sheet.bounds[ sheet.sprites[ f.sidx ].bound_idx ] ;
+                        bounds.emplace_back( bb ) ;
+                    }
+                }
+
                 // draw rects
                 {
-                    this_t::draw_rects( ss.bounds ) ;
+                    auto const idx = this_t::draw_rects( ss.bounds, size_t(-1), _cur_hovered_frame, natus::math::vec4ui_t(150, 150, 150, 150), 
+                        natus::math::vec4ui_t(0, 0, 255, 150) ) ;
+
+                    if( idx != size_t(-1) )
+                    {
+                        if( ImGui::IsMouseClicked( ImGuiMouseButton_Left ) && 
+                            ImGui::IsKeyDown( ImGuiKey_LeftCtrl) )
+                        {
+                            // assign the currently clicked to the currently selected
+                            int bp = 0 ;
+                        }
+                        else if( ImGui::IsMouseClicked( ImGuiMouseButton_Left ) )
+                        {
+                            _cur_sel_frame = idx ;
+                        }
+
+                        _cur_hovered_frame = idx ;
+                    }
+                    else if( is_image_hovered )
+                    {
+                        _cur_hovered_frame = size_t(-1) ;
+                    }
+                }
+
+                // draw animation rects
+                {
+                    size_t const idx = this_t::draw_rects( bounds, _cur_sel_frame, _cur_hovered_frame_rel, natus::math::vec4ui_t(255, 255, 255, 150), 
+                        natus::math::vec4ui_t(0, 255, 0, 150) ) ;
+                    if( idx != size_t(-1) )
+                    {
+                        _cur_hovered_frame_rel = idx ;
+                    }
+                    else if( is_image_hovered )
+                    {
+                        _cur_hovered_frame_rel = size_t(-1) ;
+                    }
                 }
 
                 // draw pivots
@@ -920,78 +1063,134 @@ void_t sprite_editor::do_tool( natus::tool::imgui_view_t imgui ) noexcept
 
     ImGui::End() ;
 
-    ImGui::Begin( "Current Animation" ) ;
-    if( _cur_sel_ani != size_t(-1) )
+    // second window for sprite observation based on
+    // current mode
     {
-        ImGui::Image( imgui.texture( "sprite_editor.framebuffer.0" ),
-            ImGui::GetContentRegionAvail() ) ;
+        char buf[128];
+        if( _cur_mode == this_t::mode::pivot )
+        {
+            sprintf( buf, "Pivot###ObservationWindow" );
+        }
+        else if( _cur_mode == this_t::mode::animation )
+        {
+            sprintf( buf, "Animation###ObservationWindow" );
+        }
+        else
+        {
+            sprintf( buf, "Observation Window###ObservationWindow" );
+        }
+        
+        ImGui::Begin( buf ) ;
+        if( _cur_sel_ani != size_t(-1) )
+        {
+            ImGui::Image( imgui.texture( "sprite_editor.framebuffer.0" ),
+                ImGui::GetContentRegionAvail() ) ;
+        }
+        else
+        {
+            ImGui::Text("No animation selected") ;
+        }
+        ImGui::End() ;
     }
-    else
-    {
-        ImGui::Text("No animation selected") ;
-    }
-    ImGui::End() ;
 
-    if( _cur_sel_ani != size_t(-1) )
+    if( _cur_mode == this_t::mode::pivot )
     {
         auto & cur_sheet = _sprite_sheets[_cur_item] ;
         auto & cur_ani = cur_sheet.animations[_cur_sel_ani] ;
 
-        
-        static size_t milli = 0 ;
-        static double time = ImGui::GetTime() ;
-        double const dif = ImGui::GetTime() - time ;
-        milli += size_t( dif * 1000.0 ) ;
-        time = ImGui::GetTime() ;
-
-
+        for( auto const & idx : _pivot_ani_frame_sel )
         {
-            size_t accum = 0 ;
-            for( auto & f : cur_ani.frames ) accum += f.duration ;
-            if( milli > accum ) milli = 0 ;
-        }
-
-        size_t idx = 0 ;
-        if( cur_ani.frames.size() > idx )
-        {
-            if( idx >= cur_ani.frames.size() ) idx = 0 ;
-            size_t accum = 0 ;
-             
-            for( size_t i=0; i<cur_ani.frames.size(); ++i ) 
-            {
-                accum += cur_ani.frames[idx].duration ;
-
-                idx = i ;
-                if( milli < accum ) break ;
-            }
-        }
-
-        if( cur_ani.frames.size() > idx )
-        {
+            if( idx >= cur_ani.frames.size() ) continue ;
+            
             auto const b = cur_sheet.bounds[ cur_sheet.sprites[ cur_ani.frames[idx].sidx ].bound_idx ] ;
             auto const p = cur_sheet.anim_pivots[ cur_sheet.sprites[ cur_ani.frames[idx].sidx ].pivot_idx ] ;
 
+            auto const p2 = (natus::math::vec2f_t( p ) - natus::math::vec2f_t(b.xy())) - 
+                            (natus::math::vec2f_t( b.zw() ) - natus::math::vec2f_t( b.xy() ) ) / natus::math::vec2f_t( 2 ) ;
+
             natus::math::vec4f_t const rect = natus::math::vec4f_t( b ) / natus::math::vec4f_t( _srp->dims.xy(), _srp->dims.xy() ) ;
-            natus::math::vec2f_t const pivot = natus::math::vec2f_t( p ) / _srp->dims.xy() ;
-            
+            natus::math::vec2f_t const pivot = natus::math::vec2f_t( p2 ) / natus::math::vec2f_t( _srp->dims.xy() ) ;
 
             _srp->sr->draw( 0, natus::math::vec2f_t(), natus::math::mat2f_t().identity(), 
-                natus::math::vec2f_t(3000.0f), rect, _cur_item, natus::math::vec2f_t(), natus::math::vec4f_t(1.0f) ) ;
-
-            
-            imgui.async().use( _srp->fb ) ;
-            imgui.async().push( _srp->so ) ;
-            _srp->sr->set_view_proj( _srp->cam.mat_view(), _srp->cam.mat_proj() ) ;
-            _srp->sr->prepare_for_rendering() ;
-            _srp->sr->render( 0 ) ;
-            imgui.async().pop( natus::graphics::backend::pop_type::render_state ) ;
-
-            imgui.async().unuse( natus::graphics::backend::unuse_type::framebuffer ) ;
-
+                    natus::math::vec2f_t(3000.0f), rect, _cur_item, pivot, 
+                natus::math::vec4f_t(1.0f,1.0f,1.0f,0.3f) ) ;
         }
 
-        
+        imgui.async().use( _srp->fb ) ;
+        imgui.async().push( _srp->so ) ;
+        _srp->sr->set_view_proj( _srp->cam.mat_view(), _srp->cam.mat_proj() ) ;
+        _srp->sr->prepare_for_rendering() ;
+        _srp->sr->render( 0 ) ;
+        imgui.async().pop( natus::graphics::backend::pop_type::render_state ) ;
+
+        imgui.async().unuse( natus::graphics::backend::unuse_type::framebuffer ) ;
     }
+    else if( _cur_mode == this_t::mode::animation )
+    {
+        auto const & cur_sheet = _sprite_sheets[ _cur_item ] ;
+        _cur_sel_ani = std::min( _cur_sel_ani, cur_sheet.animations.size() - 1 ) ;
+
+        if( _cur_sel_ani != size_t(-1) )
+        {
+            auto & cur_sheet = _sprite_sheets[_cur_item] ;
+            auto & cur_ani = cur_sheet.animations[_cur_sel_ani] ;
+        
+            static size_t milli = 0 ;
+            static double time = ImGui::GetTime() ;
+            double const dif = ImGui::GetTime() - time ;
+            milli += size_t( dif * 1000.0 ) ;
+            time = ImGui::GetTime() ;
+
+            {
+                size_t accum = 0 ;
+                for( auto & f : cur_ani.frames ) accum += f.duration ;
+                if( milli > accum ) milli = 0 ;
+            }
+
+            size_t idx = 0 ;
+            if( cur_ani.frames.size() > idx )
+            {
+                if( idx >= cur_ani.frames.size() ) idx = 0 ;
+                size_t accum = 0 ;
+             
+                for( size_t i=0; i<cur_ani.frames.size(); ++i ) 
+                {
+                    accum += cur_ani.frames[idx].duration ;
+
+                    idx = i ;
+                    if( milli < accum ) break ;
+                }
+            }
+
+            if( cur_ani.frames.size() > idx )
+            {
+                auto const b = cur_sheet.bounds[ cur_sheet.sprites[ cur_ani.frames[idx].sidx ].bound_idx ] ;
+                auto const p = cur_sheet.anim_pivots[ cur_sheet.sprites[ cur_ani.frames[idx].sidx ].pivot_idx ] ;
+
+                auto const p2 = (natus::math::vec2f_t( p ) - natus::math::vec2f_t(b.xy())) - 
+                                (natus::math::vec2f_t( b.zw() ) - natus::math::vec2f_t( b.xy() ) ) / natus::math::vec2f_t( 2 ) ;
+
+                natus::math::vec4f_t const rect = natus::math::vec4f_t( b ) / natus::math::vec4f_t( _srp->dims.xy(), _srp->dims.xy() ) ;
+                natus::math::vec2f_t const pivot = natus::math::vec2f_t( p2 ) / natus::math::vec2f_t( _srp->dims.xy() ) ;
+            
+
+                _srp->sr->draw( 0, natus::math::vec2f_t(), natus::math::mat2f_t().identity(), 
+                    natus::math::vec2f_t(3000.0f), rect, _cur_item, pivot, natus::math::vec4f_t(1.0f) ) ;
+
+            
+                imgui.async().use( _srp->fb ) ;
+                imgui.async().push( _srp->so ) ;
+                _srp->sr->set_view_proj( _srp->cam.mat_view(), _srp->cam.mat_proj() ) ;
+                _srp->sr->prepare_for_rendering() ;
+                _srp->sr->render( 0 ) ;
+                imgui.async().pop( natus::graphics::backend::pop_type::render_state ) ;
+
+                imgui.async().unuse( natus::graphics::backend::unuse_type::framebuffer ) ;
+
+            }
+        }
+    }
+    
 }
 
 void_t sprite_editor::handle_mouse( natus::tool::imgui_view_t imgui, int_t const selected ) 
@@ -1606,4 +1805,8 @@ bool_t sprite_editor::intersect_bound_location( natus::math::vec2ui_cref_t cur_p
     }
 
     return false ;
+}
+
+void_t sprite_editor::display_animations_and_frames( void_t ) noexcept 
+{
 }

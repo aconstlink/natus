@@ -133,6 +133,8 @@ namespace natus
             size_t _cur_hovered_frame = size_t(-1) ;
             size_t _cur_hovered_frame_rel = size_t(-1) ;
 
+            natus::ntd::vector< size_t > _pivot_ani_frame_sel ;
+
         private:
 
             struct rect_drag_info
@@ -254,6 +256,10 @@ namespace natus
             // [7] : bottom
             bool_t intersect_bound_location( natus::math::vec2ui_cref_t cur_pixel, natus::math::vec4ui_cref_t rect, std::array< bool_t, 8 > & hit ) const ; 
             
+        private:
+
+            void_t display_animations_and_frames( void_t ) noexcept ;
+
         };
         natus_res_typedef( sprite_editor ) ;
     }
