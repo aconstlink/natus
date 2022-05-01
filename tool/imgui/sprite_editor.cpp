@@ -481,7 +481,7 @@ void_t sprite_editor::do_tool( natus::tool::imgui_view_t imgui ) noexcept
                     ++i ;
                 }
 
-                static int sel = 0 ;
+                int sel = int_t(_cur_sel_ani) ;
                 static size_t double_clicked = size_t(-1) ;
                 int hovered = -1 ;
                 size_t item_edited = size_t(-1);
@@ -517,7 +517,7 @@ void_t sprite_editor::do_tool( natus::tool::imgui_view_t imgui ) noexcept
                     if( natus::tool::imgui_custom::ListBox( "##animations", &sel, &hovered, double_clicked, names, item_edited ) )
                     {
                     }
-                    _cur_sel_ani = sel ;
+                    _cur_sel_ani = std::min( size_t( sel ), cur_sheet.animations.size()-1 ) ;
                 }
 
                 if( item_edited != size_t(-1) )
@@ -544,6 +544,7 @@ void_t sprite_editor::do_tool( natus::tool::imgui_view_t imgui ) noexcept
 
             // bounding boxes in the list for selected animation
             {
+                _cur_sel_ani = std::min( _cur_sel_ani, cur_sheet.animations.size()-1 ) ;
                 auto & animations = cur_sheet.animations ;
                 auto & cur_ani = animations[_cur_sel_ani] ;
 
@@ -561,7 +562,7 @@ void_t sprite_editor::do_tool( natus::tool::imgui_view_t imgui ) noexcept
                     ++i ;
                 }
 
-                int sel = int_t(_cur_sel_frame) ;
+                int sel = int_t( std::min( _cur_sel_frame, cur_ani.frames.size()-1) ) ; 
                 static size_t double_clicked = size_t(-1) ;
                 
                 int hovered = int( _cur_hovered_frame_rel < cur_ani.frames.size() ? _cur_hovered_frame_rel :size_t(-1) ) ;
@@ -614,7 +615,7 @@ void_t sprite_editor::do_tool( natus::tool::imgui_view_t imgui ) noexcept
                         }
                     }
 
-                    _cur_sel_frame = sel ;
+                    _cur_sel_frame = std::min( size_t(sel), cur_ani.frames.size()-1) ;
 
                     if( item_edited != size_t(-1) )
                     {
