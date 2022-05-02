@@ -385,6 +385,9 @@ void_t sprite_editor::do_tool( natus::tool::imgui_view_t imgui ) noexcept
                     }
                 }
             }
+            if( ImGui::Checkbox( "Play Animation", &_play_animation ) )
+            {
+            }
         }
 
         // sprite sheets list box
@@ -739,8 +742,6 @@ void_t sprite_editor::do_tool( natus::tool::imgui_view_t imgui ) noexcept
     
     ImGui::SameLine() ; 
 
-    static natus::math::vec4f_t rect ;
-
     // tabs
     {
         auto & ss = _sprite_sheets[_cur_item] ;
@@ -1090,10 +1091,11 @@ void_t sprite_editor::do_tool( natus::tool::imgui_view_t imgui ) noexcept
         {
             ImGui::Text("No animation selected") ;
         }
+        
         ImGui::End() ;
     }
 
-    if( _cur_mode == this_t::mode::pivot )
+    if( _cur_mode == this_t::mode::pivot && !_play_animation)
     {
         auto & cur_sheet = _sprite_sheets[_cur_item] ;
         auto & cur_ani = cur_sheet.animations[_cur_sel_ani] ;
@@ -1125,7 +1127,7 @@ void_t sprite_editor::do_tool( natus::tool::imgui_view_t imgui ) noexcept
 
         imgui.async().unuse( natus::graphics::backend::unuse_type::framebuffer ) ;
     }
-    else if( _cur_mode == this_t::mode::animation )
+    else if( _cur_mode == this_t::mode::animation || _play_animation )
     {
         auto const & cur_sheet = _sprite_sheets[ _cur_item ] ;
         _cur_sel_ani = std::min( _cur_sel_ani, cur_sheet.animations.size() - 1 ) ;
@@ -1157,7 +1159,11 @@ void_t sprite_editor::do_tool( natus::tool::imgui_view_t imgui ) noexcept
                 {
                     accum += cur_ani.frames[idx].duration ;
 
-                    idx = i ;
+                    if( _pivot_ani_frame_sel.size() <= 1 )
+                        idx = i ;
+                    else
+                        idx = _pivot_ani_frame_sel[i%_pivot_ani_frame_sel.size()] ;
+
                     if( milli < accum ) break ;
                 }
             }

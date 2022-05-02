@@ -135,6 +135,8 @@ namespace natus
 
             natus::ntd::vector< size_t > _pivot_ani_frame_sel ;
 
+            bool_t _play_animation = true ;
+
         private:
 
             struct rect_drag_info
