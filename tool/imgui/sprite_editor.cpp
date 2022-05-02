@@ -1159,10 +1159,20 @@ void_t sprite_editor::do_tool( natus::tool::imgui_view_t imgui ) noexcept
                 {
                     accum += cur_ani.frames[idx].duration ;
 
-                    if( _pivot_ani_frame_sel.size() <= 1 )
+                    // if in animation mode, play whole animation
+                    if( _cur_mode == this_t::mode::animation )
+                    {
                         idx = i ;
+                    }
                     else
-                        idx = _pivot_ani_frame_sel[i%_pivot_ani_frame_sel.size()] ;
+                    {
+                        // if pivot selection <= 1, play whole animation
+                        // else just play multi-selected frames from selected animation
+                        if( _pivot_ani_frame_sel.size() <= 1 )
+                            idx = i ;
+                        else
+                            idx = _pivot_ani_frame_sel[i%_pivot_ani_frame_sel.size()] ;
+                    }
 
                     if( milli < accum ) break ;
                 }
