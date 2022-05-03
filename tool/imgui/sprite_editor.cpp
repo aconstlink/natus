@@ -342,9 +342,12 @@ void_t sprite_editor::do_tool( natus::tool::imgui_view_t imgui ) noexcept
 
             image.append( ss.img->image() ) ;
         }
-        imgui.async().configure( _srp->sheets ) ;
 
-        _srp->dims = image.get_dims() ;
+        if( image.get_dims().z() > 0 )
+        {
+            imgui.async().configure( _srp->sheets ) ;
+            _srp->dims = image.get_dims() ;
+        }
     }
 
     ImGui::Begin( "Sprite Editor" ) ;
@@ -1107,8 +1110,8 @@ void_t sprite_editor::do_tool( natus::tool::imgui_view_t imgui ) noexcept
             auto const b = cur_sheet.bounds[ cur_sheet.sprites[ cur_ani.frames[idx].sidx ].bound_idx ] ;
             auto const p = cur_sheet.anim_pivots[ cur_sheet.sprites[ cur_ani.frames[idx].sidx ].pivot_idx ] ;
 
-            auto const p2 = (natus::math::vec2f_t( p ) - natus::math::vec2f_t(b.xy())) - 
-                            (natus::math::vec2f_t( b.zw() ) - natus::math::vec2f_t( b.xy() ) ) / natus::math::vec2f_t( 2 ) ;
+            auto const p2 = ((natus::math::vec2f_t( p ) - natus::math::vec2f_t(b.xy())) - 
+                            (natus::math::vec2f_t( b.zw() ) - natus::math::vec2f_t( b.xy() ) ) / natus::math::vec2f_t( 2 )).floor() ;
 
             natus::math::vec4f_t const rect = natus::math::vec4f_t( b ) / natus::math::vec4f_t( _srp->dims.xy(), _srp->dims.xy() ) ;
             natus::math::vec2f_t const pivot = natus::math::vec2f_t( p2 ) / natus::math::vec2f_t( _srp->dims.xy() ) ;
@@ -1183,8 +1186,8 @@ void_t sprite_editor::do_tool( natus::tool::imgui_view_t imgui ) noexcept
                 auto const b = cur_sheet.bounds[ cur_sheet.sprites[ cur_ani.frames[idx].sidx ].bound_idx ] ;
                 auto const p = cur_sheet.anim_pivots[ cur_sheet.sprites[ cur_ani.frames[idx].sidx ].pivot_idx ] ;
 
-                auto const p2 = (natus::math::vec2f_t( p ) - natus::math::vec2f_t(b.xy())) - 
-                                (natus::math::vec2f_t( b.zw() ) - natus::math::vec2f_t( b.xy() ) ) / natus::math::vec2f_t( 2 ) ;
+                auto const p2 = ((natus::math::vec2f_t( p ) - natus::math::vec2f_t(b.xy())) - 
+                                (natus::math::vec2f_t( b.zw() ) - natus::math::vec2f_t( b.xy() ) ) / natus::math::vec2f_t( 2 )).floor() ;
 
                 natus::math::vec4f_t const rect = natus::math::vec4f_t( b ) / natus::math::vec4f_t( _srp->dims.xy(), _srp->dims.xy() ) ;
                 natus::math::vec2f_t const pivot = natus::math::vec2f_t( p2 ) / natus::math::vec2f_t( _srp->dims.xy() ) ;
