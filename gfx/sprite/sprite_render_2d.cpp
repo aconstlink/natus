@@ -315,6 +315,11 @@ void_t sprite_render_2d::init( natus::ntd::string_cref_t name, natus::ntd::strin
                         output.pos = mul( output.pos, u_world ) ;
                         output.pos = mul( output.pos, u_view ) ;
                         output.pos = mul( output.pos, u_proj ) ;
+                        
+                        // test with full screen quad
+                        //output.pos = float4( sign( input.in_pos ), 0.0, 1.0 ) ;
+                        //output.uv.xy = float2( sign( input.in_pos ) * 0.5 + 0.5 ) ;
+
                         return output;
                     } )" ) ).
 

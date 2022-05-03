@@ -213,6 +213,7 @@ namespace natus
                             }
                             base += w ;
                         }
+                        base = w * h * (z+1) ;
                     }
 
                     for( size_t z = 0; z < odims.z() ; ++z )
