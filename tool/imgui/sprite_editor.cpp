@@ -1009,10 +1009,28 @@ void_t sprite_editor::do_tool( natus::tool::imgui_view_t imgui ) noexcept
                     if( idx != size_t(-1) )
                     {
                         if( ImGui::IsMouseClicked( ImGuiMouseButton_Left ) && 
-                            ImGui::IsKeyDown( ImGuiKey_LeftCtrl) )
+                            ImGui::IsKeyDown( ImGuiKey_LeftCtrl) && 
+                            _cur_sel_ani != size_t(-1) &&
+                            _cur_sel_frame != size_t(-1) )
                         {
-                            // assign the currently clicked to the currently selected
-                            int bp = 0 ;
+                            auto & cur_sheet = _sprite_sheets[_cur_item] ;
+                            auto & cur_sprites = cur_sheet.sprites ;
+
+                            auto const iter = std::find_if( cur_sprites.begin(), cur_sprites.end(), 
+                                [&]( natus::tool::sprite_editor_t::sprite_sheet_t::sprite_cref_t s )
+                                {
+                                    return s.bound_idx == idx ;
+                                } ) ;
+
+                            if( iter == cur_sprites.end() )
+                            {
+                                natus::log::global_t::error("Upsy. Sprite not found for selected rect.") ;
+                            }
+                            else
+                            {
+                                cur_sheet.animations[_cur_sel_ani].frames[_cur_sel_frame].sidx = std::distance( cur_sprites.begin(), iter ) ;
+                            }
+                            
                         }
                         else if( ImGui::IsMouseClicked( ImGuiMouseButton_Left ) )
                         {
