@@ -1294,6 +1294,11 @@ void_t sprite_editor::handle_mouse( natus::tool::imgui_view_t imgui, int_t const
             ss.origin = natus::math::vec2f_t() ;
         }
     }
+    
+    if( io.MouseDown[2] && in_cr)
+    {
+        ss.origin += (cur_mouse - _cur_mouse) * natus::math::vec2f_t( -1.0f, -1.0f ) * ss.zoom ;
+    }
 
     // image pixel coord under mouse pos + transform y coord
     natus::math::vec2i_t const ip = (cur_mouse + idims * natus::math::vec2f_t( 0.5f, 0.5f )).floored() * natus::math::vec2f_t( 1.0f, 1.0f ) ;
