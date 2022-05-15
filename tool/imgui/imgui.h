@@ -131,3 +131,13 @@ namespace natus
         natus_typedef( imgui_view ) ;
     }
 }
+
+static ImVec2 const operator + ( ImVec2 const & lhv, ImVec2 const & rhv ) noexcept
+{
+    return ImVec2( lhv.x + rhv.x, lhv.y + rhv.y ) ;
+}
+
+static ImVec2 const operator - ( ImVec2 const & lhv, ImVec2 const & rhv ) noexcept
+{
+    return ImVec2( lhv.x - rhv.x, lhv.y - rhv.y ) ;
+}

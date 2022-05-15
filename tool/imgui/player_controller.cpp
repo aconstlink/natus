@@ -5,16 +5,6 @@
 
 using namespace natus::tool ;
 
-ImVec2 const operator + ( ImVec2 const & lhv, ImVec2 const & rhv ) noexcept
-{
-    return ImVec2( lhv.x + rhv.x, lhv.y + rhv.y ) ;
-}
-
-ImVec2 const operator - ( ImVec2 const & lhv, ImVec2 const & rhv ) noexcept
-{
-    return ImVec2( lhv.x - rhv.x, lhv.y - rhv.y ) ;
-}
-
 //****************************************************************
 void_t player_controller::do_tool( natus::ntd::string_cref_t label_, natus::tool::imgui_view_t imgui ) noexcept 
 {
@@ -28,8 +18,6 @@ void_t player_controller::do_tool( natus::ntd::string_cref_t label_, natus::tool
             return false ;
 
         ImDrawList* draw_list = ImGui::GetWindowDrawList();
-
-        //ImVec2 const pos = window->DC.CursorPos;
 
         const ImGuiID id = window->GetID( l.c_str() ) ;
         
@@ -55,7 +43,6 @@ void_t player_controller::do_tool( natus::ntd::string_cref_t label_, natus::tool
         
         {
             ImVec2 const pos1 = pos + ImVec2( r, r ) ;
-            draw_list->AddCircle( pos, 3.0f, IM_COL32(255, 255, 255, 255), 0, 1.0f ) ;
             draw_list->AddCircle( pos1, r, hover_color[ hovered ? 1 : 0 ], 0, 2.0f ) ;
             draw_list->AddCircleFilled( pos1, r, IM_COL32(255, 255, 255, 255) ) ;
         }
@@ -63,12 +50,61 @@ void_t player_controller::do_tool( natus::ntd::string_cref_t label_, natus::tool
         return pressed ;
     } ;
 
+    auto draw_prev = [&]( ImVec2 const & pos, float_t const r )
+    {
+        ImDrawList* draw_list = ImGui::GetWindowDrawList() ;
+        
+        // tri
+        {
+            ImVec2 const p1 = pos + ImVec2( 1.5f * r, 0.5f * r ) ; // top
+            ImVec2 const p2 = pos + ImVec2( 1.5f * r, 1.5f * r ) ; // bottom
+            ImVec2 const p3 = pos + ImVec2( 0.6f * r, 1.0f * r ) ; // right
+
+            ImVec2 const points[] = { p1, p2, p3 } ;
+            draw_list->AddConvexPolyFilled( points, 3, IM_COL32(0, 0, 0, 255) ) ;
+        }
+
+        // stick
+        {
+            ImVec2 const p1 = pos + ImVec2( 0.5f * r, 1.5f * r ) ; // bottom
+            ImVec2 const p2 = pos + ImVec2( 0.5f * r, 0.5f * r ) ; // top
+            ImVec2 const p3 = pos + ImVec2( 0.7f * r, 0.5f * r ) ; // top
+            ImVec2 const p4 = pos + ImVec2( 0.7f * r, 1.5f * r ) ; // bottom
+
+            ImVec2 const points[] = { p1, p2, p3, p4 } ;
+            draw_list->AddConvexPolyFilled( points, 4, IM_COL32(0, 0, 0, 255) ) ;
+        }
+    } ;
+
+    auto draw_next = [&]( ImVec2 const & pos, float_t const r )
+    {
+        ImDrawList* draw_list = ImGui::GetWindowDrawList() ;
+        
+        // tri
+        {
+            ImVec2 const p1 = pos + ImVec2( 0.6f * r, 0.5f * r ) ; // top
+            ImVec2 const p2 = pos + ImVec2( 0.6f * r, 1.5f * r ) ; // bottom
+            ImVec2 const p3 = pos + ImVec2( 1.5f * r, 1.0f * r ) ; // right
+
+            ImVec2 const points[] = { p1, p2, p3 } ;
+            draw_list->AddConvexPolyFilled( points, 3, IM_COL32(0, 0, 0, 255) ) ;
+        }
+
+        // stick
+        {
+            ImVec2 const p1 = pos + ImVec2( 1.3f * r, 1.5f * r ) ; // bottom
+            ImVec2 const p2 = pos + ImVec2( 1.3f * r, 0.5f * r ) ; // top
+            ImVec2 const p3 = pos + ImVec2( 1.5f * r, 0.5f * r ) ; // top
+            ImVec2 const p4 = pos + ImVec2( 1.5f * r, 1.5f * r ) ; // bottom
+
+            ImVec2 const points[] = { p1, p2, p3, p4 } ;
+            draw_list->AddConvexPolyFilled( points, 4, IM_COL32(0, 0, 0, 255) ) ;
+        }
+    } ;
+
     auto draw_play = [&]( ImVec2 const & pos, float_t const r )
     {
-        ImGuiWindow* window = ImGui::GetCurrentWindow() ;
         ImDrawList* draw_list = ImGui::GetWindowDrawList() ;
-
-        //ImVec2 const pos = window->DC.CursorPos ;
         
         ImVec2 const p1 = pos + ImVec2( 0.6f * r, 0.5f * r ) ; // top
         ImVec2 const p2 = pos + ImVec2( 0.6f * r, 1.5f * r ) ; // bottom
@@ -86,17 +122,12 @@ void_t player_controller::do_tool( natus::ntd::string_cref_t label_, natus::tool
     
     auto draw_stop = [&]( ImVec2 const & pos, float_t const r )
     {
-        ImGuiWindow* window = ImGui::GetCurrentWindow() ;
         ImDrawList* draw_list = ImGui::GetWindowDrawList() ;
-
-        //ImVec2 const pos = window->DC.CursorPos;//ImGui::GetCursorScreenPos() ;
-        
+                
         ImVec2 const p2 = pos + ImVec2( 0.5f * r, 0.5f * r ) ; // top
         ImVec2 const p1 = pos + ImVec2( 0.5f * r, 1.5f * r ) ; // bottom
         ImVec2 const p3 = pos + ImVec2( 1.5f * r, 0.5f * r ) ; // top
         ImVec2 const p4 = pos + ImVec2( 1.5f * r, 1.5f * r ) ; // bottom
-
-        draw_list->AddLine( p1, p2, IM_COL32(255, 255, 255, 255), 1.0f ) ;
 
         {
             ImVec2 const points[] = { p1, p2, p3, p4 } ;
@@ -104,42 +135,93 @@ void_t player_controller::do_tool( natus::ntd::string_cref_t label_, natus::tool
         }
     } ;
 
+    auto draw_pause = [&]( ImVec2 const & pos, float_t const r )
+    {
+        ImDrawList* draw_list = ImGui::GetWindowDrawList() ;
+
+        // left
+        {
+            ImVec2 const p1 = pos + ImVec2( 0.4f * r, 1.5f * r ) ; // bottom
+            ImVec2 const p2 = pos + ImVec2( 0.4f * r, 0.5f * r ) ; // top
+            ImVec2 const p3 = pos + ImVec2( 0.8f * r, 0.5f * r ) ; // top
+            ImVec2 const p4 = pos + ImVec2( 0.8f * r, 1.5f * r ) ; // bottom
+
+            ImVec2 const points[] = { p1, p2, p3, p4 } ;
+            draw_list->AddConvexPolyFilled( points, 4, IM_COL32(0, 0, 0, 255) ) ;
+        }
+
+        // right
+        {
+            ImVec2 const p1 = pos + ImVec2( 1.2f * r, 1.5f * r ) ; // bottom
+            ImVec2 const p2 = pos + ImVec2( 1.2f * r, 0.5f * r ) ; // top
+            ImVec2 const p3 = pos + ImVec2( 1.6f * r, 0.5f * r ) ; // top
+            ImVec2 const p4 = pos + ImVec2( 1.6f * r, 1.5f * r ) ; // bottom
+
+            ImVec2 const points[] = { p1, p2, p3, p4 } ;
+            draw_list->AddConvexPolyFilled( points, 4, IM_COL32(0, 0, 0, 255) ) ;
+        }
+    } ;
+
+    float_t const r = ImGui::GetTextLineHeight() * 1.0f ;
+
+    // prev button
+    {
+        ImVec2 const pos = ImGui::GetCursorScreenPos() ;
+        if( circle_button( "prev##" + label_, pos, r ) )
+        {            
+        }
+        draw_prev( pos, r ) ;
+    }
+
+    ImGui::SameLine() ;
+
     if( !_internal_play )
     {
         ImVec2 const pos = ImGui::GetCursorScreenPos() ;
-        float_t const r = ImGui::GetTextLineHeight() ;
         if( circle_button( "play##" + label_, pos, r ) )
         {
-            natus::log::global_t::status( "play" ) ;
             _play = true ;
             _pause = false ;
+            _internal_play = true ;
         }
         draw_play( pos, r ) ;
     }
     else
     {
         ImVec2 const pos = ImGui::GetCursorScreenPos() ;
-        float_t const r = ImGui::GetTextLineHeight() ;
         if( circle_button( "pause##" + label_, pos, r ) )
         {
-            natus::log::global_t::status( "pause" ) ;
             _pause = true ;
             _play = false ;
+            _internal_play = false ;
         }
+        draw_pause( pos, r ) ;
+    }
+
+    ImGui::SameLine() ;
+
+    // next button
+    {
+        ImVec2 const pos = ImGui::GetCursorScreenPos() ;
+        if( circle_button( "next##" + label_, pos, r ) )
+        {            
+        }
+        draw_next( pos, r ) ;
     }
 
     ImGui::SameLine() ;
 
     // stop button
-    ImVec2 const pos = ImGui::GetCursorScreenPos() ;
-    float_t const r = ImGui::GetTextLineHeight() ;
-    if( circle_button( "stop##" + label_, pos, r ) )
     {
-        natus::log::global_t::status( "stop" ) ;
-        _play = false ;
-        _pause = false ;
+        ImVec2 const pos = ImGui::GetCursorScreenPos() ;
+        if( circle_button( "stop##" + label_, pos, r ) )
+        {
+            _play = false ;
+            _pause = false ;
+            _internal_play = false ;
+        }
+        draw_stop( pos, r ) ;
     }
-    draw_stop( pos, r ) ;
 }
 
 //****************************************************************
