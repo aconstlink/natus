@@ -20,6 +20,12 @@ namespace natus
             // unit: milli_per_pixel
             size_t _zoom = 10 ;
 
+            // in milli seconds
+            size_t _hover = 0 ;
+
+            // in milli seconds
+            size_t _play = 0 ;
+
         public:
 
             timeline( void_t ) noexcept ;
@@ -63,6 +69,8 @@ namespace natus
 
             size_t mtp( size_t const m ) const noexcept { return this_t::milli_to_pixel( m )  ; }
             size_t ptm( size_t const p ) const noexcept { return this_t::pixel_to_milli( p ) ; }
+
+            natus::ntd::string_t make_time_string( size_t const milli ) const noexcept ;
 
         } ;
         natus_res_typedef( timeline ) ;
