@@ -67,8 +67,6 @@ bool_t timeline::begin( natus::ntd::string_cref_t label, natus::tool::imgui_view
 
     ImVec2 const scrolling_child_size = ImVec2( 0, ImGui::GetContentRegionAvail().y ) - ImVec2(0.0f, ImGui::GetTextLineHeight()+10) ;
     ImGui::BeginChild((label + "##timeline").c_str(), scrolling_child_size, true, ImGuiWindowFlags_HorizontalScrollbar) ;
-    
-    
 
     auto draw_list = ImGui::GetWindowDrawList() ;
 
@@ -76,6 +74,22 @@ bool_t timeline::begin( natus::ntd::string_cref_t label, natus::tool::imgui_view
     float_t const height = ImGui::GetContentRegionAvail().y ;
     size_t const big_line_height = height * 0.5f ;
     size_t const small_line_height = height * 0.25f ;
+
+    if( ImGui::GetIO().KeyCtrl )
+    {
+        auto const mw = ImGui::GetIO().MouseWheel ;
+        int_t tmp = int_t( -mw * 10.0f ) ;
+        if( tmp < 0 && _zoom >= size_t( std::abs( tmp ) ) )
+        {
+            _zoom += tmp ;
+            _zoom = std::max( size_t( 10 ), _zoom ) ;
+        }
+        else
+        {
+            _zoom += tmp ;
+            _zoom = std::min( size_t( 1000 ), _zoom ) ;
+        }
+    }
 
     // set markers in order to have the horizontal scroll bar visible and scrollable
     {
@@ -278,6 +292,13 @@ void_t timeline::end( void_t ) noexcept
         ImGui::TextColored( ImVec4(1.0f, 0.0f, 0.0f, 1.0f), s.c_str() ) ;
     }
     
+    ImGui::SameLine() ;
+
+    {
+        natus::ntd::string_t const s = std::to_string( _zoom ) ;
+        ImGui::Text( s.c_str() ) ;
+    }
+
     ImGui::SameLine() ;
 
     {
