@@ -26,6 +26,11 @@ namespace natus
             // in milli seconds
             size_t _play = 0 ;
 
+            // move timeline with player marker
+            bool_t _lock_player = false ;
+
+            size_t _max_milli = 0 ;
+
         public:
 
             timeline( void_t ) noexcept ;
