@@ -6,7 +6,7 @@
 using namespace natus::tool ;
 
 //****************************************************************
-void_t player_controller::do_tool( natus::ntd::string_cref_t label_, natus::tool::imgui_view_t imgui ) noexcept 
+player_controller::player_state player_controller::do_tool( natus::ntd::string_cref_t label_, natus::tool::imgui_view_t imgui ) noexcept 
 {
     auto circle_button = [&]( natus::ntd::string_cref_t l, ImVec2 const & pos, float_t const r ) -> bool_t
     {
@@ -162,6 +162,7 @@ void_t player_controller::do_tool( natus::ntd::string_cref_t label_, natus::tool
         }
     } ;
 
+    player_controller::player_state ret = player_controller::player_state::no_change ;
     float_t const r = ImGui::GetTextLineHeight() * 1.0f ;
 
     // prev button
@@ -183,6 +184,7 @@ void_t player_controller::do_tool( natus::ntd::string_cref_t label_, natus::tool
             _play = true ;
             _pause = false ;
             _internal_play = true ;
+            ret = this_t::player_state::play ;
         }
         draw_play( pos, r ) ;
     }
@@ -194,6 +196,7 @@ void_t player_controller::do_tool( natus::ntd::string_cref_t label_, natus::tool
             _pause = true ;
             _play = false ;
             _internal_play = false ;
+            ret = this_t::player_state::pause ;
         }
         draw_pause( pos, r ) ;
     }
@@ -204,7 +207,8 @@ void_t player_controller::do_tool( natus::ntd::string_cref_t label_, natus::tool
     {
         ImVec2 const pos = ImGui::GetCursorScreenPos() ;
         if( circle_button( "next##" + label_, pos, r ) )
-        {            
+        { 
+            //ret = this_t::player_state:: ;
         }
         draw_next( pos, r ) ;
     }
@@ -219,9 +223,12 @@ void_t player_controller::do_tool( natus::ntd::string_cref_t label_, natus::tool
             _play = false ;
             _pause = false ;
             _internal_play = false ;
+            ret = this_t::player_state::stop ;
         }
         draw_stop( pos, r ) ;
     }
+
+    return ret ;
 }
 
 //****************************************************************

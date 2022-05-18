@@ -17,6 +17,17 @@ namespace natus
         {
             natus_this_typedefs( player_controller ) ;
 
+        public:
+
+            enum class player_state
+            {
+                invalid, 
+                no_change,
+                play,
+                stop,
+                pause
+            };
+
         private:
 
             bool_t _internal_play = false ;
@@ -26,7 +37,7 @@ namespace natus
 
         public:
 
-            void_t do_tool( natus::ntd::string_cref_t label, natus::tool::imgui_view_t ) noexcept ;
+            player_state do_tool( natus::ntd::string_cref_t label, natus::tool::imgui_view_t ) noexcept ;
 
             bool_t is_play_clicked( void_t ) const noexcept ;
             bool_t is_pause_clicked( void_t ) const noexcept ;
