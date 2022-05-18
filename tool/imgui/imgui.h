@@ -102,7 +102,7 @@ namespace natus
 
         public:
 
-            imgui_view( imgui_res_t im ) : _imres( im )
+            imgui_view( imgui_res_t im ) noexcept : _imres( im )
             {}
 
             imgui_view( this_cref_t rhv ) noexcept
@@ -113,6 +113,18 @@ namespace natus
             imgui_view( this_rref_t rhv ) noexcept
             {
                 _imres = std::move( rhv._imres ) ;
+            }
+
+            this_ref_t operator = ( this_cref_t rhv ) noexcept
+            {
+                _imres = rhv._imres ;
+                return *this ;
+            }
+
+            this_ref_t operator = ( this_rref_t rhv ) noexcept
+            {
+                _imres = std::move( rhv._imres ) ;
+                return *this ;
             }
 
         public:
