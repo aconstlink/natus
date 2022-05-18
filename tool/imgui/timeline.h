@@ -36,9 +36,12 @@ namespace natus
 
             bool_t _begin = false ;
 
+            static size_t _label_counter ;
+
         public:
 
             timeline( void_t ) noexcept ;
+            timeline( natus::ntd::string_in_t ) noexcept ;
             timeline( this_cref_t ) = delete ;
             timeline( this_rref_t ) noexcept ;
             ~timeline( void_t ) noexcept ;
@@ -48,7 +51,7 @@ namespace natus
 
         public:
 
-            bool_t begin( natus::ntd::string_cref_t label, natus::tool::time_info_ref_t ti, natus::tool::imgui_view_t ) noexcept ;
+            bool_t begin( natus::tool::time_info_ref_t ti, natus::tool::imgui_view_t ) noexcept ;
             void_t end( void_t ) noexcept ;
 
         public:
@@ -85,6 +88,7 @@ namespace natus
 
         private:
 
+            size_t inc_label_counter( void_t ) noexcept ;
         } ;
         natus_res_typedef( timeline ) ;
     }

@@ -30,8 +30,25 @@ static auto tri_up = [&]( ImVec2 const pos, float_t const height, ImU32 const co
     draw_list->AddConvexPolyFilled( points, 3, color ) ;
 } ;
 
+size_t timeline::_label_counter = 0 ;
+
+size_t timeline::inc_label_counter( void_t ) noexcept 
+{
+    static natus::concurrent::mutex_t __mtx ;
+    natus::concurrent::lock_guard_t lk( __mtx ) ; 
+    return _label_counter++ ;
+}
+
 timeline::timeline( void_t ) noexcept 
 {
+    auto const c = this_t::inc_label_counter() ;
+    _label = "unkown_timeline_" + std::to_string( c ) ;
+}
+
+//***************************************************************
+timeline::timeline( natus::ntd::string_in_t label ) noexcept 
+{
+    _label = label + "_" + std::to_string( this_t::inc_label_counter() ) ;
 }
 
 //***************************************************************
@@ -58,14 +75,13 @@ timeline::this_ref_t timeline::operator = ( this_rref_t ) noexcept
 }
 
 //***************************************************************
-bool_t timeline::begin( natus::ntd::string_cref_t label, natus::tool::time_info_ref_t ti,  natus::tool::imgui_view_t ) noexcept 
+bool_t timeline::begin( natus::tool::time_info_ref_t ti,  natus::tool::imgui_view_t ) noexcept 
 {
     if( _begin ) return false ;
     _begin = true ;
 
     if( ti.max_milli == 0 ) ti.max_milli = 10000 ;
 
-    _label = label ;
     _max_milli = ti.max_milli ;
 
     if( _zoom == 0 )
@@ -77,8 +93,8 @@ bool_t timeline::begin( natus::ntd::string_cref_t label, natus::tool::time_info_
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
 
-    ImVec2 const scrolling_child_size = ImVec2( 0, ImGui::GetContentRegionAvail().y ) - ImVec2(0.0f, ImGui::GetTextLineHeight()+10) ;
-    ImGui::BeginChild((_label + "##timeline").c_str(), scrolling_child_size, true, ImGuiWindowFlags_HorizontalScrollbar) ;
+    //ImVec2 const scrolling_child_size = ImVec2( 0, ImGui::GetContentRegionAvail().y ) - ImVec2(0.0f, ImGui::GetTextLineHeight()+10) ;
+    ImGui::BeginChild((_label + "##timeline").c_str(), ImVec2(0,100), true, ImGuiWindowFlags_HorizontalScrollbar) ;
 
     auto draw_list = ImGui::GetWindowDrawList() ;
 
@@ -86,22 +102,6 @@ bool_t timeline::begin( natus::ntd::string_cref_t label, natus::tool::time_info_
     float_t const height = ImGui::GetContentRegionAvail().y ;
     size_t const big_line_height = height * 0.5f ;
     size_t const small_line_height = height * 0.25f ;
-
-    if( ImGui::GetIO().KeyCtrl )
-    {
-        auto const mw = ImGui::GetIO().MouseWheel ;
-        int_t tmp = int_t( -mw * 10.0f ) ;
-        if( tmp < 0 && _zoom >= size_t( std::abs( tmp ) ) )
-        {
-            _zoom += tmp ;
-            _zoom = std::max( size_t( 10 ), _zoom ) ;
-        }
-        else
-        {
-            _zoom += tmp ;
-            _zoom = std::min( size_t( 1000 ), _zoom ) ;
-        }
-    }
 
     // set markers in order to have the horizontal scroll bar visible and scrollable
     {
@@ -130,7 +130,23 @@ bool_t timeline::begin( natus::ntd::string_cref_t label, natus::tool::time_info_
 
     bool_t const mouse_in_cr = ImGui::IsMouseHoveringRect( 
         ImVec2( scroll_x, 0.0f) + ImGui::GetCursorScreenPos(), 
-        ImVec2( scroll_x, 0.0f) + ImGui::GetCursorScreenPos()+ImGui::GetContentRegionAvail() ) ; 
+        ImVec2( scroll_x, 0.0f) + ImGui::GetCursorScreenPos()+ImGui::GetContentRegionAvail() ) && ImGui::IsWindowHovered() ; 
+
+    if( ImGui::GetIO().KeyCtrl && mouse_in_cr )
+    {
+        auto const mw = ImGui::GetIO().MouseWheel ;
+        int_t tmp = int_t( -mw * 10.0f ) ;
+        if( tmp < 0 && _zoom >= size_t( std::abs( tmp ) ) )
+        {
+            _zoom += tmp ;
+            _zoom = std::max( size_t( 10 ), _zoom ) ;
+        }
+        else
+        {
+            _zoom += tmp ;
+            _zoom = std::min( size_t( 1000 ), _zoom ) ;
+        }
+    }
 
     ImGui::SetCursorScreenPos( capture_pos ) ;
 
@@ -199,7 +215,6 @@ bool_t timeline::begin( natus::ntd::string_cref_t label, natus::tool::time_info_
 
             _hover = this_t::pixel_to_milli( size_t( mouse_x ) ) ;
         }
-        
     }
     else
     {
@@ -244,18 +259,6 @@ bool_t timeline::begin( natus::ntd::string_cref_t label, natus::tool::time_info_
         ImGui::SetScrollX( p ) ;
     }
 
-    // testing line moving with scroll
-    #if 0
-    {
-        ImGui::SetCursorScreenPos( ImGui::GetCursorScreenPos() + ImVec2( scroll_x, 0.0f ) ) ;
-
-        {
-            ImVec2 pos = ImGui::GetCursorScreenPos() ;
-            draw_list->AddLine( pos + ImVec2(10.0f,0.0f), pos + ImVec2( 10.0f,10.0f ), IM_COL32(255, 0, 0, 255), 1.0f ) ;
-        }
-    }
-    #endif
-
     ImGui::SetCursorScreenPos( capture_pos ) ;
 
     // testing a button within the timeline
@@ -270,11 +273,6 @@ bool_t timeline::begin( natus::ntd::string_cref_t label, natus::tool::time_info_
     #endif 
 
     ImGui::SetCursorScreenPos( capture_pos ) ;
-
-    
-
-    //natus::log::global_t::status( "[" + std::to_string(scroll_max_x) + "] : [ " + std::to_string(scroll_x) + "] " ) ;
-
     
     return true ;
 }
@@ -325,7 +323,7 @@ void_t timeline::end( void_t ) noexcept
     ImGui::SameLine() ;
 
     {
-        ImGui::Checkbox( "lock##timeline", &_lock_player ) ;
+        ImGui::Checkbox( ("lock##timeline" + _label).c_str(), &_lock_player ) ;
     }
 
     _begin = false ;
