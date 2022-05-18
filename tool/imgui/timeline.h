@@ -1,6 +1,7 @@
 #pragma once
 
 #include "imgui.h"
+#include "../structs.h"
 
 #include <natus/ntd/string.hpp>
 #include <natus/ntd/vector.hpp>
@@ -18,7 +19,7 @@ namespace natus
         private:
 
             // unit: milli_per_pixel
-            size_t _zoom = 10 ;
+            size_t _zoom = 0 ;
 
             // in milli seconds
             size_t _hover = 0 ;
@@ -30,6 +31,10 @@ namespace natus
             bool_t _lock_player = false ;
 
             size_t _max_milli = 0 ;
+
+            natus::ntd::string_t _label ;
+
+            bool_t _begin = false ;
 
         public:
 
@@ -43,7 +48,7 @@ namespace natus
 
         public:
 
-            bool_t begin( natus::ntd::string_cref_t label, natus::tool::imgui_view_t ) noexcept ;
+            bool_t begin( natus::ntd::string_cref_t label, natus::tool::time_info_ref_t ti, natus::tool::imgui_view_t ) noexcept ;
             void_t end( void_t ) noexcept ;
 
         public:
@@ -76,6 +81,9 @@ namespace natus
             size_t ptm( size_t const p ) const noexcept { return this_t::pixel_to_milli( p ) ; }
 
             natus::ntd::string_t make_time_string( size_t const milli ) const noexcept ;
+
+
+        private:
 
         } ;
         natus_res_typedef( timeline ) ;

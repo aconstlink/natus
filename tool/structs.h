@@ -10,7 +10,6 @@ namespace natus
         {
             size_t max_milli = 0 ;
             size_t cur_milli = 0 ;
-            size_t 
         };
         natus_typedef( time_info ) ;
     }
