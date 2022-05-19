@@ -129,13 +129,14 @@ bool_t timeline::begin( natus::tool::time_info_ref_t ti,  natus::tool::imgui_vie
     //natus::log::global_t::status( std::to_string(mouse_x) ) ;
 
     bool_t const mouse_in_cr = ImGui::IsMouseHoveringRect( 
-        ImVec2( scroll_x, 0.0f) + ImGui::GetCursorScreenPos(), 
-        ImVec2( scroll_x, 0.0f) + ImGui::GetCursorScreenPos()+ImGui::GetContentRegionAvail() ) && ImGui::IsWindowHovered() ; 
+        ImVec2( ImGui::GetScrollX(), 0.0f) + ImGui::GetCursorScreenPos(), 
+        ImVec2( ImGui::GetScrollX(), 0.0f) + ImGui::GetCursorScreenPos()+ImGui::GetContentRegionAvail() ) && ImGui::IsWindowHovered() ; 
 
     if( ImGui::GetIO().KeyCtrl && mouse_in_cr )
     {
+        auto const f = ImGui::GetIO().KeyShift ? 10.0f : 1.0f ;
         auto const mw = ImGui::GetIO().MouseWheel ;
-        int_t tmp = int_t( -mw * 10.0f ) ;
+        int_t tmp = int_t( -mw * f ) ;
         if( tmp < 0 && _zoom >= size_t( std::abs( tmp ) ) )
         {
             _zoom += tmp ;
@@ -146,6 +147,8 @@ bool_t timeline::begin( natus::tool::time_info_ref_t ti,  natus::tool::imgui_vie
             _zoom += tmp ;
             _zoom = std::min( size_t( 1000 ), _zoom ) ;
         }
+
+        if( tmp != 0 ) ImGui::SetScrollX( std::max( mouse_x - ImGui::GetContentRegionAvail().x * 0.5f, 0.0f ) ) ;
     }
 
     ImGui::SetCursorScreenPos( capture_pos ) ;
