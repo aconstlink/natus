@@ -84,6 +84,7 @@ namespace natus
             size_t ptm( size_t const p ) const noexcept { return this_t::pixel_to_milli( p ) ; }
 
             natus::ntd::string_t make_time_string( size_t const milli ) const noexcept ;
+            natus::ntd::string_t make_time_string2( size_t const milli ) const noexcept ;
 
 
         private:

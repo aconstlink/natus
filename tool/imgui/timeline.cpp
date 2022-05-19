@@ -190,11 +190,10 @@ bool_t timeline::begin( natus::tool::time_info_ref_t ti,  natus::tool::imgui_vie
                 size_t const cur_milli = this_t::pixel_to_milli( (the_big + i) * size_t(big) );
 
                 #if 1
-                size_t const sec = cur_milli / 1000 ;
-                size_t const mil = cur_milli % 1000 ;
-
                 ImGui::SetCursorScreenPos( p0 + ImVec2(2.0f, height * 0.25f) + ImVec2(0.0f, ((the_big+i)%2)*ImGui::GetTextLineHeight()*0.5) ) ;
-                ImGui::Text( (std::to_string( sec ) + ":" + std::to_string( mil ) ).c_str() ) ;
+                ImGui::SetWindowFontScale( 1.0f ) ;
+                ImGui::Text( this_t::make_time_string2( cur_milli ).c_str() ) ;
+                ImGui::SetWindowFontScale( 1.0f ) ;
                 ImGui::SameLine() ;
                 #endif
             }
@@ -364,6 +363,26 @@ natus::ntd::string_t timeline::make_time_string( size_t const milli ) const noex
     {
         std::stringstream ss;
         ss << std::setw(3) << std::setfill('0') << milli % 1000 ;
+        s += ss.str();
+    }
+
+    return s ;
+}
+
+//***************************************************************
+natus::ntd::string_t timeline::make_time_string2( size_t const milli ) const noexcept 
+{
+    natus::ntd::string_t s ;
+
+    {
+        std::stringstream ss;
+        ss << std::setw(2) << std::setfill('0') << milli / 60000 ;
+        s += ss.str();
+    }
+    s += ":" ;
+    {
+        std::stringstream ss;
+        ss << std::setw(2) << std::setfill('0') << (milli / 1000) % 60 ;
         s += ss.str();
     }
 
