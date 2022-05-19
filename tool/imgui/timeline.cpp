@@ -6,7 +6,7 @@
 
 using namespace natus::tool ;
 
-static auto tri_down = [&]( ImVec2 const pos, float_t const height, ImU32 const color, ImDrawList * draw_list )
+static auto tri_down = []( ImVec2 const pos, float_t const height, ImU32 const color, ImDrawList * draw_list )
 {
     float_t const h = natus::math::fn<float_t>::ceil( height * 0.5f ) ;
 
@@ -18,7 +18,7 @@ static auto tri_down = [&]( ImVec2 const pos, float_t const height, ImU32 const 
     draw_list->AddConvexPolyFilled( points, 3, color ) ;
 } ;
 
-static auto tri_up = [&]( ImVec2 const pos, float_t const height, ImU32 const color, ImDrawList * draw_list )
+static auto tri_up = []( ImVec2 const pos, float_t const height, ImU32 const color, ImDrawList * draw_list )
 {
     float_t const h = natus::math::fn<float_t>::ceil( height * 0.5f ) ;
 
