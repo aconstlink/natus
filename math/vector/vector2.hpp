@@ -169,25 +169,14 @@ namespace natus
         public: // operator +
 
             //***************************************************
-            this_cref_t operator += ( this_cref_t rhv ){
+            this_ref_t operator += ( this_cref_t rhv ) noexcept{
                 _elem[0]+=rhv.x(); _elem[1]+=rhv.y(); 
                 return (*this) ;
             }
 
             //***************************************************
-            this_t operator + ( this_cref_t rhv ) const{
+            this_t operator + ( this_cref_t rhv ) const noexcept {
                 return this_t(_elem[0]+rhv.x(), _elem[1]+rhv.y()) ;
-            }
-
-            //***************************************************
-            this_cref_t operator += ( type_cref_t rhv ){
-                _elem[0]+=rhv; _elem[1]+=rhv;
-                return (*this) ;
-            }
-
-            //***************************************************
-            this_t operator + ( type_cref_t rhv ) const{
-                return this_t(_elem[0]+rhv, _elem[1]+rhv) ;
             }
 
         public: // operator -
