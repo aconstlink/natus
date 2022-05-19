@@ -263,6 +263,17 @@ bool_t timeline::begin( natus::tool::time_info_ref_t ti,  natus::tool::imgui_vie
 
     ImGui::SetCursorScreenPos( capture_pos ) ;
 
+    {
+        if( ImGui::GetIO().MouseDown[1] && mouse_in_cr )
+        {
+            ImVec2 cm = ImGui::GetMousePos() ;
+            float_t const d = (cm.x - _old_mouse_pos.x) ;
+            float_t const x = std::min( ImGui::GetScrollX() + d, ImGui::GetScrollMaxX() ) ;
+            ImGui::SetScrollX( x ) ;
+        }
+        _old_mouse_pos = ImGui::GetMousePos() ;
+    }
+
     // testing a button within the timeline
     #if 0
     {

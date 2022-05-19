@@ -38,6 +38,10 @@ namespace natus
 
             static size_t _label_counter ;
 
+
+            // used for moving the timeline
+            ImVec2 _old_mouse_pos ;
+
         public:
 
             timeline( void_t ) noexcept ;
