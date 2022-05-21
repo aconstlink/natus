@@ -7,9 +7,14 @@ set( avx_sources )
 # not arch specific
 set( non_arch_sources
 
+    animation/evaluation_result.h
+    animation/keyframe.hpp
+    animation/linear_keyframe_sequence.hpp
+    spline/linear_spline.hpp
+
     curve/catmull_rom_curve.hpp
     curve/cubic_bezier_curve.hpp
-    
+
     color/protos.hpp
     color/color3.hpp
     color/color4.hpp
