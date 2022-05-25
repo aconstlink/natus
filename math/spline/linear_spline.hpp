@@ -18,25 +18,38 @@ namespace natus
             natus_typedefs( T, type ) ;    
             natus_typedefs( type_t, value ) ;
 
-            typedef std::pair< value_t, value_t > __segment_t ;
-            natus_typedefs( __segment_t, segment ) ;
-
+            template< typename T2 >
+            struct segment
+            {
+                T2 p0 ;
+                T2 p1 ;
+            };
+            natus_typedefs( segment< float_t >, segmentf ) ;
+            natus_typedefs( segment< value_t >, segmentv ) ;
         
         private:
 
             /// control point being evaluated
             natus::ntd::vector< value_t > _cps ;
 
-            /// number of segments.
-            size_t _ns = 0 ;
-
-            /// reciprocal of number of segments.
-            float_t _rns = 0.0f ;
-
         public:
 
             linear_spline( void_t ) noexcept
             {}
+
+            linear_spline( value_cref_t p0, value_cref_t p1 ) noexcept
+            {
+                _cps.emplace_back( p0 ) ;
+                _cps.emplace_back( p1 ) ;
+            }
+
+            linear_spline( std::initializer_list< value_t > const & il ) noexcept
+            {
+                for( auto const & i : il )
+                {
+                    _cps.emplace_back( i ) ;
+                }                
+            }
 
             linear_spline( this_rref_t rhv ) noexcept
             {
@@ -51,16 +64,12 @@ namespace natus
             this_ref_t operator = ( this_rref_t rhv ) noexcept
             {
                 _cps = std::move( rhv._cps ) ;
-                _ns = rhv._ns ;
-                _rns = rhv._rns ;
                 return ( *this ) ;
             }
 
             this_ref_t operator = ( this_cref_t rhv ) noexcept
             {
                 _cps = rhv._cps ;
-                _ns = rhv._ns ;
-                _rns = rhv._rns ;
                 return ( *this ) ;
             }
 
@@ -69,16 +78,12 @@ namespace natus
             void_t clear( void_t ) noexcept
             {
                 _cps.clear() ;
-                _ns = 0 ;
-                _rns = 0.0f ;
             }
 
             /// Adds a control point to the end of the control point array.
             void push_back( value_in_t cp ) noexcept
             {
                 _cps.push_back( cp ) ;
-                _ns =  _cps.size() - 1 ;
-                _rns = float_t(1)/float_t(_ns) ;
             }
         
             /// replaced the control point at index i
@@ -99,10 +104,6 @@ namespace natus
                 if( index >= _cps.size() ) return false ;
 
                 _cps.insert( _cps.cbegin() + index, cp ) ;
-
-                // recalculate internal variables.
-                _ns =  _cps.size() - 1 ;
-                _rns = float_t(1)/float_t(_ns) ;
 
                 return true ;
             }
@@ -129,50 +130,67 @@ namespace natus
                 return _cps.size() ;
             }
 
+            size_t ncp( void_t ) const noexcept
+            {
+                return _cps.size() ;
+            }
+
+            /// return the number of segments.
+            size_t ns( void_t ) const noexcept
+            {
+                // (npc - 1) / p where p:=1 for linear splines
+                return this_t::ncp() - 1 ;
+            }
         
             /// return the number of segments.
             size_t num_segments( void_t ) const noexcept
             {
-                return _ns ;
+                return this_t::ns() ;
             }
 
             /// return the number of segments.
             size_t get_num_segments( void_t ) const noexcept
             {
-                return _ns ;
+                return this_t::ns() ;
+            }
+
+            // linear spline has 2 points per segment (pps)
+            size_t points_per_segment( void_t ) const noexcept
+            {
+                return 2 ;
+            }
+
+            size_t pps( void_t ) const noexcept
+            {
+                return this_t::points_per_segment() ;
             }
 
             /// evaluate at global t.
             /// the linear spline requires at least 2 control points to work.
-            bool_t operator() ( float_t const t, value_out_t val_out ) const noexcept
+            bool_t operator() ( float_t const t_g, value_out_t val_out ) const noexcept
             {
-                if( _ns < 1 ) return false ;
-            
-                if( natus::core::is_not( this_t::is_in_range( t ) ) ){
-                    return false ;
-                }
+                if( this_t::ncp() < 2 ) return false ;
+                auto const t = std::min( 1.0f, std::max( t_g, 0.0f ) ) ;
 
-                // get the segment of the given global t.
-                size_t const si = this_t::segment_index( t ) ;
+                float_t const local_t = this_t::global_to_local( t ) ;
+                auto const seg = this_t::get_segment( t ) ;
 
-                // get the control point for the corresponding 
-                // segment.
-                segment_t const seg = this_t::__get_segment( si ) ;
-
-                // convert the global t into the local t in the segment space.
-                float_t const local_t = this_t::global_to_local( t, si ) ;
-
-                // now, lerp across the points.
-                //return cps.first * (float_t(1)-local_t) + cps.second * local_t ;
-                val_out = natus::math::interpolation<value_t>::linear( seg.first, seg.second, local_t ) ;
+                val_out = natus::math::interpolation<value_t>::linear( seg.p0, seg.p1, local_t ) ;
 
                 return true ;
+            }
+
+            value_t operator() ( float_t const t ) const noexcept
+            {
+                value_t ret ;
+                this_t::operator()( t, ret ) ;
+                return ret ;
             }
 
             /// 
             bool_t dt( float_t const t, value_out_t val_out ) const noexcept
             {
-                if( _ns < 1 ) return false ;
+                if( this_t::ncp() < 2 ) return false ;
 
                 segment_t const seg = this_t::__get_segment( this_t::segment_index( t ) ) ;
 
@@ -181,58 +199,49 @@ namespace natus
                 return true ;
             }
 
+        private:
+
             /// convert global t to segment index
             /// @param tg global t E [0.0,1.0]
             /// @return segment index E [0,ns-1]
             size_t segment_index( float_t const t_g ) const noexcept
             {
-                return size_t( std::min( std::floor(t_g*_ns), float_t(_ns-1) ) ) ;
+                return size_t( std::min( std::floor(t_g*this_t::ns()), float_t(this_t::ns()-1) ) ) ;
             }
 
-            /// Converts the global t into a t that is local to the current 
-            /// segment. For example, if the spline has 5 control point where the
-            /// first point start at t=0.0 and the last ends with t=1.0, that t must
-            /// be recalculated so that it fits into the current segment where the 
-            /// t is right now.       
+            // returns the value segment for a global t.
+            segmentv_t get_segment( float_t const t_g ) const noexcept
+            {
+                auto const si = this_t::segment_index( t_g ) ;
+                return this_t::get_segment( si ) ;
+            }
+
+            segmentv_t get_segment( size_t const si ) const noexcept
+            {
+                size_t const i = si * (this_t::pps()-1) ;
+                return this_t::segmentv_t( { _cps[i+0], _cps[i+1] } ) ;
+            }
+
+            // returns the segemnt of the t values for the involved cps
+            // in the requested segment. This is used to compute the 
+            // local t value.
+            segmentf_t get_t_segment( size_t const si ) const noexcept
+            {
+                float_t const b = float_t( si * (this_t::pps() - 1) ) ;
+                float_t const r = 1.0f / float_t(this_t::ncp() - 1) ;
+                return segmentf_t{ (b + 0.0f)*r, (b + 1.0f)*r };
+            }
+
             float_t global_to_local( float_t const t ) const noexcept
             {
-                return this_t::global_to_local( t, this_t::segment_index( t ) ) ;
+                size_t const si = this_t::segment_index( t ) ;
+                auto const st = this_t::get_t_segment( si ) ;
+                return this_t::global_to_local( t, st ) ;
             }
 
-
-            /// Optimized version. Here the segment index can be passed
-            /// as a parameter, so it must not be recalculated. This is 
-            /// of use in a function where the segment index is still calculated.
-            float_t global_to_local( float_t const t, size_t const si ) const noexcept
+            float_t global_to_local( float_t const t, segmentf_cref_t s ) const noexcept
             {
-                // could be written as: t*ns-si
-                // could be written as: t*ns-floor(t*ns)
-                return (t - (si*_rns))*_ns ;
-            }
-
-        private:
-
-            /// private version without check
-            segment_t __get_segment( size_t const s ) const noexcept
-            {
-                return segment_t( _cps[s], _cps[s+1] ) ;
-            }
-
-        
-            /// Returns the segments control points. The segment index is in [0,s] 
-            /// where s is the number of segments-1.
-            bool_t get_segment( size_t const seg, segment_out_t seg_out ) const noexcept
-            {
-                if( (seg+1) >= _cps.size() ) return false ;
-            
-                seg_out = this_t::__get_segment( seg ) ;
-
-                return true ;
-            }
-
-            float_t t_to_valid_range( float_t const t ) const noexcept
-            {
-                return std::min( std::max(0.0f,t), 1.0f ) ;
+                return (t - s.p0) / (s.p1 - s.p0) ;
             }
 
             bool_t is_in_range( float_t const t ) const noexcept
