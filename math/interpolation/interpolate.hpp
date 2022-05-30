@@ -25,6 +25,12 @@ namespace natus
                 return p1 * omt * omt + p2 * real_t( 2 ) * omt * t + p3 * t * t ;
             }
 
+            static value_t quadratic_dt( value_cref_t p1, value_cref_t p2,
+                value_cref_t p3, real_t const& t )
+            {
+                return real_t(2)*t*(p1-real_t(2)*p2+p3) + real_t(2)*(p2-p1);
+            }
+
             static value_t cubic( value_cref_t p1, value_cref_t p2,
                 value_cref_t p3, value_cref_t p4, real_t const& t )
             {

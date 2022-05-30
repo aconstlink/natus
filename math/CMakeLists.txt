@@ -9,9 +9,13 @@ set( non_arch_sources
 
     animation/evaluation_result.h
     animation/keyframe.hpp
+    animation/keyframe_sequence.hpp
     animation/linear_keyframe_sequence.hpp
     spline/linear_spline.hpp
-
+    spline/quadratic_spline.hpp
+    spline/cubic_spline.hpp
+    spline/catrom_spline.hpp
+    spline/continuity.h
     curve/catmull_rom_curve.hpp
     curve/cubic_bezier_curve.hpp
 
