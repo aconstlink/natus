@@ -92,6 +92,7 @@ namespace natus
 
             natus::concurrent::mutex_t _lines_mtx ;
             natus::ntd::vector< line_t > _lines ;
+            size_t _num_lines = 0 ;
 
         public:
 

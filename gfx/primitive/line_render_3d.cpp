@@ -348,6 +348,9 @@ void_t line_render_3d::prepare_for_rendering( void_t ) noexcept
 
         vertex_realloc = _go->vertex_buffer().get_sib() > vsib ;
         data_realloc = _ao->data_buffer().get_sib() > bsib ;
+
+        _num_lines = _lines.size() ;
+        _lines.clear() ;
     }
 
     // 2. prepare variable set
@@ -388,7 +391,7 @@ void_t line_render_3d::render( void_t ) noexcept
         a.push( _rs ) ;
         {
             natus::graphics::backend::render_detail rd ;
-            rd.num_elems = _lines.size() << 1 ;
+            rd.num_elems = _num_lines << 1 ;
             rd.start = 0 ;
             rd.varset = 0 ;
             a.render( _ro, rd ) ;
