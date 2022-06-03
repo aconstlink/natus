@@ -131,7 +131,7 @@ namespace natus
             void_t draw_rect( size_t const, natus::math::vec2f_cref_t p0, natus::math::vec2f_cref_t p1, 
                 natus::math::vec2f_cref_t p2, natus::math::vec2f_cref_t p3, natus::math::vec4f_cref_t color ) noexcept ;
 
-            void_t draw_circle( size_t const, size_t const, natus::math::vec2f_cref_t p0, float_t const r, natus::math::vec4f_cref_t color ) noexcept ;
+            void_t draw_circle( size_t const layer, size_t const num_points, natus::math::vec2f_cref_t p0, float_t const r, natus::math::vec4f_cref_t color ) noexcept ;
 
         public:
 
