@@ -1,6 +1,7 @@
 #pragma once
 
 #include "angle.hpp"
+#include "constants.hpp"
 
 namespace natus
 {    
@@ -18,7 +19,7 @@ namespace natus
 
             static type_t val_to_radian( type_t const degree )
             {
-                return degree * natus::math::constants::pi<type_t>() / type_t( 180 ) ;
+                return degree * natus::math::constants<type_t>::pi() / type_t( 180 ) ;
             }
 
             static angle_t to_radian( type_t const deg )
