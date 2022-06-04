@@ -174,7 +174,7 @@ namespace natus
             // @return segment index E [0,ns-1]
             size_t segment_index( float_t const t ) const noexcept
             {
-                return size_t( std::min( std::floor( t * this_t::ns() ), this_t::ns() - 1 ) ) ;
+                return size_t( std::min( std::floor( t * float_t( this_t::ns() ) ), float_t( this_t::ns() - 1 ) ) ) ;
             }
 
             // returns the value segment for a global t.
