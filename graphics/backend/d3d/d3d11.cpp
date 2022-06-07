@@ -2375,7 +2375,12 @@ public: // functions
             data.view->Release() ;
             data.view = nullptr ;
         }
-            
+        
+        // must be 16 in order to have access to all data.
+        // this is independent from the number of layout elements.
+        // latout elements may only have vec4f inserted!
+        size_t const elem_sib = 16 ; // sizeof( vec4f ) ;
+
         // create the buffer
         {
             D3D11_BUFFER_DESC bd = { } ;
@@ -2383,7 +2388,7 @@ public: // functions
             // using max of 1 sib so empty vbs will create and will 
             // be resized in the update function. Important for now
             // is that the buffer will be NOT nullptr.
-            bd.ByteWidth = UINT( std::max( byte_width, size_t( 1 ) ) ) ;
+            bd.ByteWidth = UINT( std::max( byte_width, elem_sib ) ) ;
             bd.BindFlags = D3D11_BIND_VERTEX_BUFFER | D3D10_BIND_SHADER_RESOURCE ;
             bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE ;
 
@@ -2400,13 +2405,11 @@ public: // functions
             res_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT ;
             res_desc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER ;
 
-            // must be 16 in order to have access to all data.
-            // this is independent from the number of layout elements.
-            // latout elements may only have vec4f inserted!
-            UINT const elem_sib = 16 ; // sizeof( vec4f )
-
             res_desc.Buffer.FirstElement= 0 ;
-            res_desc.Buffer.NumElements = UINT( byte_width ) / elem_sib ;
+
+            // somehow, this can not be 0
+            // otherwise, hr will be in valid.
+            res_desc.Buffer.NumElements = std::max( UINT( byte_width ) / UINT(elem_sib), 1u ) ; 
 
             auto const hr = dev->CreateShaderResourceView( data.buffer, &res_desc, data.view ) ;
             if( FAILED( hr ) )
