@@ -68,7 +68,7 @@ generic_camera::~generic_camera( void_t ) noexcept {}
      _trafo = trafo ;
      for( lens_res_t& res : _lenses )
      {
-         res->transform_by( trafo ) ;
+         res->set_transformation( trafo ) ;
      }
  }
 

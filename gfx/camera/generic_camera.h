@@ -10,6 +10,11 @@ namespace natus
 {
     namespace gfx
     {
+        // A generic camera class storing lenses for rendering 
+        // through those lenses. The camera has a frame for spacial 
+        // positioning and the lenes have a transformation too.
+        // @todo each lens needs an offset so a stereoscopic camera
+        // can be created by adding two lenses and defining the offset.
         class NATUS_GFX_API generic_camera : public icamera
         {
             natus_this_typedefs( generic_camera ) ;

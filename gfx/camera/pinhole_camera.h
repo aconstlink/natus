@@ -8,6 +8,9 @@ namespace natus
 {
     namespace gfx
     {
+        // this class simplyfies the use of the pinholse lens and 
+        // the generic camera. It has one pinhole lens that can 
+        // be directly accessed through this class.
         class pinhole_camera
         {
             natus_this_typedefs( pinhole_camera ) ;
@@ -99,6 +102,16 @@ namespace natus
             natus::math::mat4f_t mat_view( void_t ) const noexcept
             {
                 return _lens->get_view_matrix() ;
+            }
+
+            natus::math::m3d::trafof_cref_t get_transformation( void_t ) const noexcept
+            {
+                return _camera->get_transformation() ;
+            }
+
+            void_t set_transformation( natus::math::m3d::trafof_cref_t t ) noexcept
+            {
+                _camera->set_transformaion( t ) ;
             }
         };
         natus_res_typedef( pinhole_camera ) ;
