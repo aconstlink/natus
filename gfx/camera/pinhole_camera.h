@@ -4,6 +4,8 @@
 #include "generic_camera.h"
 #include "pinhole_lens.h"
 
+#include <natus/math/utility/3d/look_at.hpp>
+
 namespace natus
 {
     namespace gfx
@@ -85,10 +87,11 @@ namespace natus
             this_ref_t look_at( natus::math::vec3f_cref_t pos,
                 natus::math::vec3f_cref_t up, natus::math::vec3f_cref_t at ) noexcept
             {
-                _camera->for_each_lens( [&] ( icamera_ref_t, lens_res_t& l ) 
-                { 
-                    l->look_at( pos, up, at ) ;
-                } ) ;
+                natus::math::mat4f_t m ;
+                natus::math::m3d::create_lookat_rh( pos, up, at, m ) ;
+
+                _camera->set_transformaion( m ) ;
+
                 return *this ;
             }
 

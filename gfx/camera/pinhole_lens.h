@@ -35,13 +35,13 @@ namespace natus
 
         public:
 
-            pinhole_lens( void_t ) 
+            pinhole_lens( void_t ) noexcept
             {
                 _lens_matrix.identity() ;
                 _view_matrix.identity() ;
                 _proj_matrix.identity() ;
             }
-            pinhole_lens( this_rref_t rhv ) 
+            pinhole_lens( this_rref_t rhv ) noexcept
             {
                 _lens_frame = rhv._lens_frame ;
                 _lens_matrix = rhv._lens_matrix ;
@@ -50,7 +50,7 @@ namespace natus
 
                 _projection_mode = rhv._projection_mode ;
             }
-            virtual ~pinhole_lens( void_t ) {}
+            virtual ~pinhole_lens( void_t ) noexcept {}
 
         public:
 
@@ -95,66 +95,31 @@ namespace natus
                 return ::std::move( ret ) ;
             }
 
-            bool_t is_perspective( void_t ) const
+            bool_t is_perspective( void_t ) const noexcept
             {
                 return _projection_mode == projection_type::perspective ;
             }
 
-            bool_t is_orthographic( void_t ) const
+            bool_t is_orthographic( void_t ) const noexcept
             {
                 return _projection_mode == projection_type::orthographic ;
             }
 
-            void_t set_camera_matrix( natus::math::mat4f_cref_t ) ;
-
         public: // interface
 
-            virtual natus::math::vec3f_t get_position( void_t ) const 
+            virtual void_t update_view_matrix( natus::math::mat4f_cref_t frame ) noexcept 
             {
-                return _lens_matrix.get_column3( 3 ) ;
+                natus::math::m3d::create_view_matrix( frame, _view_matrix ) ;
             }
 
-            virtual natus::math::mat3f_cref_t get_lens_frame( void_t ) const 
-            {
-                return _lens_frame ;
-            }
-
-            virtual natus::math::mat4f_cref_t get_lens_matrix( void_t ) const 
-            {
-                return _lens_matrix ;
-            }
-
-            virtual natus::math::mat4f_cref_t get_view_matrix( void_t ) const 
+            virtual natus::math::mat4f_cref_t get_view_matrix( void_t ) const noexcept 
             {
                 return _view_matrix ;
             }
 
-            virtual natus::math::mat4f_cref_t get_proj_matrix( void_t ) const 
+            virtual natus::math::mat4f_cref_t get_proj_matrix( void_t ) const noexcept 
             {
                 return _proj_matrix ;
-            }
-
-            virtual void_t transform_by( natus::math::m3d::trafof_cref_t trafo_in ) 
-            {
-                natus::math::m3d::trafof_t const trafo =
-                    natus::math::m3d::trafof_t( _lens_matrix ) * trafo_in ;
-
-                natus::math::mat4f_t const mat_comp = trafo.get_transformation() * _lens_matrix ;
-
-                natus::math::m3d::create_view_matrix( mat_comp, _view_matrix ) ;
-            }
-
-            virtual void_t set_transformation( natus::math::m3d::trafof_cref_t trafo_in ) 
-            {
-                _lens_matrix = trafo_in.get_transformation() ;
-                natus::math::m3d::create_view_matrix( _lens_matrix, _view_matrix ) ;
-            }
-
-            virtual void_t look_at( natus::math::vec3f_cref_t pos,
-                natus::math::vec3f_cref_t up, natus::math::vec3f_cref_t at ) 
-            {
-                natus::math::m3d::create_lookat_rh( pos, up, at, _lens_matrix ) ;
-                natus::math::m3d::create_view_matrix( _lens_matrix, _view_matrix ) ;
             }
         };
         natus_res_typedef( pinhole_lens ) ;

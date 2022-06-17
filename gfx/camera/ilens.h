@@ -17,19 +17,9 @@ namespace natus
         {
         public:
 
-            /// lens position relative to camera
-            virtual natus::math::vec3f_t get_position( void_t ) const = 0 ;
-
-            virtual natus::math::mat3f_cref_t get_lens_frame( void_t ) const = 0 ;
-            virtual natus::math::mat4f_cref_t get_lens_matrix( void_t ) const = 0 ;
-            virtual natus::math::mat4f_cref_t get_view_matrix( void_t ) const = 0 ;
-            virtual natus::math::mat4f_cref_t get_proj_matrix( void_t ) const = 0 ;
-
-            virtual void_t transform_by( natus::math::m3d::trafof_cref_t )  = 0 ;
-            virtual void_t set_transformation( natus::math::m3d::trafof_cref_t ) = 0 ;
-
-            virtual void_t look_at( natus::math::vec3f_cref_t pos,
-                natus::math::vec3f_cref_t up, natus::math::vec3f_cref_t at ) = 0 ;
+            virtual void_t update_view_matrix( natus::math::mat4f_cref_t frame ) noexcept = 0 ;
+            virtual natus::math::mat4f_cref_t get_view_matrix( void_t ) const  noexcept = 0 ;
+            virtual natus::math::mat4f_cref_t get_proj_matrix( void_t ) const  noexcept = 0 ;
         };
         natus_res_typedef( ilens ) ;
         typedef natus::memory::res_t< ilens_t > lens_res_t ;

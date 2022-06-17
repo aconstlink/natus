@@ -39,23 +39,23 @@ namespace natus
 
         public:
 
-            natus::gfx::result add_lens( natus::gfx::lens_res_t lens ) ;
-            void_t replace_lens( size_t const, lens_res_t ) ;
+            natus::gfx::result add_lens( natus::gfx::lens_res_t lens ) noexcept ;
+            void_t replace_lens( size_t const, lens_res_t ) noexcept ;
 
         public: // interface
 
             
-            virtual size_t get_num_lenses( void_t ) const ;
+            virtual size_t get_num_lenses( void_t ) const noexcept ;
 
-            virtual lens_res_t get_lens( size_t const i ) ;
+            virtual lens_res_t get_lens( size_t const i ) noexcept ;
 
-            virtual void_t transform_by( natus::math::m3d::trafof_cref_t trafo )  ;
-            virtual void_t set_transformaion( natus::math::m3d::trafof_cref_t trafo ) ;
+            virtual void_t transform_by( natus::math::m3d::trafof_cref_t trafo ) noexcept  ;
+            virtual void_t set_transformaion( natus::math::m3d::trafof_cref_t trafo ) noexcept ;
 
-            virtual natus::math::m3d::trafof_cref_t get_transformation( void_t ) const ;
+            virtual natus::math::m3d::trafof_cref_t get_transformation( void_t ) const noexcept ;
 
-            typedef ::std::function< void_t ( icamera_ref_t, lens_res_t& ) > lens_funk_t ;
-            virtual void_t for_each_lens( lens_funk_t funk )  ;
+            typedef std::function< void_t ( icamera_ref_t, lens_res_t& ) > lens_funk_t ;
+            virtual void_t for_each_lens( lens_funk_t funk ) noexcept  ;
         };
         natus_res_typedef( generic_camera ) ;
     }
