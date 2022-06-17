@@ -207,6 +207,7 @@ namespace natus
                 return true ;
             }
 
+            // evaluates at global t.
             value_t operator() ( float_t const t ) const noexcept
             {
                 value_t ret ;
@@ -214,6 +215,7 @@ namespace natus
                 return ret ;
             }
 
+            // evaluates 1st differential at global t.
             value_t dt( float_t const t ) const noexcept
             {
                 if( this_t::ncp() < 3 ) return value_t() ;
