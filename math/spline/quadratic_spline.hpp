@@ -132,19 +132,28 @@ namespace natus
                 _cps.clear() ;
             }
 
-            /// Add an interpolating control point.
-            /// computes the mid control point in c1 continuity.
+            // Add an interpolating control point.
+            // computes the mid control point in c1 continuity.
+            // Computes c1 if at least three points are present.
             void append( value_in_t cp ) noexcept
             {
-                if( this_t::ncp() < 3 ) return ;
-
-                value_t midpoint = cp ;
-
-                // compute middle cp
+                if( this_t::ncp() < 3 ) 
                 {
+                    _cps.emplace_back( cp ) ;
+                    return ;
                 }
 
-                _cps.push_back( cp ) ;
+                size_t const s = this_t::num_segments() - 1 ;
+
+                size_t const base = s * 2 ;
+
+                auto const p0 = _cps[ base + 0 ] ;
+                auto const p1 = _cps[ base + 1 ] ;
+                auto const p2 = _cps[ base + 2 ] ;
+
+                _cps.emplace_back( _cps.back() + natus::math::interpolation<value_t>::quadratic_dt( p0, p1, p2, 1.0f )*0.5f ) ;
+
+                _cps.emplace_back( cp ) ;
             }
 
             /// return the number of segments.
