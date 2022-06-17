@@ -35,6 +35,17 @@ namespace natus
 
         public:
 
+            enum class init_type
+            {
+                // take control points as passed.
+                complete,
+                // take given control points and construct a c1 continous spline
+                construct_c1,
+
+            };
+
+        public:
+
             quadratic_spline( void_t ) noexcept
             {}
 
@@ -47,14 +58,51 @@ namespace natus
             }
 
             // pass control points
-            quadratic_spline( std::initializer_list< value_t > const & li ) noexcept
+            // if t == construct_c1 -> first three control points represent the first segment. Every other control point
+            // is interpreted as interpolating points
+            // @precondition li.size() >= 3
+            quadratic_spline( natus::ntd::vector< value_t > const & li, this_t::init_type t = this_t::init_type::complete ) noexcept
             {
-                for( auto const & i : li )
+                if( li.size() < 3 ) return ;
+
+                if( t == this_t::init_type::complete )
                 {
-                    _cps.emplace_back( i ) ;
+                    for( auto const & i : li )
+                    {
+                        _cps.emplace_back( i ) ;
+                    }
+                }
+                else if( t == this_t::init_type::construct_c1 )
+                {
+                    _cps.reserve( li.size() * 2 ) ;
+                    
+                    _cps.emplace_back( li[0] ) ;
+                    _cps.emplace_back( li[1] ) ;
+                    _cps.emplace_back( li[2] ) ;
+
+
+                    for( size_t i=3; i<li.size(); ++i )
+                    {
+                        size_t const s = this_t::num_segments() - 1 ;
+
+                        size_t const base = s * 2 ;
+
+                        auto const p0 = _cps[ base + 0 ] ;
+                        auto const p1 = _cps[ base + 1 ] ;
+                        auto const p2 = _cps[ base + 2 ] ;
+
+                        _cps.emplace_back( _cps.back() + natus::math::interpolation<value_t>::quadratic_dt( p0, p1, p2, 1.0f )*0.5f ) ;
+
+                        _cps.emplace_back( li[i] ) ;
+                    }
                 }
             }
 
+            quadratic_spline( std::initializer_list< value_t > const & li, this_t::init_type t = this_t::init_type::complete ) noexcept :
+                quadratic_spline( natus::ntd::vector< value_t >( li), t )
+            {
+                
+            }
             quadratic_spline( this_rref_t rhv ) noexcept
             {
                 (*this) = std::move(rhv) ;
