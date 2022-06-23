@@ -36,13 +36,51 @@ namespace natus
             {
                 real_t const one_minus_t = ( real_t( 1 ) - t ) ;
                 real_t const one_minus_t2 = one_minus_t * one_minus_t ;
+                real_t const one_minus_t3 = one_minus_t2 * one_minus_t ;
                 real_t const t2 = t * t ;
+                real_t const t3 = t2 * t;
 
                 // b(t) = (1-t)^3*p1 + 3*(1-t)^2*t*p2 + 3*(1-t)*t^2*p3 + t^3*p4
-                return		p1 * one_minus_t2 * one_minus_t +
-                    p2 * real_t( 3 ) * one_minus_t2 * t +
-                    p3 * real_t( 3 ) * one_minus_t * t2 +
-                    p4 * t2 * t ;
+                auto const term1 = p1 * one_minus_t3 ;
+                auto const term2 = p2 * one_minus_t2 * t * real_t(3) ;
+                auto const term3 = p3 * one_minus_t * t2 * real_t(3) ;
+                auto const term4 = p4 * t3 ;
+
+                return term1 + term2 + term3 + term4 ;
+            }
+
+            static value_t cubic_dt( value_cref_t p1, value_cref_t p2,
+                value_cref_t p3, value_cref_t p4, real_t const& t )
+            {
+                real_t const t2 = t * t ;
+                real_t const one_minus_t = ( real_t( 1 ) - t ) ;
+                real_t const one_minus_t2 = one_minus_t * one_minus_t ;
+
+                auto const s1 = p2 - p1 ;
+                auto const s2 = p3 - p2 ;
+                auto const s3 = p4 - p3 ;
+
+                auto const term1 = s1 * one_minus_t2 * real_t(3) ;
+                auto const term2 = s2 * one_minus_t * t * real_t(6) ;
+                auto const term3 = s3 * t2 * real_t( 3 ) ;
+
+                return term1 + term2 + term3 ;
+            }
+
+            static value_t cubic_dt2( value_cref_t p1, value_cref_t p2,
+                value_cref_t p3, value_cref_t p4, real_t const& t )
+            { 
+                real_t const t2 = t * t ;
+                real_t const one_minus_t = real_t( 1 ) - t ;
+                real_t const one_minus_t2 = one_minus_t * one_minus_t ;
+
+                auto const s1 = p3 - p2 * real_t(2) + p1 ;
+                auto const s2 = p4 - p3 * real_t(2) + p2 ;
+
+                auto const term1 = s1 * one_minus_t * real_t(6) ;
+                auto const term2 = s2 * t * real_t(6) ;
+
+                return term1 + term2 ;
             }
 
             static value_t catrom_by_slope( value_cref_t p1, value_cref_t m1,

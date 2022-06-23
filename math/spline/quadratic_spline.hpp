@@ -226,6 +226,17 @@ namespace natus
                 return natus::math::interpolation<value_t>::quadratic_dt( seg.p0, seg.p1, seg.p2, local_t ) ;
             }
 
+        public:
+
+            typedef std::function< void_t ( value_cref_t ) > for_each_cp_funk_t ;
+            void_t for_each_control_point( for_each_cp_funk_t funk ) const noexcept 
+            {
+                for( auto const & p : _cps )
+                {
+                    funk( p ) ;
+                }
+            }
+
         private:
 
             // convert global t to segment index
