@@ -23,6 +23,10 @@ set( sources
     "primitive/tri_render_2d.cpp"
     "primitive/primitive_render_2d.h"
     "primitive/primitive_render_2d.cpp"
+    "primitive/tri_render_3d.h"
+    "primitive/tri_render_3d.cpp"
+    "primitive/primitive_render_3d.h"
+    "primitive/primitive_render_3d.cpp"
     
     "sprite/sprite_render_2d.h"
     "sprite/sprite_render_2d.cpp"

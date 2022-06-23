@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include "../api.h"
@@ -11,61 +10,66 @@
 #include <natus/graphics/object/geometry_object.h>
 #include <natus/graphics/variable/variable_set.hpp>
 
-
 #include <natus/ntd/vector.hpp>
 
 namespace natus
 {
     namespace gfx
     {
-        class NATUS_GFX_API line_render_3d
+        class NATUS_GFX_API tri_render_3d
         {
-            natus_this_typedefs( line_render_3d ) ;
+            natus_this_typedefs( tri_render_3d ) ;
 
-        private:
+        private: // data
 
-            struct line
+            struct tri
             {
-                typedef struct
+                struct points
                 {
                     natus::math::vec3f_t p0 ;
                     natus::math::vec3f_t p1 ;
-                } points_t ;
-
-                union
-                {
-                    points_t points ;
-                    natus::math::vec3f_t pa[2] ;
+                    natus::math::vec3f_t p2 ;
                 };
-                
+
+                union 
+                {
+                    points pts ;
+                    natus::math::vec3f_t array[3] ;
+                };
                 natus::math::vec4f_t color ;
 
-                line( void_t ) {}
-                line( line const & rhv ) 
+                tri( void_t ) noexcept {}
+                tri( tri const & rhv ) noexcept
                 {
-                    points = rhv.points ;
-                    color = rhv.color ;
+                    std::memcpy( reinterpret_cast<void_ptr_t>(this),
+                        reinterpret_cast<void_cptr_t>(&rhv), sizeof(tri) ) ;
                 }
-                line( line && rhv ) noexcept
+                tri( tri && rhv ) noexcept
                 {
-                    points = std::move( rhv.points ) ;
-                    color = std::move( rhv.color ) ;
+                    std::memcpy( reinterpret_cast<void_ptr_t>(this),
+                        reinterpret_cast<void_cptr_t>(&rhv), sizeof(tri) ) ;
                 }
 
-                line & operator = ( line const & rhv ) noexcept
+                tri & operator = ( tri const & rhv ) noexcept
                 {
-                    points = rhv.points ;
-                    color = rhv.color ;
+                    std::memcpy( reinterpret_cast<void_ptr_t>(this),
+                        reinterpret_cast<void_cptr_t>(&rhv), sizeof(tri) ) ;
                     return *this ;
                 }
-                line & operator = ( line && rhv ) noexcept
+                tri & operator = ( tri && rhv ) noexcept
                 {
-                    points = std::move( rhv.points ) ;
-                    color = std::move( rhv.color ) ;
+                    std::memcpy( reinterpret_cast<void_ptr_t>(this),
+                        reinterpret_cast<void_cptr_t>(&rhv), sizeof(tri) ) ;
                     return *this ;
                 }
             };
-            natus_typedef( line ) ;
+            natus_typedef( tri ) ;
+
+            natus::concurrent::mutex_t _tris_mtx ;
+            natus::ntd::vector< tri_t > _tris ;
+            size_t _num_tris = 0 ;
+
+        private: // graphics
 
             struct vertex
             {
@@ -76,8 +80,6 @@ namespace natus
             {
                 natus::math::vec4f_t color ;
             };
-
-        private:
 
             natus::ntd::string_t _name ;
             natus::graphics::async_views_t _asyncs ;
@@ -90,38 +92,25 @@ namespace natus
             natus::math::mat4f_t _proj ;
             natus::math::mat4f_t _view ;
 
-            natus::concurrent::mutex_t _lines_mtx ;
-            natus::ntd::vector< line_t > _lines ;
-            size_t _num_lines = 0 ;
-
         public:
 
-            line_render_3d( void_t ) noexcept ;
-            line_render_3d( this_cref_t ) = delete ;
-            line_render_3d( this_rref_t ) noexcept ;
-            ~line_render_3d( void_t ) noexcept ;
-
-        public:
+            tri_render_3d( void_t ) noexcept ;
+            tri_render_3d( this_cref_t ) = delete ;
+            tri_render_3d( this_rref_t ) noexcept ;
+            ~tri_render_3d( void_t ) noexcept ;
 
             void_t init( natus::ntd::string_cref_t, natus::graphics::async_views_t ) noexcept ;
             void_t release( void_t ) noexcept ;
 
-        public: // draw functions
+        public:
 
-            void_t draw( natus::math::vec3f_cref_t p0, natus::math::vec3f_cref_t p1, natus::math::vec4f_cref_t color ) noexcept ;
+            void_t draw( natus::math::vec3f_cref_t p0, natus::math::vec3f_cref_t p1, 
+                natus::math::vec3f_cref_t p2, natus::math::vec4f_cref_t color ) noexcept ;
 
-
-            
-            
-
-            #if 0 // for later
-            void_t draw_cube( natus::math::vec3f_cref_t center, float_t const half, natus::math::vec4f_cref_t color ) noexcept ;
             void_t draw_rect( natus::math::vec3f_cref_t p0, natus::math::vec3f_cref_t p1, 
                 natus::math::vec3f_cref_t p2, natus::math::vec3f_cref_t p3, natus::math::vec4f_cref_t color ) noexcept ;
 
-            void_t draw_circle( natus::math::vec2f_cref_t center, float_t const r, size_t const num_points, natus::math::vec4f_cref_t color ) noexcept ;
-            
-            #endif
+            void_t draw_circle( natus::math::mat3f_cref_t, natus::math::vec3f_cref_t p0, float_t const r, natus::math::vec4f_cref_t color, size_t const ) noexcept ;
 
         public:
 
@@ -133,9 +122,13 @@ namespace natus
 
         private:
 
+            natus_typedefs( natus::ntd::vector< natus::math::vec3f_t >, circle ) ;
+            natus::ntd::vector< circle_t > _circle_cache ;
+            circle_cref_t lookup_circle_cache( size_t const ) noexcept ;
+
             void_t add_variable_set( natus::graphics::render_object_ref_t rc ) noexcept ;
 
-        } ;
-        natus_res_typedef( line_render_3d ) ;
+        };
+        natus_res_typedef( tri_render_3d ) ;
     }
 }
