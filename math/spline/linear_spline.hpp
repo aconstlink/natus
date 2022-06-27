@@ -29,8 +29,9 @@ namespace natus
         
         private:
 
+            natus_typedefs( natus::ntd::vector< value_t >, points ) ;
             /// control point being evaluated
-            natus::ntd::vector< value_t > _cps ;
+            points_t _cps ;
 
         public:
 
@@ -44,6 +45,14 @@ namespace natus
             }
 
             linear_spline( std::initializer_list< value_t > const & il ) noexcept
+            {
+                for( auto const & i : il )
+                {
+                    _cps.emplace_back( i ) ;
+                }                
+            }
+
+            linear_spline( natus::ntd::vector< value_t > const & il ) noexcept
             {
                 for( auto const & i : il )
                 {
@@ -197,6 +206,11 @@ namespace natus
                 val_out = seg.second - seg.first ;
 
                 return true ;
+            }
+
+            points_cref_t control_points( void_t ) const noexcept
+            {
+                return _cps ;
             }
 
         private:

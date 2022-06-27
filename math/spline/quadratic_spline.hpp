@@ -30,8 +30,9 @@ namespace natus
 
         private:
 
+            natus_typedefs( natus::ntd::vector< value_t >, points ) ;
             /// control point being evaluated
-            natus::ntd::vector< value_t > _cps ;
+            points_t _cps ;
 
         public:
 
@@ -40,8 +41,7 @@ namespace natus
                 // take control points as passed.
                 complete,
                 // take given control points and construct a c1 continous spline
-                construct_c1,
-
+                construct,
             };
 
         public:
@@ -72,29 +72,9 @@ namespace natus
                         _cps.emplace_back( i ) ;
                     }
                 }
-                else if( t == this_t::init_type::construct_c1 )
+                else if( t == this_t::init_type::construct )
                 {
-                    _cps.reserve( li.size() * 2 ) ;
-                    
-                    _cps.emplace_back( li[0] ) ;
-                    _cps.emplace_back( li[1] ) ;
-                    _cps.emplace_back( li[2] ) ;
-
-
-                    for( size_t i=3; i<li.size(); ++i )
-                    {
-                        size_t const s = this_t::num_segments() - 1 ;
-
-                        size_t const base = s * 2 ;
-
-                        auto const p0 = _cps[ base + 0 ] ;
-                        auto const p1 = _cps[ base + 1 ] ;
-                        auto const p2 = _cps[ base + 2 ] ;
-
-                        _cps.emplace_back( _cps.back() + natus::math::interpolation<value_t>::quadratic_dt( p0, p1, p2, 1.0f )*0.5f ) ;
-
-                        _cps.emplace_back( li[i] ) ;
-                    }
+                   _cps = this_t::construct_from_list( li ) ;
                 }
             }
 
@@ -125,6 +105,43 @@ namespace natus
                 return ( *this ) ;
             }
 
+        private:
+
+            static void_t append_single_to_list( size_t const num_segments, value_in_t cp, points_ref_t inout ) noexcept
+            {
+                size_t const s = num_segments - 1 ;
+
+                size_t const base = s * 2 ;
+
+                auto const p0 = inout[ base + 0 ] ;
+                auto const p1 = inout[ base + 1 ] ;
+                auto const p2 = inout[ base + 2 ] ;
+
+                inout.emplace_back( inout.back() + natus::math::interpolation<value_t>::quadratic_dt( p0, p1, p2, 1.0f ) * 0.5f ) ;
+
+                inout.emplace_back( cp ) ;
+            }
+
+            // first four control points need to represent a cubic bezier.
+            static points_t construct_from_list( points_cref_t li ) noexcept
+            {
+                points_t ret ;
+
+                ret.reserve( li.size() * 2 ) ;
+                    
+                ret.emplace_back( li[0] ) ;
+                ret.emplace_back( li[1] ) ;
+                ret.emplace_back( li[2] ) ;
+
+                size_t ns = 1 ;
+                for( size_t i=3; i<li.size(); ++i )
+                {
+                    this_t::append_single_to_list( ns++, li[i], ret ) ;
+                }
+
+                return ret ;
+            }
+
         public:
 
             void_t clear( void_t ) noexcept
@@ -143,17 +160,7 @@ namespace natus
                     return ;
                 }
 
-                size_t const s = this_t::num_segments() - 1 ;
-
-                size_t const base = s * 2 ;
-
-                auto const p0 = _cps[ base + 0 ] ;
-                auto const p1 = _cps[ base + 1 ] ;
-                auto const p2 = _cps[ base + 2 ] ;
-
-                _cps.emplace_back( _cps.back() + natus::math::interpolation<value_t>::quadratic_dt( p0, p1, p2, 1.0f )*0.5f ) ;
-
-                _cps.emplace_back( cp ) ;
+                this_t::append_single_to_list( this_t::num_segments(), cp, _cps ) ;
             }
 
             /// return the number of segments.
@@ -235,6 +242,11 @@ namespace natus
                 {
                     funk( p ) ;
                 }
+            }
+
+            points_cref_t control_points( void_t ) const noexcept
+            {
+                return _cps ;
             }
 
         private:

@@ -32,8 +32,9 @@ namespace natus
 
         private:
 
+            natus_typedefs( natus::ntd::vector< value_t >, points ) ;
             /// control point being evaluated
-            natus::ntd::vector< value_t > _cps ;
+            points_t _cps ;
 
         public:
 
@@ -41,10 +42,8 @@ namespace natus
             {
                 // take control points as passed.
                 complete,
-                // take given control points and construct a c1 continous spline
-                construct_c1,
-                // take givec control points and construct a c2 coninuouse spline
-                construct_c2
+                // take given control points and construct a c1/c2 continous spline
+                construct,
             };
 
         public:
@@ -76,32 +75,9 @@ namespace natus
                         _cps.emplace_back( i ) ;
                     }
                 }
-                else if( t == this_t::init_type::construct_c1 )
+                else if( t == this_t::init_type::construct )
                 {
-                    _cps.reserve( li.size() * 2 ) ;
-                    
-                    _cps.emplace_back( li[0] ) ;
-                    _cps.emplace_back( li[1] ) ;
-                    _cps.emplace_back( li[2] ) ;
-                    _cps.emplace_back( li[3] ) ;
-
-
-                    for( size_t i=4; i<li.size(); ++i )
-                    {
-                        size_t const s = this_t::num_segments() - 1 ;
-
-                        size_t const base = s * 3 ;
-
-                        auto const p0 = _cps[ base + 0 ] ;
-                        auto const p1 = _cps[ base + 1 ] ;
-                        auto const p2 = _cps[ base + 2 ] ;
-                        auto const p3 = _cps[ base + 3 ] ;
-
-                        _cps.emplace_back( _cps.back() + natus::math::interpolation<value_t>::cubic_dt( p0, p1, p2, p3, 1.0f )*0.5f ) ;
-                        _cps.emplace_back( _cps.back() + natus::math::interpolation<value_t>::cubic_dt2( p0, p1, p2, p3, 1.0f )*0.5f ) ;
-
-                        _cps.emplace_back( li[i] ) ;
-                    }
+                    _cps = this_t::construct_from_list( li ) ;
                 }
             }
 
@@ -132,6 +108,48 @@ namespace natus
                 return ( *this ) ;
             }
 
+        private:
+
+            static void_t append_single_to_list( size_t const num_segments, value_in_t cp, points_ref_t inout ) noexcept
+            {
+                size_t const s = num_segments - 1 ;
+
+                size_t const base = s * 3 ;
+
+                auto const p0 = inout[ base + 0 ] ;
+                auto const p1 = inout[ base + 1 ] ;
+                auto const p2 = inout[ base + 2 ] ;
+                auto const p3 = inout[ base + 3 ] ;
+
+                auto const p = inout.back() ;
+                inout.emplace_back( p + natus::math::interpolation<value_t>::cubic_dt( p0, p1, p2, p3, 1.0f ) * 0.34f ) ;
+                inout.emplace_back( p + natus::math::interpolation<value_t>::cubic_dt2( p0, p1, p2, p3, 1.0f ) * 0.17f ) ;
+
+                inout.emplace_back( cp ) ;
+            }
+
+            // first four control points need to represent a cubic bezier.
+            static points_t construct_from_list( points_cref_t li ) noexcept
+            {
+                points_t ret ;
+
+                ret.reserve( li.size() * 2 ) ;
+                    
+                ret.emplace_back( li[0] ) ;
+                ret.emplace_back( li[1] ) ;
+                ret.emplace_back( li[2] ) ;
+                ret.emplace_back( li[3] ) ;
+
+                size_t ns = 1 ;
+                for( size_t i=4; i<li.size(); ++i )
+                {
+                    this_t::append_single_to_list( ns++, li[i], ret ) ;
+                }
+
+                return ret ;
+            }
+
+
         public:
 
             void_t clear( void_t ) noexcept
@@ -150,20 +168,7 @@ namespace natus
                     return ;
                 }
 
-                size_t const s = this_t::num_segments() - 1 ;
-
-                size_t const base = s * 3 ;
-
-                auto const p0 = _cps[ base + 0 ] ;
-                auto const p1 = _cps[ base + 1 ] ;
-                auto const p2 = _cps[ base + 2 ] ;
-                auto const p3 = _cps[ base + 3 ] ;
-
-                auto const p = _cps.back() ;
-                _cps.emplace_back( p + natus::math::interpolation<value_t>::cubic_dt( p0, p1, p2, p3, 1.0f ) * 0.5f ) ;
-                _cps.emplace_back( p + natus::math::interpolation<value_t>::cubic_dt2( p0, p1, p2, p3, 1.0f ) * 0.25f ) ;
-
-                _cps.emplace_back( cp ) ;
+                this_t::append_single_to_list( this_t::num_segments(), cp, _cps ) ;
             }
 
         public:
@@ -238,6 +243,10 @@ namespace natus
                 }
             }
 
+            points_cref_t control_points( void_t ) const noexcept
+            {
+                return _cps ;
+            }
 
         private:
 
