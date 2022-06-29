@@ -458,15 +458,18 @@ void_t tri_render_3d::render( void_t ) noexcept
 //**********************************************************
 tri_render_3d::circle_cref_t tri_render_3d::lookup_circle_cache( size_t const s ) noexcept 
 {
+    // segments required
+    size_t const segs_reg = s * 3 ;
+
     auto iter = std::find_if( _circle_cache.begin(), _circle_cache.end(), [&]( circle_cref_t c )
     {
-        return c.size() == s ;
+        return c.size() == segs_reg ;
     } ) ;
 
     if( iter == _circle_cache.end() )
     {
         size_t const segs = std::max( size_t(5), s ) ;
-        natus::ntd::vector< natus::math::vec3f_t > points( segs * 3  ) ;
+        natus::ntd::vector< natus::math::vec3f_t > points( segs_reg  ) ;
 
         float_t a = 0.0f ;
         float_t const del = 2.0f * natus::math::constants<float_t>::pi() / float_t(segs) ;
