@@ -234,13 +234,12 @@ namespace natus
 
         public:
 
-            typedef std::function< void_t ( value_cref_t ) > for_each_cp_funk_t ;
+            typedef std::function< void_t ( size_t const, value_cref_t ) > for_each_cp_funk_t ;
             void_t for_each_control_point( for_each_cp_funk_t funk ) const noexcept 
             {
-                for( auto const & p : _cps )
-                {
-                    funk( p ) ;
-                }
+                size_t idx = 0 ;
+                for( auto const & p : _cps ) funk( idx++, p ) ;
+                
             }
 
             points_cref_t control_points( void_t ) const noexcept

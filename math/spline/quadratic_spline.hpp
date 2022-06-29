@@ -83,6 +83,7 @@ namespace natus
             {
                 
             }
+
             quadratic_spline( this_rref_t rhv ) noexcept
             {
                 (*this) = std::move(rhv) ;
@@ -163,6 +164,62 @@ namespace natus
                 this_t::append_single_to_list( this_t::num_segments(), cp, _cps ) ;
             }
 
+            void_t change_point( size_t const i, value_cref_t cp ) noexcept
+            {
+                auto const o = _cps[i] ;
+                auto const dif = cp - o ;
+
+                if( i % 2 == 0 ) // interpolating point
+                {
+                    _cps[i] = cp ;
+                    if( i < _cps.size() - 1 ) _cps[i+1] = _cps[i+1] + dif ;
+                    if( i > 0 ) _cps[i-1] = _cps[i-1] + dif ;
+                    
+                    
+                    // fix all after cur segment
+                    {
+                        size_t const so = i/2 ;
+                        
+                        // original segment - even/odd 
+                        size_t const seo = (i/2) % 2 ;
+
+                        for( size_t s=so+1; s<this_t::get_num_segments(); ++s )
+                        {
+                            size_t const idx = s * 2 + 1 ;
+                            float_t const sig = (s%2) == seo ? 1.0f : -1.0f ;
+                            _cps[ idx ] += dif * sig ;
+                        }
+                    }
+
+                    // fix all before cur segment
+                    {
+                        size_t const so = std::max( i/2, size_t(1) ) ;
+                        
+                        // original segment - even/odd 
+                        size_t const seo = (i/2) % 2 ;
+
+                        for( size_t s=0; s<so-1; ++s )
+                        {
+                            size_t const idx = s * 2 + 1 ;
+                            float_t const sig = (s%2) == seo ? -1.0f : 1.0f ;
+                            _cps[ idx ] += dif * sig ;
+                        }
+                    }
+                }
+                else
+                {
+                    // original segment - even/odd 
+                    size_t const seo = (i/2) % 2 ;
+
+                    for( size_t s=0; s<this_t::get_num_segments(); ++s )
+                    {
+                        size_t const idx = s * 2 + 1 ;
+                        float_t const sig = (s%2) == seo ? 1.0f : -1.0f ;
+                        _cps[ idx ] += dif * sig ;
+                    }
+                }
+            }
+
             /// return the number of segments.
             size_t num_segments( void_t ) const noexcept
             {
@@ -235,18 +292,21 @@ namespace natus
 
         public:
 
-            typedef std::function< void_t ( value_cref_t ) > for_each_cp_funk_t ;
+            typedef std::function< void_t ( size_t const, value_cref_t ) > for_each_cp_funk_t ;
             void_t for_each_control_point( for_each_cp_funk_t funk ) const noexcept 
             {
-                for( auto const & p : _cps )
-                {
-                    funk( p ) ;
-                }
+                size_t idx = 0 ;
+                for( auto const & p : _cps ) funk( idx++, p ) ;
             }
 
             points_cref_t control_points( void_t ) const noexcept
             {
                 return _cps ;
+            }
+
+            value_t get_control_point( size_t const i ) const noexcept 
+            {
+                return i >= _cps.size() ? value_t() : _cps[i] ;
             }
 
         private:
