@@ -12,13 +12,13 @@ namespace natus
             natus_typedefs( T, value ) ;
             typedef float_t real_t ;
 
-            static value_t linear( value_cref_t p1, value_cref_t p2, real_t const& t )
+            static value_t linear( value_cref_t p1, value_cref_t p2, real_t const& t ) noexcept
             {
                 return value_t( p1 * ( real_t( 1 ) - t ) + p2 * t );
             }
 
             static value_t quadratic( value_cref_t p1, value_cref_t p2,
-                value_cref_t p3, real_t const& t )
+                value_cref_t p3, real_t const& t ) noexcept
             {
                 // one minus t
                 real_t const omt = real_t( 1 ) - t ;
@@ -32,7 +32,7 @@ namespace natus
             }
 
             static value_t quadratic_dt( value_cref_t p1, value_cref_t p2,
-                value_cref_t p3, real_t const& t )
+                value_cref_t p3, real_t const& t ) noexcept
             {
                 real_t const omt = real_t(1) - t;
 
@@ -43,7 +43,7 @@ namespace natus
             }
 
             static value_t cubic( value_cref_t p1, value_cref_t p2,
-                value_cref_t p3, value_cref_t p4, real_t const& t )
+                value_cref_t p3, value_cref_t p4, real_t const& t ) noexcept
             {
                 real_t const one_minus_t = ( real_t( 1 ) - t ) ;
                 real_t const one_minus_t2 = one_minus_t * one_minus_t ;
@@ -61,7 +61,7 @@ namespace natus
             }
 
             static value_t cubic_dt( value_cref_t p1, value_cref_t p2,
-                value_cref_t p3, value_cref_t p4, real_t const& t )
+                value_cref_t p3, value_cref_t p4, real_t const& t ) noexcept
             {
                 real_t const t2 = t * t ;
                 real_t const one_minus_t = ( real_t( 1 ) - t ) ;
@@ -79,7 +79,7 @@ namespace natus
             }
 
             static value_t cubic_dt2( value_cref_t p1, value_cref_t p2,
-                value_cref_t p3, value_cref_t p4, real_t const& t )
+                value_cref_t p3, value_cref_t p4, real_t const& t ) noexcept
             { 
                 real_t const t2 = t * t ;
                 real_t const one_minus_t = real_t( 1 ) - t ;
@@ -94,28 +94,27 @@ namespace natus
                 return term1 + term2 ;
             }
 
-            static value_t catrom_by_slope( value_cref_t p1, value_cref_t m1,
-                value_cref_t p2, value_cref_t m2, real_t const& t )
+            static value_t cubic_hermit( value_cref_t p1, value_cref_t m1,
+                value_cref_t p2, value_cref_t m2, real_t const& t ) noexcept
             {
-                real_t t2 = t * t ;
-                real_t t3 = t2 * t ;
+                auto const t2 = t * t ;
+                auto const t3 = t2 * t ;
 
-                real_t s3_t2 = real_t( 3 ) * t2 ; // 3*t^2
-                real_t s2_t3 = real_t( 2 ) * t3 ; // 2*t^3
+                auto const term1 = (p1 * real_t(+2) + m1 - p2 * real_t(2) + m2 ) * t3 ;
+                auto const term2 = (p1 * real_t(-3) + p2 * real_t(3) - m1 * real_t(2) - m2 ) * t2 ;
+                auto const term3 = m1 * t ;
+                auto const term4 = p1 ;
 
-                // p(t) = (2t^3-3t^2+1) * p1 + (t^3-2*t^2+t) * m1 + (-2t^3+3t^2) * p2 + (t^3-t^2) * m2 
-                return
-                    p1 * ( s2_t3 - s3_t2 + real_t( 1 ) ) + m1 * ( t3 - real_t( 2 ) * t2 + t ) +
-                    p2 * ( -s2_t3 + s3_t2 ) + m2 * ( t3 - t2 ) ;
+                return term1 + term2 + term3 + term4 ;
             }
 
-            static value_t catrom_by_point( value_cref_t p1, value_cref_t p2,
-                value_cref_t p3, value_cref_t p4, real_t const& t )
+            static value_t catmull_rom( value_cref_t p1, value_cref_t p2,
+                value_cref_t p3, value_cref_t p4, real_t const& t ) noexcept
             {
-                value_t const m2 = p3 - p1 ; // slope at p2
-                value_t const m3 = p4 - p2 ; // slope at p3
+                value_t const m2 = (p3 - p1) * real_t( 0.5 ) ; // slope at p2
+                value_t const m3 = (p4 - p2) * real_t( 0.5 ) ; // slope at p3
 
-                return catrom_interp_slope( p2, m2, p3, m3 ) ;
+                return cubic_hermit( p2, m2, p3, m3 ) ;
             }
         };
     }

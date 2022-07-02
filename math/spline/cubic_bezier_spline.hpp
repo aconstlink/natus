@@ -10,11 +10,11 @@ namespace natus
 {
     namespace math
     {
-        // qudratic bezier
+        // cubic bezier
         template< typename T >
-        class quadratic_spline
+        class cubic_bezier_spline
         {
-            natus_this_typedefs( quadratic_spline<T> ) ;
+            natus_this_typedefs( cubic_bezier_spline<T> ) ;
             natus_typedefs( T, type ) ;    
             natus_typedefs( T, value ) ;
 
@@ -24,6 +24,7 @@ namespace natus
                 T2 p0 ;
                 T2 p1 ;
                 T2 p2 ;
+                T2 p3 ;
             };
             natus_typedefs( segment< float_t >, segmentf ) ;
             natus_typedefs( segment< value_t >, segmentv ) ;
@@ -40,30 +41,31 @@ namespace natus
             {
                 // take control points as passed.
                 complete,
-                // take given control points and construct a c1 continous spline
+                // take given control points and construct a c1/c2 continous spline
                 construct,
             };
 
         public:
 
-            quadratic_spline( void_t ) noexcept
+            cubic_bezier_spline( void_t ) noexcept
             {}
 
             // init with first segment
-            quadratic_spline( value_cref_t p0, value_cref_t p1, value_cref_t p2 ) noexcept
+            cubic_bezier_spline( value_cref_t p0, value_cref_t p1, value_cref_t p2, value_cref_t p3 ) noexcept
             {
                 _cps.emplace_back( p0 ) ;
                 _cps.emplace_back( p1 ) ;
                 _cps.emplace_back( p2 ) ;
+                _cps.emplace_back( p3 ) ;
             }
 
             // pass control points
             // if t == construct_c1 -> first three control points represent the first segment. Every other control point
             // is interpreted as interpolating points
             // @precondition li.size() >= 3
-            quadratic_spline( natus::ntd::vector< value_t > const & li, this_t::init_type t = this_t::init_type::complete ) noexcept
+            cubic_bezier_spline( natus::ntd::vector< value_t > const & li, this_t::init_type t = this_t::init_type::complete ) noexcept
             {
-                if( li.size() < 3 ) return ;
+                if( li.size() < 4 ) return ;
 
                 if( t == this_t::init_type::complete )
                 {
@@ -74,22 +76,21 @@ namespace natus
                 }
                 else if( t == this_t::init_type::construct )
                 {
-                   _cps = this_t::construct_from_list( li ) ;
+                    _cps = this_t::construct_from_list( li ) ;
                 }
             }
 
-            quadratic_spline( std::initializer_list< value_t > const & li, this_t::init_type t = this_t::init_type::complete ) noexcept :
-                quadratic_spline( natus::ntd::vector< value_t >( li), t )
+            cubic_bezier_spline( std::initializer_list< value_t > const & li, this_t::init_type t = this_t::init_type::complete ) noexcept :
+                cubic_bezier_spline( natus::ntd::vector< value_t >( li), t )
             {
                 
             }
-
-            quadratic_spline( this_rref_t rhv ) noexcept
+            cubic_bezier_spline( this_rref_t rhv ) noexcept
             {
                 (*this) = std::move(rhv) ;
             }
 
-            quadratic_spline( this_cref_t rhv ) noexcept
+            cubic_bezier_spline( this_cref_t rhv ) noexcept
             {
                 (*this) = rhv ;
             }
@@ -112,13 +113,16 @@ namespace natus
             {
                 size_t const s = num_segments - 1 ;
 
-                size_t const base = s * 2 ;
+                size_t const base = s * 3 ;
 
                 auto const p0 = inout[ base + 0 ] ;
                 auto const p1 = inout[ base + 1 ] ;
                 auto const p2 = inout[ base + 2 ] ;
+                auto const p3 = inout[ base + 3 ] ;
 
-                inout.emplace_back( inout.back() + natus::math::interpolation<value_t>::quadratic_dt( p0, p1, p2, 1.0f ) * 0.5f ) ;
+                auto const p = inout.back() ;
+                inout.emplace_back( p + natus::math::interpolation<value_t>::cubic_dt( p0, p1, p2, p3, 1.0f ) * 0.34f ) ;
+                inout.emplace_back( p + natus::math::interpolation<value_t>::cubic_dt2( p0, p1, p2, p3, 1.0f ) * 0.17f ) ;
 
                 inout.emplace_back( cp ) ;
             }
@@ -133,15 +137,17 @@ namespace natus
                 ret.emplace_back( li[0] ) ;
                 ret.emplace_back( li[1] ) ;
                 ret.emplace_back( li[2] ) ;
+                ret.emplace_back( li[3] ) ;
 
                 size_t ns = 1 ;
-                for( size_t i=3; i<li.size(); ++i )
+                for( size_t i=4; i<li.size(); ++i )
                 {
                     this_t::append_single_to_list( ns++, li[i], ret ) ;
                 }
 
                 return ret ;
             }
+
 
         public:
 
@@ -155,7 +161,7 @@ namespace natus
             // Computes c1 if at least three points are present.
             void append( value_in_t cp ) noexcept
             {
-                if( this_t::ncp() < 3 ) 
+                if( this_t::ncp() < 4 ) 
                 {
                     _cps.emplace_back( cp ) ;
                     return ;
@@ -164,68 +170,14 @@ namespace natus
                 this_t::append_single_to_list( this_t::num_segments(), cp, _cps ) ;
             }
 
-            void_t change_point( size_t const i, value_cref_t cp ) noexcept
-            {
-                auto const o = _cps[i] ;
-                auto const dif = cp - o ;
-
-                if( i % 2 == 0 ) // interpolating point
-                {
-                    _cps[i] = cp ;
-                    if( i < _cps.size() - 1 ) _cps[i+1] = _cps[i+1] + dif ;
-                    if( i > 0 ) _cps[i-1] = _cps[i-1] + dif ;
-                    
-                    
-                    // fix all after cur segment
-                    {
-                        size_t const so = i/2 ;
-                        
-                        // original segment - even/odd 
-                        size_t const seo = (i/2) % 2 ;
-
-                        for( size_t s=so+1; s<this_t::get_num_segments(); ++s )
-                        {
-                            size_t const idx = s * 2 + 1 ;
-                            float_t const sig = (s%2) == seo ? 1.0f : -1.0f ;
-                            _cps[ idx ] += dif * sig ;
-                        }
-                    }
-
-                    // fix all before cur segment
-                    {
-                        size_t const so = std::max( i/2, size_t(1) ) ;
-                        
-                        // original segment - even/odd 
-                        size_t const seo = (i/2) % 2 ;
-
-                        for( size_t s=0; s<so-1; ++s )
-                        {
-                            size_t const idx = s * 2 + 1 ;
-                            float_t const sig = (s%2) == seo ? -1.0f : 1.0f ;
-                            _cps[ idx ] += dif * sig ;
-                        }
-                    }
-                }
-                else
-                {
-                    // original segment - even/odd 
-                    size_t const seo = (i/2) % 2 ;
-
-                    for( size_t s=0; s<this_t::get_num_segments(); ++s )
-                    {
-                        size_t const idx = s * 2 + 1 ;
-                        float_t const sig = (s%2) == seo ? 1.0f : -1.0f ;
-                        _cps[ idx ] += dif * sig ;
-                    }
-                }
-            }
+        public:
 
             /// return the number of segments.
             size_t num_segments( void_t ) const noexcept
             {
                 // (ncp - 1) / p
-                // where p is the power of the spline. quadratic => 2
-                return (_cps.size() - 1) / 2 ; 
+                // where p is the power of the spline. cubic => 3
+                return (_cps.size() - 1) / 3 ; 
             }
 
             /// return the number of segments.
@@ -242,7 +194,7 @@ namespace natus
             // quadratic spline has 3 points per segment (pps)
             size_t points_per_segment( void_t ) const noexcept
             {
-                return 3 ;
+                return 4 ;
             }
 
             size_t pps( void_t ) const noexcept
@@ -260,13 +212,13 @@ namespace natus
             // requires 3 control points at min.
             bool_t operator() ( float_t const t_g, value_out_t val_out ) const noexcept
             {
-                if( this_t::ncp() < 3 ) return false ;
+                if( this_t::ncp() < 4 ) return false ;
                 auto const t = std::min( 1.0f, std::max( t_g, 0.0f ) ) ;
 
                 float_t const local_t = this_t::global_to_local( t ) ;
                 auto const seg = this_t::get_segment( t ) ;
 
-                val_out = natus::math::interpolation<value_t>::quadratic( seg.p0, seg.p1, seg.p2, local_t ) ;
+                val_out = natus::math::interpolation<value_t>::cubic( seg.p0, seg.p1, seg.p2, seg.p3, local_t ) ;
 
                 return true ;
             }
@@ -279,17 +231,6 @@ namespace natus
                 return ret ;
             }
 
-            // evaluates 1st differential at global t.
-            value_t dt( float_t const t ) const noexcept
-            {
-                if( this_t::ncp() < 3 ) return value_t() ;
-
-                float_t const local_t = this_t::global_to_local( t ) ;
-                auto const seg = this_t::get_segment( t ) ;
-
-                return natus::math::interpolation<value_t>::quadratic_dt( seg.p0, seg.p1, seg.p2, local_t ) ;
-            }
-
         public:
 
             typedef std::function< void_t ( size_t const, value_cref_t ) > for_each_cp_funk_t ;
@@ -297,16 +238,12 @@ namespace natus
             {
                 size_t idx = 0 ;
                 for( auto const & p : _cps ) funk( idx++, p ) ;
+                
             }
 
             points_cref_t control_points( void_t ) const noexcept
             {
                 return _cps ;
-            }
-
-            value_t get_control_point( size_t const i ) const noexcept 
-            {
-                return i >= _cps.size() ? value_t() : _cps[i] ;
             }
 
         private:
@@ -329,7 +266,7 @@ namespace natus
             segmentv_t get_segment( size_t const si ) const noexcept
             {
                 size_t const i = si * (this_t::pps()-1) ;
-                return this_t::segmentv_t( { _cps[i+0], _cps[i+1], _cps[i+2]} ) ;
+                return this_t::segmentv_t( { _cps[i+0], _cps[i+1], _cps[i+2], _cps[i+3]} ) ;
             }
 
             // returns the segemnt of the t values for the involved cps
@@ -339,7 +276,7 @@ namespace natus
             {
                 float_t const b = float_t( si * (this_t::pps() - 1) ) ;
                 float_t const r = 1.0f / float_t(this_t::ncp() - 1) ;
-                return segmentf_t{ (b + 0.0f)*r, (b + 1.0f)*r, (b + 2.0f)*r };
+                return segmentf_t{ (b + 0.0f)*r, (b + 1.0f)*r, (b + 2.0f)*r, (b + 3.0f)*r };
             }
 
             float_t global_to_local( float_t const t ) const noexcept
@@ -351,7 +288,7 @@ namespace natus
 
             float_t global_to_local( float_t const t, segmentf_cref_t s ) const noexcept
             {
-                return (t - s.p0) / (s.p2 - s.p0) ;
+                return (t - s.p0) / (s.p3 - s.p0) ;
             }
 
             bool_t is_in_range( float_t const t ) const noexcept
@@ -360,6 +297,6 @@ namespace natus
             }
 
         } ;
-        natus_typedefs( quadratic_spline<float_t>, quadratic_splinef ) ;
     }
 }
+

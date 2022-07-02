@@ -11,10 +11,10 @@ set( non_arch_sources
     animation/keyframe.hpp
     animation/keyframe_sequence.hpp
     animation/linear_keyframe_sequence.hpp
-    spline/linear_spline.hpp
-    spline/quadratic_spline.hpp
-    spline/cubic_spline.hpp
-    spline/catrom_spline.hpp
+    spline/linear_bezier_spline.hpp
+    spline/quadratic_bezier_spline.hpp
+    spline/cubic_bezier_spline.hpp
+    spline/cubic_hermit_spline.hpp
     spline/continuity.h
     curve/catmull_rom_curve.hpp
     curve/cubic_bezier_curve.hpp

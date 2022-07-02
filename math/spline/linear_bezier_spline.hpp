@@ -12,9 +12,9 @@ namespace natus
     namespace math
     {
         template< typename T > 
-        class linear_spline
+        class linear_bezier_spline
         {
-            natus_this_typedefs( linear_spline<T> ) ;
+            natus_this_typedefs( linear_bezier_spline<T> ) ;
             natus_typedefs( T, type ) ;    
             natus_typedefs( type_t, value ) ;
 
@@ -35,16 +35,16 @@ namespace natus
 
         public:
 
-            linear_spline( void_t ) noexcept
+            linear_bezier_spline( void_t ) noexcept
             {}
 
-            linear_spline( value_cref_t p0, value_cref_t p1 ) noexcept
+            linear_bezier_spline( value_cref_t p0, value_cref_t p1 ) noexcept
             {
                 _cps.emplace_back( p0 ) ;
                 _cps.emplace_back( p1 ) ;
             }
 
-            linear_spline( std::initializer_list< value_t > const & il ) noexcept
+            linear_bezier_spline( std::initializer_list< value_t > const & il ) noexcept
             {
                 for( auto const & i : il )
                 {
@@ -52,7 +52,7 @@ namespace natus
                 }                
             }
 
-            linear_spline( natus::ntd::vector< value_t > const & il ) noexcept
+            linear_bezier_spline( natus::ntd::vector< value_t > const & il ) noexcept
             {
                 for( auto const & i : il )
                 {
@@ -60,12 +60,12 @@ namespace natus
                 }                
             }
 
-            linear_spline( this_rref_t rhv ) noexcept
+            linear_bezier_spline( this_rref_t rhv ) noexcept
             {
                 (*this) = std::move(rhv) ;
             }
 
-            linear_spline( this_cref_t rhv ) noexcept
+            linear_bezier_spline( this_cref_t rhv ) noexcept
             {
                 (*this) = rhv ;
             }
