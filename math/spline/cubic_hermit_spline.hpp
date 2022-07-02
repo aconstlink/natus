@@ -92,7 +92,7 @@ namespace natus
                 {
                     auto const m = (data.points[2] - data.points[0]) * 0.5f ;
                     points[0] = data.points[0] ;
-                    lefts[0] = -m ;
+                    lefts[0] = m ;
                     rights[0] = m ;
                 }
 
@@ -100,7 +100,7 @@ namespace natus
                 {
                     auto const m = (data.points[i+1] - data.points[i-1]) * 0.5f ; 
                     points[i] = data.points[i] ;
-                    lefts[i] = -m ;
+                    lefts[i] = m ;
                     rights[i] = m ;
                 }
 
@@ -110,7 +110,7 @@ namespace natus
                     auto const m = (data.points[lp-2] - data.points[lp]) * 0.5f ;
                     points[lp] = data.points[lp] ;
                     lefts[lp] = m ;
-                    rights[lp] = -m ;
+                    rights[lp] = m ;
                 }
 
                 return true ;
@@ -220,7 +220,7 @@ namespace natus
                 float_t const local_t = this_t::global_to_local( t ) ;
                 auto const seg = this_t::get_segment( t ) ;
 
-                val_out = natus::math::interpolation<value_t>::cubic_hermit( seg.p0.p, seg.p0.rt, seg.p1.p, seg.p1.rt, local_t ) ;
+                val_out = natus::math::interpolation<value_t>::cubic_hermit( seg.p0.p, seg.p0.rt, seg.p1.p, seg.p1.lt, local_t ) ;
 
                 return true ;
             }
