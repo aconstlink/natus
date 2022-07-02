@@ -329,6 +329,11 @@ namespace natus
                 return this_t( _elem[0] - rhv, _elem[1] - rhv, _elem[2] - rhv ) ;
             }
 
+            //***************************************************
+            this_t operator - ( void_t ) const noexcept{
+                return this_t( -_elem[0], -_elem[1], -_elem[2] ) ;
+            }
+
         public: // mult
 
             inline void mult( type_t value )
