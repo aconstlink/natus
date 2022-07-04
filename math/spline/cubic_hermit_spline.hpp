@@ -48,26 +48,19 @@ namespace natus
 
         public:
 
-            // the first and the last point is used to compute the
-            // right and the left tangents of the beginning and the end
-            // of the spline control points.
-            // the first and the last point is not interpolated and will be
-            // dropped when the tangents are computed.
-            // all other tangents are computed fromt he convex hull.
-            struct init_with_additional_points
-            {
-            };
-
             // init the hermit spline with complete data.
-            struct init_with_tangents
+            struct init_with_separate_tangents
             {
                 // each interpolated point
                 points_t points ;
-                
-                // the left and the right tangents
-                // size needs to be points.size() * 2
-                tangents_t tangs ;
+
+                // left tangents
+                tangents_t lts ;
+
+                // right tangents
+                tangents_t rts ;
             };
+            natus_typedef( init_with_separate_tangents ) ;
 
             // compute tangents catrom-style
             struct init_by_catmull_rom
@@ -107,7 +100,7 @@ namespace natus
                 // last point
                 {
                     size_t const lp = data.points.size() - 1 ;
-                    auto const m = (data.points[lp-2] - data.points[lp]) * 0.5f ;
+                    auto const m = (data.points[lp]-data.points[lp-2]) * 0.5f ;
                     points[lp] = data.points[lp] ;
                     lefts[lp] = m ;
                     rights[lp] = m ;
@@ -116,12 +109,28 @@ namespace natus
                 return true ;
             }
 
+            static bool_t construct_spline_data( init_with_separate_tangents_in_t data, 
+                points_out_t points, tangents_out_t lefts, tangents_out_t rights ) noexcept
+            {
+                points = data.points ;
+                lefts = data.lts ;
+                rights = data.rts ;
+
+                return true ;
+            } 
+
+
         public:
 
             cubic_hermit_spline( void_t ) noexcept
             {}
 
-            cubic_hermit_spline( init_by_catmull_rom_cref_t data ) noexcept 
+            cubic_hermit_spline( init_with_separate_tangents_in_t data ) noexcept 
+            {
+                this_t::construct_spline_data( data, _cps, _lts, _rts ) ;
+            }
+
+            cubic_hermit_spline( init_by_catmull_rom_in_t data ) noexcept 
             {
                 this_t::construct_spline_data( data, _cps, _lts, _rts ) ;
             }
@@ -162,11 +171,26 @@ namespace natus
             }
 
             // Add an interpolating control point.
-            // computes the mid control point in c1 continuity.
-            // Computes c1 if at least three points are present.
-            void append( value_in_t cp ) noexcept
+            // @precondition requires at least 3 points
+            bool_t append( value_in_t cp ) noexcept
             {
+                if( _cps.size() < 3 ) return false ;
+
+                _cps.emplace_back( cp ) ;
+
+                size_t const lp = _cps.size() - 1 ;
+                auto const m = (_cps[lp]-_cps[lp-2]) * 0.5f ;
                 
+                _lts.emplace_back( m ) ;
+                _rts.emplace_back( m ) ;
+            }
+
+            // add an interpolating control point.
+            void_t append( control_point_in_t cp ) noexcept
+            {
+                _cps.emplace_back( cp.p ) ;
+                _lts.emplace_back( cp.lt ) ;
+                _rts.emplace_back( cp.rt ) ;
             }
 
             void_t change_point( size_t const i, value_cref_t cp ) noexcept
