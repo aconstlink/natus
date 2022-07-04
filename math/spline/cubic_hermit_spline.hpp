@@ -176,6 +176,15 @@ namespace natus
                 _cps[i] = cp ;
             }
 
+            void_t change_control_point( size_t const i, control_point_cref_t cp ) noexcept
+            {
+                if( i >= _cps.size() ) return ;
+
+                _cps[i] = cp.p ;
+                _lts[i] = cp.lt ;
+                _rts[i] = cp.rt ;
+            }
+
             /// return the number of segments.
             size_t num_segments( void_t ) const noexcept
             {
