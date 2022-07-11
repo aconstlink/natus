@@ -13,6 +13,8 @@ namespace natus
         template< typename T >
         class cubic_hermit_spline
         {
+        public:
+
             natus_this_typedefs( cubic_hermit_spline<T> ) ;
             natus_typedefs( T, type ) ;    
             natus_typedefs( T, value ) ;
@@ -172,9 +174,29 @@ namespace natus
 
             // Add an interpolating control point.
             // @precondition requires at least 3 points
-            bool_t append( value_in_t cp ) noexcept
+            void_t append( value_in_t cp ) noexcept
             {
-                if( _cps.size() < 3 ) return false ;
+                if( _cps.size() < 3 ) 
+                {
+                    _cps.emplace_back( cp ) ;
+                    _lts.clear() ;
+                    _rts.clear() ;
+
+                    for( size_t i=1; i<_cps.size(); ++i )
+                    {
+                        auto const m = _cps[i] - _cps[i-1] ;
+                        _lts.emplace_back( m * 0.5f ) ;
+                        _rts.emplace_back( m * 0.5f ) ;
+                    }
+
+                    if( _lts.size() != 0 ) 
+                    {
+                        _lts.emplace_back( _lts.back() ) ;
+                        _rts.emplace_back( _rts.back() ) ;
+                    }
+
+                    return ;
+                }
 
                 _cps.emplace_back( cp ) ;
 
@@ -183,6 +205,12 @@ namespace natus
                 
                 _lts.emplace_back( m ) ;
                 _rts.emplace_back( m ) ;
+            }
+
+            /// Adds a control point to the end of the control point array.
+            void push_back( value_in_t cp ) noexcept
+            {
+                this_t::append( cp ) ;
             }
 
             // add an interpolating control point.
@@ -207,6 +235,18 @@ namespace natus
                 _cps[i] = cp.p ;
                 _lts[i] = cp.lt ;
                 _rts[i] = cp.rt ;
+            }
+
+            /// Inserts the passed control point before the 
+            /// control point at index i. If the index is out of range, 
+            /// the control point is appended.
+            void_t insert( size_t const index, value_cref_t cp ) noexcept
+            {
+                if( index >= _cps.size() ) return this_t::append( cp ) ;
+
+                _cps.insert( _cps.cbegin() + index, cp ) ;
+                _lts.insert( _lts.cbegin() + index, _lts[index] ) ;
+                _rts.insert( _rts.cbegin() + index, _rts[index] ) ;
             }
 
             /// return the number of segments.
@@ -294,6 +334,18 @@ namespace natus
             points_cref_t points( void_t ) const noexcept
             {
                 return _cps ;
+            }
+
+            // returns the ith interpolated control point
+            control_point_t get_interpolated_control_point( size_t const i ) const noexcept
+            {
+                return i >= _cps.size() ? control_point_t() : control_point_t { _cps[i], _lts[i], _rts[i] } ;
+            }
+
+            // returns the ith interpolated control point
+            value_t get_interpolated_value( size_t const i ) const noexcept
+            {
+                return i >= _cps.size() ? value_t() : _cps[i] ;
             }
 
         private:

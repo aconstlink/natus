@@ -14,6 +14,8 @@ namespace natus
         template< typename T > 
         class linear_bezier_spline
         {
+        public:
+
             natus_this_typedefs( linear_bezier_spline<T> ) ;
             natus_typedefs( T, type ) ;    
             natus_typedefs( type_t, value ) ;
@@ -125,6 +127,12 @@ namespace natus
                 val_out = _cps[ index ] ;
 
                 return true ;
+            }
+
+            // returns the ith interpolated control point
+            value_t get_interpolated_value( size_t const i ) const noexcept
+            {
+                return i >= _cps.size() ? value_t() : _cps[i] ;
             }
         
             /// Returns the number of control points.

@@ -2,7 +2,7 @@
 
 #include "keyframe.hpp"
 #include "evaluation_result.h"
-#include "../spline/linear_spline.hpp"
+#include "../spline/linear_bezier_spline.hpp"
 
 #include <natus/ntd/vector.hpp>
 #include <functional>
@@ -11,6 +11,7 @@ namespace natus
 {
     namespace math
     {
+        // obsolute: use keyframe_sequence< natus::math::linear_bezier_spline< xyz_t > >
         template< typename T >
         class linear_keyframe_sequence
         {
@@ -25,8 +26,8 @@ namespace natus
 
             natus_typedefs( typename keyframe_t::time_stamp_t, time_stamp ) ;
         
-            natus_typedefs( natus::math::linear_spline<T>, value_spline ) ;
-            natus_typedefs( natus::math::linear_spline<float_t>, time_spline ) ;
+            natus_typedefs( natus::math::linear_bezier_spline<T>, value_spline ) ;
+            natus_typedefs( natus::math::linear_bezier_spline<float_t>, time_spline ) ;
 
             natus_typedefs( natus::ntd::vector< float_t >, scalings ) ;
 
