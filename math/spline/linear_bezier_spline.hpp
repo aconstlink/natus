@@ -110,13 +110,11 @@ namespace natus
         
             /// Inserts the passed control point before the 
             /// control point at index i.        
-            bool_t insert( size_t const index, value_cref_t cp ) noexcept
+            void_t insert( size_t const index, value_cref_t cp ) noexcept
             {
-                if( index >= _cps.size() ) return false ;
+                if( index >= _cps.size() ) return this_t::push_back( cp ) ;
 
                 _cps.insert( _cps.cbegin() + index, cp ) ;
-
-                return true ;
             }
 
             /// returns the control point at index

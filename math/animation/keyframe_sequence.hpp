@@ -120,6 +120,16 @@ namespace natus
                 return true ;
             }
 
+            keyframe_t back( void_t ) const noexcept
+            {
+                return _keyframes.back() ;
+            }
+
+            size_t get_num_keyframes( void_t ) const noexcept
+            {
+                return _keyframes.size() ;
+            }
+
         public:
 
             natus::math::evaluation_result operator () ( time_stamp_t const ts, value_out_t vo ) const noexcept
