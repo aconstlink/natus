@@ -6,6 +6,8 @@
 
 #include <natus/ntd/vector.hpp>
 
+#include <functional>
+
 namespace natus
 {
     namespace math

@@ -218,7 +218,7 @@ namespace natus
             {
                 return _cps ;
             }
-
+            
         private:
 
             /// convert global t to segment index

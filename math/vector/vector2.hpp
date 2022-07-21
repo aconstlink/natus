@@ -5,6 +5,7 @@
 
 #include "../typedefs.h"
 #include "../utility/fn.hpp"
+#include "../utility/constants.hpp"
 
 #include "vector2b.hpp"
 
@@ -511,6 +512,12 @@ namespace natus
                 return vec3_t( type_t(0), type_t(0), this_t::cross_as_scalar(other) ) ;
             }
 
+            // return this_t( dot, cross.z() )
+            this_t dot_cross( this_cref_t o ) const noexcept
+            {
+                return this_t( this_t::dot(o), this_t::x() * o.y() - this_t::y() * o.x() ) ;
+            }
+
             //***************************************************
             vec2_ref_t fract( void_t )
             {
@@ -598,5 +605,46 @@ namespace natus
         natus_typedefs( vector2< double_t >, vec2d ) ;
         natus_typedefs( vector2< uint_t >, vec2ui ) ;
         natus_typedefs( vector2< ushort_t >, vec2us ) ;
+
+
+        template< typename T >
+        class vector2e{ };
+
+        // @todo make this available for any floating point precision.
+        template<>
+        class vector2e<float_t>
+        { 
+        public:
+
+            natus_typedefs( float_t, type ) ;
+            natus_this_typedefs( vector2e< type_t > ) ;
+            natus_typedefs( natus::math::vector2< type_t >, vec2 ) ;
+
+            // transforms this vector from E {-1,1} to E {0,1}
+            // e.g. -1 -> 0, 0 -> 0.5, 1 -> 1
+            static vec2_t minus_one_to_one( this_t::vec2_cref_t a ) noexcept
+            {
+                return a * vec2_t( 0.5f ) + vec2_t( 0.5f ) ;
+            }
+
+            // does the opposite of minus_on_to_one
+            static vec2_t one_to_minus_one( this_t::vec2_cref_t a ) noexcept
+            {
+                return a * vec2_t( 2.0f ) - vec2_t( 1.0f ) ;
+            }
+
+            // returns the full angle between the vectors a and b in radians in {0, 2pi}
+            // @pre a and b must be normalized vectors. this function does no normalization.
+            static type_t full_angle( this_t::vec2_cref_t a, this_t::vec2_cref_t b ) noexcept
+            {
+                auto const dc = a.dot_cross(b) ;
+                float_t const sig = dc.sign().y() ;
+                uint_t const idx = 1 - uint_t( natus::math::fn<float_t>::nnv_to_pnv( sig ) ) ;
+                return std::acos( dc.x() ) * sig + natus::math::vec2f_t( 0, natus::math::constants<float_t>::pix2() )[ idx ] ;
+            }
+        };
+
+        natus_typedefs( vector2e< float_t >, vec2fe ) ;
+        
     }
 }

@@ -5,6 +5,7 @@
 #include "../typedefs.h"
 #include "../vector/protos.hpp"
 #include "../vector/vector3.hpp"
+#include "../utility/fn.hpp"
 #include "switch.h"
 
 namespace natus
@@ -15,6 +16,8 @@ namespace natus
         class matrix2
         {
         public: // typedefs 
+
+            natus_this_typedefs( matrix2< type > ) ;
 
             typedef type type_t ;
             typedef type_t & type_ref_t ;
@@ -28,10 +31,6 @@ namespace natus
 
             typedef vector3< type_t > vec3_t ;
             typedef vector4< type_t > vec4_t ;
-
-            typedef this_t & this_ref_t ;
-            typedef this_t && this_rref_t ;
-            typedef this_t const & this_cref_t ;
 
         public: // ctor
 
@@ -100,6 +99,14 @@ namespace natus
             {
                 set_row( 0, vec2_t( cos_sin.x(), -cos_sin.y() ) ) ;
                 set_row( 1, vec2_t( cos_sin.y(), cos_sin.x() ) ) ;
+            }
+
+        public:
+
+            static this_t make_rotation_matrix( float_t const angle ) noexcept
+            {
+                return this_t( natus::math::fn<type_t>::cos(angle), 
+                    natus::math::fn<type_t>::sin(angle), natus::math::rotation_matrix() ) ;
             }
 
         public: // operator []
