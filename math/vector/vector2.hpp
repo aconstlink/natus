@@ -638,7 +638,7 @@ namespace natus
             static type_t full_angle( this_t::vec2_cref_t a, this_t::vec2_cref_t b ) noexcept
             {
                 auto const dc = a.dot_cross(b) ;
-                float_t const sig = dc.sign().y() ;
+                float_t const sig = vec2_t( type_t(1), dc.sign().y() )[ size_t( std::abs( dc.sign().y() ) )] ;
                 uint_t const idx = 1 - uint_t( natus::math::fn<float_t>::nnv_to_pnv( sig ) ) ;
                 return std::acos( dc.x() ) * sig + natus::math::vec2f_t( 0, natus::math::constants<float_t>::pix2() )[ idx ] ;
             }
