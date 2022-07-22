@@ -10,6 +10,8 @@ set( sources
     "filesystem.hpp"
     "string.hpp"
 
+    "insertion_sort.hpp"
+
     "string/utf8.hpp"
     "string/split.hpp"
 
