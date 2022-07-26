@@ -19,18 +19,13 @@ namespace natus
 
             natus_this_typedefs( matrix2< type > ) ;
 
-            typedef type type_t ;
-            typedef type_t & type_ref_t ;
-
-            typedef matrix2< type_t > this_t ;
-            typedef matrix3< type_t > mat3_t ;
-            typedef matrix4< type_t > mat4_t ;
-
-            typedef vector2< type_t > vec2_t ;
-            typedef vec2_t const & vec2_cref_t ;
-
-            typedef vector3< type_t > vec3_t ;
-            typedef vector4< type_t > vec4_t ;
+            natus_typedefs( type, type ) ;
+            natus_typedefs( matrix2< type_t >, mat2 ) ;
+            natus_typedefs( matrix3< type_t >, mat3 ) ;
+            natus_typedefs( matrix4< type_t >, mat4 ) ;
+            natus_typedefs( vector2< type_t >, vec2 ) ;
+            natus_typedefs( vector3< type_t >, vec3 ) ;
+            natus_typedefs( vector4< type_t >, vec4 ) ;
 
         public: // ctor
 
