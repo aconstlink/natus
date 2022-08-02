@@ -393,14 +393,24 @@ namespace natus
             }
 
             //***************************************************
-            this_ref_t normalize( void ){
-                type_t len = this_t::length() ;
-                if( ::std::abs(len) > ::std::numeric_limits<type_t>::epsilon() ) (*this) /= len ;
-                return (*this) ;
+            this_ref_t normalize( float_t & len ) noexcept {
+                len = this_t::length() ;
+                return ( std::abs(len) > std::numeric_limits<type_t>::epsilon() ) ? (*this) /= len : *this ;
             }
 
             //***************************************************
-            this_t normalized( void ) const {
+            this_t normalized( float_t & len ) const noexcept {
+                return this_t( *this ).normalize( len ) ;
+            } 
+
+            //***************************************************
+            this_ref_t normalize( void ) noexcept {
+                type_t len ;
+                return this_t::normalize( len ) ;
+            }
+
+            //***************************************************
+            this_t normalized( void ) const noexcept {
                 this_t vec( *this ) ;
                 vec.normalize() ;
                 return vec ;
