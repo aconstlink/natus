@@ -69,6 +69,14 @@ namespace natus
 
             /// the upper 3x3 camera matrix is supposed to be orthonormal.
             template< typename type_t >
+            natus::math::vector3< type_t > get_dir_from_camera_matrix( 
+                natus::math::matrix4< type_t > const & mat_in ) 
+            {
+                return mat_in.get_column( 2 ).xyz() ;
+            }
+
+            /// the upper 3x3 camera matrix is supposed to be orthonormal.
+            template< typename type_t >
             void get_up_from_camera_matrix( 
                 natus::math::vector3< type_t > & up,
                 natus::math::matrix4< type_t > const & mat_in ) 

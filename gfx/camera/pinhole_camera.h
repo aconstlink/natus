@@ -4,7 +4,7 @@
 #include "generic_camera.h"
 #include "pinhole_lens.h"
 
-#include <natus/math/utility/3d/look_at.hpp>
+#include <natus/math/camera/3d/camera_util.hpp>
 
 namespace natus
 {
@@ -52,14 +52,14 @@ namespace natus
             this_ref_t orthographic( float_t const w, float_t const h,
                 float_t const n, float_t const f  ) noexcept
             {
-                _lens->make_orthographic( w, h, n, f ) ;
+                _camera->make_orthographic( w, h, n, f ) ;
                 return *this ;
             }
 
             this_ref_t perspective_fov( float_t const fov, float_t const aspect,
                 float_t const n, float_t const f  ) noexcept
             {
-                _lens->make_perspective_fov( fov, aspect, n, f ) ;
+                _camera->make_perspective_fov( fov, aspect, n, f ) ;
                 return *this ;
             }
 
@@ -99,12 +99,12 @@ namespace natus
 
             natus::math::mat4f_t mat_proj( void_t ) const noexcept
             {
-                return _lens->get_proj_matrix() ;
+                return _camera->get_proj_matrix() ;
             }
 
             natus::math::mat4f_t mat_view( void_t ) const noexcept
             {
-                return _lens->get_view_matrix() ;
+                return _camera->get_view_matrix() ;
             }
 
             natus::math::m3d::trafof_cref_t get_transformation( void_t ) const noexcept

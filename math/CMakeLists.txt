@@ -69,10 +69,8 @@ set( non_arch_sources
     utility/index_2d_to_1d.hpp
     utility/index_3d_to_1d.hpp
 
-    utility/3d/look_at.hpp
+    
     utility/3d/ortho_basis.hpp
-    utility/3d/perspective_fov.hpp
-    utility/3d/orthographic_projection.hpp
     utility/3d/transformation.hpp
 
 
@@ -83,10 +81,13 @@ set( non_arch_sources
 
     camera/3d/perspective_camera.hpp
     camera/3d/orthographic_camera.hpp
+    camera/3d/camera_util.hpp
+    camera/3d/perspective_fov.hpp
+    camera/3d/orthographic_projection.hpp
+    
+    dsp/fft.hpp
 
-    "dsp/fft.hpp"
-
-    "header_only.cpp"
+    header_only.cpp
 )
 
 # compound include files

@@ -8,9 +8,7 @@ namespace natus
 {
     namespace math
     {
-        using namespace natus::core::types ;
-
-        namespace natus_3d
+        namespace m3d
         {
             template< typename type_t >
             class ray
@@ -38,7 +36,7 @@ namespace natus
 
                 vec3_t point_at( type_t dist ) const { return _origin + _dir * dist ; }
             };
+            typedef ray< float_t > ray3f_t ;
         }
-        typedef natus_3d::ray< float_t > ray3f_t ;
     }
 }

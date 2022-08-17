@@ -1,6 +1,6 @@
 #include "imgui.h"
 
-#include <natus/math/utility/3d/orthographic_projection.hpp>
+#include <natus/math/camera/3d/orthographic_projection.hpp>
 
 using namespace natus::tool ;
 
