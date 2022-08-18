@@ -94,6 +94,16 @@ namespace natus
                 return *this ;
             }
 
+            bool_t is_perspective( void_t ) const noexcept
+            {
+                return _camera->is_perspective() ;
+            }
+
+            bool_t is_orthographic( void_t ) const noexcept
+            {
+                return _camera->is_orthographic() ;
+            }
+
         public:
 
             natus::math::mat4f_t mat_proj( void_t ) const noexcept
