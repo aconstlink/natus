@@ -10,9 +10,8 @@ namespace natus
 {
     namespace gfx
     {
-        // this class simplyfies the use of the pinholse lens and 
-        // the generic camera. It has one pinhole lens that can 
-        // be directly accessed through this class.
+        // this class simplyfies the use of the pinhole lens and 
+        // the generic camera. It has one pinhole lens and a generic camera.
         class pinhole_camera
         {
             natus_this_typedefs( pinhole_camera ) ;

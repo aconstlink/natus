@@ -8,6 +8,7 @@ namespace natus
 {
     namespace gfx
     {
+        // very simplistic lens. Has no physical properties.
         class NATUS_GFX_API pinhole_lens : public ilens
         {
             natus_this_typedefs( pinhole_lens ) ;
