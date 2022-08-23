@@ -4,7 +4,9 @@
 #include "ilens.h"
 
 #include <natus/math/primitive/3d/ray.hpp>
+#include <natus/math/primitive/3d/frustum.hpp>
 #include <natus/math/utility/3d/transformation.hpp>
+#include <natus/math/camera/3d/perspective_fov.hpp>
 #include <natus/ntd/vector.hpp>
 
 #include <array>
@@ -26,6 +28,8 @@ namespace natus
             natus_typedefs( natus::math::m3d::ray3f_t, ray3 ) ;
             natus_typedefs( natus::math::vec2f_t, vec2 ) ;
             natus_typedefs( natus::math::vec3f_t, vec3 ) ;
+            natus_typedefs( natus::math::m3d::frustum<float_t>, frustum ) ;
+            natus_typedefs( frustum_t::plane_t, plane ) ;
 
         private:
 
@@ -40,10 +44,17 @@ namespace natus
 
         private:
 
-            natus::math::mat3f_t _cam_frame ;
             natus::math::mat4f_t _cam_matrix ;
             natus::math::mat4f_t _view_matrix ;
             natus::math::mat4f_t _proj_matrix ;
+
+            float_t _fov ;
+            float_t _aspect ;
+
+            // in pixels
+            natus::math::vec2f_t _sensor_dims ;
+            natus::math::vec2f_t _near_far ;
+            frustum_t _frustum ;
 
         private:
 
@@ -58,7 +69,7 @@ namespace natus
 
             generic_camera( this_rref_t rhv ) noexcept ;
 
-            generic_camera( this_cref_t rhv ) = delete ;
+            generic_camera( this_cref_t rhv ) noexcept ;
             
             virtual ~generic_camera( void_t ) noexcept ;
 
@@ -72,13 +83,15 @@ namespace natus
             this_ref_t make_orthographic( float_t const w, float_t const h,
                 float_t const n, float_t const f ) noexcept ;
 
-            this_ref_t make_perspective_fov( float_t const fov, float_t const aspect,
+            this_ref_t make_perspective_fov( float_t const w, float_t const h,
+                float_t const fov, float_t const aspect,
                 float_t const n, float_t const f ) noexcept  ;
 
             static this_t create_orthographic( float_t const w, float_t const h,
                 float_t const n, float_t const f ) noexcept ;
 
-            static this_t create_perspective_fov( float_t const fov, float_t const aspect,
+            static this_t create_perspective_fov( float_t const w, float_t const h, 
+                float_t const fov, float_t const aspect,
                 float_t const n, float_t const f ) noexcept  ;
 
             bool_t is_perspective( void_t ) const noexcept ;
@@ -91,52 +104,38 @@ namespace natus
 
             natus::math::mat4f_cref_t get_proj_matrix( void_t ) const noexcept ;
 
-        public: // get vec
+        public: // get
 
-            vec3_t get_position( void_t ) const ;
+            vec3_t get_position( void_t ) const noexcept ;
 
-            this_cref_t get_position( vec3_ref_t pos ) const ;
+            this_cref_t get_position( vec3_ref_t pos ) const noexcept ;
 
-            vec3_t get_direction( void_t ) const ;
+            vec3_t get_direction( void_t ) const noexcept ;
 
-            this_cref_t get_direction( vec3_ref_t dir ) const ;
+            this_cref_t get_direction( vec3_ref_t dir ) const noexcept ;
 
-            vec3_t get_up( void_t ) const ;
+            vec3_t get_up( void_t ) const noexcept ;
 
-            this_cref_t get_up( vec3_ref_t up ) const ;
+            this_cref_t get_up( vec3_ref_t up ) const noexcept ;
 
-            vec3_t get_right( void_t ) const ;
+            vec3_t get_right( void_t ) const noexcept ;
 
-            this_cref_t get_right( vec3_ref_t right ) const ;
+            this_cref_t get_right( vec3_ref_t right ) const noexcept ;
+
+            frustum_cref_t get_frustum( void_t ) const noexcept ;
 
         public: // ray
 
-            #if 0
             /// creates a ray in view center direction.
             /// @param norm_pos [in] [-1,1] screen position
-            ray3_t create_ray_norm( vec2_cref_t norm_pos ) const
-            {
-                float_t const w = natus::math::get_width_at<float_t>( get_fov(), get_aspect(), type_t( 1 ) ) ;
-                float_t const h = natus::math::get_height_at<float_t>( get_fov(), type_t( 1 ) ) ;
-                return ray3_t( get_position(), _cam * vec3_t( norm_pos * vec2_t( w, h ) * type_t( 0.5 ), type_t( 1 ) ).normalize() ) ;
-            }
+            ray3_t create_ray_norm( vec2_cref_t norm_pos ) const noexcept ;
 
             /// creates a ray in view center direction.
-            ray3_t create_center_ray( void_t ) const
-            {
-                //return create_ray_norm( vec2_t(type_t(0), type_t(0)) ) ;
-                return ray3_t( get_position(), get_direction() ) ;
-            }
+            ray3_t create_center_ray( void_t ) const ;
 
             /// creates a ray in view center direction.
             /// @param screen_pos [in] [(0,0),(width,height)] screen position.
-            ray3_t create_ray( vec2_cref_t screen_pos ) const
-            {
-                vec2_t norm_coord = screen_pos / vec2_t( _swidth, _sheight ) ;
-                norm_coord = norm_coord * type_t( 2 ) - type_t( 1 ) ;
-                return create_ray_norm( norm_coord ) ;
-            }
-            #endif
+            ray3_t create_ray( vec2_cref_t screen_pos ) const ;
 
         public: // interface
 
@@ -152,6 +151,12 @@ namespace natus
 
             typedef std::function< void_t ( this_ref_t, lens_res_t& ) > lens_funk_t ;
             void_t for_each_lens( lens_funk_t funk ) noexcept  ;
+
+        private:
+
+            
+            void_t reconstruct_frustum_planes( void_t ) noexcept ;
+
         };
         natus_res_typedef( generic_camera ) ;
     }

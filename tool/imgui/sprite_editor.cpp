@@ -247,7 +247,8 @@ void_t sprite_editor::do_tool( natus::tool::imgui_view_t imgui ) noexcept
     if( !_srp->initialized )
     {
         _srp->cam = natus::gfx::pinhole_camera_t() ;
-        _srp->cam.orthographic( 200.0f, 200.0f, 1.0f, 100.0f ) ;
+        _srp->cam.set_dims( 200.0f, 200.0f, 1.0f, 100.0f ) ;
+        _srp->cam.orthographic() ;
         _srp->cam.look_at( natus::math::vec3f_t( 0.0f, 0.0f, -50.0f ),
                         natus::math::vec3f_t( 0.0f, 1.0f, 0.0f ), natus::math::vec3f_t( 0.0f, 0.0f, 0.0f )) ;
         

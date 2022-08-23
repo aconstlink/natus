@@ -19,6 +19,8 @@ namespace natus
             natus::gfx::pinhole_lens_res_t _lens ;
             natus::gfx::generic_camera_res_t _camera ;
 
+            natus::math::vec4f_t _wh_nf = natus::math::vec4f_t( 1.0f, 1.0f, 1.0f, 1000.0f ) ;
+
         public:
 
             pinhole_camera( void_t ) noexcept
@@ -48,17 +50,33 @@ namespace natus
 
         public:
 
-            this_ref_t orthographic( float_t const w, float_t const h,
-                float_t const n, float_t const f  ) noexcept
+            this_ref_t set_sensor_dims( float_t const w, float_t const h ) noexcept
             {
-                _camera->make_orthographic( w, h, n, f ) ;
+                _wh_nf = natus::math::vec4f_t( w, h, _wh_nf.zw() ) ;
                 return *this ;
             }
 
-            this_ref_t perspective_fov( float_t const fov, float_t const aspect,
-                float_t const n, float_t const f  ) noexcept
+            this_ref_t set_near_far( float_t const n, float_t const f ) noexcept
             {
-                _camera->make_perspective_fov( fov, aspect, n, f ) ;
+                _wh_nf = natus::math::vec4f_t( _wh_nf.xy(), n, f ) ;
+                return *this ;
+            }
+
+            this_ref_t set_dims( float_t const w, float_t const h, float_t const n, float_t const f ) noexcept
+            {
+                _wh_nf = natus::math::vec4f_t( w, h, n, f ) ;
+                return *this ;
+            }
+
+            this_ref_t orthographic( void_t  ) noexcept
+            {
+                _camera->make_orthographic( _wh_nf.x(), _wh_nf.y(), _wh_nf.z(), _wh_nf.w() ) ;
+                return *this ;
+            }
+
+            this_ref_t perspective_fov( float_t const fov ) noexcept
+            {
+                _camera->make_perspective_fov( _wh_nf.x(),_wh_nf.y(), fov, _wh_nf.x() / _wh_nf.y(), _wh_nf.z(), _wh_nf.w() ) ;
                 return *this ;
             }
 
@@ -104,6 +122,11 @@ namespace natus
                 return _camera->is_orthographic() ;
             }
 
+            natus::gfx::generic_camera_res_t get_camera( void_t ) noexcept
+            {
+                return _camera ;
+            }
+
         public:
 
             natus::math::mat4f_t mat_proj( void_t ) const noexcept
@@ -124,6 +147,11 @@ namespace natus
             void_t set_transformation( natus::math::m3d::trafof_cref_t t ) noexcept
             {
                 _camera->set_transformaion( t ) ;
+            }
+
+            float_t aspect( void_t ) const noexcept
+            {
+                return _wh_nf.y() / _wh_nf.x() ;
             }
         };
         natus_res_typedef( pinhole_camera ) ;

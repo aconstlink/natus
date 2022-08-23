@@ -623,5 +623,11 @@ namespace natus
         natus_typedefs( vector3<ushort_t>, vec3us ) ;
         natus_typedefs( vector3<float_t>, vec3f ) ;
         natus_typedefs( vector3<double_t>, vec3d ) ;
+
+        template< typename T >
+        static vector3< T > operator * ( float_t const f, vector3< T > const & o ) noexcept
+        {
+            return o * f ;
+        }
     }
 }
