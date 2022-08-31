@@ -2,6 +2,7 @@
 
 #include "hesse_plane.hpp"
 #include "../../vector/vector3.hpp"
+#include "../../utility/fn.hpp"
 
 namespace natus
 {
@@ -49,9 +50,9 @@ namespace natus
             inline vec3_t get_abs_normal( void_t ) const {
                 //return vec3_t(std::abs(_plane.x()),std::abs(_plane.y()),std::abs(_plane.z())) ;
                 return vec3_t(
-                    natus::math::fast<float_t>::abs( _plane.x() ),
-                    natus::math::fast<float_t>::abs( _plane.y() ),
-                    natus::math::fast<float_t>::abs( _plane.z() )
+                    natus::math::fn<float_t>::abs( _plane.x() ),
+                    natus::math::fn<float_t>::abs( _plane.y() ),
+                    natus::math::fn<float_t>::abs( _plane.z() )
                 ) ;
             }
 
