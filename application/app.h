@@ -219,12 +219,18 @@ namespace natus
                 size_t milli_dt ;
             };
 
+            struct tool_data
+            {
+                natus::tool::imgui_view_t imgui ;
+            };
+
             natus_typedef( update_data ) ;
             natus_typedef( physics_data ) ;
             natus_typedef( render_data ) ;
             natus_typedef( audio_data ) ;
             natus_typedef( device_data ) ;
             natus_typedef( logic_data ) ;
+            natus_typedef( tool_data ) ;
 
         public:
 
@@ -239,7 +245,7 @@ namespace natus
             virtual natus::application::result on_event( window_id_t const, this_t::window_event_info_in_t ) noexcept
             { return natus::application::result::ok ; }
 
-            virtual natus::application::result on_tool( natus::tool::imgui_view_t ) noexcept
+            virtual natus::application::result on_tool( tool_data_ref_t ) noexcept
             { return natus::application::result::no_imgui ;  }
 
             virtual natus::application::result on_physics( physics_data_in_t ) noexcept 
