@@ -268,7 +268,8 @@ generic_camera::ray3_t generic_camera::create_ray_norm( vec2_cref_t norm_pos ) c
         return ray3_t( this_t::get_position(), _cam_matrix * vec3_t( norm_pos * vec2_t( w, h ) * 0.5f, 1.0f ).normalize() ) ;
     }
 
-    return ray3_t( this_t::get_position(), _cam_matrix * natus::math::vec3f_t(0.0f,0.0f,1.0f) ) ;
+    auto const po = _cam_matrix * natus::math::vec3f_t( norm_pos * _sensor_dims * 0.5f, 0.0f ) ;
+    return ray3_t( this_t::get_position() + po, _cam_matrix * natus::math::vec3f_t(0.0f,0.0f,1.0f) ) ;
 }
 
 generic_camera::ray3_t generic_camera::create_center_ray( void_t ) const
