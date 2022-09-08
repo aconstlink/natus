@@ -60,6 +60,9 @@ set( sources
     platform/window_message_receiver.hpp
     platform/gl_info.h
     platform/gfx_context.h
+    
+    util/simple_app_essentials.h
+    util/simple_app_essentials.cpp
     )
 
 if( NATUS_GRAPHICS_WGL )
