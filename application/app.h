@@ -246,7 +246,7 @@ namespace natus
             { return natus::application::result::ok ; }
 
             virtual natus::application::result on_tool( tool_data_ref_t ) noexcept
-            { return natus::application::result::no_imgui ;  }
+            { return natus::application::result::no_tool ;  }
 
             virtual natus::application::result on_physics( physics_data_in_t ) noexcept 
             { return natus::application::result::ok ; }

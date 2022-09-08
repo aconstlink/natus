@@ -21,7 +21,7 @@ namespace natus
             invalid_extension,
             invalid_win32_handle,
             invalid_xlib_handle,
-            no_imgui,
+            no_tool,
             num_results
         };
 

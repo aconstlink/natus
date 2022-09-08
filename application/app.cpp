@@ -437,7 +437,7 @@ bool_t app::platform_update( void_t )
                 _windows[ 0 ].imgui->execute( [&] ( ImGuiContext* ctx )
                 {
                     this_t::tool_data_t td = { natus::tool::imgui_view_t( _windows[ 0 ].imgui ) } ;
-                    if( this->on_tool( td ) != natus::application::result::no_imgui )
+                    if( this->on_tool( td ) != natus::application::result::no_tool )
                     {
                         render = true ;
                     }
