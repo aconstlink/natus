@@ -62,9 +62,33 @@ namespace natus
 
             public:
 
+                struct init_struct
+                {
+                    struct init_graphics
+                    {
+                        natus::ntd::string_t app_name ;
+                        natus::graphics::async_views_t graphics ;
+                    };
+                    
+                    struct init_database
+                    {
+                        natus::io::path_cref_t base ;
+                        natus::io::path_cref_t rel; 
+                        natus::io::path_cref_t name ;
+                    };
+
+                    init_graphics ig ;
+                    init_database idb ;
+                };
+                natus_typedef( init_struct ) ;
+
+                void_t init( init_struct_cref_t ) noexcept ;
+
+            private:
+
                 void_t init_graphics( natus::ntd::string_cref_t, natus::graphics::async_views_t ) noexcept ;
                 void_t init_font( void_t ) noexcept ;
-                void_t init_data( natus::io::path_cref_t base, natus::io::path_cref_t rel, natus::io::path_cref_t name ) noexcept ;
+                void_t init_database( natus::io::path_cref_t base, natus::io::path_cref_t rel, natus::io::path_cref_t name ) noexcept ;
                 void_t init_device( void_t ) noexcept ;
 
             public:
@@ -74,6 +98,7 @@ namespace natus
                 void_t on_graphics_begin( natus::application::app_t::render_data_in_t ) noexcept ;
                 void_t on_graphics_end( size_t const num_layers ) noexcept ;
                 void_t on_tool( natus::application::app::tool_data_ref_t ) noexcept ;
+                void_t on_shutdown( void_t ) noexcept ;
             };
             natus_res_typedef( simple_app_essentials ) ;
         }

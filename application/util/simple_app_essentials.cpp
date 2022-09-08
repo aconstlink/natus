@@ -40,6 +40,14 @@ simple_app_essentials::this_ref_t simple_app_essentials::operator = ( this_rref_
     return *this ;
 }
 
+void_t simple_app_essentials::init( init_struct_cref_t d ) noexcept 
+{
+    this_t::init_database( d.idb.base, d.idb.rel, d.idb.name ) ;
+    this_t::init_font() ;
+    this_t::init_graphics( d.ig.app_name, d.ig.graphics ) ;
+    this_t::init_device() ;
+}
+
 //****************************************************************
 void_t simple_app_essentials::init_font( void_t ) noexcept 
 {
@@ -119,7 +127,7 @@ void_t simple_app_essentials::init_graphics( natus::ntd::string_cref_t name, nat
 }
 
 //****************************************************************
-void_t simple_app_essentials::init_data( natus::io::path_cref_t base, natus::io::path_cref_t rel, natus::io::path_cref_t name ) noexcept 
+void_t simple_app_essentials::init_database( natus::io::path_cref_t base, natus::io::path_cref_t rel, natus::io::path_cref_t name ) noexcept 
 {
     _db = natus::io::database_t( base, rel, name ) ;
 }
@@ -281,3 +289,6 @@ void_t simple_app_essentials::on_tool( natus::application::app::tool_data_ref_t 
 }
 
 //****************************************************************
+void_t simple_app_essentials::on_shutdown( void_t ) noexcept 
+{
+}
