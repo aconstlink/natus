@@ -6,6 +6,8 @@
 #include <natus/format/nsl/nsl_module.h>
 #include <natus/format/future_items.hpp>
 
+#include <natus/math/utility/angle.hpp>
+
 using namespace natus::application ;
 using namespace natus::application::util ;
 
@@ -40,6 +42,7 @@ simple_app_essentials::this_ref_t simple_app_essentials::operator = ( this_rref_
     return *this ;
 }
 
+//****************************************************************
 void_t simple_app_essentials::init( init_struct_cref_t d ) noexcept 
 {
     this_t::init_database( d.idb.base, d.idb.rel, d.idb.name ) ;
@@ -113,15 +116,19 @@ void_t simple_app_essentials::init_graphics( natus::ntd::string_cref_t name, nat
         _lr3->init( name + ".line_render", _graphics ) ;
     }
 
+    _camera_0 = natus::gfx::pinhole_camera_res_t( natus::gfx::pinhole_camera_t() ) ;
+    _camera_0->perspective_fov( natus::math::angle<float_t>::degree_to_radian( 45.0f ) ) ;
+
     //
+    // @todo: fix this
     // why setting camera position two times?
     //
     {
-        _camera_0.look_at( natus::math::vec3f_t( 0.0f, 100.0f, -1000.0f ),
+        _camera_0->look_at( natus::math::vec3f_t( 0.0f, 100.0f, -1000.0f ),
                 natus::math::vec3f_t( 0.0f, 1.0f, 0.0f ), natus::math::vec3f_t( 0.0f, 100.0f, 0.0f )) ;
     }
 
-    _camera_0.set_transformation( natus::math::m3d::trafof_t( 1.0f, 
+    _camera_0->set_transformation( natus::math::m3d::trafof_t( 1.0f, 
         natus::math::vec3f_t(0.0f,0.0f,0.0f), 
         natus::math::vec3f_t(0.0f,0.0f,-1000.0f) ) ) ;
 }
@@ -162,8 +169,15 @@ void_t simple_app_essentials::init_device( void_t ) noexcept
 void_t simple_app_essentials::on_event( natus::application::app::window_id_t const, natus::application::app::window_event_info_in_t wei ) noexcept 
 {
     _window_dims = natus::math::vec2f_t( float_t(wei.w), float_t(wei.h) ) ;
-    _camera_0.set_dims( float_t(wei.h), float_t(wei.w), _near, _far ) ;
-    
+    _camera_0->set_dims( float_t(wei.h), float_t(wei.w), _near, _far ) ;
+    if( _camera_0->is_perspective() ) 
+    {
+        _camera_0->perspective_fov() ;
+    }
+    else if( _camera_0->is_orthographic() )
+    {
+        _camera_0->orthographic() ;
+    }
 }
 
 //****************************************************************
@@ -190,6 +204,11 @@ void_t simple_app_essentials::on_device( natus::application::app::device_data_in
         _cur_mouse = _cur_mouse * (_window_dims * natus::math::vec2f_t(0.5f) );
     }
 
+    {
+        natus::device::layouts::three_mouse_t mouse( _dev_mouse ) ;
+        _cur_mouse_nrm = mouse.get_local() * natus::math::vec2f_t( 2.0f ) - natus::math::vec2f_t( 1.0f ) ;
+    }
+
     // rotate
     {
         natus::device::layouts::three_mouse_t mouse( _dev_mouse ) ;
@@ -199,9 +218,9 @@ void_t simple_app_essentials::on_device( natus::application::app::device_data_in
 
         if( mouse.is_pressing(natus::device::layouts::three_mouse::button::right ) )
         {
-            auto old2 = _camera_0.get_transformation() ;
+            auto old2 = _camera_0->get_transformation() ;
             auto trafo = old2.rotate_by_angle_fr( natus::math::vec3f_t( -dif.y()*2.0f, dif.x()*2.0f, 0.0f ) ) ;
-            _camera_0.set_transformation( trafo ) ;
+            _camera_0->set_transformation( trafo ) ;
         }
     }
 
@@ -245,20 +264,20 @@ void_t simple_app_essentials::on_device( natus::application::app::device_data_in
             translate += natus::math::vec3f_t(0.0f, 10.0f, 0.0f ) ;
         }
 
-        auto trafo = _camera_0.get_transformation() ;
+        auto trafo = _camera_0->get_transformation() ;
         trafo.translate_fr( translate ) ;
-        _camera_0.set_transformation( trafo ) ;
+        _camera_0->set_transformation( trafo ) ;
     }
 }
 
 //****************************************************************
 void_t simple_app_essentials::on_graphics_begin( natus::application::app_t::render_data_in_t ) noexcept 
 {
-    _pr->set_view_proj( _camera_0.mat_view(), _camera_0.mat_proj() ) ;
-    _lr3->set_view_proj( _camera_0.mat_view(), _camera_0.mat_proj() ) ;
-    _pr3->set_view_proj( _camera_0.mat_view(), _camera_0.mat_proj() ) ;
+    _pr->set_view_proj( _camera_0->mat_view(), _camera_0->mat_proj() ) ;
+    _lr3->set_view_proj( _camera_0->mat_view(), _camera_0->mat_proj() ) ;
+    _pr3->set_view_proj( _camera_0->mat_view(), _camera_0->mat_proj() ) ;
 
-    if( _has_font ) _tr->set_view_proj( _camera_0.mat_view(), _camera_0.mat_proj() ) ;
+    if( _has_font ) _tr->set_view_proj( _camera_0->mat_view(), _camera_0->mat_proj() ) ;
 }
 
 //****************************************************************

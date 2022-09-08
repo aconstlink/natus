@@ -40,7 +40,7 @@ namespace natus
                 perspective
             };
 
-            projection_type _projection_mode ;
+            projection_type _projection_mode = projection_type::undefined ;
 
         private:
 
@@ -104,6 +104,8 @@ namespace natus
 
             natus::math::mat4f_cref_t get_proj_matrix( void_t ) const noexcept ;
 
+            float_t get_fov( void_t ) const noexcept { return _fov ; }
+            
         public: // get
 
             vec3_t get_position( void_t ) const noexcept ;

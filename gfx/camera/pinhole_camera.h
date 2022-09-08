@@ -45,6 +45,8 @@ namespace natus
             {
                 _lens = ::std::move( rhv._lens ) ;
                 _camera = ::std::move( rhv._camera ) ;
+                _wh_nf = rhv._wh_nf ;
+
                 return *this ;
             }
 
@@ -80,6 +82,12 @@ namespace natus
                 return *this ;
             }
 
+            this_ref_t perspective_fov( void_t ) noexcept
+            {
+                _camera->make_perspective_fov( _wh_nf.x(),_wh_nf.y(), this_t::fov(), _wh_nf.x() / _wh_nf.y(), _wh_nf.z(), _wh_nf.w() ) ;
+                return *this ;
+            }
+
             this_ref_t translate_by( natus::math::vec3f_cref_t d ) noexcept
             {
                 natus::math::m3d::trafof_t t ;
@@ -99,6 +107,11 @@ namespace natus
             natus::math::vec3f_t get_position( void_t ) const noexcept
             {
                 return _camera->get_transformation().get_translation() ;
+            }
+
+            float_t fov( void_t ) const noexcept
+            {
+                return _camera->get_fov() ;
             }
 
             this_ref_t look_at( natus::math::vec3f_cref_t pos,

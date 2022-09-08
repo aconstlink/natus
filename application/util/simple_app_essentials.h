@@ -33,8 +33,6 @@ namespace natus
 
                 natus::math::vec2f_t _window_dims = natus::math::vec2f_t( 1.0f ) ;
 
-                bool_t _do_tool = true ;
-
                 natus::io::database_res_t _db ;
 
                 bool_t _has_font = false ;
@@ -44,10 +42,15 @@ namespace natus
                 natus::device::three_device_res_t _dev_mouse ;
                 natus::device::ascii_device_res_t _dev_ascii ;
                 natus::math::vec2f_t _cur_mouse ;
+                natus::math::vec2f_t _cur_mouse_nrm ;
+
+                bool_t _left_down = false ;
+                bool_t _right_down = false ;
+                bool_t _do_tool = false ;
 
             private: // camera
 
-                natus::gfx::pinhole_camera_t _camera_0 ;
+                natus::gfx::pinhole_camera_res_t _camera_0 ;
                 float_t _far = 1000.0f ;
                 float_t _near = 0.1f ;
 
@@ -99,6 +102,26 @@ namespace natus
                 void_t on_graphics_end( size_t const num_layers ) noexcept ;
                 void_t on_tool( natus::application::app::tool_data_ref_t ) noexcept ;
                 void_t on_shutdown( void_t ) noexcept ;
+
+            public:
+
+                natus::gfx::text_render_2d_res_t get_text_render( void_t ) noexcept { return _tr ; }
+                natus::gfx::primitive_render_2d_res_t get_prim_render( void_t ) noexcept { return _pr ; }
+                natus::gfx::line_render_3d_res_t get_line_render_3d( void_t ) noexcept { return _lr3 ; }
+                natus::gfx::primitive_render_3d_res_t get_prim_render_3d( void_t ) noexcept { return _pr3 ; }
+
+                natus::gfx::pinhole_camera_res_t get_camera_0( void_t ) noexcept { return _camera_0 ; }
+
+                natus::math::vec2f_t get_cur_mouse_pos( void_t ) const noexcept { return _cur_mouse ; }
+                natus::math::vec2f_t get_cur_mouse_pos_nrm( void_t ) const noexcept { return _cur_mouse_nrm ; }
+                
+                bool_t left_down( void_t ) const noexcept { return _left_down ; }
+                bool_t right_down( void_t ) const noexcept { return _right_down ; }
+                natus::math::vec2f_t get_window_dims( void_t ) const noexcept { return _window_dims ; }
+
+                bool_t do_tool( void_t ) const noexcept { return _do_tool ; }
+                void_t set_do_tool( bool_t const b ) noexcept { _do_tool = b ; }
+
             };
             natus_res_typedef( simple_app_essentials ) ;
         }
