@@ -80,15 +80,17 @@ void_t simple_app_essentials::init_font( void_t ) noexcept
             ps->set_value<size_t>( "point_size", 90 ) ;
         }
 
-        natus::format::module_registry_res_t mod_reg = natus::format::global_t::registry() ;
-        auto fitem = mod_reg->import_from( natus::io::location_t( "fonts.LCD_Solid.ttf" ), _db, ps ) ;
-        natus::format::glyph_atlas_item_res_t ii = fitem.get() ;
-        if( ii.is_valid() )
         {
-            _tr = natus::gfx::text_render_2d_res_t( natus::gfx::text_render_2d_t( "my_text_render", _graphics ) ) ;
+            natus::format::module_registry_res_t mod_reg = natus::format::global_t::registry() ;
+            auto fitem = mod_reg->import_from( natus::io::location_t( "fonts.LCD_Solid.ttf" ), _db, ps ) ;
+            natus::format::glyph_atlas_item_res_t ii = fitem.get() ;
+            if( ii.is_valid() )
+            {
+                _tr = natus::gfx::text_render_2d_res_t( natus::gfx::text_render_2d_t( "my_text_render", _graphics ) ) ;
                     
-            _tr->init( std::move( *ii->obj ) ) ;
-            _has_font = true ;
+                _tr->init( std::move( *ii->obj ) ) ;
+                _has_font = true ;
+            }
         }
     }
 }
@@ -115,6 +117,7 @@ void_t simple_app_essentials::init_graphics( natus::ntd::string_cref_t name, nat
         _lr3 = natus::gfx::line_render_3d_res_t( natus::gfx::line_render_3d_t() ) ;
         _lr3->init( name + ".line_render", _graphics ) ;
     }
+    
 
     _camera_0 = natus::gfx::pinhole_camera_res_t( natus::gfx::pinhole_camera_t() ) ;
     _camera_0->perspective_fov( natus::math::angle<float_t>::degree_to_radian( 45.0f ) ) ;

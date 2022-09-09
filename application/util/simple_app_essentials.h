@@ -18,6 +18,14 @@ namespace natus
         {
             using namespace natus::core::types ;
 
+            // provides the user with 
+            // - some renderers for quick primitive rendering
+            // - basic 2d text renderer
+            // - default camera
+            // - camera movement with mouse and keyboard
+            // - database
+            // - font loading on default data path
+            // - mouse coords on screen
             class NATUS_APPLICATION_API simple_app_essentials
             {
                 natus_this_typedefs( simple_app_essentials ) ;
@@ -75,9 +83,9 @@ namespace natus
                     
                     struct init_database
                     {
-                        natus::io::path_cref_t base ;
-                        natus::io::path_cref_t rel; 
-                        natus::io::path_cref_t name ;
+                        natus::io::path_t base ;
+                        natus::io::path_t rel; 
+                        natus::io::path_t name ;
                     };
 
                     init_graphics ig ;
@@ -121,6 +129,9 @@ namespace natus
 
                 bool_t do_tool( void_t ) const noexcept { return _do_tool ; }
                 void_t set_do_tool( bool_t const b ) noexcept { _do_tool = b ; }
+
+                natus::io::database_res_t get_database( void_t ) noexcept { return _db ; }
+                natus::io::database_res_t db( void_t ) noexcept { return _db ; }
 
             };
             natus_res_typedef( simple_app_essentials ) ;
