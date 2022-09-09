@@ -38,6 +38,7 @@ simple_app_essentials::this_ref_t simple_app_essentials::operator = ( this_rref_
     _lr3 = std::move( rhv._lr3 ) ;
     _pr3 = std::move( rhv._pr3 ) ;
     _window_dims = std::move( rhv._window_dims ) ;
+    _rs = std::move( rhv._rs ) ;
 
     return *this ;
 }
@@ -99,6 +100,39 @@ void_t simple_app_essentials::init_font( void_t ) noexcept
 void_t simple_app_essentials::init_graphics( natus::ntd::string_cref_t name, natus::graphics::async_views_t graphics ) noexcept 
 {
     _graphics = graphics ;
+
+    // root render states
+    {
+        natus::graphics::state_object_t so = natus::graphics::state_object_t(
+            name + "root_render_states" ) ;
+
+        {
+            natus::graphics::render_state_sets_t rss ;
+
+            rss.depth_s.do_change = true ;
+            rss.depth_s.ss.do_activate = false ;
+            rss.depth_s.ss.do_depth_write = false ;
+
+            rss.polygon_s.do_change = true ;
+            rss.polygon_s.ss.do_activate = true ;
+            rss.polygon_s.ss.ff = natus::graphics::front_face::clock_wise ;
+            rss.polygon_s.ss.cm = natus::graphics::cull_mode::back;
+            rss.polygon_s.ss.fm = natus::graphics::fill_mode::fill ;
+
+            rss.clear_s.do_change = true ;
+            rss.clear_s.ss.do_activate = true ;
+            rss.clear_s.ss.do_color_clear = true ;
+            rss.clear_s.ss.clear_color = natus::math::vec4f_t( 0.5f, 0.5f, 0.5f, 1.0f ) ;
+                   
+            so.add_render_state_set( rss ) ;
+        }
+
+        _rs = std::move( so ) ;
+        _graphics.for_each( [&]( natus::graphics::async_view_t a )
+        {
+            a.configure( _rs ) ;
+        } ) ;
+    }
 
     // prepare primitive
     {
@@ -276,6 +310,13 @@ void_t simple_app_essentials::on_device( natus::application::app::device_data_in
 //****************************************************************
 void_t simple_app_essentials::on_graphics_begin( natus::application::app_t::render_data_in_t ) noexcept 
 {
+    {
+        _graphics.for_each( [&]( natus::graphics::async_view_t a )
+        {
+            a.push( _rs ) ;
+        } ) ;
+    }
+
     _pr->set_view_proj( _camera_0->mat_view(), _camera_0->mat_proj() ) ;
     _lr3->set_view_proj( _camera_0->mat_view(), _camera_0->mat_proj() ) ;
     _pr3->set_view_proj( _camera_0->mat_view(), _camera_0->mat_proj() ) ;
@@ -303,6 +344,13 @@ void_t simple_app_essentials::on_graphics_end( size_t const num_layers ) noexcep
             if( _has_font ) _tr->render( i ) ;
         }
     }
+
+    {
+        _graphics.for_each( [&]( natus::graphics::async_view_t a )
+        {
+            a.pop( natus::graphics::backend::pop_type::render_state ) ;
+        } ) ;
+    }  
 }
 
 //****************************************************************

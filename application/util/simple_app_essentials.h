@@ -34,6 +34,8 @@ namespace natus
 
                 natus::graphics::async_views_t _graphics ;
 
+                natus::graphics::state_object_res_t _rs ;
+
                 natus::gfx::text_render_2d_res_t _tr ;
                 natus::gfx::primitive_render_2d_res_t _pr ;
                 natus::gfx::line_render_3d_res_t _lr3 ;
@@ -132,6 +134,8 @@ namespace natus
 
                 natus::io::database_res_t get_database( void_t ) noexcept { return _db ; }
                 natus::io::database_res_t db( void_t ) noexcept { return _db ; }
+
+                natus::device::three_device_res_t get_mouse_dev( void_t ) noexcept { return _dev_mouse ; }
 
             };
             natus_res_typedef( simple_app_essentials ) ;
