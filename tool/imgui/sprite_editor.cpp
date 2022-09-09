@@ -268,7 +268,7 @@ void_t sprite_editor::do_tool( natus::tool::imgui_view_t imgui ) noexcept
             // load each slice into the image
             for( auto & ss : _sprite_sheets )
             {
-                img.append( ss.img->image() ) ;
+                if( ss.img.is_valid() ) img.append( ss.img->image() ) ;
             }
 
             natus::graphics::image_object_res_t ires = natus::graphics::image_object_t( 
