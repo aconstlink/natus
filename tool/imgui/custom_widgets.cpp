@@ -105,3 +105,38 @@ bool_t custom_imgui_widgets::direction( char const * label, natus::math::vec2f_r
 
     return ret ;
 }
+
+void_t custom_imgui_widgets::text_overlay( char const * label, natus::ntd::string_cref_t text, int corner ) noexcept 
+{
+    this_t::overlay_begin( label, corner ) ;
+    ImGui::Text(text.c_str());
+    this_t::overlay_end() ;
+}
+
+bool_t custom_imgui_widgets::overlay_begin( char const * label, int corner ) noexcept 
+{
+    ImGuiIO& io = ImGui::GetIO();
+    ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
+    if (corner != -1)
+    {
+        const float PAD = 10.0f;
+        const ImGuiViewport* viewport = ImGui::GetMainViewport();
+        ImVec2 work_pos = viewport->WorkPos; // Use work area to avoid menu-bar/task-bar, if any!
+        ImVec2 work_size = viewport->WorkSize;
+        ImVec2 window_pos, window_pos_pivot;
+        window_pos.x = (corner & 1) ? (work_pos.x + work_size.x - PAD) : (work_pos.x + PAD);
+        window_pos.y = (corner & 2) ? (work_pos.y + work_size.y - PAD) : (work_pos.y + PAD);
+        window_pos_pivot.x = (corner & 1) ? 1.0f : 0.0f;
+        window_pos_pivot.y = (corner & 2) ? 1.0f : 0.0f;
+        ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always, window_pos_pivot);
+        window_flags |= ImGuiWindowFlags_NoMove;
+    }
+    ImGui::SetNextWindowBgAlpha(0.35f); // Transparent background
+    bool_t open = true ;
+    return ImGui::Begin(label, &open, window_flags) ;
+}
+
+void_t custom_imgui_widgets::overlay_end( void_t ) noexcept 
+{
+    ImGui::End();
+}

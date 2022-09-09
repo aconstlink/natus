@@ -1,6 +1,7 @@
 #include "simple_app_essentials.h"
 
 #include <natus/property/property_sheet.hpp>
+#include <natus/tool/imgui/custom_widgets.h>
 
 #include <natus/format/global.h>
 #include <natus/format/nsl/nsl_module.h>
@@ -14,6 +15,12 @@ using namespace natus::application::util ;
 //****************************************************************
 simple_app_essentials::simple_app_essentials( void_t ) noexcept 
 {
+}
+
+//****************************************************************
+simple_app_essentials::simple_app_essentials( natus::graphics::async_views_t graphics ) noexcept 
+{
+    _graphics = graphics ;
 }
 
 //****************************************************************
@@ -48,7 +55,7 @@ void_t simple_app_essentials::init( init_struct_cref_t d ) noexcept
 {
     this_t::init_database( d.idb.base, d.idb.rel, d.idb.name ) ;
     this_t::init_font() ;
-    this_t::init_graphics( d.ig.app_name, d.ig.graphics ) ;
+    this_t::init_graphics( d.ig.app_name ) ;
     this_t::init_device() ;
 }
 
@@ -97,10 +104,8 @@ void_t simple_app_essentials::init_font( void_t ) noexcept
 }
 
 //****************************************************************
-void_t simple_app_essentials::init_graphics( natus::ntd::string_cref_t name, natus::graphics::async_views_t graphics ) noexcept 
+void_t simple_app_essentials::init_graphics( natus::ntd::string_cref_t name ) noexcept 
 {
-    _graphics = graphics ;
-
     // root render states
     {
         natus::graphics::state_object_t so = natus::graphics::state_object_t(
@@ -203,7 +208,8 @@ void_t simple_app_essentials::init_device( void_t ) noexcept
 }
 
 //****************************************************************
-void_t simple_app_essentials::on_event( natus::application::app::window_id_t const, natus::application::app::window_event_info_in_t wei ) noexcept 
+void_t simple_app_essentials::on_event( natus::application::app::window_id_t const, natus::application::app::window_event_info_in_t wei,
+    natus::math::vec2f_cref_t target ) noexcept 
 {
     _window_dims = natus::math::vec2f_t( float_t(wei.w), float_t(wei.h) ) ;
     _camera_0->set_dims( float_t(wei.h), float_t(wei.w), _near, _far ) ;
@@ -215,6 +221,9 @@ void_t simple_app_essentials::on_event( natus::application::app::window_id_t con
     {
         _camera_0->orthographic() ;
     }
+
+    natus::math::vec2f_t const ratio = _window_dims / target ;
+    _extend = target * (ratio.x() < ratio.y() ? ratio.xx() : ratio.yy()) ;
 }
 
 //****************************************************************
@@ -325,8 +334,24 @@ void_t simple_app_essentials::on_graphics_begin( natus::application::app_t::rend
 }
 
 //****************************************************************
-void_t simple_app_essentials::on_graphics_end( size_t const num_layers ) noexcept 
+void_t simple_app_essentials::on_graphics_end( size_t const num_layers, per_layer_funk_t funk ) noexcept 
 {
+    // draw extend
+    if( _draw_debug ) 
+    {
+        auto const cpos = _camera_0->get_position().xy() ;
+
+        natus::math::vec2f_t p0 = cpos + _extend * natus::math::vec2f_t(-0.5f,-0.5f) ;
+        natus::math::vec2f_t p1 = cpos + _extend * natus::math::vec2f_t(-0.5f,+0.5f) ;
+        natus::math::vec2f_t p2 = cpos + _extend * natus::math::vec2f_t(+0.5f,+0.5f) ;
+        natus::math::vec2f_t p3 = cpos + _extend * natus::math::vec2f_t(+0.5f,-0.5f) ;
+
+        natus::math::vec4f_t color0( 1.0f, 1.0f, 1.0f, 0.0f ) ;
+        natus::math::vec4f_t color1( 1.0f, 1.0f, 1.0f, 1.0f ) ;
+
+        _pr->draw_rect( num_layers-2, p0, p1, p2, p3, color0, color1 ) ;
+    }
+
     // render all
     {
         if( _has_font ) _tr->prepare_for_rendering() ;
@@ -342,6 +367,7 @@ void_t simple_app_essentials::on_graphics_end( size_t const num_layers ) noexcep
         {
             _pr->render( i ) ;
             if( _has_font ) _tr->render( i ) ;
+            funk( i ) ;
         }
     }
 
@@ -354,8 +380,48 @@ void_t simple_app_essentials::on_graphics_end( size_t const num_layers ) noexcep
 }
 
 //****************************************************************
-void_t simple_app_essentials::on_tool( natus::application::app::tool_data_ref_t ) noexcept 
+void_t simple_app_essentials::on_graphics_end( size_t const num_layers ) noexcept 
 {
+    this_t::on_graphics_end( num_layers, [&]( size_t const ){} ) ;
+}
+
+//****************************************************************
+bool_t simple_app_essentials::on_tool( natus::application::app::tool_data_ref_t, bool_t const default_ui ) noexcept 
+{
+    if( !this_t::do_tool() )
+    {
+        if( default_ui )
+        {
+            natus::tool::custom_imgui_widgets::text_overlay( "nouioverlay##simple_app_essentials", "Press F2 for UI" ) ;
+        }
+        return false ;
+    }
+    
+    if( default_ui )
+    {
+        ImGui::Begin( "App Essentials Controls##simple_app_essentials" ) ;
+        {
+            float_t data[2] = {_extend.x(), _extend.y() } ;
+            ImGui::SliderFloat2( "Extent##simple_app_essentials", data, 0.0f, 1000.0f, "%f" ) ;
+            _extend.x( data[0] ) ; _extend.y( data[1] ) ;
+        }
+
+        {
+            ImGui::Checkbox( "Draw Debug##simple_app_essentials", &_draw_debug ) ;
+        }
+
+        {
+            ImGui::Text( "mx: %f, my: %f", _window_dims.x(), _window_dims.y() ) ;
+        }
+
+        {
+            ImGui::Text( "mx: %f, my: %f", _cur_mouse.x(), _cur_mouse.y() ) ;
+        }
+
+        ImGui::End() ;
+    }
+
+    return true ;
 }
 
 //****************************************************************
