@@ -59,6 +59,7 @@ namespace natus
 
                 bool_t _do_tool = false ;
                 bool_t _draw_debug = false ;
+                bool_t _show_demo = false ;
 
             private: // camera
 

@@ -418,6 +418,11 @@ bool_t simple_app_essentials::on_tool( natus::application::app::tool_data_ref_t,
             ImGui::Text( "mx: %f, my: %f", _cur_mouse.x(), _cur_mouse.y() ) ;
         }
 
+        {
+            if( ImGui::Checkbox( "ImGui Demo Window##simple_app_essentials", &_show_demo ) ){}
+            if( _show_demo ) ImGui::ShowDemoWindow( &_show_demo ) ;
+        }
+
         ImGui::End() ;
     }
 
