@@ -51,6 +51,7 @@ namespace natus
                 natus::device::ascii_device_res_t _dev_ascii ;
                 natus::math::vec2f_t _cur_mouse ;
                 natus::math::vec2f_t _cur_mouse_nrm ;
+                natus::math::vec2f_t _last_mouse ;
 
                 bool_t _left_down = false ;
                 bool_t _right_down = false ;
@@ -138,7 +139,8 @@ namespace natus
 
                 natus::math::vec2f_t get_cur_mouse_pos( void_t ) const noexcept { return _cur_mouse ; }
                 natus::math::vec2f_t get_cur_mouse_pos_nrm( void_t ) const noexcept { return _cur_mouse_nrm ; }
-                
+                natus::math::vec2f_t get_cur_mouse_dif( void_t ) const noexcept { return _cur_mouse - _last_mouse ; } 
+
                 bool_t left_down( void_t ) const noexcept { return _left_down ; }
                 bool_t right_down( void_t ) const noexcept { return _right_down ; }
                 natus::math::vec2f_t get_window_dims( void_t ) const noexcept { return _window_dims ; }

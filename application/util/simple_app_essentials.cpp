@@ -245,6 +245,7 @@ void_t simple_app_essentials::on_device( natus::application::app::device_data_in
     }
 
     {
+        _last_mouse = _cur_mouse ;
         natus::device::layouts::three_mouse_t mouse( _dev_mouse ) ;
         _cur_mouse = mouse.get_local() * natus::math::vec2f_t( 2.0f ) - natus::math::vec2f_t( 1.0f ) ;
         _cur_mouse = _cur_mouse * (_window_dims * natus::math::vec2f_t(0.5f) );
@@ -262,11 +263,26 @@ void_t simple_app_essentials::on_device( natus::application::app::device_data_in
         natus::math::vec2f_t const dif = (mouse.get_global()* natus::math::vec2f_t( 2.0f ) - natus::math::vec2f_t( 1.0f )) - old ;
         old = mouse.get_global() * natus::math::vec2f_t( 2.0f ) - natus::math::vec2f_t( 1.0f ) ;
 
+        if( mouse.is_pressing(natus::device::layouts::three_mouse::button::left ) )
+        {
+            _left_down = true ;
+        }
+        else if(  mouse.is_released(natus::device::layouts::three_mouse::button::left ) ) 
+        {
+            _left_down = false ;
+        }
+
         if( mouse.is_pressing(natus::device::layouts::three_mouse::button::right ) )
         {
             auto old2 = _camera_0->get_transformation() ;
             auto trafo = old2.rotate_by_angle_fr( natus::math::vec3f_t( -dif.y()*2.0f, dif.x()*2.0f, 0.0f ) ) ;
             _camera_0->set_transformation( trafo ) ;
+
+            _right_down = true ;
+        }
+        else if(  mouse.is_released(natus::device::layouts::three_mouse::button::right ) ) 
+        {
+            _right_down = false ;
         }
     }
 
