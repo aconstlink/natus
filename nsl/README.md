@@ -165,6 +165,7 @@ vertex_shader
     }
 }
 ```
+Within a library, you can define another library which help organizing code.
 
 ## Control Flow
 
