@@ -94,6 +94,87 @@ pixel_shader
 }
   
 ```
+## MRT
+If the user wants to output onto multiple render targets:
+```
+pixel_shader
+{
+    // some vars
+    
+    out vec4_t color0 : color0 ;
+    out vec4_t color1 : color1 ;
+    out vec4_t color2 : color2 ;
 
+    void main()
+    {
+        out.color0 = vec4_t(1.0) ;
+        out.color1 = vec4_t(0.0) ;
+        out.color2 = texture(...) ;
+    }
+}
+```
+The render targets can be specified via the C++ program using a ```framebuffer```.
 
 ## Libraries
+A library can be used to reuse code. A library is written like this:
+```
+library mylib
+{
+    vec4_t my_color2( vec4_t color ) 
+    {
+        return color * vec4_t( 0.0, 1.0, 0.0, 0.0) ;
+    }
+
+    vec4_t my_color( vec4_t color )
+    {
+        return color + vec4_t( 1.0,0.0,0.0,0.0);
+    }
+    
+    library inner
+    {
+      float_t pi = 3.1432423 ;
+      
+      vec2_t_t funk( in vec2_t vin ) {            
+            return vin ;
+        }
+    }
+    
+    vec3_t xyz( vec3_t vin )
+    {
+        return vin ;
+    }
+    
+    vec4_t to_vec4( in vec3_t vin ) {
+        return vec4_t( nsl.mylib.xyz( vin ), 1.0 ) ;
+    }
+}
+```
+
+The simbols must be introduced to the used nsl database before those can be used within shaders. Using a library need to be preceeded by the word ```nsl``` and can be used within libraries too:
+
+```
+vertex_shader
+{
+    // some variables here
+    void main()
+    {
+        vec3_t pos = nsl.mylib.xyz( nsl.mylib.xyz( in.pos * vec3_t( nsl.mylib.inner.pi) ) ) ;
+        out.pos = proj * view * nsl.math.to_vec4( pos ) ;
+    }
+}
+```
+
+## Control Flow
+
+```
+if( condition ){}
+while( condition ){}
+for( int i=0; i<NUMBER; ++i ){ /*use i here*/ }
+```
+
+## Comments
+Are written like so:
+```
+// one line comment
+/* multi line comment*/
+```
