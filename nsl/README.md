@@ -59,7 +59,41 @@ position normal tangent texcoord texcoord(0-7) color color(0-7) projection view 
 ```
 
 ### Ins and Outs
+Ins and outs are used to define the data stream through the pipeline stages(i.e. shaders). An ```in``` is used to specify an incomping data stream. An ```out``` is used to specify data that is streaming out of a shader. If a shader is followed by another shader, the ```in```s in the shader that follows must match the ```out```s of the shader that came first.
 
+```
+vertex_shader NAME
+{
+  mat4_t proj : projection ;
+  mat4_t view : view ;
+
+  in vec3_t pos : position ;
+  in vec2_t tx : texcoord0 ;
+  
+  out vec2_t tx : texcoord0 ;
+  out vec4_t pos : position ;
+  
+  void main()
+  {
+    out.pos = vec4_t( in.pos, 1.0 ) ;
+    out.tx = in.tx ;
+  }
+}
+
+pixel_shader
+{
+    tex2d_t some_texture ;
+
+    in vec2_t tx : texcoord0 ;
+    out vec4_t color : color ;
+
+    void main()
+    {
+        out.color = texture( some_texture, in.tx ) ;
+    }
+}
+  
+```
 
 
 ## Libraries
