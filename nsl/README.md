@@ -183,7 +183,7 @@ Are written like so:
 ```
 
 ## Build-Ins
-Build-in functions are provided with nsl and can be used anywhere.
+Build-in functions are provided with nsl as follows:
 ```
 dot cross pulse step mix pow texture
 ```
