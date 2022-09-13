@@ -181,3 +181,9 @@ Are written like so:
 // one line comment
 /* multi line comment*/
 ```
+
+## Build-Ins
+Build-in functions are provided with nsl and can be used anywhere.
+```
+dot cross pulse step mix pow texture
+```
