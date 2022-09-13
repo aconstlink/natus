@@ -61,7 +61,7 @@ position normal tangent texcoord texcoord(0-7) color color(0-7) projection view 
 ```
 
 ### Ins and Outs
-Ins and outs are used to define the data stream through the pipeline stages(i.e. shaders). An ```in``` is used to specify an incomping data stream. An ```out``` is used to specify data that is streaming out of a shader. If a shader is followed by another shader, the ```in```s in the shader that follows must match the ```out```s of the shader that came first.
+Ins and outs are used to define the data stream through the pipeline stages(i.e. shaders). An ```in``` is used to specify an incoming data stream. An ```out``` is used to specify data that is streaming out of a shader. If a shader is followed by another shader, the ```in```s in the shader that follows must match the ```out```s of the shader that came first.
 
 ```
 vertex_shader NAME
@@ -152,7 +152,7 @@ library mylib
 }
 ```
 
-The simbols must be introduced to the used nsl database before those can be used within shaders. Using a library need to be preceeded by the word ```nsl``` and can be used within libraries too:
+The symbols must be introduced to the used nsl database before those can be used within shaders. Using a library need to be preceeded by the word ```nsl``` and can be used within libraries too:
 
 ```
 vertex_shader
