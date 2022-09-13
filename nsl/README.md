@@ -5,7 +5,7 @@ The language already has become quite complex and I can barely remember all the 
 
 nsl helps the user to write shaders across platforms. The nsl shader is parsed, checked for simple syntax issues and is then transformed into the particular backend supported hardware shader. 
 
-## Types
+## Variable Types
 nsl supports various types:
 ```
 float_t uint_t int_t vec1_t vec2_t vec3_t vec4_t mat2_t mat3_t mat4_t tex1d_t tex2d_t
