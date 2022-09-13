@@ -95,7 +95,7 @@ pixel_shader
   
 ```
 ## MRT
-If the user wants to output onto multiple render targets:
+If you want to output onto multiple render targets, just use the color bindings:
 ```
 pixel_shader
 {
