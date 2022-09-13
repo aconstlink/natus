@@ -3,6 +3,8 @@
 
 The language already has become quite complex and I can barely remember all the details. So lets dive into it again and give it a good documentation.
 
+nsl helps the user to write shaders across platforms. The nsl shader is parsed, checked for simple syntax issues and is then transformed into the particular backend supported hardware shader. 
+
 ## Types
 nsl supports various types:
 ```
