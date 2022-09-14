@@ -290,6 +290,7 @@ struct gl3_backend::pimpl
     GLsizei vp_height = 0 ;
 
     natus::graphics::backend_type const bt = natus::graphics::backend_type::gl3 ;
+    natus::graphics::shader_api_type const sapi = natus::graphics::shader_api_type::glsl_1_4 ;
 
     // the current render state set
     natus::graphics::render_state_sets_t render_states ;
@@ -922,7 +923,7 @@ struct gl3_backend::pimpl
 
         natus::graphics::shader_set_t ss ;
         {
-            auto const res = obj.shader_set( this_t::bt, ss ) ;
+            auto const res = obj.shader_set( this_t::sapi, ss ) ;
             if( natus::core::is_not(res) )
             {
                 natus::log::global_t::warning( natus_log_fn(
@@ -1470,7 +1471,7 @@ struct gl3_backend::pimpl
         {
             natus::graphics::shader_set_t ss ;
             {
-                auto const res = sc.shader_set( this_t::bt, ss ) ;
+                auto const res = sc.shader_set( this_t::sapi, ss ) ;
                 if( res )
                 {
                     auto const r1 = this_t::compile_shader( sconfig.vs_id, ss.vertex_shader().code() ) ;

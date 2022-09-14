@@ -209,7 +209,7 @@ void_t quad::init( natus::graphics::async_views_t asyncs, size_t const nvs ) noe
                         out_color = texture( u_tex, var_tx ) ;
                     } )" ) ) ;
 
-                sc.insert( natus::graphics::backend_type::gl3, std::move( ss ) ) ;
+                sc.insert( natus::graphics::shader_api_type::glsl_1_4, std::move( ss ) ) ;
             }
 
             // shaders : es 3.0
@@ -247,7 +247,7 @@ void_t quad::init( natus::graphics::async_views_t asyncs, size_t const nvs ) noe
                         out_color = texture( u_tex, var_tx ) ;
                     } )" ) ) ;
 
-                sc.insert( natus::graphics::backend_type::es3, std::move( ss ) ) ;
+                sc.insert( natus::graphics::shader_api_type::glsles_3_0, std::move( ss ) ) ;
             }
 
             // shaders : hlsl 11(5.0)
@@ -308,7 +308,7 @@ void_t quad::init( natus::graphics::async_views_t asyncs, size_t const nvs ) noe
                         return u_tex.Sample( smp_u_tex, uv );
                     } )" ) ) ;
 
-                sc.insert( natus::graphics::backend_type::d3d11, std::move( ss ) ) ;
+                sc.insert( natus::graphics::shader_api_type::hlsl_5_0, std::move( ss ) ) ;
             }
 
             // configure more details

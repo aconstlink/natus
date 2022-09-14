@@ -127,7 +127,7 @@ void_t text_render_2d::init( natus::font::glyph_atlas_res_t ga, size_t const ng 
 
         // shaders : ogl 3.1
         {
-            sc.insert( natus::graphics::backend_type::gl3, natus::graphics::shader_set_t().
+            sc.insert( natus::graphics::shader_api_type::glsl_1_4, natus::graphics::shader_set_t().
 
                 set_vertex_shader( natus::graphics::shader_t( R"(
                     #version 140
@@ -202,7 +202,7 @@ void_t text_render_2d::init( natus::font::glyph_atlas_res_t ga, size_t const ng 
 
         // shaders : es 3.0
         {
-            sc.insert( natus::graphics::backend_type::es3, natus::graphics::shader_set_t().
+            sc.insert( natus::graphics::shader_api_type::glsles_3_0, natus::graphics::shader_set_t().
 
                 set_vertex_shader( natus::graphics::shader_t( R"(
                     #version 300 es
@@ -284,7 +284,7 @@ void_t text_render_2d::init( natus::font::glyph_atlas_res_t ga, size_t const ng 
 
         // shaders : hlsl 11
         {
-            sc.insert( natus::graphics::backend_type::d3d11, natus::graphics::shader_set_t().
+            sc.insert( natus::graphics::shader_api_type::hlsl_5_0, natus::graphics::shader_set_t().
 
                 set_vertex_shader( natus::graphics::shader_t( R"(
                     cbuffer Camera : register( b0 ) 

@@ -674,6 +674,8 @@ struct d3d11_backend::pimpl
 public: // variables
 
     natus::graphics::backend_type const bt = natus::graphics::backend_type::d3d11 ;
+    natus::graphics::shader_api_type const sapi = natus::graphics::shader_api_type::hlsl_5_0
+        ;
     natus::graphics::d3d11_context_ptr_t _ctx ;
 
     typedef natus::ntd::vector< this_t::geo_data > geo_configs_t ;
@@ -1622,7 +1624,7 @@ public: // functions
         // shader code
         natus::graphics::shader_set_t ss ;
         {
-            auto const res = obj.shader_set( this->bt, ss ) ;
+            auto const res = obj.shader_set( this->sapi, ss ) ;
             if( natus::core::is_not(res) )
             {
                 natus::log::global_t::warning( natus_log_fn(

@@ -16,6 +16,14 @@ namespace natus
 {
     namespace graphics
     {
+        enum class shader_api_type
+        {
+            unknown,
+            glsl_1_4,       // gl 3.1
+            glsles_3_0,     // gles 3.1
+            hlsl_5_0        // dx 11
+        };
+
         class NATUS_GRAPHICS_API shader_object : public object
         {
             natus_this_typedefs( shader_object ) ;
@@ -158,7 +166,7 @@ namespace natus
 
         private:
 
-            typedef ::std::pair< natus::graphics::backend_type, natus::graphics::shader_set > ss_item_t ;
+            typedef ::std::pair< natus::graphics::shader_api_type, natus::graphics::shader_set > ss_item_t ;
             typedef natus::ntd::vector< ss_item_t > shader_sets_t ;
 
             shader_sets_t _shader_sets ;
@@ -220,7 +228,7 @@ namespace natus
 
         public:
            
-            this_ref_t insert( natus::graphics::backend_type const bt, natus::graphics::shader_set_in_t ss )
+            this_ref_t insert( natus::graphics::shader_api_type const bt, natus::graphics::shader_set_in_t ss )
             {
                 auto iter = ::std::find_if( _shader_sets.begin(), _shader_sets.end(),
                     [&] ( this_t::ss_item_t const& item )
@@ -240,7 +248,7 @@ namespace natus
                 return *this ;
             }
 
-            bool_t shader_set( natus::graphics::backend_type const bt, natus::graphics::shader_set_out_t ss ) const
+            bool_t shader_set( natus::graphics::shader_api_type const bt, natus::graphics::shader_set_out_t ss ) const
             {
                 auto const iter = ::std::find_if( _shader_sets.begin(), _shader_sets.end(), 
                     [&] ( this_t::ss_item_t const & item ) 

@@ -161,23 +161,23 @@ namespace natus
                     {
                         natus::graphics::shader_set_t ss ;
 
-                        natus::graphics::backend_type bt = natus::graphics::backend_type::unknown ;
+                        natus::graphics::shader_api_type bt = natus::graphics::shader_api_type::unknown ;
                         switch( t )
                         {
                         case natus::nsl::api_type::gl3:
-                            bt = natus::graphics::backend_type::gl3 ;
+                            bt = natus::graphics::shader_api_type::glsl_1_4 ;
                             break ;
                         case natus::nsl::api_type::es3:
-                            bt = natus::graphics::backend_type::es3 ;
+                            bt = natus::graphics::shader_api_type::glsles_3_0 ;
                             break ;
                         case natus::nsl::api_type::d3d11:
-                            bt = natus::graphics::backend_type::d3d11 ;
+                            bt = natus::graphics::shader_api_type::hlsl_5_0 ;
                             break ;
                         default:
                             break;
                         }
 
-                        if( bt == natus::graphics::backend_type::unknown )
+                        if( bt == natus::graphics::shader_api_type::unknown )
                         {
                             natus::log::global_t::warning( "[nsl_bridge] : unknown/unmappable api type" ) ;
                             continue ;
