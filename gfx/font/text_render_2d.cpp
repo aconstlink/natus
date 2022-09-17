@@ -4,10 +4,9 @@
 using namespace natus::gfx ;
 
 
-text_render_2d::text_render_2d( natus::ntd::string_cref_t name, natus::graphics::async_views_t asyncs ) noexcept
+text_render_2d::text_render_2d( void_t ) noexcept
 {
-    _asyncs = std::move( asyncs ) ;
-    _name = "natus.gfx.text_render_2d." + name ;
+    
 }
 
 text_render_2d::text_render_2d( this_rref_t rhv ) noexcept
@@ -29,8 +28,16 @@ text_render_2d::~text_render_2d( void_t ) noexcept
 {
 }
 
-void_t text_render_2d::init( natus::font::glyph_atlas_res_t ga, size_t const ng ) noexcept
+void_t text_render_2d::init( natus::ntd::string_cref_t name, natus::graphics::async_views_t graphics, size_t const ng) noexcept 
 {
+    this_t::init( name, graphics, std::move(_ga), ng ) ;
+}
+
+void_t text_render_2d::init( natus::ntd::string_cref_t name, natus::graphics::async_views_t asyncs, natus::font::glyph_atlas_res_t ga, size_t const ng ) noexcept
+{
+    _asyncs = std::move( asyncs ) ;
+    _name = "natus.gfx.text_render_2d." + name ;
+
     if( !ga.is_valid() ) 
     {
         natus::log::global_t::error(natus_log_fn("invalid glyph atlas")) ;

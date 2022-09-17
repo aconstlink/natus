@@ -131,14 +131,19 @@ namespace natus
 
         public:
 
-            text_render_2d( natus::ntd::string_cref_t, natus::graphics::async_views_t ) noexcept ;
+            text_render_2d( void_t ) noexcept ;
             text_render_2d( this_cref_t ) = delete ;
             text_render_2d( this_rref_t ) noexcept ;
             ~text_render_2d( void_t ) noexcept ;
 
         public:
             
-            void_t init( natus::font::glyph_atlas_res_t, size_t const = 10 ) noexcept ;
+            // can be used to set the atlas before init.
+            // @note requires init afterwards
+            void_t set_glyph_atlas( natus::font::glyph_atlas_res_t ga ) noexcept { _ga = ga ; }
+
+            void_t init( natus::ntd::string_cref_t, natus::graphics::async_views_t, natus::font::glyph_atlas_res_t, size_t const = 10 ) noexcept ;
+            void_t init( natus::ntd::string_cref_t, natus::graphics::async_views_t, size_t const = 10 ) noexcept ;
 
             void_t set_view_proj( natus::math::mat4f_cref_t view, natus::math::mat4f_cref_t proj ) ;
             void_t set_view_proj( size_t const, natus::math::mat4f_cref_t view, natus::math::mat4f_cref_t proj ) ;

@@ -103,10 +103,9 @@ void_t simple_app_essentials::init_font( void_t ) noexcept
             natus::format::glyph_atlas_item_res_t ii = fitem.get() ;
             if( ii.is_valid() )
             {
-                _tr = natus::gfx::text_render_2d_res_t( natus::gfx::text_render_2d_t( "my_text_render", _graphics ) ) ;
-                    
-                _tr->init( std::move( *ii->obj ) ) ;
                 _has_font = true ;
+                _tr = natus::gfx::text_render_2d_res_t( natus::gfx::text_render_2d_t( ) ) ;
+                _tr->set_glyph_atlas( std::move( *ii->obj ) ) ;
             }
         }
     }
@@ -166,6 +165,9 @@ void_t simple_app_essentials::init_graphics( natus::ntd::string_cref_t name ) no
         _lr3->init( name + ".line_render", _graphics ) ;
     }
     
+    {
+        _tr->init( name + ".my_text_render", _graphics ) ;
+    }
 
     _camera_0 = natus::gfx::pinhole_camera_res_t( natus::gfx::pinhole_camera_t() ) ;
     _camera_0->perspective_fov( natus::math::angle<float_t>::degree_to_radian( 45.0f ) ) ;
