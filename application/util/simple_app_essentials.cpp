@@ -7,6 +7,12 @@
 #include <natus/format/nsl/nsl_module.h>
 #include <natus/format/future_items.hpp>
 
+#include <natus/graphics/shader/nsl_bridge.hpp>
+
+#include <natus/nsl/parser.h>
+#include <natus/nsl/dependency_resolver.hpp>
+#include <natus/nsl/generator_structs.hpp>
+
 #include <natus/math/utility/angle.hpp>
 
 using namespace natus::application ;
@@ -46,6 +52,8 @@ simple_app_essentials::this_ref_t simple_app_essentials::operator = ( this_rref_
     _pr3 = std::move( rhv._pr3 ) ;
     _window_dims = std::move( rhv._window_dims ) ;
     _rs = std::move( rhv._rs ) ;
+    _shader_mon = std::move( rhv._shader_mon ) ;
+    _ndb = std::move( rhv._ndb ) ;
 
     return *this ;
 }
@@ -56,6 +64,7 @@ void_t simple_app_essentials::init( init_struct_cref_t d ) noexcept
     this_t::init_database( d.idb.base, d.idb.rel, d.idb.name ) ;
     this_t::init_font() ;
     this_t::init_graphics( d.ig.app_name ) ;
+    this_t::init_shaders( d.nsl_shaders ) ;
     this_t::init_device() ;
 }
 
@@ -208,6 +217,49 @@ void_t simple_app_essentials::init_device( void_t ) noexcept
 }
 
 //****************************************************************
+void_t simple_app_essentials::init_shaders( this_t::locations_cref_t shader_locations ) noexcept 
+{
+    _ndb = natus::nsl::database_t() ;
+
+    natus::ntd::vector< natus::nsl::symbol_t > config_symbols ;
+
+    for( auto const & l : shader_locations )
+    {
+        natus::format::module_registry_res_t mod_reg = natus::format::global_t::registry() ;
+        auto fitem2 = mod_reg->import_from( l, _db ) ;
+
+        natus::format::nsl_item_res_t ii = fitem2.get() ;
+        if( ii.is_valid() ) _ndb->insert( std::move( std::move( ii->doc ) ), config_symbols ) ;
+
+        _db->attach( l.as_string(), _shader_mon ) ;
+    }
+
+    // generate configs
+    for( auto const & s : config_symbols )
+    {
+        natus::nsl::generatable_t res = natus::nsl::dependency_resolver_t().resolve(
+            _ndb, s ) ;
+
+        if( res.missing.size() != 0 )
+        {
+            natus::log::global_t::warning( "[simple_app_essentials] : We have missing shader symbols." ) ;
+            for( auto const& m : res.missing )
+            {
+                natus::log::global_t::status( m.expand() ) ;
+            }
+        }
+
+        auto const sc = natus::graphics::nsl_bridge_t().create(
+            natus::nsl::generator_t( std::move( res ) ).generate() ).set_name( s.expand() ) ;
+
+        _graphics.for_each( [&]( natus::graphics::async_view_t a )
+        {
+            a.configure( sc ) ;
+        } ) ;
+    }
+}
+
+//****************************************************************
 void_t simple_app_essentials::on_event( natus::application::app::window_id_t const, natus::application::app::window_event_info_in_t wei,
     natus::math::vec2f_cref_t target ) noexcept 
 {
@@ -329,6 +381,51 @@ void_t simple_app_essentials::on_device( natus::application::app::device_data_in
         auto trafo = _camera_0->get_transformation() ;
         trafo.translate_fr( translate ) ;
         _camera_0->set_transformation( trafo ) ;
+    }
+}
+
+//****************************************************************
+void_t simple_app_essentials::on_update( natus::application::app_t::update_data_in_t ) noexcept 
+{
+    // check shader file changes
+    // and recompile and set new shaders
+    // @todo can be put into a task
+    {
+        _shader_mon->for_each_and_swap( [&] ( natus::io::location_cref_t loc, natus::io::monitor_t::notify const )
+        {
+            natus::nsl::database_t::symbols_t config_symbols ;
+
+            natus::log::global_t::status( "[simple_app_essentials] : File changed: " + loc.as_string() ) ;
+
+            natus::format::module_registry_res_t mod_reg = natus::format::global_t::registry() ;
+            auto fitem2 = mod_reg->import_from( loc, _db ) ;
+
+            natus::format::nsl_item_res_t ii = fitem2.get() ;
+            if( ii.is_valid() ) _ndb->insert( std::move( std::move( ii->doc ) ), config_symbols ) ;
+
+            for( auto const & s : config_symbols )
+            {
+                natus::nsl::generatable_t res = natus::nsl::dependency_resolver_t().resolve(
+                    _ndb, s ) ;
+
+                if( res.missing.size() != 0 )
+                {
+                    natus::log::global_t::warning( "[simple_app_essentials] : We have missing shader symbols." ) ;
+                    for( auto const& m : res.missing )
+                    {
+                        natus::log::global_t::warning( m.expand() ) ;
+                    }
+                }
+
+                auto const sc = natus::graphics::nsl_bridge_t().create(
+                    natus::nsl::generator_t( std::move( res ) ).generate() ).set_name( s.expand() ) ;
+
+                _graphics.for_each( [&]( natus::graphics::async_view_t a )
+                {
+                    a.configure( sc ) ;
+                } ) ;
+            }
+        } ) ;
     }
 }
 

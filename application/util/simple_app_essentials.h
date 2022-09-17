@@ -8,7 +8,7 @@
 #include <natus/gfx/font/text_render_2d.h>
 #include <natus/gfx/primitive/line_render_3d.h>
 #include <natus/gfx/primitive/primitive_render_3d.h>
-
+#include <natus/nsl/database.hpp>
 
 namespace natus
 {
@@ -26,9 +26,12 @@ namespace natus
             // - database
             // - font loading on default data path
             // - mouse coords on screen
+            // - loads nsl shaders, manages the file monitor and reloads the graphics shaders
             class NATUS_APPLICATION_API simple_app_essentials
             {
                 natus_this_typedefs( simple_app_essentials ) ;
+
+                natus_typedefs( natus::ntd::vector< natus::io::location_t >,  locations ) ;
 
             private:
 
@@ -41,9 +44,13 @@ namespace natus
                 natus::gfx::line_render_3d_res_t _lr3 ;
                 natus::gfx::primitive_render_3d_res_t _pr3 ;
 
-                natus::io::database_res_t _db ;
-
                 bool_t _has_font = false ;
+
+            private: // io / shader
+
+                natus::io::database_res_t _db ;
+                natus::nsl::database_res_t _ndb ;
+                natus::io::monitor_res_t _shader_mon = natus::io::monitor_t() ;
 
             private: // device 
 
@@ -103,6 +110,7 @@ namespace natus
 
                     init_graphics ig ;
                     init_database idb ;
+                    locations_t nsl_shaders ;
                 };
                 natus_typedef( init_struct ) ;
 
@@ -114,9 +122,11 @@ namespace natus
                 void_t init_font( void_t ) noexcept ;
                 void_t init_database( natus::io::path_cref_t base, natus::io::path_cref_t rel, natus::io::path_cref_t name ) noexcept ;
                 void_t init_device( void_t ) noexcept ;
+                void_t init_shaders( locations_cref_t ) noexcept ;
 
             public:
 
+                void_t on_update( natus::application::app_t::update_data_in_t ) noexcept ;
                 void_t on_event( natus::application::app::window_id_t const, natus::application::app::window_event_info_in_t wei, 
                     natus::math::vec2f_cref_t target = natus::math::vec2f_t(800, 600) ) noexcept ;
                 void_t on_device( natus::application::app::device_data_in_t ) noexcept ;

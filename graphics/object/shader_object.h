@@ -21,7 +21,8 @@ namespace natus
             unknown,
             glsl_1_4,       // gl 3.1
             glsles_3_0,     // gles 3.1
-            hlsl_5_0        // dx 11
+            hlsl_5_0,        // dx 11
+            nsl_1_0
         };
 
         class NATUS_GRAPHICS_API shader_object : public object
