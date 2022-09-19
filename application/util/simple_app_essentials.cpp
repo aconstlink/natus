@@ -101,10 +101,12 @@ void_t simple_app_essentials::init_font( void_t ) noexcept
             natus::format::module_registry_res_t mod_reg = natus::format::global_t::registry() ;
             auto fitem = mod_reg->import_from( natus::io::location_t( "fonts.LCD_Solid.ttf" ), _db, ps ) ;
             natus::format::glyph_atlas_item_res_t ii = fitem.get() ;
+            
+            _tr = natus::gfx::text_render_2d_res_t( natus::gfx::text_render_2d_t( ) ) ;
+
             if( ii.is_valid() )
             {
                 _has_font = true ;
-                _tr = natus::gfx::text_render_2d_res_t( natus::gfx::text_render_2d_t( ) ) ;
                 _tr->set_glyph_atlas( std::move( *ii->obj ) ) ;
             }
         }
