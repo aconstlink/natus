@@ -190,14 +190,16 @@ dot cross pulse step mix pow texture
 
 The following operator are available:
 
-´´´
+```
 + - * / '
-´´´
+```
+
 Important to note is the difference in multiplication of vectors:
-´´´ 
+
+```
 float_t d = vec_a * vec_b ; // dot multiplication
 vec_type vec_b = mat_a * vec_a ; // matrix/vector multiplication
 vec_type vec_c = vec_a ' vec_b ; // component wise multiplication
+```
 
-´´´
-This difference originates in the the ´´´*´´´ operator handling in hlsl and glsl. In hlsl the ´´´*´´´ performs a dot product with two vectors. In glsl this operator performs a component wise operation. So the ´´´*´´´ operator can not be converted cleanly from nsl.
+This difference originates in the the ```*``` operator handling in hlsl and glsl. In hlsl the ```*``` performs a dot product with two vectors. In glsl this operator performs a component wise operation. So the ```*``` operator can not be converted cleanly from nsl.
