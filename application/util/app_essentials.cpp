@@ -268,7 +268,7 @@ void_t app_essentials::on_event( natus::application::app::window_id_t const, nat
     natus::math::vec2f_cref_t target ) noexcept 
 {
     _window_dims = natus::math::vec2f_t( float_t(wei.w), float_t(wei.h) ) ;
-    _camera_0->set_dims( float_t(wei.h), float_t(wei.w), _near, _far ) ;
+    _camera_0->set_sensor_dims( float_t(wei.h), float_t(wei.w) ) ;
     if( _camera_0->is_perspective() ) 
     {
         _camera_0->perspective_fov() ;
