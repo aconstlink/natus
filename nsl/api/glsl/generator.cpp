@@ -513,13 +513,13 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
         // replace numbers
         {
             shd = std::regex_replace( shd,
-                std::regex( " num_float \\( ([0-9]+) \\, ([0-9]+) \\) " ),
+                std::regex( " __GEN__NUM_FLOAT__ \\( ([0-9]+) \\, ([0-9]+) \\) " ),
                 " $1.$2 " ) ;
             shd = std::regex_replace( shd,
-                std::regex( " num_uint \\( ([0-9]+) \\) " ),
+                std::regex( " __GEN__NUM_UINT__ \\( ([0-9]+) \\) " ),
                 " $1u " ) ;
             shd = std::regex_replace( shd,
-                std::regex( " num_int \\( ([0-9]+) \\) " ),
+                std::regex( " __GEN__NUM_INT__ \\( ([0-9]+) \\) " ),
                 " $1 " ) ;
         }
 

@@ -24,7 +24,7 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_t co
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {
                 if( args.size() != 2 ) return "mmul ( INVALID_ARGS ) " ;
-                return "mul( " + args[ 1 ] + " , " + args[ 0 ] + ")" ;
+                return "mul( " + args[ 1 ] + " , " + args[ 0 ] + " )" ;
             }
         },
         {
@@ -632,13 +632,13 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
 
     {
         shd = std::regex_replace( shd,
-            std::regex( " num_float \\( ([0-9]+) \\, ([0-9]+) \\) " ),
+            std::regex( " __GEN__NUM_FLOAT__ \\( ([0-9]+) \\, ([0-9]+) \\) " ),
             " $1.$2 " ) ;
         shd = std::regex_replace( shd,
-            std::regex( " num_uint \\( ([0-9]+) \\) " ),
+            std::regex( " __GEN__NUM_UINT__ \\( ([0-9]+) \\) " ),
             " $1u " ) ;
         shd = std::regex_replace( shd,
-            std::regex( " num_int \\( ([0-9]+) \\) " ),
+            std::regex( " __GEN__NUM_INT__ \\( ([0-9]+) \\) " ),
             " $1 " ) ;
     }
 
