@@ -27,9 +27,9 @@ namespace natus
             // - font loading on default data path
             // - mouse coords on screen
             // - loads nsl shaders, manages the file monitor and reloads the graphics shaders
-            class NATUS_APPLICATION_API simple_app_essentials
+            class NATUS_APPLICATION_API app_essentials
             {
-                natus_this_typedefs( simple_app_essentials ) ;
+                natus_this_typedefs( app_essentials ) ;
 
                 natus_typedefs( natus::ntd::vector< natus::io::location_t >,  locations ) ;
 
@@ -83,11 +83,11 @@ namespace natus
 
             public:
 
-                simple_app_essentials( void_t ) noexcept ;
-                simple_app_essentials( natus::graphics::async_views_t ) noexcept ;
-                simple_app_essentials( this_cref_t ) = delete ;
-                simple_app_essentials( this_rref_t rhv ) noexcept ;
-                ~simple_app_essentials( void_t ) noexcept ;
+                app_essentials( void_t ) noexcept ;
+                app_essentials( natus::graphics::async_views_t ) noexcept ;
+                app_essentials( this_cref_t ) = delete ;
+                app_essentials( this_rref_t rhv ) noexcept ;
+                ~app_essentials( void_t ) noexcept ;
 
                 this_ref_t operator = ( this_rref_t ) noexcept ;
 
@@ -169,7 +169,7 @@ namespace natus
 
                 natus::math::vec2f_t get_extent( void_t ) const noexcept { return _extend ; }
             };
-            natus_res_typedef( simple_app_essentials ) ;
+            natus_res_typedef( app_essentials ) ;
         }
     }
 }

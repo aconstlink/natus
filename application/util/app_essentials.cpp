@@ -1,4 +1,4 @@
-#include "simple_app_essentials.h"
+#include "app_essentials.h"
 
 #include <natus/property/property_sheet.hpp>
 #include <natus/tool/imgui/custom_widgets.h>
@@ -19,29 +19,29 @@ using namespace natus::application ;
 using namespace natus::application::util ;
 
 //****************************************************************
-simple_app_essentials::simple_app_essentials( void_t ) noexcept 
+app_essentials::app_essentials( void_t ) noexcept 
 {
 }
 
 //****************************************************************
-simple_app_essentials::simple_app_essentials( natus::graphics::async_views_t graphics ) noexcept 
+app_essentials::app_essentials( natus::graphics::async_views_t graphics ) noexcept 
 {
     _graphics = graphics ;
 }
 
 //****************************************************************
-simple_app_essentials::simple_app_essentials( this_rref_t rhv ) noexcept 
+app_essentials::app_essentials( this_rref_t rhv ) noexcept 
 {
     *this = std::move( rhv ) ;
 }
 
 //****************************************************************
-simple_app_essentials::~simple_app_essentials( void_t ) noexcept 
+app_essentials::~app_essentials( void_t ) noexcept 
 {
 }
 
 //****************************************************************
-simple_app_essentials::this_ref_t simple_app_essentials::operator = ( this_rref_t rhv ) noexcept 
+app_essentials::this_ref_t app_essentials::operator = ( this_rref_t rhv ) noexcept 
 {
     _camera_0 = std::move( rhv._camera_0 ) ;
     _graphics = std::move( rhv._graphics ) ;
@@ -59,7 +59,7 @@ simple_app_essentials::this_ref_t simple_app_essentials::operator = ( this_rref_
 }
 
 //****************************************************************
-void_t simple_app_essentials::init( init_struct_cref_t d ) noexcept 
+void_t app_essentials::init( init_struct_cref_t d ) noexcept 
 {
     this_t::init_database( d.idb.base, d.idb.rel, d.idb.name ) ;
     this_t::init_font() ;
@@ -69,7 +69,7 @@ void_t simple_app_essentials::init( init_struct_cref_t d ) noexcept
 }
 
 //****************************************************************
-void_t simple_app_essentials::init_font( void_t ) noexcept 
+void_t app_essentials::init_font( void_t ) noexcept 
 {
     // import fonts and create text render
     {
@@ -114,7 +114,7 @@ void_t simple_app_essentials::init_font( void_t ) noexcept
 }
 
 //****************************************************************
-void_t simple_app_essentials::init_graphics( natus::ntd::string_cref_t name ) noexcept 
+void_t app_essentials::init_graphics( natus::ntd::string_cref_t name ) noexcept 
 {
     // root render states
     {
@@ -189,13 +189,13 @@ void_t simple_app_essentials::init_graphics( natus::ntd::string_cref_t name ) no
 }
 
 //****************************************************************
-void_t simple_app_essentials::init_database( natus::io::path_cref_t base, natus::io::path_cref_t rel, natus::io::path_cref_t name ) noexcept 
+void_t app_essentials::init_database( natus::io::path_cref_t base, natus::io::path_cref_t rel, natus::io::path_cref_t name ) noexcept 
 {
     _db = natus::io::database_t( base, rel, name ) ;
 }
 
 //****************************************************************
-void_t simple_app_essentials::init_device( void_t ) noexcept 
+void_t app_essentials::init_device( void_t ) noexcept 
 {
     natus::device::global_t::system()->search( [&] ( natus::device::idevice_res_t dev_in )
     {
@@ -221,7 +221,7 @@ void_t simple_app_essentials::init_device( void_t ) noexcept
 }
 
 //****************************************************************
-void_t simple_app_essentials::init_shaders( this_t::locations_cref_t shader_locations ) noexcept 
+void_t app_essentials::init_shaders( this_t::locations_cref_t shader_locations ) noexcept 
 {
     _ndb = natus::nsl::database_t() ;
 
@@ -264,7 +264,7 @@ void_t simple_app_essentials::init_shaders( this_t::locations_cref_t shader_loca
 }
 
 //****************************************************************
-void_t simple_app_essentials::on_event( natus::application::app::window_id_t const, natus::application::app::window_event_info_in_t wei,
+void_t app_essentials::on_event( natus::application::app::window_id_t const, natus::application::app::window_event_info_in_t wei,
     natus::math::vec2f_cref_t target ) noexcept 
 {
     _window_dims = natus::math::vec2f_t( float_t(wei.w), float_t(wei.h) ) ;
@@ -283,7 +283,7 @@ void_t simple_app_essentials::on_event( natus::application::app::window_id_t con
 }
 
 //****************************************************************
-void_t simple_app_essentials::on_device( natus::application::app::device_data_in_t ) noexcept 
+void_t app_essentials::on_device( natus::application::app::device_data_in_t ) noexcept 
 {
     natus::device::layouts::ascii_keyboard_t ascii( _dev_ascii ) ;
     if( ascii.get_state( natus::device::layouts::ascii_keyboard_t::ascii_key::f8 ) ==
@@ -389,7 +389,7 @@ void_t simple_app_essentials::on_device( natus::application::app::device_data_in
 }
 
 //****************************************************************
-void_t simple_app_essentials::on_update( natus::application::app_t::update_data_in_t ) noexcept 
+void_t app_essentials::on_update( natus::application::app_t::update_data_in_t ) noexcept 
 {
     // check shader file changes
     // and recompile and set new shaders
@@ -434,7 +434,7 @@ void_t simple_app_essentials::on_update( natus::application::app_t::update_data_
 }
 
 //****************************************************************
-void_t simple_app_essentials::on_graphics_begin( natus::application::app_t::render_data_in_t ) noexcept 
+void_t app_essentials::on_graphics_begin( natus::application::app_t::render_data_in_t ) noexcept 
 {
     {
         _graphics.for_each( [&]( natus::graphics::async_view_t a )
@@ -451,7 +451,7 @@ void_t simple_app_essentials::on_graphics_begin( natus::application::app_t::rend
 }
 
 //****************************************************************
-void_t simple_app_essentials::on_graphics_end( size_t const num_layers, per_layer_funk_t funk ) noexcept 
+void_t app_essentials::on_graphics_end( size_t const num_layers, per_layer_funk_t funk ) noexcept 
 {
     // draw extend
     if( _draw_debug ) 
@@ -497,13 +497,13 @@ void_t simple_app_essentials::on_graphics_end( size_t const num_layers, per_laye
 }
 
 //****************************************************************
-void_t simple_app_essentials::on_graphics_end( size_t const num_layers ) noexcept 
+void_t app_essentials::on_graphics_end( size_t const num_layers ) noexcept 
 {
     this_t::on_graphics_end( num_layers, [&]( size_t const ){} ) ;
 }
 
 //****************************************************************
-bool_t simple_app_essentials::on_tool( natus::application::app::tool_data_ref_t, bool_t const default_ui ) noexcept 
+bool_t app_essentials::on_tool( natus::application::app::tool_data_ref_t, bool_t const default_ui ) noexcept 
 {
     if( !this_t::do_tool() )
     {
@@ -547,6 +547,6 @@ bool_t simple_app_essentials::on_tool( natus::application::app::tool_data_ref_t,
 }
 
 //****************************************************************
-void_t simple_app_essentials::on_shutdown( void_t ) noexcept 
+void_t app_essentials::on_shutdown( void_t ) noexcept 
 {
 }

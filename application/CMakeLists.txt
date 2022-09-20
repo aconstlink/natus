@@ -61,8 +61,8 @@ set( sources
     platform/gl_info.h
     platform/gfx_context.h
     
-    util/simple_app_essentials.h
-    util/simple_app_essentials.cpp
+    util/app_essentials.h
+    util/app_essentials.cpp
     )
 
 if( NATUS_GRAPHICS_WGL )
