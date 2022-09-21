@@ -326,9 +326,9 @@ parser::statements_t parser::replace_numbers( statements_rref_t ss ) const
 {
     for( auto& s : ss )
     {
-        s = std::regex_replace( s, std::regex( " ([0-9]+) " ), " __GEN__NUM_INT__ ( $1 ) " ) ;
-        s = std::regex_replace( s, std::regex( " ([0-9]+)u+ " ), " __GEN__NUM_UINT__ ( $1 ) " ) ;
-        s = std::regex_replace( s, std::regex( " ([0-9]+)\\.([0-9]+)f? " ), " __GEN__NUM_FLOAT__ ( $1 , $2 ) " ) ;
+        s = std::regex_replace( s, std::regex( " ([0-9]+) " ), " __int__ ( $1 ) " ) ;
+        s = std::regex_replace( s, std::regex( " ([0-9]+)u+ " ), " __uint__ ( $1 ) " ) ;
+        s = std::regex_replace( s, std::regex( " ([0-9]+)\\.([0-9]+)f? " ), " __float__ ( $1 , $2 ) " ) ;
     }
     return std::move( ss ) ;
 }
