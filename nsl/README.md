@@ -183,7 +183,7 @@ Are written like so:
 ## Build-Ins
 Build-in functions are provided with nsl as follows:
 ```
-dot cross pulse step mix pow texture
+dot cross pulse step mix pow floor ceil
 ```
  
 ## Operators
@@ -203,3 +203,15 @@ vec_type vec_c = vec_a ' vec_b ; // component wise multiplication
 ```
 
 This difference originates in the the ```*``` operator handling in hlsl and glsl. In hlsl the ```*``` performs a dot product with two vectors. In glsl this operator performs a component wise operation. So the ```*``` operator can not be converted cleanly from nsl.
+
+## Arrays
+Within the code you can write an array like so for many types
+```
+type_t myarray = { a, b, c } ;
+type_t d = myarray[#number] ;
+```
+
+Unfortunately, arrays can not be used floating around like so
+```
+a + b + { c, d }[0] ; // not possible. It must be declared first
+```
