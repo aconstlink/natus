@@ -29,6 +29,7 @@ namespace natus
                             for( auto const& v : s.variables )
                             {
                                 if( s.type != natus::nsl::shader_type::vertex_shader ) continue ;
+                                if( v.fq != natus::nsl::flow_qualifier::in ) continue ;
 
                                 // check texcoord
                                 {

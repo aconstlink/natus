@@ -29,16 +29,16 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_t co
             natus::ntd::string_t( "add" ),
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {
-                if( args.size() != 2 ) return "add ( INVALID_ARGS ) " ;
-                return args[ 0 ] + " + " + args[ 1 ] ;
+                if( args.size() == 0 || args.size() > 2 ) return "add ( INVALID_ARGS ) " ;
+                return args.size() == 1 ? "+ " + args[ 0 ] : args[ 0 ] + " + " + args[ 1 ] ;
             }
         },
         {
             natus::ntd::string_t( "sub" ),
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {
-                if( args.size() != 2 ) return "sub ( INVALID_ARGS ) " ;
-                return args[ 0 ] + " - " + args[ 1 ] ;
+                if( args.size() == 0 || args.size() > 2 ) return "sub ( INVALID_ARGS ) " ;
+                return args.size() == 1 ? "- " + args[ 0 ] : args[ 0 ] + " - " + args[ 1 ] ;
             }
         },
         {
@@ -137,6 +137,73 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_t co
                 if( args.size() != 1 ) return "-- ( INVALID_ARGS ) " ;
                 return "( " + args[ 0 ] + " ) -- " ;
             }
+        },
+        {
+            natus::ntd::string_t( "fract" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 1 ) return "fract ( INVALID_ARGS ) " ;
+                return "fract ( " + args[ 0 ] + " ) " ;
+            }
+        },
+        {
+            natus::ntd::string_t( "ceil" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 1 ) return "ceil ( INVALID_ARGS ) " ;
+                return "ceil ( " + args[ 0 ] + " ) " ;
+            }
+        },
+        {
+            natus::ntd::string_t( "floor" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 1 ) return "floor ( INVALID_ARGS ) " ;
+                return "floor ( " + args[ 0 ] + " ) " ;
+            }
+        },
+        {
+            natus::ntd::string_t( "dot" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 2 ) return "dot ( INVALID_ARGS ) " ;
+                return "dot ( " + args[ 0 ] + " , " + args[ 1 ] + " ) " ;
+            }
+        },
+        {
+            natus::ntd::string_t( "as_vec2" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 1 ) return "as_vec2 ( INVALID_ARGS ) " ;
+                return "vec2_t ( " + args[ 0 ] + " ) " ;
+            }
+        },
+        {
+            natus::ntd::string_t( "as_vec3" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 1 ) return "as_vec3 ( INVALID_ARGS ) " ;
+                return "vec3_t ( " + args[ 0 ] + " ) " ;
+            }
+        },
+        {
+            natus::ntd::string_t( "as_vec4" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 1 ) return "as_vec4 ( INVALID_ARGS ) " ;
+                return "vec4_t ( " + args[ 0 ] + " ) " ;
+            }
+        },
+        {
+            natus::ntd::string_t( "__make_array" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() < 3 ) return "__make_array ( INVALID_ARGS ) " ;
+                natus::ntd::string_t tmp ;
+                for( size_t i=0; i<args.size()-3; ++i ) tmp += args[3+i] + " , " ;
+                tmp = tmp.substr( 0, tmp.size() - 3 ) ;
+                return args[0] + " " + args[1] + " [ " + args[2] + " ] = " + args[0] + " [ " + args[2] + " ] " + " ( " + tmp + " ) " ;
+            }
         }
     } ;
 
@@ -150,6 +217,8 @@ natus::ntd::string_t generator::map_variable_type( natus::nsl::type_cref_t type 
     {
         mapping_t( natus::nsl::type_t(), "unknown" ),
         mapping_t( natus::nsl::type_t::as_void(), "void" ),
+        mapping_t( natus::nsl::type_t::as_int(), "int" ),
+        mapping_t( natus::nsl::type_t::as_uint(), "uint" ),
         mapping_t( natus::nsl::type_t::as_float(), "float" ),
         mapping_t( natus::nsl::type_t::as_vec2(), "vec2" ),
         mapping_t( natus::nsl::type_t::as_vec3(), "vec3" ),
@@ -158,7 +227,8 @@ natus::ntd::string_t generator::map_variable_type( natus::nsl::type_cref_t type 
         mapping_t( natus::nsl::type_t::as_mat3(), "mat3" ),
         mapping_t( natus::nsl::type_t::as_mat4(), "mat4" ),
         mapping_t( natus::nsl::type_t::as_tex1d(), "sampler1D" ),
-        mapping_t( natus::nsl::type_t::as_tex2d(), "sampler2D" )
+        mapping_t( natus::nsl::type_t::as_tex2d(), "sampler2D" ),
+        mapping_t( natus::nsl::type_t::as_tex2d_array(), "sampler2DArray" )
     } ;
 
     for( auto const& m : __mappings ) if( m.first == type ) return m.second ;

@@ -170,7 +170,8 @@ namespace natus
             singular,
             array,
             texture_1d,
-            texture_2d
+            texture_2d,
+            texture_2d_array
         } ;
 
         struct type
@@ -211,7 +212,8 @@ namespace natus
             { 
                 return 
                     ext == natus::nsl::type_ext::texture_1d || 
-                    ext == natus::nsl::type_ext::texture_2d ;
+                    ext == natus::nsl::type_ext::texture_2d ||
+                    ext == natus::nsl::type_ext::texture_2d_array ;
             }
 
             static this_t as_void( void_t ) noexcept
@@ -279,6 +281,11 @@ namespace natus
                 return { type_base::tfloat, type_struct::vec4, type_ext::texture_2d } ;
             }
 
+            static this_t as_tex2d_array( void_t ) noexcept
+            {
+                return { type_base::tfloat, type_struct::vec4, type_ext::texture_2d_array } ;
+            }
+
 
         };
         natus_typedef( type ) ;
@@ -301,7 +308,8 @@ namespace natus
                 __mapping_t( "mat3_t", type_t::as_mat3() ),
                 __mapping_t( "mat4_t", type_t::as_mat4() ),
                 __mapping_t( "tex1d_t", type_t::as_tex1d() ),
-                __mapping_t( "tex2d_t", type_t::as_tex2d() )
+                __mapping_t( "tex2d_t", type_t::as_tex2d() ),
+                __mapping_t( "tex2d_array_t", type_t::as_tex2d_array() )
             } ;
 
             for( auto const & m : __mappings ) if( m.first == t ) return m.second ;
@@ -501,6 +509,7 @@ namespace natus
             {
                 { type_t::as_vec4(), "texture", { { type_t::as_tex1d(), "t" }, { type_t::as_vec1(), "uv" } } },
                 { type_t::as_vec4(), "texture", { { type_t::as_tex2d(), "t" }, { type_t::as_vec2(), "uv" } } },
+                { type_t::as_vec4(), "texture", { { type_t::as_tex2d_array(), "t" }, { type_t::as_vec3(), "uv" } } },
             } ;
 
             static const signatures_t sigs[] =

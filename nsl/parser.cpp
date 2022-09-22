@@ -784,6 +784,51 @@ parser::statements_t parser::repackage( statements_rref_t ss ) const noexcept
         }
     }
 
+    // 2. repackage array construction
+    {
+        for( auto iter = ss.begin(); iter != ss.end(); ++iter )
+        {
+            // at the moment, only = {...} arrays are supported.
+            // arrays like {...}[num] is not supported
+            if( (*iter).back() != '=' || *(iter+1) != "{" ) continue ;            
+            
+            {
+                auto const tokens = this_t::tokenize( (*iter).substr( 0, iter->size() - 2 ) ) ;
+                *iter = "__make_array ( " ;
+                *iter += tokens[0] + " , " ;
+                *iter += tokens[1] + " , " ;
+            }
+            
+            auto iter0 = ss.erase( iter + 1 ) ; // first argument
+            auto iter1 = iter ; // running iter
+            while( *(++iter1) != "}" )
+            {
+                if( (*iter1).size() >= 2 )
+                {
+                    size_t count = 0 ; 
+                    count += (*iter1)[0] == ',' ? 1 : 0 ;
+                    count += (*iter1)[1] == ' ' ? 1 : 0 ;
+                    if( count != 0 ) *iter1 = (*iter1).substr( count, (*iter1).size() - count ) ;
+                }
+            }
+
+            // append arguments
+            {
+                size_t const num_args = iter1 - iter0 ;
+                *iter += std::to_string( num_args ) + " , " ;
+                for( auto i = iter0; i<iter1; ++i )
+                {
+                    *iter += *i + " , " ;
+                }
+                // remove trailing ,
+                *iter = iter->substr( 0, iter->size() - 2 ) ;
+            }
+
+            *iter += " ) " ;
+            iter = ss.erase( iter0, iter1 + 1 ) ;
+        }
+    }
+
     // 2. ; to last line
     {
         for( auto iter = ss.begin(); iter != ss.end(); ++iter )
