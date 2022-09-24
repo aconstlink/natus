@@ -34,6 +34,7 @@ natus::nsl::post_parse::document_t parser::process( natus::ntd::string_rref_t fi
     statements = this_t::repackage( std::move( statements ) ) ;
     statements = this_t::replace_numbers( std::move( statements ) ) ;
     statements = this_t::replace_operators( std::move( statements ) ) ;
+    statements = this_t::replace_buildins( std::move( statements ) ) ;
 
     // with the statements we can do:
     // 1. sanity checks here possible
@@ -446,7 +447,7 @@ parser::statements_t parser::replace_operators( statements_rref_t ss ) const
         natus::ntd::vector< repl > repls =
         {
             //{ "=", "ass" }, // declaration need to be handled first. float_t c = ...
-            { "return", "ret" }
+            { "return", ":ret:" }
         } ;
 
         auto is_stop = [&] ( char const t, size_t const l )
@@ -471,12 +472,12 @@ parser::statements_t parser::replace_operators( statements_rref_t ss ) const
         natus::ntd::vector< repl > repls =
         {
             //{ "=", "ass" }, // declaration need to be handled first. float_t c = ...
-            { "*=", "mul_asg" },
-            { "/=", "div_asg" },
-            { "+=", "add_asg" },
-            { "-=", "sub_asg" },
-            { "<=", "leq" },
-            { ">=", "geq" }
+            { "*=", ":mul_asg:" },
+            { "/=", ":div_asg:" },
+            { "+=", ":add_asg:" },
+            { "-=", ":sub_asg:" },
+            { "<=", ":leq:" },
+            { ">=", ":geq:" }
         } ;
 
         auto is_stop = [&] ( char const t, size_t const l )
@@ -500,17 +501,17 @@ parser::statements_t parser::replace_operators( statements_rref_t ss ) const
     {
         natus::ntd::vector< repl > repls =
         {
-            { "++", "inc", true },
-            { "--", "dec", true },
-            { "*", "mmul" },    // math multiplication
-            { "'", "cmul" },    // component-wise multiplication
-            { "/", "div" },
-            { "+", "add" },
-            { "-", "sub" },
-            { ">>", "rs" },
-            { "<<", "ls" },
-            { "<", "lt" },
-            { ">", "gt" }
+            { "++", ":inc:", true },
+            { "--", ":dec:", true },
+            { "*", ":mmul:" },    // math multiplication
+            { "'", ":cmul:" },    // component-wise multiplication
+            { "/", ":div:" },
+            { "+", ":add:" },
+            { "-", ":sub:" },
+            { ">>", ":rs:" },
+            { "<<", ":ls:" },
+            { "<", ":lt:" },
+            { ">", ":gt:" }
         } ;
 
         auto is_stop = [&] ( char const t, size_t const l )
@@ -527,6 +528,35 @@ parser::statements_t parser::replace_operators( statements_rref_t ss ) const
             for( auto const & r : repls )
             {
                 do_replacement( line, r, is_stop ) ;
+            }
+        }
+    }
+
+    return std::move( ss ) ;
+}
+
+
+parser::statements_t parser::replace_buildins( statements_rref_t ss ) const 
+{
+    for( size_t i=0; i<size_t(buildin_type::num_build_ins); ++i )
+    {
+        auto const bi = natus::nsl::get_build_in( buildin_type(i) ) ;
+        if( bi.t == buildin_type::unknown ) continue ;
+
+        for( auto iter = ss.begin(); iter != ss.end(); ++iter )
+        {
+            size_t p0 = iter->find( bi.fname ) ;
+            while( p0 != std::string::npos )
+            {
+                size_t const p1 = iter->find_first_of( '(', p0 ) ;
+                bool_t const a = p0 + bi.fname.size() + 1 == p1 ;
+                bool_t const b = p0 != 0 && (*iter)[p0 - 1] == ' ' ;
+
+                if( a && b )
+                {
+                    iter->replace( p0, (p1-p0) - 1, bi.opcode ) ;
+                }
+                p0 = iter->find( bi.fname, p1 ) ;
             }
         }
     }
@@ -794,7 +824,7 @@ parser::statements_t parser::repackage( statements_rref_t ss ) const noexcept
             
             {
                 auto const tokens = this_t::tokenize( (*iter).substr( 0, iter->size() - 2 ) ) ;
-                *iter = "__make_array ( " ;
+                *iter = ":make_array: ( " ;
                 *iter += tokens[0] + " , " ;
                 *iter += tokens[1] + " , " ;
             }

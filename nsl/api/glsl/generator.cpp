@@ -10,7 +10,7 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_t co
     natus::nsl::repl_syms_t repls =
     {
         {
-            natus::ntd::string_t( "cmul" ),
+            natus::ntd::string_t( ":cmul:" ),
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {
                 if( args.size() != 2 ) return "mul ( INVALID_ARGS ) " ;
@@ -18,7 +18,7 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_t co
             }
         },
         {
-            natus::ntd::string_t( "mmul" ),
+            natus::ntd::string_t( ":mmul:" ),
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {
                 if( args.size() != 2 ) return "mmul ( INVALID_ARGS ) " ;
@@ -26,7 +26,7 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_t co
             }
         },
         {
-            natus::ntd::string_t( "add" ),
+            natus::ntd::string_t( ":add:" ),
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {
                 if( args.size() == 0 || args.size() > 2 ) return "add ( INVALID_ARGS ) " ;
@@ -34,7 +34,7 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_t co
             }
         },
         {
-            natus::ntd::string_t( "sub" ),
+            natus::ntd::string_t( ":sub:" ),
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {
                 if( args.size() == 0 || args.size() > 2 ) return "sub ( INVALID_ARGS ) " ;
@@ -42,7 +42,7 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_t co
             }
         },
         {
-            natus::ntd::string_t( "div" ),
+            natus::ntd::string_t( ":div:" ),
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {
                 if( args.size() != 2 ) return "div ( INVALID_ARGS ) " ;
@@ -50,7 +50,7 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_t co
             }
         },
         {
-            natus::ntd::string_t( "pulse" ),
+            natus::ntd::string_t( ":pulse:" ),
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {
                 if( args.size() != 3 ) return "pulse ( INVALID_ARGS ) " ;
@@ -59,7 +59,7 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_t co
             }
         },
         {
-            natus::ntd::string_t( "texture" ),
+            natus::ntd::string_t( ":texture:" ),
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {
                 if( args.size() != 2 ) return "texture ( INVALID_ARGS ) " ;
@@ -67,7 +67,7 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_t co
             }
         },
         {
-            natus::ntd::string_t( "rt_texture" ),
+            natus::ntd::string_t( ":rt_texture:" ),
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {
                 if( args.size() != 2 ) return "rt_texture ( INVALID_ARGS ) " ;
@@ -75,7 +75,7 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_t co
             }
         },
         {
-            natus::ntd::string_t( "lt" ),
+            natus::ntd::string_t( ":lt:" ),
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {
                 if( args.size() != 2 ) return "lt ( INVALID_ARGS ) " ;
@@ -83,7 +83,7 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_t co
             }
         },
         {
-            natus::ntd::string_t( "gt" ),
+            natus::ntd::string_t( ":gt:" ),
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {
                 if( args.size() != 2 ) return "gt ( INVALID_ARGS ) " ;
@@ -91,7 +91,7 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_t co
             }
         },
         {
-            natus::ntd::string_t( "ret" ),
+            natus::ntd::string_t( ":ret:" ),
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {
                 if( args.size() != 1 ) return "ret ( INVALID_ARGS ) " ;
@@ -99,7 +99,7 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_t co
             }
         },
         {
-            natus::ntd::string_t( "mix" ),
+            natus::ntd::string_t( ":mix:" ),
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {
                 if( args.size() != 3 ) return "mix ( INVALID_ARGS ) " ;
@@ -107,7 +107,7 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_t co
             }
         },
         {
-            natus::ntd::string_t( "inc" ),
+            natus::ntd::string_t( ":inc:" ),
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {
                 if( args.size() != 1 ) return "++ ( INVALID_ARGS ) " ;
@@ -115,7 +115,7 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_t co
             }
         },
         {
-            natus::ntd::string_t( "dec" ),
+            natus::ntd::string_t( ":dec:" ),
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {
                 if( args.size() != 1 ) return "-- ( INVALID_ARGS ) " ;
@@ -123,7 +123,7 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_t co
             }
         },
         {
-            natus::ntd::string_t( "inc_post" ),
+            natus::ntd::string_t( ":inc_post:" ),
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {
                 if( args.size() != 1 ) return "++ ( INVALID_ARGS ) " ;
@@ -131,7 +131,7 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_t co
             }
         },
         {
-            natus::ntd::string_t( "dec_post" ),
+            natus::ntd::string_t( ":dec_post:" ),
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {
                 if( args.size() != 1 ) return "-- ( INVALID_ARGS ) " ;
@@ -139,7 +139,7 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_t co
             }
         },
         {
-            natus::ntd::string_t( "fract" ),
+            natus::ntd::string_t( ":fract:" ),
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {
                 if( args.size() != 1 ) return "fract ( INVALID_ARGS ) " ;
@@ -147,7 +147,7 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_t co
             }
         },
         {
-            natus::ntd::string_t( "ceil" ),
+            natus::ntd::string_t( ":ceil:" ),
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {
                 if( args.size() != 1 ) return "ceil ( INVALID_ARGS ) " ;
@@ -155,7 +155,7 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_t co
             }
         },
         {
-            natus::ntd::string_t( "floor" ),
+            natus::ntd::string_t( ":floor:" ),
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {
                 if( args.size() != 1 ) return "floor ( INVALID_ARGS ) " ;
@@ -163,7 +163,7 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_t co
             }
         },
         {
-            natus::ntd::string_t( "dot" ),
+            natus::ntd::string_t( ":dot:" ),
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {
                 if( args.size() != 2 ) return "dot ( INVALID_ARGS ) " ;
@@ -171,7 +171,15 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_t co
             }
         },
         {
-            natus::ntd::string_t( "as_vec2" ),
+            natus::ntd::string_t( ":pow:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 2 ) return "pow ( INVALID_ARGS ) " ;
+                return "pow ( " + args[ 0 ] + " , " + args[ 1 ] + " ) " ;
+            }
+        },
+        {
+            natus::ntd::string_t( ":as_vec2:" ),
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {
                 if( args.size() != 1 ) return "as_vec2 ( INVALID_ARGS ) " ;
@@ -179,7 +187,7 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_t co
             }
         },
         {
-            natus::ntd::string_t( "as_vec3" ),
+            natus::ntd::string_t( ":as_vec3:" ),
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {
                 if( args.size() != 1 ) return "as_vec3 ( INVALID_ARGS ) " ;
@@ -187,7 +195,7 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_t co
             }
         },
         {
-            natus::ntd::string_t( "as_vec4" ),
+            natus::ntd::string_t( ":as_vec4:" ),
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {
                 if( args.size() != 1 ) return "as_vec4 ( INVALID_ARGS ) " ;
@@ -195,7 +203,7 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_t co
             }
         },
         {
-            natus::ntd::string_t( "__make_array" ),
+            natus::ntd::string_t( ":make_array:" ),
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {
                 if( args.size() < 3 ) return "__make_array ( INVALID_ARGS ) " ;

@@ -127,7 +127,7 @@ namespace natus
                         else if( s[ i ] == ')' ) --level ;
                         if( level == size_t( -1 ) ) break ;
                     }
-                    p0 = s.replace( p0, ( --beg ) - p0, repl.repl( args ) ).find( repl.what, p0 + 1 ) ;
+                    p0 = s.replace( p0, ( --beg ) - p0, repl.repl( args ) ).find( repl.what, p0 ) ;
                 }
             }
             return std::move( s ) ;

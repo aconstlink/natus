@@ -46,6 +46,7 @@ namespace natus
             statements_t replace_numbers( statements_rref_t ss ) const ;
 
             statements_t replace_operators( statements_rref_t ss ) const ;
+            statements_t replace_buildins( statements_rref_t ss ) const ;
 
             natus::nsl::post_parse::libraries_t analyse_libraries( natus::nsl::parse::libraries_rref_t libs ) const noexcept ;
 

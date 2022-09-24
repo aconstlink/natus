@@ -317,42 +317,6 @@ namespace natus
             return natus::nsl::type_t() ;
         }
 
-        enum class build_in
-        {
-            unknown,
-            add,
-            sub,
-            div,
-            mul,
-            dot,
-            cross,
-            pulse,
-            step,
-            mix,
-            pow,
-            texture,
-            rt_texture,
-            num_build_ins
-        };
-
-        static build_in to_build_in( natus::ntd::string_cref_t s ) noexcept
-        {
-            if( s == "add" ) return natus::nsl::build_in::add ;
-            else if( s == "sub" ) return natus::nsl::build_in::sub ;
-            else if( s == "div" ) return natus::nsl::build_in::div ;
-            else if( s == "mul" ) return natus::nsl::build_in::mul ;
-            else if( s == "dot" ) return natus::nsl::build_in::dot ;
-            else if( s == "cross" ) return natus::nsl::build_in::cross ;
-            else if( s == "pulse" ) return natus::nsl::build_in::pulse ;
-            else if( s == "step" ) return natus::nsl::build_in::step ;
-            else if( s == "mix" ) return natus::nsl::build_in::mix ;
-            else if( s == "pow" ) return natus::nsl::build_in::pow ;
-            else if( s == "texture" ) return natus::nsl::build_in::texture ;
-            else if( s == "rt_texture" ) return natus::nsl::build_in::rt_texture ;
-
-            return natus::nsl::build_in::unknown ;
-        }
-
         // the fragments function signature
         struct signature
         {
@@ -387,6 +351,101 @@ namespace natus
         };
         natus_typedef( signature ) ;
 
+        enum class buildin_type
+        {
+            unknown,
+            add,
+            sub,
+            div,
+            mul,
+            dot,
+            cross,
+            pulse,
+            step,
+            ceil,
+            floor,
+            mix,
+            pow,
+            fract,
+            texture,
+            rt_texture,
+            as_vec2,
+            as_vec3,
+            as_vec4,
+            num_build_ins
+        };
+
+        struct build_in
+        {
+            buildin_type t ;
+            natus::ntd::string_t fname ;
+            natus::ntd::string_t opcode ;
+        };
+        natus_typedef( build_in ) ;
+
+        static build_in get_build_in( buildin_type t ) noexcept
+        {
+            switch( t )
+            {
+            case buildin_type::dot : return { buildin_type::dot, "dot", ":dot:" } ;
+            case buildin_type::cross : return { buildin_type::cross, "cross", ":cross:" } ;
+            case buildin_type::pulse : return { buildin_type::pulse, "pulse", ":pulse:" } ;
+            case buildin_type::step : return { buildin_type::step, "step", ":step:" } ;
+            case buildin_type::ceil : return { buildin_type::ceil, "ceil", ":ceil:" } ;
+            case buildin_type::floor : return { buildin_type::floor, "floor", ":floor:" } ;
+            case buildin_type::mix : return { buildin_type::mix, "mix", ":mix:" } ;
+            case buildin_type::pow : return { buildin_type::pow, "pow", ":pow:" } ;
+            case buildin_type::fract : return { buildin_type::fract, "fract", ":fract:" } ;
+            case buildin_type::texture : return { buildin_type::texture, "texture", ":texture:" } ;
+            case buildin_type::rt_texture : return { buildin_type::rt_texture, "rt_texture", ":rt_texture:" } ;
+            case buildin_type::as_vec2 : return { buildin_type::as_vec2, "as_vec2", ":as_vec2:" } ;
+            case buildin_type::as_vec3 : return { buildin_type::as_vec3, "as_vec3", ":as_vec3:" } ;
+            case buildin_type::as_vec4 : return { buildin_type::as_vec4, "as_vec3", ":as_vec4:" } ;
+            }
+            return { buildin_type::unknown, "unknown-buildin", ":unknown-buildin:" } ; 
+        }
+
+        static build_in get_build_in_for_func_name( natus::ntd::string_in_t name ) noexcept
+        {
+            if( name == "dot" ) return { buildin_type::dot, "dot", ":dot:" } ;
+            if( name == "cross" ) return { buildin_type::cross, "cross", ":cross:" } ;
+            if( name == "pulse" ) return { buildin_type::pulse, "pulse", ":pulse:" } ;
+            if( name == "step" ) return { buildin_type::step, "step", ":step:" } ;
+            if( name == "ceil" ) return { buildin_type::ceil, "ceil", ":ceil:" } ;
+            if( name == "floor" ) return { buildin_type::floor, "floor", ":floor:" } ;
+            if( name == "mix" ) return { buildin_type::mix, "mix", ":mix:" } ;
+            if( name == "pow" ) return { buildin_type::pow, "pow", ":pow:" } ;
+            if( name == "fract" ) return { buildin_type::pow, "fract", ":fract:" } ;
+            if( name == "texture" ) return { buildin_type::texture, "texture", ":texture:" } ;
+            if( name == "rt_texture" ) return { buildin_type::rt_texture, "rt_texture", ":rt_texture:" } ;
+            if( name == "as_vec2" ) return { buildin_type::as_vec2, "as_vec2", ":as_vec2:" } ;
+            if( name == "as_vec3" ) return { buildin_type::as_vec3, "as_vec3", ":as_vec3:" } ;
+            if( name == "as_vec4" ) return { buildin_type::as_vec4, "as_vec4", ":as_vec4:" } ;
+            return { buildin_type::unknown, "unknown-buildin", ":unknown-buildin:" } ;
+        }
+
+        #if UNUSED
+
+        static build_in to_build_in( natus::ntd::string_cref_t s ) noexcept
+        {
+            if( s == ":add:" ) return natus::nsl::build_in::add ;
+            else if( s == ":sub:" ) return natus::nsl::build_in::sub ;
+            else if( s == ":div:" ) return natus::nsl::build_in::div ;
+            else if( s == ":mul:" ) return natus::nsl::build_in::mul ;
+            else if( s == ":dot:" ) return natus::nsl::build_in::dot ;
+            else if( s == ":cross:" ) return natus::nsl::build_in::cross ;
+            else if( s == ":pulse:" ) return natus::nsl::build_in::pulse ;
+            else if( s == ":step:" ) return natus::nsl::build_in::step ;
+            else if( s == ":ceil:" ) return natus::nsl::build_in::ceil ;
+            else if( s == ":floor:" ) return natus::nsl::build_in::floor ;
+            else if( s == ":mix:" ) return natus::nsl::build_in::mix ;
+            else if( s == ":pow:" ) return natus::nsl::build_in::pow ;
+            else if( s == ":texture:" ) return natus::nsl::build_in::texture ;
+            else if( s == ":rt_texture:" ) return natus::nsl::build_in::rt_texture ;
+
+            return natus::nsl::build_in::unknown ;
+        }
+        
         static natus::nsl::type_t deduce_return_type( 
             natus::nsl::build_in const bi, natus::ntd::vector< natus::nsl::type_t > const & args ) noexcept
         {
@@ -396,120 +455,136 @@ namespace natus
 
             static const signatures_t adds =
             {
-                { type_t::as_vec1(), "add", { { type_t::as_vec1(), "a" }, { type_t::as_vec1(), "b" } } },
-                { type_t::as_vec2(), "add", { { type_t::as_vec2(), "a" }, { type_t::as_vec2(), "b" } } },
-                { type_t::as_vec3(), "add", { { type_t::as_vec3(), "a" }, { type_t::as_vec3(), "b" } } },
-                { type_t::as_vec4(), "add", { { type_t::as_vec4(), "a" }, { type_t::as_vec4(), "b" } } },
+                { type_t::as_vec1(), ":add:", { { type_t::as_vec1(), "a" }, { type_t::as_vec1(), "b" } } },
+                { type_t::as_vec2(), ":add:", { { type_t::as_vec2(), "a" }, { type_t::as_vec2(), "b" } } },
+                { type_t::as_vec3(), ":add:", { { type_t::as_vec3(), "a" }, { type_t::as_vec3(), "b" } } },
+                { type_t::as_vec4(), ":add:", { { type_t::as_vec4(), "a" }, { type_t::as_vec4(), "b" } } },
 
-                { type_t::as_mat2(), "add", { { type_t::as_mat2(), "a" }, { type_t::as_mat2(), "b" } } },
-                { type_t::as_mat3(), "add", { { type_t::as_mat3(), "a" }, { type_t::as_mat3(), "b" } } },
-                { type_t::as_mat4(), "add", { { type_t::as_mat4(), "a" }, { type_t::as_mat4(), "b" } } },
+                { type_t::as_mat2(), ":add:", { { type_t::as_mat2(), "a" }, { type_t::as_mat2(), "b" } } },
+                { type_t::as_mat3(), ":add:", { { type_t::as_mat3(), "a" }, { type_t::as_mat3(), "b" } } },
+                { type_t::as_mat4(), ":add:", { { type_t::as_mat4(), "a" }, { type_t::as_mat4(), "b" } } },
             } ;
 
             static const signatures_t subs =
             {
-                { type_t::as_vec1(), "sub", { { type_t::as_vec1(), "a" }, { type_t::as_vec1(), "b" } } },
-                { type_t::as_vec2(), "sub", { { type_t::as_vec2(), "a" }, { type_t::as_vec2(), "b" } } },
-                { type_t::as_vec3(), "sub", { { type_t::as_vec3(), "a" }, { type_t::as_vec3(), "b" } } },
-                { type_t::as_vec4(), "sub", { { type_t::as_vec4(), "a" }, { type_t::as_vec4(), "b" } } },
+                { type_t::as_vec1(), ":sub:", { { type_t::as_vec1(), "a" }, { type_t::as_vec1(), "b" } } },
+                { type_t::as_vec2(), ":sub:", { { type_t::as_vec2(), "a" }, { type_t::as_vec2(), "b" } } },
+                { type_t::as_vec3(), ":sub:", { { type_t::as_vec3(), "a" }, { type_t::as_vec3(), "b" } } },
+                { type_t::as_vec4(), ":sub:", { { type_t::as_vec4(), "a" }, { type_t::as_vec4(), "b" } } },
 
-                { type_t::as_mat2(), "sub", { { type_t::as_mat2(), "a" }, { type_t::as_mat2(), "b" } } },
-                { type_t::as_mat3(), "sub", { { type_t::as_mat3(), "a" }, { type_t::as_mat3(), "b" } } },
-                { type_t::as_mat4(), "sub", { { type_t::as_mat4(), "a" }, { type_t::as_mat4(), "b" } } },
+                { type_t::as_mat2(), ":sub:", { { type_t::as_mat2(), "a" }, { type_t::as_mat2(), "b" } } },
+                { type_t::as_mat3(), ":sub:", { { type_t::as_mat3(), "a" }, { type_t::as_mat3(), "b" } } },
+                { type_t::as_mat4(), ":sub:", { { type_t::as_mat4(), "a" }, { type_t::as_mat4(), "b" } } },
             } ;
 
             static const signatures_t divs =
             {
-                { type_t::as_vec1(), "div", { { type_t::as_vec1(), "a" }, { type_t::as_vec1(), "b" } } },
-                { type_t::as_vec2(), "div", { { type_t::as_vec2(), "a" }, { type_t::as_vec2(), "b" } } },
-                { type_t::as_vec3(), "div", { { type_t::as_vec3(), "a" }, { type_t::as_vec3(), "b" } } },
-                { type_t::as_vec4(), "div", { { type_t::as_vec4(), "a" }, { type_t::as_vec4(), "b" } } },
-                { type_t::as_mat2(), "div", { { type_t::as_mat2(), "a" }, { type_t::as_mat2(), "b" } } },
-                { type_t::as_mat3(), "div", { { type_t::as_mat3(), "a" }, { type_t::as_mat3(), "b" } } },
-                { type_t::as_mat4(), "div", { { type_t::as_mat4(), "a" }, { type_t::as_mat4(), "b" } } },
+                { type_t::as_vec1(), ":div:", { { type_t::as_vec1(), "a" }, { type_t::as_vec1(), "b" } } },
+                { type_t::as_vec2(), ":div:", { { type_t::as_vec2(), "a" }, { type_t::as_vec2(), "b" } } },
+                { type_t::as_vec3(), ":div:", { { type_t::as_vec3(), "a" }, { type_t::as_vec3(), "b" } } },
+                { type_t::as_vec4(), ":div:", { { type_t::as_vec4(), "a" }, { type_t::as_vec4(), "b" } } },
+                { type_t::as_mat2(), ":div:", { { type_t::as_mat2(), "a" }, { type_t::as_mat2(), "b" } } },
+                { type_t::as_mat3(), ":div:", { { type_t::as_mat3(), "a" }, { type_t::as_mat3(), "b" } } },
+                { type_t::as_mat4(), ":div:", { { type_t::as_mat4(), "a" }, { type_t::as_mat4(), "b" } } },
             } ;
 
             static const signatures_t muls = 
             {  
-                { type_t::as_vec1(), "mul", { { type_t::as_vec1(), "a" }, { type_t::as_vec1(), "b" } } },
-                { type_t::as_vec2(), "mul", { { type_t::as_vec2(), "a" }, { type_t::as_vec2(), "b" } } },
-                { type_t::as_vec3(), "mul", { { type_t::as_vec3(), "a" }, { type_t::as_vec3(), "b" } } },
+                { type_t::as_vec1(), ":mul:", { { type_t::as_vec1(), "a" }, { type_t::as_vec1(), "b" } } },
+                { type_t::as_vec2(), ":mul:", { { type_t::as_vec2(), "a" }, { type_t::as_vec2(), "b" } } },
+                { type_t::as_vec3(), ":mul:", { { type_t::as_vec3(), "a" }, { type_t::as_vec3(), "b" } } },
 
-                { type_t::as_vec2(), "mul", { { type_t::as_vec1(), "a" }, { type_t::as_vec2(), "b" } } },
-                { type_t::as_vec2(), "mul", { { type_t::as_vec2(), "a" }, { type_t::as_vec1(), "b" } } },
-                { type_t::as_vec3(), "mul", { { type_t::as_vec1(), "a" }, { type_t::as_vec3(), "b" } } },
-                { type_t::as_vec3(), "mul", { { type_t::as_vec3(), "a" }, { type_t::as_vec1(), "b" } } },
-                { type_t::as_vec4(), "mul", { { type_t::as_vec1(), "a" }, { type_t::as_vec4(), "b" } } },
-                { type_t::as_vec4(), "mul", { { type_t::as_vec4(), "a" }, { type_t::as_vec1(), "b" } } },
+                { type_t::as_vec2(), ":mul:", { { type_t::as_vec1(), "a" }, { type_t::as_vec2(), "b" } } },
+                { type_t::as_vec2(), ":mul:", { { type_t::as_vec2(), "a" }, { type_t::as_vec1(), "b" } } },
+                { type_t::as_vec3(), ":mul:", { { type_t::as_vec1(), "a" }, { type_t::as_vec3(), "b" } } },
+                { type_t::as_vec3(), ":mul:", { { type_t::as_vec3(), "a" }, { type_t::as_vec1(), "b" } } },
+                { type_t::as_vec4(), ":mul:", { { type_t::as_vec1(), "a" }, { type_t::as_vec4(), "b" } } },
+                { type_t::as_vec4(), ":mul:", { { type_t::as_vec4(), "a" }, { type_t::as_vec1(), "b" } } },
 
-                { type_t::as_mat2(), "mul", { { type_t::as_mat2(), "a" }, { type_t::as_vec1(), "b" } } },
-                { type_t::as_mat2(), "mul", { { type_t::as_vec1(), "a" }, { type_t::as_mat2(), "b" } } },
-                { type_t::as_mat3(), "mul", { { type_t::as_mat3(), "a" }, { type_t::as_vec1(), "b" } } },
-                { type_t::as_mat3(), "mul", { { type_t::as_vec1(), "a" }, { type_t::as_mat3(), "b" } } },
-                { type_t::as_mat4(), "mul", { { type_t::as_mat4(), "a" }, { type_t::as_vec1(), "b" } } },
-                { type_t::as_mat4(), "mul", { { type_t::as_vec1(), "a" }, { type_t::as_mat4(), "b" } } },
+                { type_t::as_mat2(), ":mul:", { { type_t::as_mat2(), "a" }, { type_t::as_vec1(), "b" } } },
+                { type_t::as_mat2(), ":mul:", { { type_t::as_vec1(), "a" }, { type_t::as_mat2(), "b" } } },
+                { type_t::as_mat3(), ":mul:", { { type_t::as_mat3(), "a" }, { type_t::as_vec1(), "b" } } },
+                { type_t::as_mat3(), ":mul:", { { type_t::as_vec1(), "a" }, { type_t::as_mat3(), "b" } } },
+                { type_t::as_mat4(), ":mul:", { { type_t::as_mat4(), "a" }, { type_t::as_vec1(), "b" } } },
+                { type_t::as_mat4(), ":mul:", { { type_t::as_vec1(), "a" }, { type_t::as_mat4(), "b" } } },
 
-                { type_t::as_vec2(), "mul", { { type_t::as_mat2(), "a" }, { type_t::as_vec2(), "b" } } },
-                { type_t::as_vec3(), "mul", { { type_t::as_mat3(), "a" }, { type_t::as_vec3(), "b" } } },
-                { type_t::as_vec4(), "mul", { { type_t::as_mat4(), "a" }, { type_t::as_vec4(), "b" } } },
+                { type_t::as_vec2(), ":mul:", { { type_t::as_mat2(), "a" }, { type_t::as_vec2(), "b" } } },
+                { type_t::as_vec3(), ":mul:", { { type_t::as_mat3(), "a" }, { type_t::as_vec3(), "b" } } },
+                { type_t::as_vec4(), ":mul:", { { type_t::as_mat4(), "a" }, { type_t::as_vec4(), "b" } } },
 
 
-                { type_t::as_mat2(), "mul", { { type_t::as_vec2(), "a" }, { type_t::as_mat2(), "b" } } },
-                { type_t::as_mat3(), "mul", { { type_t::as_vec3(), "a" }, { type_t::as_mat3(), "b" } } },
-                { type_t::as_mat4(), "mul", { { type_t::as_vec4(), "a" }, { type_t::as_mat4(), "b" } } },
+                { type_t::as_mat2(), ":mul:", { { type_t::as_vec2(), "a" }, { type_t::as_mat2(), "b" } } },
+                { type_t::as_mat3(), ":mul:", { { type_t::as_vec3(), "a" }, { type_t::as_mat3(), "b" } } },
+                { type_t::as_mat4(), ":mul:", { { type_t::as_vec4(), "a" }, { type_t::as_mat4(), "b" } } },
             };
 
             static const signatures_t dots =
             {
-                { type_t::as_vec1(), "dot", { { type_t::as_vec1(), "a" }, { type_t::as_vec1(), "b" } } },
-                { type_t::as_vec1(), "dot", { { type_t::as_vec2(), "a" }, { type_t::as_vec2(), "b" } } },
-                { type_t::as_vec1(), "dot", { { type_t::as_vec3(), "a" }, { type_t::as_vec3(), "b" } } },
-                { type_t::as_vec1(), "dot", { { type_t::as_vec4(), "a" }, { type_t::as_vec4(), "b" } } },
+                { type_t::as_vec1(), ":dot:", { { type_t::as_vec1(), "a" }, { type_t::as_vec1(), "b" } } },
+                { type_t::as_vec1(), ":dot:", { { type_t::as_vec2(), "a" }, { type_t::as_vec2(), "b" } } },
+                { type_t::as_vec1(), ":dot:", { { type_t::as_vec3(), "a" }, { type_t::as_vec3(), "b" } } },
+                { type_t::as_vec1(), ":dot:", { { type_t::as_vec4(), "a" }, { type_t::as_vec4(), "b" } } },
             } ;
 
             static const signatures_t crosss =
             { 
-                { type_t::as_vec3(), "cross", { { type_t::as_vec2(), "a" }, { type_t::as_vec2(), "b" } } },
-                { type_t::as_vec3(), "cross", { { type_t::as_vec3(), "a" }, { type_t::as_vec3(), "b" } } },
+                { type_t::as_vec3(), ":cross:", { { type_t::as_vec2(), "a" }, { type_t::as_vec2(), "b" } } },
+                { type_t::as_vec3(), ":cross:", { { type_t::as_vec3(), "a" }, { type_t::as_vec3(), "b" } } },
             } ;
 
             static const signatures_t pulses =
             {
-                { type_t::as_vec1(), "pulse", { { type_t::as_vec1(), "a" }, { type_t::as_vec1(), "b" }, { type_t::as_vec1(), "x" } } },
-                { type_t::as_vec2(), "pulse", { { type_t::as_vec2(), "a" }, { type_t::as_vec2(), "b" }, { type_t::as_vec2(), "x" } } },
-                { type_t::as_vec3(), "pulse", { { type_t::as_vec3(), "a" }, { type_t::as_vec3(), "b" }, { type_t::as_vec3(), "x" } } },
-                { type_t::as_vec4(), "pulse", { { type_t::as_vec4(), "a" }, { type_t::as_vec4(), "b" }, { type_t::as_vec4(), "x" } } },
+                { type_t::as_vec1(), ":pulse:", { { type_t::as_vec1(), "a" }, { type_t::as_vec1(), "b" }, { type_t::as_vec1(), "x" } } },
+                { type_t::as_vec2(), ":pulse:", { { type_t::as_vec2(), "a" }, { type_t::as_vec2(), "b" }, { type_t::as_vec2(), "x" } } },
+                { type_t::as_vec3(), ":pulse:", { { type_t::as_vec3(), "a" }, { type_t::as_vec3(), "b" }, { type_t::as_vec3(), "x" } } },
+                { type_t::as_vec4(), ":pulse:", { { type_t::as_vec4(), "a" }, { type_t::as_vec4(), "b" }, { type_t::as_vec4(), "x" } } },
             } ;
 
             static const signatures_t steps =
             {
-                { type_t::as_vec1(), "step", { { type_t::as_vec1(), "a" }, { type_t::as_vec1(), "x" } } },
-                { type_t::as_vec2(), "step", { { type_t::as_vec2(), "a" }, { type_t::as_vec2(), "x" } } },
-                { type_t::as_vec3(), "step", { { type_t::as_vec3(), "a" }, { type_t::as_vec3(), "x" } } },
-                { type_t::as_vec4(), "step", { { type_t::as_vec4(), "a" }, { type_t::as_vec4(), "x" } } },
+                { type_t::as_vec1(), ":step:", { { type_t::as_vec1(), "a" }, { type_t::as_vec1(), "x" } } },
+                { type_t::as_vec2(), ":step:", { { type_t::as_vec2(), "a" }, { type_t::as_vec2(), "x" } } },
+                { type_t::as_vec3(), ":step:", { { type_t::as_vec3(), "a" }, { type_t::as_vec3(), "x" } } },
+                { type_t::as_vec4(), ":step:", { { type_t::as_vec4(), "a" }, { type_t::as_vec4(), "x" } } },
+            } ;
+
+            static const signatures_t ceils =
+            {
+                { type_t::as_vec1(), ":ceil:", { { type_t::as_vec1(), "a" }, { type_t::as_vec1(), "x" } } },
+                { type_t::as_vec2(), ":ceil:", { { type_t::as_vec2(), "a" }, { type_t::as_vec2(), "x" } } },
+                { type_t::as_vec3(), ":ceil:", { { type_t::as_vec3(), "a" }, { type_t::as_vec3(), "x" } } },
+                { type_t::as_vec4(), ":ceil:", { { type_t::as_vec4(), "a" }, { type_t::as_vec4(), "x" } } },
+            } ;
+
+            static const signatures_t floors =
+            {
+                { type_t::as_vec1(), ":floor:", { { type_t::as_vec1(), "a" }, { type_t::as_vec1(), "x" } } },
+                { type_t::as_vec2(), ":floor:", { { type_t::as_vec2(), "a" }, { type_t::as_vec2(), "x" } } },
+                { type_t::as_vec3(), ":floor:", { { type_t::as_vec3(), "a" }, { type_t::as_vec3(), "x" } } },
+                { type_t::as_vec4(), ":floor:", { { type_t::as_vec4(), "a" }, { type_t::as_vec4(), "x" } } },
             } ;
 
             static const signatures_t mixes =
             {
-                { type_t::as_vec1(), "mix", { { type_t::as_vec1(), "a" }, { type_t::as_vec1(), "b" }, { type_t::as_vec1(), "x" } } },
-                { type_t::as_vec2(), "mix", { { type_t::as_vec2(), "a" }, { type_t::as_vec2(), "b" }, { type_t::as_vec2(), "x" } } },
-                { type_t::as_vec3(), "mix", { { type_t::as_vec3(), "a" }, { type_t::as_vec3(), "b" }, { type_t::as_vec3(), "x" } } },
-                { type_t::as_vec4(), "mix", { { type_t::as_vec4(), "a" }, { type_t::as_vec4(), "b" }, { type_t::as_vec4(), "x" } } },
+                { type_t::as_vec1(), ":mix:", { { type_t::as_vec1(), "a" }, { type_t::as_vec1(), "b" }, { type_t::as_vec1(), "x" } } },
+                { type_t::as_vec2(), ":mix:", { { type_t::as_vec2(), "a" }, { type_t::as_vec2(), "b" }, { type_t::as_vec2(), "x" } } },
+                { type_t::as_vec3(), ":mix:", { { type_t::as_vec3(), "a" }, { type_t::as_vec3(), "b" }, { type_t::as_vec3(), "x" } } },
+                { type_t::as_vec4(), ":mix:", { { type_t::as_vec4(), "a" }, { type_t::as_vec4(), "b" }, { type_t::as_vec4(), "x" } } },
             } ;
 
             static const signatures_t pows =
             {
-                { type_t::as_vec1(), "pow", { { type_t::as_vec1(), "x" }, { type_t::as_vec1(), "y" } } },
-                { type_t::as_vec2(), "pow", { { type_t::as_vec2(), "x" }, { type_t::as_vec2(), "y" } } },
-                { type_t::as_vec3(), "pow", { { type_t::as_vec3(), "x" }, { type_t::as_vec3(), "y" } } },
-                { type_t::as_vec4(), "pow", { { type_t::as_vec4(), "x" }, { type_t::as_vec4(), "y" } } },
+                { type_t::as_vec1(), ":pow:", { { type_t::as_vec1(), "x" }, { type_t::as_vec1(), "y" } } },
+                { type_t::as_vec2(), ":pow:", { { type_t::as_vec2(), "x" }, { type_t::as_vec2(), "y" } } },
+                { type_t::as_vec3(), ":pow:", { { type_t::as_vec3(), "x" }, { type_t::as_vec3(), "y" } } },
+                { type_t::as_vec4(), ":pow:", { { type_t::as_vec4(), "x" }, { type_t::as_vec4(), "y" } } },
             } ;
 
             static const signatures_t textures =
             {
-                { type_t::as_vec4(), "texture", { { type_t::as_tex1d(), "t" }, { type_t::as_vec1(), "uv" } } },
-                { type_t::as_vec4(), "texture", { { type_t::as_tex2d(), "t" }, { type_t::as_vec2(), "uv" } } },
-                { type_t::as_vec4(), "texture", { { type_t::as_tex2d_array(), "t" }, { type_t::as_vec3(), "uv" } } },
+                { type_t::as_vec4(), ":texture:", { { type_t::as_tex1d(), "t" }, { type_t::as_vec1(), "uv" } } },
+                { type_t::as_vec4(), ":texture:", { { type_t::as_tex2d(), "t" }, { type_t::as_vec2(), "uv" } } },
+                { type_t::as_vec4(), ":texture:", { { type_t::as_tex2d_array(), "t" }, { type_t::as_vec3(), "uv" } } },
             } ;
 
             static const signatures_t sigs[] =
@@ -536,5 +611,6 @@ namespace natus
             
             return natus::nsl::type_t() ;
         }
+        #endif
     }
 }
