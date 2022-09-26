@@ -294,6 +294,18 @@ natus::nsl::generated_code_t::shaders_t generator::generate( natus::nsl::generat
             {
                 var.new_name = "gl_Position" ;
             }
+            else if( var.binding == natus::nsl::binding::vertex_id )
+            {
+                var.new_name = "gl_VertexId" ;
+            }
+            else if( var.binding == natus::nsl::binding::primitive_id )
+            {
+                var.new_name = "gl_PrimitiveId" ;
+            }
+            else if( var.binding == natus::nsl::binding::instance_id )
+            {
+                var.new_name = "gl_InstanceId" ;
+            }
         }
     }
 

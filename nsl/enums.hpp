@@ -46,20 +46,22 @@ namespace natus
             unknown,
             in,
             out,
-            global
+            global,
+            local
         };
         static flow_qualifier to_flow_qualifier( natus::ntd::string_cref_t s ) noexcept
         {
             if( s == "in" ) return flow_qualifier::in ;
             else if( s == "out" ) return flow_qualifier::out ;
             else if( s == "" || s == "global" ) return flow_qualifier::global ;
+            else if( s == "local" ) return flow_qualifier::local ;
             return flow_qualifier::unknown ;
         }
 
         static natus::ntd::string_cref_t to_string( natus::nsl::flow_qualifier const fq ) noexcept
         {
             static natus::ntd::string_t const __strings[] = { 
-                "unknown", "in", "out", "global" } ;
+                "unknown", "in", "out", "global", "local" } ;
             return __strings[ size_t( fq ) ] ;
         }
     }
@@ -71,7 +73,8 @@ namespace natus
             unknown, position, normal, tangent,
             texcoord0,texcoord1,texcoord2,texcoord3,texcoord4,texcoord5,texcoord6,texcoord7,
             color0, color1, color2, color3, color4, color5, color6, color7,
-            projection, view, world, object, camera, camera_position, viewport
+            projection, view, world, object, camera, camera_position, viewport,
+            vertex_id, primitive_id, instance_id
         };
 
         static binding to_binding( natus::ntd::string_cref_t b ) noexcept
@@ -107,7 +110,10 @@ namespace natus
                 __mapping_t( "object", natus::nsl::binding::object ),
                 __mapping_t( "camera", natus::nsl::binding::camera ),
                 __mapping_t( "camera_position", natus::nsl::binding::camera_position ),
-                __mapping_t( "viewport", natus::nsl::binding::viewport )
+                __mapping_t( "viewport", natus::nsl::binding::viewport ),
+                __mapping_t( "vertex_id", natus::nsl::binding::vertex_id ),
+                __mapping_t( "primitive_id", natus::nsl::binding::primitive_id ),
+                __mapping_t( "instance_id", natus::nsl::binding::instance_id )
             } ;
 
             for( auto const& m : __mappings ) if( b == m.first ) return m.second ;
@@ -121,7 +127,8 @@ namespace natus
                 "unknown", "position", "normal", "tangent",
                 "texcoord0", "texcoord1", "texcoord2", "texcoord3", "texcoord4", "texcoord5", "texcoord6", "texcoord7",
                 "color0", "color1", "color2", "color3", "color4", "color5", "color6", "color7",
-                "projection", "view", "world", "object", "camera", "camera_position", "viewport"
+                "projection", "view", "world", "object", "camera", "camera_position", "viewport",
+                "vertex_id", "primitive_id", "instance_id"
             } ;
             return __values[ size_t( b ) ] ;
         }
@@ -138,6 +145,18 @@ namespace natus
             return
                 size_t( natus::nsl::binding::color0 ) <= size_t( b ) &&
                 size_t( natus::nsl::binding::color7 ) >= size_t( b ) ;
+        }
+
+        // forced flow qualifiers where a specific binding is used
+        static flow_qualifier flow_qualifier_from_binding( flow_qualifier const fq, natus::nsl::binding const b ) noexcept
+        {
+            switch( b ) 
+            {
+            case natus::nsl::binding::vertex_id: 
+            case natus::nsl::binding::primitive_id:
+            case natus::nsl::binding::instance_id: return natus::nsl::flow_qualifier::local ;
+            }
+            return fq ;
         }
     }
 

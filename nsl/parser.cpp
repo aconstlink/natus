@@ -217,7 +217,7 @@ natus::nsl::post_parse::configs_t parser::analyse_configs( natus::nsl::parse::co
             {
                 variable v ;
                 v.binding = natus::nsl::to_binding( var.binding ) ;
-                v.fq = natus::nsl::to_flow_qualifier( var.flow_qualifier ) ;
+                v.fq = natus::nsl::flow_qualifier_from_binding( natus::nsl::to_flow_qualifier( var.flow_qualifier ), v.binding ) ;
                 v.line = var.line ;
                 v.name = var.name ;
                 v.type = natus::nsl::to_type( var.type ) ;

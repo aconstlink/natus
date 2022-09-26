@@ -292,7 +292,12 @@ natus::ntd::string_t generator::map_variable_binding( natus::nsl::shader_type co
         mapping_t( natus::nsl::binding::texcoord4, "TEXCOORD4" ),
         mapping_t( natus::nsl::binding::texcoord5, "TEXCOORD5" ),
         mapping_t( natus::nsl::binding::texcoord6, "TEXCOORD6" ),
-        mapping_t( natus::nsl::binding::texcoord7, "TEXCOORD7" )
+        mapping_t( natus::nsl::binding::texcoord7, "TEXCOORD7" ),
+
+        mapping_t( natus::nsl::binding::vertex_id, "SV_VertexID" ),
+        mapping_t( natus::nsl::binding::primitive_id, "SV_PrimitiveID" ),
+        mapping_t( natus::nsl::binding::instance_id, "SV_InstanceID" )
+
     } ;
 
     static mapping_t const __mrt[] =
@@ -316,7 +321,6 @@ natus::ntd::string_t generator::map_variable_binding( natus::nsl::shader_type co
             natus::nsl::is_color( binding ) )
         {
             for( auto const& m : __mrt ) if( m.first == binding ) return m.second ;
-
         }
     }
 
@@ -518,7 +522,8 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
         text << "{" << std::endl ;
         for( auto const& v : s.variables )
         {
-            if( v.fq != natus::nsl::flow_qualifier::in ) continue ;
+            if( v.fq != natus::nsl::flow_qualifier::in &&
+                v.fq != natus::nsl::flow_qualifier::local ) continue ;
 
             natus::ntd::string_t name = v.name ;
             natus::ntd::string_t const type_ = this_t::map_variable_type( v.type ) ;
@@ -691,16 +696,21 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
             {
                 flow = "out." ;
                 struct_name = "output." ;
-            }
+            } else if( v.fq == natus::nsl::flow_qualifier::local )
+            {
+                flow = "" ;
+                struct_name = "input." ;
+            } 
 
             // replace in./out. with 
             {
-                natus::ntd::string_t const repl = flow + v.old_name ;
-                size_t p0 = shd.find( repl, off ) ;
+                natus::ntd::string_t const what = flow + v.old_name ;
+                size_t p0 = shd.find( what, off ) ;
                 while( p0 != std::string::npos )
                 {
-                    shd.replace( p0, repl.size(), struct_name + v.new_name ) ;
-                    p0 = shd.find( repl, p0 + 3 ) ;
+                    auto const with = struct_name + v.new_name ;
+                    shd.replace( p0, what.size(), with ) ;
+                    p0 = shd.find( what, p0 + with.size() ) ;
                 }
             }
         }
