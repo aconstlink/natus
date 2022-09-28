@@ -293,18 +293,22 @@ natus::nsl::generated_code_t::shaders_t generator::generate( natus::nsl::generat
                 var.binding == natus::nsl::binding::position )
             {
                 var.new_name = "gl_Position" ;
+                var.fq = natus::nsl::flow_qualifier::system ;
             }
             else if( var.binding == natus::nsl::binding::vertex_id )
             {
                 var.new_name = "gl_VertexId" ;
+                var.fq = natus::nsl::flow_qualifier::system ;
             }
             else if( var.binding == natus::nsl::binding::primitive_id )
             {
                 var.new_name = "gl_PrimitiveId" ;
+                var.fq = natus::nsl::flow_qualifier::system ;
             }
             else if( var.binding == natus::nsl::binding::instance_id )
             {
                 var.new_name = "gl_InstanceId" ;
+                var.fq = natus::nsl::flow_qualifier::system ;
             }
         }
     }
@@ -372,7 +376,8 @@ natus::nsl::generated_code_t::shaders_t generator::generate( natus::nsl::generat
     return std::move( ret ) ;
 }
 
-natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatable_cref_t genable, natus::nsl::post_parse::config_t::shader_cref_t s, natus::nsl::variable_mappings_cref_t var_mappings, natus::nsl::api_type const type ) noexcept
+natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatable_cref_t genable, natus::nsl::post_parse::config_t::shader_cref_t s, 
+    natus::nsl::variable_mappings_cref_t var_mappings, natus::nsl::api_type const type ) noexcept
 {
     natus::nsl::generated_code_t::code code ;
 
@@ -472,19 +477,26 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
 
         size_t layloc_id = 0 ;
         text << "// Uniforms and in/out // " << std::endl ;
-        for( auto const& v : s.variables )
+        for( auto & v : s.variables )
         {
-            if( v.fq == natus::nsl::flow_qualifier::out &&
-                v.binding == natus::nsl::binding::position ) continue ;
+            //if( v.fq == natus::nsl::flow_qualifier::system ) continue ;
 
             natus::ntd::string_t name = v.name ;
             natus::ntd::string_t const type_ = this_t::map_variable_type( v.type ) ;
 
-
-            size_t const idx = natus::nsl::find_by( var_mappings, v.name, v.binding, v.fq, s.type ) ;
-            if( idx != size_t( -1 ) )
+            // do not write down system variables
             {
-                name = var_mappings[ idx ].new_name ;
+                size_t const idx = natus::nsl::find_by( var_mappings, v.name, v.binding, natus::nsl::flow_qualifier::system, s.type ) ;
+                if( idx < var_mappings.size() ) continue ;
+            }
+
+            {
+                size_t const idx = natus::nsl::find_by( var_mappings, v.name, v.binding, v.fq, s.type ) ;
+                if( idx < var_mappings.size() )
+                {
+                    if( var_mappings[ idx ].fq == natus::nsl::flow_qualifier::system ) continue ;
+                    name = var_mappings[ idx ].new_name ;
+                }
             }
 
             // do some regex replacements

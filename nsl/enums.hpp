@@ -47,7 +47,8 @@ namespace natus
             in,
             out,
             global,
-            local
+            local,
+            system  // variables should not be declared/defined. Internal purpose only.
         };
         static flow_qualifier to_flow_qualifier( natus::ntd::string_cref_t s ) noexcept
         {
@@ -61,7 +62,7 @@ namespace natus
         static natus::ntd::string_cref_t to_string( natus::nsl::flow_qualifier const fq ) noexcept
         {
             static natus::ntd::string_t const __strings[] = { 
-                "unknown", "in", "out", "global", "local" } ;
+                "unknown", "in", "out", "global", "local", "system" } ;
             return __strings[ size_t( fq ) ] ;
         }
     }
