@@ -78,6 +78,22 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_t co
             }
         },
         {
+            natus::ntd::string_t( ":ls:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 2 ) return " << ( INVALID_ARGS ) " ;
+                return args[ 0 ] + " << " + args[ 1 ] ;
+            }
+        },
+        {
+            natus::ntd::string_t( ":rs:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 2 ) return ">> ( INVALID_ARGS ) " ;
+                return args[ 0 ] + " >> " + args[ 1 ] ;
+            }
+        },
+        {
             natus::ntd::string_t( ":lt:" ),
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {
@@ -215,6 +231,14 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_t co
                 if( args.size() != 1 ) return "as_vec4 ( INVALID_ARGS ) " ;
                 return "vec4_t ( " + args[ 0 ] + " , " + args[ 0 ] + " , " + args[ 0 ] + " , " + args[ 0 ] + " ) " ;
             }
+        },
+        {
+            natus::ntd::string_t( ":fetch_data:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 2 ) return "fetch_data ( INVALID_ARGS ) " ;
+                return args[ 0 ] + ".Load( " + args[ 1 ] + " ) " ;
+            }
         }
     } ;
 
@@ -239,7 +263,9 @@ natus::ntd::string_t generator::map_variable_type( natus::nsl::type_cref_t type 
         mapping_t( natus::nsl::type_t::as_mat4(), "float4x4" ),
         mapping_t( natus::nsl::type_t::as_tex1d(), "Texture1D" ),
         mapping_t( natus::nsl::type_t::as_tex2d(), "Texture2D" ),
-        mapping_t( natus::nsl::type_t::as_tex2d_array(), "Texture2DArray" )
+        mapping_t( natus::nsl::type_t::as_tex2d_array(), "Texture2DArray" ),
+        mapping_t( natus::nsl::type_t::as_data_buffer(), "Buffer< float4 >" )
+
     } ;
 
     for( auto const& m : __mappings ) if( m.first == type ) return m.second ;

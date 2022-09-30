@@ -47,8 +47,7 @@ namespace natus
             in,
             out,
             global,
-            local,
-            system  // variables should not be declared/defined. Internal purpose only.
+            local
         };
         static flow_qualifier to_flow_qualifier( natus::ntd::string_cref_t s ) noexcept
         {
@@ -62,7 +61,7 @@ namespace natus
         static natus::ntd::string_cref_t to_string( natus::nsl::flow_qualifier const fq ) noexcept
         {
             static natus::ntd::string_t const __strings[] = { 
-                "unknown", "in", "out", "global", "local", "system" } ;
+                "unknown", "in", "out", "global", "local" } ;
             return __strings[ size_t( fq ) ] ;
         }
     }
@@ -191,7 +190,8 @@ namespace natus
             array,
             texture_1d,
             texture_2d,
-            texture_2d_array
+            texture_2d_array,
+            data_buffer
         } ;
 
         struct type
@@ -306,6 +306,11 @@ namespace natus
                 return { type_base::tfloat, type_struct::vec4, type_ext::texture_2d_array } ;
             }
 
+            static this_t as_data_buffer( void_t ) noexcept
+            {
+                return { type_base::tfloat, type_struct::vec4, type_ext::data_buffer } ;
+            }
+
 
         };
         natus_typedef( type ) ;
@@ -329,7 +334,8 @@ namespace natus
                 __mapping_t( "mat4_t", type_t::as_mat4() ),
                 __mapping_t( "tex1d_t", type_t::as_tex1d() ),
                 __mapping_t( "tex2d_t", type_t::as_tex2d() ),
-                __mapping_t( "tex2d_array_t", type_t::as_tex2d_array() )
+                __mapping_t( "tex2d_array_t", type_t::as_tex2d_array() ),
+                __mapping_t( "data_buffer_t", type_t::as_data_buffer() )
             } ;
 
             for( auto const & m : __mappings ) if( m.first == t ) return m.second ;
@@ -392,6 +398,7 @@ namespace natus
             as_vec2,
             as_vec3,
             as_vec4,
+            fetch_data,
             num_build_ins
         };
 
@@ -421,6 +428,7 @@ namespace natus
             case buildin_type::as_vec2 : return { buildin_type::as_vec2, "as_vec2", ":as_vec2:" } ;
             case buildin_type::as_vec3 : return { buildin_type::as_vec3, "as_vec3", ":as_vec3:" } ;
             case buildin_type::as_vec4 : return { buildin_type::as_vec4, "as_vec3", ":as_vec4:" } ;
+            case buildin_type::fetch_data: return { buildin_type::fetch_data, "fetch_data", ":fetch_data:" } ;
             }
             return { buildin_type::unknown, "unknown-buildin", ":unknown-buildin:" } ; 
         }
@@ -441,6 +449,7 @@ namespace natus
             if( name == "as_vec2" ) return { buildin_type::as_vec2, "as_vec2", ":as_vec2:" } ;
             if( name == "as_vec3" ) return { buildin_type::as_vec3, "as_vec3", ":as_vec3:" } ;
             if( name == "as_vec4" ) return { buildin_type::as_vec4, "as_vec4", ":as_vec4:" } ;
+            if( name == "fetch_data" ) return { buildin_type::fetch_data, "fetch_data", ":fetch_data:" } ;
             return { buildin_type::unknown, "unknown-buildin", ":unknown-buildin:" } ;
         }
 

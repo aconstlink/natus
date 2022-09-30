@@ -20,10 +20,10 @@ namespace natus
 
             private:
 
-                static natus::ntd::string_t replace_buildin_symbols( natus::ntd::string_t code ) noexcept ;
-                static natus::ntd::string_t map_variable_type( natus::nsl::type_cref_t type ) noexcept ;
+                static natus::ntd::string_t replace_buildin_symbols( natus::nsl::api_type const t, natus::ntd::string_t code ) noexcept ;
+                static natus::ntd::string_t map_variable_type( natus::nsl::api_type const apit, natus::nsl::type_cref_t type ) noexcept ;
                 static natus::ntd::string_cref_t to_texture_type( natus::nsl::type_cref_t t ) noexcept ;
-                static natus::ntd::string_t replace_types( natus::ntd::string_t code ) noexcept ;
+                static natus::ntd::string_t replace_types( natus::nsl::api_type const apit, natus::ntd::string_t code ) noexcept ;
 
             public:
 

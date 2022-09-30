@@ -5,7 +5,7 @@
 
 using namespace natus::nsl::glsl ;
 
-natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_t code ) noexcept
+natus::ntd::string_t generator::replace_buildin_symbols( natus::nsl::api_type const t, natus::ntd::string_t code ) noexcept
 {
     natus::nsl::repl_syms_t repls =
     {
@@ -72,6 +72,22 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_t co
             {
                 if( args.size() != 2 ) return "rt_texture ( INVALID_ARGS ) " ;
                 return  "texture( " + args[ 0 ] + " , " + args[ 1 ] + " ) " ;
+            }
+        },
+        {
+            natus::ntd::string_t( ":ls:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 2 ) return " << ( INVALID_ARGS ) " ;
+                return args[ 0 ] + " << " + args[ 1 ] ;
+            }
+        },
+        {
+            natus::ntd::string_t( ":rs:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 2 ) return ">> ( INVALID_ARGS ) " ;
+                return args[ 0 ] + " >> " + args[ 1 ] ;
             }
         },
         {
@@ -206,7 +222,7 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_t co
             natus::ntd::string_t( ":make_array:" ),
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {
-                if( args.size() < 3 ) return "__make_array ( INVALID_ARGS ) " ;
+                if( args.size() < 3 ) return "make_array ( INVALID_ARGS ) " ;
                 natus::ntd::string_t tmp ;
                 for( size_t i=0; i<args.size()-3; ++i ) tmp += args[3+i] + " , " ;
                 tmp = tmp.substr( 0, tmp.size() - 3 ) ;
@@ -215,33 +231,97 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_t co
         }
     } ;
 
+    if( t == natus::nsl::api_type::gl3 )
+    {
+        repls.emplace_back( repl_sym ( 
+            {
+                natus::ntd::string_t( ":fetch_data:" ),
+                [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+                {
+                    if( args.size() != 2 ) return "fetch_data ( INVALID_ARGS ) " ;
+                    return "texelFetch ( " + args[ 0 ] + ", " + args[ 1 ] + " ) " ;
+                } 
+            } ) ) ;
+    }
+    else if( t == natus::nsl::api_type::es3 )
+    {
+        repls.emplace_back( repl_sym ( 
+            {
+                natus::ntd::string_t( ":fetch_data:" ),
+                [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+                {
+                    if( args.size() != 2 ) return "fetch_data ( INVALID_ARGS ) " ;
+                    return "texelFetch ( " + args[ 0 ] + ", ivec2 ( " 
+                        + "((" + args[ 1 ] + ")%textureSize( " + args[0] + ", 0 ))," 
+                        + "((" + args[ 1 ] + ")/textureSize( " + args[0] + ", 0 ))"
+                        + "), 0 ) " ;
+
+                    //ivec2 wh = textureSize( u_data, 0 ) ;
+                    //texelFetch( u_data, 
+                    //ivec2( (((idx*2)+1) % wh.x), (((idx*2)+1) / wh.x) ), 0 )
+                } 
+            } ) ) ;
+    }
+
     return natus::nsl::perform_repl( std::move( code ), repls ) ;
 }
 
-natus::ntd::string_t generator::map_variable_type( natus::nsl::type_cref_t type ) noexcept
+natus::ntd::string_t generator::map_variable_type( natus::nsl::api_type const apit, natus::nsl::type_cref_t type ) noexcept
 {
-    typedef std::pair< natus::nsl::type_t, natus::ntd::string_t > mapping_t ;
-    static mapping_t const __mappings[] =
+    if( apit == natus::nsl::api_type::gl3 )
     {
-        mapping_t( natus::nsl::type_t(), "unknown" ),
-        mapping_t( natus::nsl::type_t::as_void(), "void" ),
-        mapping_t( natus::nsl::type_t::as_int(), "int" ),
-        mapping_t( natus::nsl::type_t::as_uint(), "uint" ),
-        mapping_t( natus::nsl::type_t::as_float(), "float" ),
-        mapping_t( natus::nsl::type_t::as_vec2(), "vec2" ),
-        mapping_t( natus::nsl::type_t::as_vec3(), "vec3" ),
-        mapping_t( natus::nsl::type_t::as_vec4(), "vec4" ),
-        mapping_t( natus::nsl::type_t::as_mat2(), "mat2" ),
-        mapping_t( natus::nsl::type_t::as_mat3(), "mat3" ),
-        mapping_t( natus::nsl::type_t::as_mat4(), "mat4" ),
-        mapping_t( natus::nsl::type_t::as_tex1d(), "sampler1D" ),
-        mapping_t( natus::nsl::type_t::as_tex2d(), "sampler2D" ),
-        mapping_t( natus::nsl::type_t::as_tex2d_array(), "sampler2DArray" )
-    } ;
+        typedef std::pair< natus::nsl::type_t, natus::ntd::string_t > mapping_t ;
+        static mapping_t const __mappings[] =
+        {
+            mapping_t( natus::nsl::type_t(), "unknown" ),
+            mapping_t( natus::nsl::type_t::as_void(), "void" ),
+            mapping_t( natus::nsl::type_t::as_int(), "int" ),
+            mapping_t( natus::nsl::type_t::as_uint(), "uint" ),
+            mapping_t( natus::nsl::type_t::as_float(), "float" ),
+            mapping_t( natus::nsl::type_t::as_vec2(), "vec2" ),
+            mapping_t( natus::nsl::type_t::as_vec3(), "vec3" ),
+            mapping_t( natus::nsl::type_t::as_vec4(), "vec4" ),
+            mapping_t( natus::nsl::type_t::as_mat2(), "mat2" ),
+            mapping_t( natus::nsl::type_t::as_mat3(), "mat3" ),
+            mapping_t( natus::nsl::type_t::as_mat4(), "mat4" ),
+            mapping_t( natus::nsl::type_t::as_tex1d(), "sampler1D" ),
+            mapping_t( natus::nsl::type_t::as_tex2d(), "sampler2D" ),
+            mapping_t( natus::nsl::type_t::as_tex2d_array(), "sampler2DArray" ),
+            mapping_t( natus::nsl::type_t::as_data_buffer(), "samplerBuffer" )
+        } ;
 
-    for( auto const& m : __mappings ) if( m.first == type ) return m.second ;
+        for( auto const& m : __mappings ) if( m.first == type ) return m.second ;
 
-    return __mappings[ 0 ].second ;
+        return __mappings[ 0 ].second ;
+    }
+    else if( apit == natus::nsl::api_type::es3 )
+    {
+        typedef std::pair< natus::nsl::type_t, natus::ntd::string_t > mapping_t ;
+        static mapping_t const __mappings[] =
+        {
+            mapping_t( natus::nsl::type_t(), "unknown" ),
+            mapping_t( natus::nsl::type_t::as_void(), "void" ),
+            mapping_t( natus::nsl::type_t::as_int(), "int" ),
+            mapping_t( natus::nsl::type_t::as_uint(), "uint" ),
+            mapping_t( natus::nsl::type_t::as_float(), "float" ),
+            mapping_t( natus::nsl::type_t::as_vec2(), "vec2" ),
+            mapping_t( natus::nsl::type_t::as_vec3(), "vec3" ),
+            mapping_t( natus::nsl::type_t::as_vec4(), "vec4" ),
+            mapping_t( natus::nsl::type_t::as_mat2(), "mat2" ),
+            mapping_t( natus::nsl::type_t::as_mat3(), "mat3" ),
+            mapping_t( natus::nsl::type_t::as_mat4(), "mat4" ),
+            mapping_t( natus::nsl::type_t::as_tex1d(), "sampler1D" ),
+            mapping_t( natus::nsl::type_t::as_tex2d(), "sampler2D" ),
+            mapping_t( natus::nsl::type_t::as_tex2d_array(), "sampler2DArray" ),
+            mapping_t( natus::nsl::type_t::as_data_buffer(), "sampler2D" )
+        } ;
+
+        for( auto const& m : __mappings ) if( m.first == type ) return m.second ;
+
+        return __mappings[ 0 ].second ;
+    }
+
+    return "unknown" ;
 }
 
 natus::ntd::string_cref_t generator::to_texture_type( natus::nsl::type_cref_t t ) noexcept
@@ -258,7 +338,7 @@ natus::ntd::string_cref_t generator::to_texture_type( natus::nsl::type_cref_t t 
     return __mappings[ 0 ].second ;
 }
 
-natus::ntd::string_t generator::replace_types( natus::ntd::string_t code ) noexcept
+natus::ntd::string_t generator::replace_types( natus::nsl::api_type const apit, natus::ntd::string_t code ) noexcept
 {
     size_t p0 = 0 ;
     size_t p1 = code.find_first_of( ' ' ) ;
@@ -270,7 +350,7 @@ natus::ntd::string_t generator::replace_types( natus::ntd::string_t code ) noexc
         natus::nsl::type_t const t = natus::nsl::to_type( token ) ;
         if( t.base != natus::nsl::type_base::unknown )
         {
-            code.replace( p0, dist, this_t::map_variable_type( t ) ) ;
+            code.replace( p0, dist, this_t::map_variable_type( apit, t ) ) ;
         }
         p0 = p1 + 1 ;
         p1 = code.find_first_of( ' ', p0 ) ;
@@ -293,47 +373,18 @@ natus::nsl::generated_code_t::shaders_t generator::generate( natus::nsl::generat
                 var.binding == natus::nsl::binding::position )
             {
                 var.new_name = "gl_Position" ;
-                var.fq = natus::nsl::flow_qualifier::system ;
             }
             else if( var.binding == natus::nsl::binding::vertex_id )
             {
                 var.new_name = "gl_VertexId" ;
-                var.fq = natus::nsl::flow_qualifier::system ;
             }
             else if( var.binding == natus::nsl::binding::primitive_id )
             {
                 var.new_name = "gl_PrimitiveId" ;
-                var.fq = natus::nsl::flow_qualifier::system ;
             }
             else if( var.binding == natus::nsl::binding::instance_id )
             {
                 var.new_name = "gl_InstanceId" ;
-                var.fq = natus::nsl::flow_qualifier::system ;
-            }
-        }
-    }
-
-    // replace buildins
-    {
-        for( auto& s : genable.config.shaders )
-        {
-            for( auto& c : s.codes )
-            {
-                for( auto& l : c.lines )
-                {
-                    l = this_t::replace_buildin_symbols( std::move( l ) ) ;
-                }
-            }
-        }
-
-        for( auto& frg : genable.frags )
-        {
-            for( auto& f : frg.fragments )
-            {
-                //for( auto& l : c.lines )
-                {
-                    f = this_t::replace_buildin_symbols( std::move( f ) ) ;
-                }
             }
         }
     }
@@ -376,12 +427,39 @@ natus::nsl::generated_code_t::shaders_t generator::generate( natus::nsl::generat
     return std::move( ret ) ;
 }
 
-natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatable_cref_t genable, natus::nsl::post_parse::config_t::shader_cref_t s, 
+natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatable_cref_t genable_, natus::nsl::post_parse::config_t::shader_cref_t shd_, 
     natus::nsl::variable_mappings_cref_t var_mappings, natus::nsl::api_type const type ) noexcept
 {
+    natus::nsl::generatable_t genable = genable_ ;
+
     natus::nsl::generated_code_t::code code ;
 
     std::stringstream text ;
+
+    // 0. replace buildins
+    {
+        for( auto& s : genable.config.shaders )
+        {
+            for( auto& c : s.codes )
+            {
+                for( auto& l : c.lines )
+                {
+                    l = this_t::replace_buildin_symbols(  type, std::move( l ) ) ;
+                }
+            }
+        }
+
+        for( auto& frg : genable.frags )
+        {
+            for( auto& f : frg.fragments )
+            {
+                //for( auto& l : c.lines )
+                {
+                    f = this_t::replace_buildin_symbols( type, std::move( f ) ) ;
+                }
+            }
+        }
+    }
 
     // 1. glsl stuff at the front
     {
@@ -401,10 +479,10 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
     }
 
     // add extensions for pixel shader
-    if( s.type == natus::nsl::shader_type::pixel_shader )
+    if( shd_.type == natus::nsl::shader_type::pixel_shader )
     {
         size_t num_color = 0 ;
-        for( auto const& var : s.variables )
+        for( auto const& var : shd_.variables )
         {
             num_color += natus::nsl::is_color( var.binding ) ? 1 : 0 ;
         }
@@ -424,11 +502,11 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
         text << "// Declarations // " << std::endl ;
         for( auto const& f : genable.frags )
         {
-            text << this_t::map_variable_type( f.sig.return_type ) << " " ;
+            text << this_t::map_variable_type( type, f.sig.return_type ) << " " ;
             text << f.sym_long.expand( "_" ) << " ( " ;
             for( auto const& a : f.sig.args )
             {
-                text << this_t::map_variable_type( a.type ) + ", " ;
+                text << this_t::map_variable_type( type, a.type ) + ", " ;
             }
 
             text.seekp( -2, std::ios_base::end ) ;
@@ -444,11 +522,11 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
         {
             // make signature
             {
-                text << this_t::map_variable_type( f.sig.return_type ) << " " ;
+                text << this_t::map_variable_type( type, f.sig.return_type ) << " " ;
                 text << f.sym_long.expand( "_" ) << " ( " ;
                 for( auto const& a : f.sig.args )
                 {
-                    text << this_t::map_variable_type( a.type ) + " " + a.name + ", "  ;
+                    text << this_t::map_variable_type( type, a.type ) + " " + a.name + ", "  ;
                 }
                 text.seekp( -2, std::ios_base::end ) ;
                 text << " )" << std::endl ;
@@ -459,7 +537,7 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
                 text << "{" << std::endl ;
                 for( auto const& l : f.fragments )
                 {
-                    text << this_t::replace_types( l ) << std::endl ;
+                    text << this_t::replace_types( type, l ) << std::endl ;
                 }
                 text << "}" << std::endl ;
             }
@@ -470,31 +548,28 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
     // 4. make all glsl uniforms from shader variables
     {
         size_t num_color = 0 ;
-        for( auto const& var : s.variables )
+        for( auto const& var : shd_.variables )
         {
             num_color += natus::nsl::is_color( var.binding ) ? 1 : 0 ;
         }
 
         size_t layloc_id = 0 ;
         text << "// Uniforms and in/out // " << std::endl ;
-        for( auto & v : s.variables )
+        for( auto & v : shd_.variables )
         {
-            //if( v.fq == natus::nsl::flow_qualifier::system ) continue ;
+            // omit system variables
+            if( v.binding == natus::nsl::binding::position && v.fq == natus::nsl::flow_qualifier::out ) continue ;
+            if( v.binding == natus::nsl::binding::vertex_id ) continue ;
+            if( v.binding == natus::nsl::binding::instance_id ) continue ;
+            if( v.binding == natus::nsl::binding::primitive_id ) continue ;
 
             natus::ntd::string_t name = v.name ;
-            natus::ntd::string_t const type_ = this_t::map_variable_type( v.type ) ;
-
-            // do not write down system variables
-            {
-                size_t const idx = natus::nsl::find_by( var_mappings, v.name, v.binding, natus::nsl::flow_qualifier::system, s.type ) ;
-                if( idx < var_mappings.size() ) continue ;
-            }
+            natus::ntd::string_t const type_ = this_t::map_variable_type( type, v.type ) ;
 
             {
-                size_t const idx = natus::nsl::find_by( var_mappings, v.name, v.binding, v.fq, s.type ) ;
+                size_t const idx = natus::nsl::find_by( var_mappings, v.name, v.binding, v.fq, shd_.type ) ;
                 if( idx < var_mappings.size() )
                 {
-                    if( var_mappings[ idx ].fq == natus::nsl::flow_qualifier::system ) continue ;
                     name = var_mappings[ idx ].new_name ;
                 }
             }
@@ -507,7 +582,7 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
             natus::ntd::string_t layloc ;
 
             if( v.fq == natus::nsl::flow_qualifier::out &&
-                s.type == natus::nsl::shader_type::pixel_shader &&
+                shd_.type == natus::nsl::shader_type::pixel_shader &&
                 num_color > 1 )
             {
                 layloc = "layout( location = " + std::to_string( layloc_id++ ) + " ) " ;
@@ -524,11 +599,11 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
     // 5. insert main/shader from config
     {
         text << "// The shader // " << std::endl ;
-        for( auto const& c : s.codes )
+        for( auto const& c : shd_.codes )
         {
             for( auto const& l : c.lines )
             {
-                text << this_t::replace_types( l ) << std::endl ;
+                text << this_t::replace_types( type, l ) << std::endl ;
             }
         }
     }
@@ -572,7 +647,7 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
 
         // shader dependencies
         {
-            for( auto const& d : s.deps )
+            for( auto const& d : shd_.deps )
             {
                 size_t p0 = shd.find( d.expand() ) ; 
                     
@@ -591,7 +666,7 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
 
             for( auto const& v : var_mappings )
             {
-                if( v.st != s.type ) continue ;
+                if( v.st != shd_.type ) continue ;
 
                 natus::ntd::string_t flow ;
 
@@ -626,7 +701,7 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
         }
 
         {
-            shd = this_t::replace_buildin_symbols( std::move( shd ) ) ;
+            shd = this_t::replace_buildin_symbols( type, std::move( shd ) ) ;
         }
 
         code.shader = shd ;
