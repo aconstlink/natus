@@ -213,7 +213,7 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_t co
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {
                 if( args.size() != 1 ) return "as_vec2 ( INVALID_ARGS ) " ;
-                return "vec2_t ( " + args[ 0 ] + " , " + args[ 0 ] + " ) " ;
+                return "float2 ( " + args[ 0 ] + " , " + args[ 0 ] + " ) " ;
             }
         },
         {
@@ -221,7 +221,7 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_t co
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {
                 if( args.size() != 1 ) return "as_vec3 ( INVALID_ARGS ) " ;
-                return "vec3_t ( " + args[ 0 ] + " , " + args[ 0 ] + " , " + args[ 0 ] + " ) " ;
+                return "float3 ( " + args[ 0 ] + " , " + args[ 0 ] + " , " + args[ 0 ] + " ) " ;
             }
         },
         {
@@ -229,7 +229,7 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_t co
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {
                 if( args.size() != 1 ) return "as_vec4 ( INVALID_ARGS ) " ;
-                return "vec4_t ( " + args[ 0 ] + " , " + args[ 0 ] + " , " + args[ 0 ] + " , " + args[ 0 ] + " ) " ;
+                return "float4 ( " + args[ 0 ] + " , " + args[ 0 ] + " , " + args[ 0 ] + " , " + args[ 0 ] + " ) " ;
             }
         },
         {

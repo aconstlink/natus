@@ -199,7 +199,7 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::nsl::api_type co
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {
                 if( args.size() != 1 ) return "as_vec2 ( INVALID_ARGS ) " ;
-                return "vec2_t ( " + args[ 0 ] + " ) " ;
+                return "vec2 ( " + args[ 0 ] + " ) " ;
             }
         },
         {
@@ -207,7 +207,7 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::nsl::api_type co
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {
                 if( args.size() != 1 ) return "as_vec3 ( INVALID_ARGS ) " ;
-                return "vec3_t ( " + args[ 0 ] + " ) " ;
+                return "vec3 ( " + args[ 0 ] + " ) " ;
             }
         },
         {
@@ -215,7 +215,7 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::nsl::api_type co
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {
                 if( args.size() != 1 ) return "as_vec4 ( INVALID_ARGS ) " ;
-                return "vec4_t ( " + args[ 0 ] + " ) " ;
+                return "vec4 ( " + args[ 0 ] + " ) " ;
             }
         },
         {
@@ -376,15 +376,15 @@ natus::nsl::generated_code_t::shaders_t generator::generate( natus::nsl::generat
             }
             else if( var.binding == natus::nsl::binding::vertex_id )
             {
-                var.new_name = "gl_VertexId" ;
+                var.new_name = "gl_VertexID" ;
             }
             else if( var.binding == natus::nsl::binding::primitive_id )
             {
-                var.new_name = "gl_PrimitiveId" ;
+                var.new_name = "gl_PrimitiveID" ;
             }
             else if( var.binding == natus::nsl::binding::instance_id )
             {
-                var.new_name = "gl_InstanceId" ;
+                var.new_name = "gl_InstanceID" ;
             }
         }
     }
@@ -466,7 +466,7 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
         switch( type )
         {
         case natus::nsl::api_type::gl3:
-            text << "#version 130" << std::endl << std::endl ;
+            text << "#version 140" << std::endl << std::endl ;
             break ;
         case natus::nsl::api_type::es3:
             text << "#version 300 es" << std::endl ;
