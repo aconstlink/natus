@@ -1937,7 +1937,38 @@ public: // functions
             return false ;
         }
 
-        
+        // sort shader input attributes based on geometry layout.
+        // in hlsl the order seems to be required to match for the
+        // used geometry layout (next section) and the shader input
+        // attribute order.
+        {
+            this_t::shader_data_ref_t shd = shaders[ rd.shd_id ] ;
+            this_t::geo_data_ref_t geo = geo_datas[ rd.geo_id ] ;
+
+            for( size_t i = 0; i<shd.vertex_inputs.size(); ++i )
+            {
+                size_t j = i ;
+                
+                while( j < shd.vertex_inputs.size() && geo.elements[i].va != shd.vertex_inputs[j].va  ) ++j ;
+
+                if( j == i ) continue ;
+                // input variable declared in shader not found in geometry, remove ...
+                else if( j == shd.vertex_inputs.size() )
+                {
+                    shd.vertex_inputs.erase( shd.vertex_inputs.begin() + i ) ;
+                    natus::log::global_t::warning( natus_log_fn(
+                        "removed shader intput attribute in [" + shd.name + "]. Attribute not found in geometry layout." ) ) ;
+                }
+                // .. or entries are not at the same spot. exchange.
+                else if ( j != i )
+                {
+                    auto const tmp = shd.vertex_inputs[i] ;
+                    shd.vertex_inputs[i] = shd.vertex_inputs[j] ;
+                    shd.vertex_inputs[j] = tmp ;
+                }
+            }
+        }
+
         // for binding attributes, the shader and the geometry is required.
         {
             size_t i = 0 ; 
