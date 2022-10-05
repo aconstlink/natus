@@ -207,7 +207,7 @@ namespace natus
             {
                 if( this_t::ncp() < 2 ) return false ;
 
-                segment_t const seg = this_t::__get_segment( this_t::segment_index( t ) ) ;
+                segmentf_t const seg = this_t::__get_segment( this_t::segment_index( t ) ) ;
 
                 val_out = seg.second - seg.first ;
 

@@ -223,6 +223,7 @@ void_t quad::init( natus::graphics::async_views_t asyncs, size_t const nvs ) noe
                     uniform mat4 u_world ;
                     uniform mat4 u_view ;
                     uniform mat4 u_proj ;
+                    uniform vec4 u_tc ;
                     void main()
                     {
                         vec2 tc[4] = vec2[](

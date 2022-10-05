@@ -899,7 +899,7 @@ struct es3_backend::pimpl
             {
                 natus::log::global_t::warning( natus_log_fn(
                     "config [" + obj.name() + "] has no shaders for " + 
-                    natus::graphics::to_string( this_t::sapi ) ) ) ;
+                    natus::graphics::to_string( this_t::bt ) ) ) ;
                 return oid ;
             }
         }

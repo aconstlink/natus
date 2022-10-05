@@ -20,7 +20,7 @@ namespace natus
             typedef std::function< void_t ( size_t const a, size_t const b ) > swap_funk_t ;
 
             
-            static void_t in_range( size_t const a, size_t const b, std::vector< T > & points, swap_funk_t funk = [=](size_t const a, size_t const b){} )
+            static void_t in_range( size_t const a, size_t const b, std::vector< T > & points, swap_funk_t funk = [](size_t const a, size_t const b){} )
             {
                 return this_t::the_sort( a, b, points, funk ) ;
             }
