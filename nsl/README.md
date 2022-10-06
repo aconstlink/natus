@@ -9,6 +9,9 @@ nsl supports various types:
 float_t uint_t int_t vec1_t vec2_t vec3_t vec4_t mat2_t mat3_t mat4_t tex1d_t tex2d_t
 ```
 
+## Vector Order and Coordinate System
+nsl and the whole natus engine uses column vectors. So multiplication is done like in mathematics. The z direction of the coordinate system in positive into the screen. So positive z is away from the observer.
+
 ## The Config
 
 A configuration is supposed to hold properties, variables and shaders. A combination of the aforementioned is just like a config. So a configuration used like this:
