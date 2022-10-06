@@ -252,8 +252,8 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::nsl::api_type co
                 {
                     if( args.size() != 2 ) return "fetch_data ( INVALID_ARGS ) " ;
                     return "texelFetch ( " + args[ 0 ] + ", ivec2 ( " 
-                        + "( ( " + args[ 1 ] + " ) % textureSize( " + args[0] + ", 0 ) ) , " 
-                        + "( ( " + args[ 1 ] + " ) / textureSize( " + args[0] + ", 0 ) ) "
+                        + "( ( " + args[ 1 ] + " ) % textureSize( " + args[0] + ", 0 ).x ) , " 
+                        + "( ( " + args[ 1 ] + " ) / textureSize( " + args[0] + ", 0 ).x ) "
                         + ") , 0 ) " ;
                 } 
             } ) ) ;
