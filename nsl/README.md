@@ -197,12 +197,14 @@ The following operator are available:
 Important to note is the difference in multiplication of vectors:
 
 ```
-float_t d = vec_a * vec_b ; // dot multiplication
+float_t d = vec_a * vec_b ; // dot multiplication - do not use this. This is not consistend across shading languanges.
 vec_type vec_b = mat_a * vec_a ; // matrix/vector multiplication
 vec_type vec_c = vec_a ' vec_b ; // component wise multiplication
 ```
 
 This difference originates in the the ```*``` operator handling in hlsl and glsl. In hlsl the ```*``` performs a dot product with two vectors. In glsl this operator performs a component wise operation. So the ```*``` operator can not be converted cleanly from nsl.
+
+The case of using the ```*``` for the dot product will not be available in the future. Use ```dot(a,b)``` instead.
 
 ## Arrays
 Within the code you can write an array like so for many types
