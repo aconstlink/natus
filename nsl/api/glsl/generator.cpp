@@ -266,63 +266,72 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::nsl::api_type co
     return natus::nsl::perform_repl( std::move( code ), repls ) ;
 }
 
-natus::ntd::string_t generator::map_variable_type( natus::nsl::api_type const apit, natus::nsl::type_cref_t type ) noexcept
+namespace this_file
 {
-    if( apit == natus::nsl::api_type::gl3 )
+    typedef std::pair< natus::nsl::type_t, natus::ntd::string_t > mapping_t ;
+
+    static mapping_t map_variable_type( natus::nsl::api_type const apit, natus::nsl::type_cref_t type ) noexcept
     {
-        typedef std::pair< natus::nsl::type_t, natus::ntd::string_t > mapping_t ;
-        static mapping_t const __mappings[] =
+        if( apit == natus::nsl::api_type::gl3 )
         {
-            mapping_t( natus::nsl::type_t(), "unknown" ),
-            mapping_t( natus::nsl::type_t::as_void(), "void" ),
-            mapping_t( natus::nsl::type_t::as_int(), "int" ),
-            mapping_t( natus::nsl::type_t::as_uint(), "uint" ),
-            mapping_t( natus::nsl::type_t::as_float(), "float" ),
-            mapping_t( natus::nsl::type_t::as_vec2(), "vec2" ),
-            mapping_t( natus::nsl::type_t::as_vec3(), "vec3" ),
-            mapping_t( natus::nsl::type_t::as_vec4(), "vec4" ),
-            mapping_t( natus::nsl::type_t::as_mat2(), "mat2" ),
-            mapping_t( natus::nsl::type_t::as_mat3(), "mat3" ),
-            mapping_t( natus::nsl::type_t::as_mat4(), "mat4" ),
-            mapping_t( natus::nsl::type_t::as_tex1d(), "sampler1D" ),
-            mapping_t( natus::nsl::type_t::as_tex2d(), "sampler2D" ),
-            mapping_t( natus::nsl::type_t::as_tex2d_array(), "sampler2DArray" ),
-            mapping_t( natus::nsl::type_t::as_data_buffer(), "samplerBuffer" )
-        } ;
+            static mapping_t const __mappings[] =
+            {
+                mapping_t( natus::nsl::type_t(), "unknown" ),
+                mapping_t( natus::nsl::type_t::as_void(), "void" ),
+                mapping_t( natus::nsl::type_t::as_int(), "int" ),
+                mapping_t( natus::nsl::type_t::as_uint(), "uint" ),
+                mapping_t( natus::nsl::type_t::as_float(), "float" ),
+                mapping_t( natus::nsl::type_t::as_vec2(), "vec2" ),
+                mapping_t( natus::nsl::type_t::as_vec3(), "vec3" ),
+                mapping_t( natus::nsl::type_t::as_vec4(), "vec4" ),
+                mapping_t( natus::nsl::type_t::as_mat2(), "mat2" ),
+                mapping_t( natus::nsl::type_t::as_mat3(), "mat3" ),
+                mapping_t( natus::nsl::type_t::as_mat4(), "mat4" ),
+                mapping_t( natus::nsl::type_t::as_tex1d(), "sampler1D" ),
+                mapping_t( natus::nsl::type_t::as_tex2d(), "sampler2D" ),
+                mapping_t( natus::nsl::type_t::as_tex2d_array(), "sampler2DArray" ),
+                mapping_t( natus::nsl::type_t::as_data_buffer(), "samplerBuffer" )
+            } ;
 
-        for( auto const& m : __mappings ) if( m.first == type ) return m.second ;
+            for( auto const& m : __mappings ) if( m.first == type ) return m ;
 
-        return __mappings[ 0 ].second ;
+            return __mappings[ 0 ] ;
+        }
+        else if( apit == natus::nsl::api_type::es3 )
+        {
+            static mapping_t const __mappings[] =
+            {
+                mapping_t( natus::nsl::type_t(), "unknown" ),
+                mapping_t( natus::nsl::type_t::as_void(), "void" ),
+                mapping_t( natus::nsl::type_t::as_int(), "int" ),
+                mapping_t( natus::nsl::type_t::as_uint(), "uint" ),
+                mapping_t( natus::nsl::type_t::as_float(), "float" ),
+                mapping_t( natus::nsl::type_t::as_vec2(), "vec2" ),
+                mapping_t( natus::nsl::type_t::as_vec3(), "vec3" ),
+                mapping_t( natus::nsl::type_t::as_vec4(), "vec4" ),
+                mapping_t( natus::nsl::type_t::as_mat2(), "mat2" ),
+                mapping_t( natus::nsl::type_t::as_mat3(), "mat3" ),
+                mapping_t( natus::nsl::type_t::as_mat4(), "mat4" ),
+                mapping_t( natus::nsl::type_t::as_tex1d(), "sampler1D" ),
+                mapping_t( natus::nsl::type_t::as_tex2d(), "sampler2D" ),
+                mapping_t( natus::nsl::type_t::as_tex2d_array(), "sampler2DArray" ),
+                mapping_t( natus::nsl::type_t::as_data_buffer(), "sampler2D" )
+            } ;
+
+            for( auto const& m : __mappings ) if( m.first == type ) return m ;
+
+            return __mappings[ 0 ] ;
+        }
+
+        return mapping_t( natus::nsl::type_t(), "unknown" ) ;
     }
-    else if( apit == natus::nsl::api_type::es3 )
+
+    static natus::ntd::string_t map_variable_type_to_string( natus::nsl::api_type const apit, natus::nsl::type_cref_t type ) noexcept
     {
-        typedef std::pair< natus::nsl::type_t, natus::ntd::string_t > mapping_t ;
-        static mapping_t const __mappings[] =
-        {
-            mapping_t( natus::nsl::type_t(), "unknown" ),
-            mapping_t( natus::nsl::type_t::as_void(), "void" ),
-            mapping_t( natus::nsl::type_t::as_int(), "int" ),
-            mapping_t( natus::nsl::type_t::as_uint(), "uint" ),
-            mapping_t( natus::nsl::type_t::as_float(), "float" ),
-            mapping_t( natus::nsl::type_t::as_vec2(), "vec2" ),
-            mapping_t( natus::nsl::type_t::as_vec3(), "vec3" ),
-            mapping_t( natus::nsl::type_t::as_vec4(), "vec4" ),
-            mapping_t( natus::nsl::type_t::as_mat2(), "mat2" ),
-            mapping_t( natus::nsl::type_t::as_mat3(), "mat3" ),
-            mapping_t( natus::nsl::type_t::as_mat4(), "mat4" ),
-            mapping_t( natus::nsl::type_t::as_tex1d(), "sampler1D" ),
-            mapping_t( natus::nsl::type_t::as_tex2d(), "sampler2D" ),
-            mapping_t( natus::nsl::type_t::as_tex2d_array(), "sampler2DArray" ),
-            mapping_t( natus::nsl::type_t::as_data_buffer(), "sampler2D" )
-        } ;
-
-        for( auto const& m : __mappings ) if( m.first == type ) return m.second ;
-
-        return __mappings[ 0 ].second ;
+        return this_file::map_variable_type( apit, type ).second ;
     }
-
-    return "unknown" ;
 }
+
 
 natus::ntd::string_cref_t generator::to_texture_type( natus::nsl::type_cref_t t ) noexcept
 {
@@ -350,7 +359,7 @@ natus::ntd::string_t generator::replace_types( natus::nsl::api_type const apit, 
         natus::nsl::type_t const t = natus::nsl::to_type( token ) ;
         if( t.base != natus::nsl::type_base::unknown )
         {
-            code.replace( p0, dist, this_t::map_variable_type( apit, t ) ) ;
+            code.replace( p0, dist, this_file::map_variable_type_to_string( apit, t ) ) ;
         }
         p0 = p1 + 1 ;
         p1 = code.find_first_of( ' ', p0 ) ;
@@ -442,12 +451,38 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
             break ;
         case natus::nsl::api_type::es3:
             text << "#version 300 es" << std::endl ;
-            text << "precision mediump float ;" << std::endl << std::endl ;
+            text << "precision mediump int ;" << std::endl;
+            text << "precision mediump float ;" << std::endl ;
+            
+            // print down all precision declarations 
+            {
+                natus::nsl::type_t const table[] = { 
+                    natus::nsl::type_t::as_tex2d_array() 
+                } ;
+
+                for( auto const e : table )
+                {
+                    for( auto const& v : shd_.variables )
+                    {
+                        auto const t = this_file::map_variable_type( type, v.type ) ;
+                        if( t.first == e )
+                        {
+                            text << "precision mediump " << t.second << " ;" << std::endl ;
+                            break ;
+                        }
+                    }
+
+                }
+            }
+            text << std::endl ;
+
             break ;
         default:
             text << "#version " << "glsl_type case missing" << std::endl << std::endl ;
             break ;
         }
+
+        
     }
 
     // add extensions for pixel shader
@@ -474,11 +509,11 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
         text << "// Declarations // " << std::endl ;
         for( auto const& f : genable.frags )
         {
-            text << this_t::map_variable_type( type, f.sig.return_type ) << " " ;
+            text << this_file::map_variable_type_to_string( type, f.sig.return_type ) << " " ;
             text << f.sym_long.expand( "_" ) << " ( " ;
             for( auto const& a : f.sig.args )
             {
-                text << this_t::map_variable_type( type, a.type ) + ", " ;
+                text << this_file::map_variable_type_to_string( type, a.type ) + ", " ;
             }
 
             text.seekp( -2, std::ios_base::end ) ;
@@ -494,11 +529,11 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
         {
             // make signature
             {
-                text << this_t::map_variable_type( type, f.sig.return_type ) << " " ;
+                text << this_file::map_variable_type_to_string( type, f.sig.return_type ) << " " ;
                 text << f.sym_long.expand( "_" ) << " ( " ;
                 for( auto const& a : f.sig.args )
                 {
-                    text << this_t::map_variable_type( type, a.type ) + " " + a.name + ", "  ;
+                    text << this_file::map_variable_type_to_string( type, a.type ) + " " + a.name + ", "  ;
                 }
                 text.seekp( -2, std::ios_base::end ) ;
                 text << " )" << std::endl ;
@@ -537,7 +572,7 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
             if( v.binding == natus::nsl::binding::primitive_id ) continue ;
 
             natus::ntd::string_t name = v.name ;
-            natus::ntd::string_t const type_ = this_t::map_variable_type( type, v.type ) ;
+            natus::ntd::string_t const type_ = this_file::map_variable_type_to_string( type, v.type ) ;
 
             {
                 size_t const idx = natus::nsl::find_by( var_mappings, v.name, v.binding, v.fq, shd_.type ) ;
