@@ -359,10 +359,9 @@ natus::ntd::string_t generator::replace_types( natus::nsl::api_type const apit, 
     return std::move( code ) ;
 }
 
-natus::nsl::generated_code_t::shaders_t generator::generate( natus::nsl::generatable_cref_t genable_, natus::nsl::variable_mappings_cref_t var_map_ ) noexcept
+natus::nsl::generated_code_t::shaders_t generator::generate( natus::nsl::generatable_cref_t genable, natus::nsl::variable_mappings_cref_t var_map_ ) noexcept
 {
     natus::nsl::variable_mappings_t var_map = var_map_ ;
-    natus::nsl::generatable_t genable = genable_ ;
 
     // start renaming internal variables
     {
@@ -427,39 +426,12 @@ natus::nsl::generated_code_t::shaders_t generator::generate( natus::nsl::generat
     return std::move( ret ) ;
 }
 
-natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatable_cref_t genable_, natus::nsl::post_parse::config_t::shader_cref_t shd_, 
+natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatable_cref_t genable, natus::nsl::post_parse::config_t::shader_cref_t shd_, 
     natus::nsl::variable_mappings_cref_t var_mappings, natus::nsl::api_type const type ) noexcept
 {
-    natus::nsl::generatable_t genable = genable_ ;
-
     natus::nsl::generated_code_t::code code ;
 
     std::stringstream text ;
-
-    // 0. replace buildins
-    {
-        for( auto& s : genable.config.shaders )
-        {
-            for( auto& c : s.codes )
-            {
-                for( auto& l : c.lines )
-                {
-                    l = this_t::replace_buildin_symbols(  type, std::move( l ) ) ;
-                }
-            }
-        }
-
-        for( auto& frg : genable.frags )
-        {
-            for( auto& f : frg.fragments )
-            {
-                //for( auto& l : c.lines )
-                {
-                    f = this_t::replace_buildin_symbols( type, std::move( f ) ) ;
-                }
-            }
-        }
-    }
 
     // 1. glsl stuff at the front
     {
@@ -535,8 +507,9 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
             // make body
             {
                 text << "{" << std::endl ;
-                for( auto const& l : f.fragments )
+                for( auto l : f.fragments )
                 {
+                    l = this_t::replace_buildin_symbols( type, std::move( l ) ) ;
                     text << this_t::replace_types( type, l ) << std::endl ;
                 }
                 text << "}" << std::endl ;
@@ -601,8 +574,9 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
         text << "// The shader // " << std::endl ;
         for( auto const& c : shd_.codes )
         {
-            for( auto const& l : c.lines )
+            for( auto l : c.lines )
             {
+                l = this_t::replace_buildin_symbols(  type, std::move( l ) ) ;
                 text << this_t::replace_types( type, l ) << std::endl ;
             }
         }
