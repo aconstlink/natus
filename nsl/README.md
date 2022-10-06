@@ -107,8 +107,8 @@ pixel_shader
 
     void main()
     {
-        out.color0 = vec4_t(1.0) ;
-        out.color1 = vec4_t(0.0) ;
+        out.color0 = as_vec4(1.0) ;
+        out.color1 = as_vec4(0.0) ;
         out.color2 = texture(...) ;
     }
 }
