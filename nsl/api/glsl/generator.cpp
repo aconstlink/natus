@@ -252,13 +252,9 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::nsl::api_type co
                 {
                     if( args.size() != 2 ) return "fetch_data ( INVALID_ARGS ) " ;
                     return "texelFetch ( " + args[ 0 ] + ", ivec2 ( " 
-                        + "((" + args[ 1 ] + ")%textureSize( " + args[0] + ", 0 ))," 
-                        + "((" + args[ 1 ] + ")/textureSize( " + args[0] + ", 0 ))"
-                        + "), 0 ) " ;
-
-                    //ivec2 wh = textureSize( u_data, 0 ) ;
-                    //texelFetch( u_data, 
-                    //ivec2( (((idx*2)+1) % wh.x), (((idx*2)+1) / wh.x) ), 0 )
+                        + "( ( " + args[ 1 ] + " ) % textureSize( " + args[0] + ", 0 ) ) , " 
+                        + "( ( " + args[ 1 ] + " ) / textureSize( " + args[0] + ", 0 ) ) "
+                        + ") , 0 ) " ;
                 } 
             } ) ) ;
     }
