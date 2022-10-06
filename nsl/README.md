@@ -215,3 +215,16 @@ Unfortunately, arrays can not be used floating around like so
 ```
 a + b + { c, d }[0] ; // not possible. It must be declared first
 ```
+
+# Rules of Usage
+There are certain pitfalls that are not handled by the nsl compiler yet. This is due to the fact that different shading languages handle these cases differently.
+
+## Take care of types
+Mixing types often fail in the api compiler which are hard to trace.
+```
+vec4_t v = vec4_t( vec3_t(1.0) * 2 ) ;
+```
+The line above has two shortcommings.
+- Do not put a scalar in a vector struct. Use ```as_vec3(1.0)``` for example.
+- Do not multiply mixed types, instead do ```as_vec3(1.0) * 2.0```. Generally, multiplying a scalar with a vector type is ok. But it would be more save to do a component-wise vec3 multiplication like so ```as_vec3(1.0) ' as_vec3(2.0)```.
+
