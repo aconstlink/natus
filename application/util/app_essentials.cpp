@@ -223,7 +223,7 @@ void_t app_essentials::init_device( void_t ) noexcept
 //****************************************************************
 void_t app_essentials::init_shaders( this_t::locations_cref_t shader_locations ) noexcept 
 {
-    _ndb = natus::nsl::database_t() ;
+    if( !_ndb.is_valid() ) _ndb = natus::nsl::database_t() ;
 
     natus::ntd::vector< natus::nsl::symbol_t > config_symbols ;
 
@@ -233,7 +233,7 @@ void_t app_essentials::init_shaders( this_t::locations_cref_t shader_locations )
         auto fitem2 = mod_reg->import_from( l, _db ) ;
 
         natus::format::nsl_item_res_t ii = fitem2.get() ;
-        if( ii.is_valid() ) _ndb->insert( std::move( std::move( ii->doc ) ), config_symbols ) ;
+        if( ii.is_valid() ) _ndb->insert( std::move( ii->doc ), config_symbols ) ;
 
         _db->attach( l.as_string(), _shader_mon ) ;
     }
@@ -241,8 +241,7 @@ void_t app_essentials::init_shaders( this_t::locations_cref_t shader_locations )
     // generate configs
     for( auto const & s : config_symbols )
     {
-        natus::nsl::generatable_t res = natus::nsl::dependency_resolver_t().resolve(
-            _ndb, s ) ;
+        natus::nsl::generatable_t res = natus::nsl::dependency_resolver_t().resolve( _ndb, s ) ;
 
         if( res.missing.size() != 0 )
         {
@@ -261,6 +260,45 @@ void_t app_essentials::init_shaders( this_t::locations_cref_t shader_locations )
             a.configure( sc ) ;
         } ) ;
     }
+}
+
+//****************************************************************
+natus::ntd::vector< natus::nsl::symbol_t > app_essentials::process_shader( natus::ntd::string_cref_t shader ) noexcept 
+{
+    natus::ntd::vector< natus::nsl::symbol_t > config_symbols ;
+
+    if( !_ndb.is_valid() )
+    {
+        natus::log::global_t::error( "[app_essentials::process_shader] : nsl not initialized" ) ;
+        return config_symbols ;
+    }
+
+    _ndb->insert( natus::nsl::parser_t("app_essentials::process_shader::nsl_parser").process( shader ), config_symbols ) ;
+
+    // generate configs
+    for( auto const & s : config_symbols )
+    {
+        natus::nsl::generatable_t res = natus::nsl::dependency_resolver_t().resolve( _ndb, s ) ;
+
+        if( res.missing.size() != 0 )
+        {
+            natus::log::global_t::warning( "[simple_app_essentials] : We have missing shader symbols." ) ;
+            for( auto const& m : res.missing )
+            {
+                natus::log::global_t::status( m.expand() ) ;
+            }
+        }
+
+        auto const sc = natus::graphics::nsl_bridge_t().create(
+            natus::nsl::generator_t( std::move( res ) ).generate() ).set_name( s.expand() ) ;
+
+        _graphics.for_each( [&]( natus::graphics::async_view_t a )
+        {
+            a.configure( sc ) ;
+        } ) ;
+    }
+
+    return std::move( config_symbols ) ;
 }
 
 //****************************************************************

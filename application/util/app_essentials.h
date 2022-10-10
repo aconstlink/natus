@@ -126,6 +126,10 @@ namespace natus
 
             public:
 
+                natus::ntd::vector< natus::nsl::symbol_t > process_shader( natus::ntd::string_cref_t shader ) noexcept ;
+
+            public:
+
                 void_t on_update( natus::application::app_t::update_data_in_t ) noexcept ;
                 void_t on_event( natus::application::app::window_id_t const, natus::application::app::window_event_info_in_t wei, 
                     natus::math::vec2f_cref_t target = natus::math::vec2f_t(800, 600) ) noexcept ;
@@ -162,6 +166,7 @@ namespace natus
 
                 natus::io::database_res_t get_database( void_t ) noexcept { return _db ; }
                 natus::io::database_res_t db( void_t ) noexcept { return _db ; }
+                natus::nsl::database_res_t ndb( void_t ) noexcept { return _ndb ; }
 
                 natus::device::three_device_res_t get_mouse_dev( void_t ) noexcept { return _dev_mouse ; }
 
