@@ -28,6 +28,14 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_t co
             }
         },
         {
+            natus::ntd::string_t( ":mul_asg:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 2 ) return "mul_asg ( INVALID_ARGS ) " ;
+                return args[ 0 ] + " *= " + args[ 1 ] ;
+            }
+        },
+        {
             natus::ntd::string_t( ":add:" ),
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {

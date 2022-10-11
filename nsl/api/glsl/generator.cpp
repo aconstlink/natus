@@ -26,6 +26,14 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::nsl::api_type co
             }
         },
         {
+            natus::ntd::string_t( ":mul_asg:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 2 ) return "mul_asg ( INVALID_ARGS ) " ;
+                return args[ 0 ] + " *= " + args[ 1 ] ;
+            }
+        },
+        {
             natus::ntd::string_t( ":add:" ),
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {
@@ -443,7 +451,7 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
         switch( type )
         {
         case natus::nsl::api_type::gl3:
-            text << "#version 140" << std::endl << std::endl ;
+            text << "#version 140" << " // " << genable.config.name << std::endl << std::endl ;
             break ;
         case natus::nsl::api_type::es3:
             text << "#version 300 es" << std::endl ;
