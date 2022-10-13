@@ -429,7 +429,7 @@ parser::statements_t parser::replace_operators( statements_rref_t ss ) const
             else if ( arg1.empty() && r.single)
             {
                 line = line.replace( beg, end - beg,
-                        r.with + "_post ( " + arg0 + " ) " ) ;
+                        r.with.substr(0, r.with.size()-1) + "_post: ( " + arg0 + " ) " ) ;
             }
             else
             {
