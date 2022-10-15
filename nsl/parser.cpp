@@ -208,7 +208,10 @@ natus::nsl::post_parse::configs_t parser::analyse_configs( natus::nsl::parse::co
                                 std::move( s.deps ), natus::nsl::symbol_t::find_all_symbols( "nsl.", f ) ) ;
                         }
                     }
-
+                    // determine used buildins
+                    {
+                        c_.buildins = this_t::determine_used_buildins( cd.lines ) ;
+                    }
                     s.codes.emplace_back( std::move( c_ ) ) ;
                 }
             }
@@ -549,10 +552,11 @@ parser::statements_t parser::replace_buildins( statements_rref_t ss ) const
             while( p0 != std::string::npos )
             {
                 size_t const p1 = iter->find_first_of( '(', p0 ) ;
-                bool_t const a = p0 + bi.fname.size() + 1 == p1 ;
-                bool_t const b = p0 != 0 && (*iter)[p0 - 1] == ' ' ;
+                bool_t const a = p0 + bi.fname.size() + 1 == p1 ; 
+                bool_t const b = (*iter)[p0 + bi.fname.size()] == ' ' ;
+                bool_t const c = p0 == 0 || (p0 != 0 && (*iter)[p0 - 1] == ' ') ;
 
-                if( a && b )
+                if( a && b && c )
                 {
                     iter->replace( p0, (p1-p0) - 1, bi.opcode ) ;
                 }
@@ -605,78 +609,10 @@ natus::nsl::post_parse::libraries_t parser::analyse_libraries( natus::nsl::parse
                 }
             }
 
-            #if 0
-            // find all depending function symbols
+            // determine used buildins
             {
-                using dep_signature_t = natus::nsl::post_parse::library_t::fragment_t::dep_signature_t ;
-                for( size_t i = 1; i < shd.fragments.size(); ++i )
-                {
-                    auto const& f = shd.fragments[ i ] ;
-
-                    auto token = this_t::tokenize( f ) ;
-                    for( auto iter = token.begin(); iter < token.end(); ++iter )
-                    {
-                        if( *iter != "(" ) continue ;
-
-                        dep_signature_t ds ;
-
-                        // previous symbol must be name
-                        {
-                            auto iter_prev = iter - 1 ;
-
-                            if( iter_prev->find( '+' ) != std::string::npos ) continue ;
-                            if( iter_prev->find( '-' ) != std::string::npos ) continue ;
-                            if( iter_prev->find( '*' ) != std::string::npos ) continue ;
-                            if( iter_prev->find( '/' ) != std::string::npos ) continue ;
-                            if( iter_prev->find( '=' ) != std::string::npos ) continue ;
-                            if( iter_prev->find( '<' ) != std::string::npos ) continue ;
-                            if( iter_prev->find( '>' ) != std::string::npos ) continue ;
-                            if( iter_prev->find( "if" ) != std::string::npos ) continue ;
-                            if( iter_prev->find( "for" ) != std::string::npos ) continue ;
-                            if( iter_prev->find( "while" ) != std::string::npos ) continue ;
-                            if( iter_prev->find( ',' ) != std::string::npos ) continue ;
-                            if( iter_prev->find( '(' ) != std::string::npos ) continue ;
-                            if( iter_prev->find( ')' ) != std::string::npos ) continue ;
-                            ds.name = *iter_prev ;
-                        }
-
-                        // find end and all arg
-                        {
-                            size_t level = 0 ;
-
-                            auto beg = ++iter ;
-                            while( true )
-                            {
-                                if( *iter == "(" ) ++level ;
-                                else if( *iter == ")" && level != 0 ) --level ;
-                                else if( ( *iter == "," && level == 0 ) || ( *iter == ")" && level == 0 ) )
-                                {
-                                    natus::ntd::string_t arg ;
-                                    while( beg != iter )
-                                    {
-                                        arg += *beg++ ;
-                                    }
-                                    ++beg ;
-
-                                    {
-                                        dep_signature_t sig_arg ;
-                                        sig_arg.name = arg ;
-                                        ds.args.emplace_back( std::move( sig_arg ) ) ;
-                                    }
-
-                                    if( *iter == ")" ) break ;
-                                }
-
-                                ++iter ;
-                            }
-
-                        }
-
-                    }
-
-                }
+                s.buildins = this_t::determine_used_buildins( shd.body ) ;
             }
-            #endif
 
             s.fragments = shd.body ;
             cur_lib.fragments.emplace_back( std::move( s ) ) ;
@@ -1106,6 +1042,7 @@ natus::ntd::string_t parser::clear_line( natus::ntd::string_rref_t s ) const noe
     return std::move( s ) ;
 }
 
+//******************************************************************************************************
 natus::ntd::string_t parser::remove_comment_lines( natus::ntd::string_rref_t s ) const noexcept
 {
     // 1. clear all //
@@ -1135,6 +1072,7 @@ natus::ntd::string_t parser::remove_comment_lines( natus::ntd::string_rref_t s )
     return std::move( s ) ;
 }
 
+//******************************************************************************************************
 natus::ntd::vector< natus::ntd::string_t > parser::tokenize( natus::ntd::string_cref_t s ) const noexcept
 {
     natus::ntd::vector< natus::ntd::string_t > tokens ;
@@ -1151,4 +1089,30 @@ natus::ntd::vector< natus::ntd::string_t > parser::tokenize( natus::ntd::string_
     tokens.emplace_back( s.substr( off ) ) ;
 
     return std::move( tokens ) ;
+}
+
+//******************************************************************************************************
+natus::nsl::post_parse::used_buildins_t parser::determine_used_buildins( natus::ntd::vector< natus::ntd::string_t > const & lines ) const noexcept 
+{
+    natus::nsl::post_parse::used_buildins_t ret ;
+
+    for( size_t i=0; i<lines.size(); ++i )
+    {
+        auto const & line = lines[i] ;
+
+        auto const tokens = this_t::tokenize( line ) ;
+
+        size_t j = 0 ;
+        for( auto const & token : tokens )
+        {
+            auto const bi = natus::nsl::get_build_in_by_opcode( token ) ;
+            if( bi.t != natus::nsl::buildin_type::unknown ) 
+            {
+                ret.emplace_back( natus::nsl::post_parse::used_buildin_t { i, j, bi } ) ;
+            }
+            ++j ;
+        }
+    }
+
+    return std::move( ret ) ;
 }

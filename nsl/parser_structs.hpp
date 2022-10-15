@@ -12,6 +12,7 @@ namespace natus
 {
     namespace nsl
     {
+        //*******************************************************************************************
         namespace parse
         {
             struct config
@@ -74,8 +75,19 @@ namespace natus
             natus_typedefs( natus::ntd::vector< library_t >, libraries ) ;
         }
 
+        //*******************************************************************************************
         namespace post_parse
         {
+            struct used_buildin
+            {
+                size_t line ;
+                size_t token ;
+                natus::nsl::build_in_t bi ;
+            };
+            natus_typedef( used_buildin ) ;
+            natus_typedefs( natus::ntd::vector< used_buildin_t >, used_buildins ) ;
+
+            // ***********************************************
             struct config
             {
                 struct shader
@@ -95,6 +107,7 @@ namespace natus
                     {
                         natus::nsl::language_class version ;
                         natus::ntd::vector< natus::ntd::string_t > lines ;
+                        used_buildins_t buildins ;
                     };
                     natus_typedef( code ) ;
                     natus::ntd::vector< code > codes ;
@@ -111,25 +124,18 @@ namespace natus
             natus_typedef( config ) ;
             natus_typedefs( natus::ntd::vector< config >, configs ) ;
 
+            // ***********************************************
             struct library
             {
                 struct fragment
                 {
-                    natus::ntd::vector< natus::ntd::string_t > fragments ;
-
-                    
                     natus::nsl::signature_t sig ;
 
-                    symbols_t deps ;
+                    // more accurately, the code lines
+                    natus::ntd::vector< natus::ntd::string_t > fragments ;
+                    used_buildins_t buildins ;
 
-                    // the signature of all used function symbols in the fragment
-                    struct dep_signature
-                    {
-                        natus::ntd::string_t name ;
-                        natus::ntd::vector< dep_signature > args ;
-                    };
-                    natus_typedef( dep_signature ) ;
-                    natus::ntd::vector< dep_signature > dep_sigs ;
+                    symbols_t deps ;
 
                     natus::nsl::symbol_t sym_long ;
 

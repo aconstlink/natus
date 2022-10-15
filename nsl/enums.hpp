@@ -256,24 +256,24 @@ namespace natus
                 return { type_base::tuint, type_struct::vec1, type_ext::singular } ;
             }
 
-            static this_t as_vec1( void_t ) noexcept
+            static this_t as_vec1( natus::nsl::type_base bt = type_base::tfloat ) noexcept
             {
-                return { type_base::tfloat, type_struct::vec1, type_ext::singular } ;
+                return { bt, type_struct::vec1, type_ext::singular } ;
             }
 
-            static this_t as_vec2( void_t ) noexcept
+            static this_t as_vec2( natus::nsl::type_base bt = type_base::tfloat ) noexcept
             {
-                return { type_base::tfloat, type_struct::vec2, type_ext::singular } ;
+                return { bt, type_struct::vec2, type_ext::singular } ;
             }
 
-            static this_t as_vec3( void_t ) noexcept
+            static this_t as_vec3( natus::nsl::type_base bt = type_base::tfloat ) noexcept
             {
-                return { type_base::tfloat, type_struct::vec3, type_ext::singular } ;
+                return { bt, type_struct::vec3, type_ext::singular } ;
             }
 
-            static this_t as_vec4( void_t ) noexcept
+            static this_t as_vec4( natus::nsl::type_base bt = type_base::tfloat ) noexcept
             {
-                return { type_base::tfloat, type_struct::vec4, type_ext::singular } ;
+                return { bt, type_struct::vec4, type_ext::singular } ;
             }
 
             static this_t as_mat2( void_t ) noexcept
@@ -399,6 +399,8 @@ namespace natus
             as_vec3,
             as_vec4,
             fetch_data,
+            texture_offset,
+            texture_dims,
             num_build_ins
         };
 
@@ -410,47 +412,54 @@ namespace natus
         };
         natus_typedef( build_in ) ;
 
+        static const build_in_t buildins[] = 
+        {
+            { buildin_type::unknown, "unknown-buildin", ":unknown-buildin:" },
+            { buildin_type::dot, "dot", ":dot:" },
+            { buildin_type::cross, "cross", ":cross:" },
+            { buildin_type::pulse, "pulse", ":pulse:" },
+            { buildin_type::step, "step", ":step:" },
+            { buildin_type::ceil, "ceil", ":ceil:" },
+            { buildin_type::floor, "floor", ":floor:" },
+            { buildin_type::mix, "mix", ":mix:" },
+            { buildin_type::pow, "pow", ":pow:" },
+            { buildin_type::fract, "fract", ":fract:" },
+            { buildin_type::texture, "texture", ":texture:" },
+            { buildin_type::texture, "texture", ":texture:" },
+            { buildin_type::rt_texture, "rt_texture", ":rt_texture:" },
+            { buildin_type::as_vec2, "as_vec2", ":as_vec2:" },
+            { buildin_type::as_vec3, "as_vec3", ":as_vec3:" },
+            { buildin_type::as_vec4, "as_vec3", ":as_vec4:" },
+            { buildin_type::fetch_data, "fetch_data", ":fetch_data:" },
+            { buildin_type::texture_offset, "texture_offset", ":texture_offset:" },
+            { buildin_type::texture_dims, "texture_dims", ":texture_dims:" }
+        } ;
+
         static build_in get_build_in( buildin_type t ) noexcept
         {
-            switch( t )
+            for( size_t i=0; i<size_t(buildin_type::num_build_ins); ++i )
             {
-            case buildin_type::dot : return { buildin_type::dot, "dot", ":dot:" } ;
-            case buildin_type::cross : return { buildin_type::cross, "cross", ":cross:" } ;
-            case buildin_type::pulse : return { buildin_type::pulse, "pulse", ":pulse:" } ;
-            case buildin_type::step : return { buildin_type::step, "step", ":step:" } ;
-            case buildin_type::ceil : return { buildin_type::ceil, "ceil", ":ceil:" } ;
-            case buildin_type::floor : return { buildin_type::floor, "floor", ":floor:" } ;
-            case buildin_type::mix : return { buildin_type::mix, "mix", ":mix:" } ;
-            case buildin_type::pow : return { buildin_type::pow, "pow", ":pow:" } ;
-            case buildin_type::fract : return { buildin_type::fract, "fract", ":fract:" } ;
-            case buildin_type::texture : return { buildin_type::texture, "texture", ":texture:" } ;
-            case buildin_type::rt_texture : return { buildin_type::rt_texture, "rt_texture", ":rt_texture:" } ;
-            case buildin_type::as_vec2 : return { buildin_type::as_vec2, "as_vec2", ":as_vec2:" } ;
-            case buildin_type::as_vec3 : return { buildin_type::as_vec3, "as_vec3", ":as_vec3:" } ;
-            case buildin_type::as_vec4 : return { buildin_type::as_vec4, "as_vec3", ":as_vec4:" } ;
-            case buildin_type::fetch_data: return { buildin_type::fetch_data, "fetch_data", ":fetch_data:" } ;
+                if( t == buildins[i].t ) return buildins[i] ;
             }
-            return { buildin_type::unknown, "unknown-buildin", ":unknown-buildin:" } ; 
+            return buildins[0] ;
         }
 
-        static build_in get_build_in_for_func_name( natus::ntd::string_in_t name ) noexcept
+        static build_in get_build_in_by_func_name( natus::ntd::string_in_t name ) noexcept
         {
-            if( name == "dot" ) return { buildin_type::dot, "dot", ":dot:" } ;
-            if( name == "cross" ) return { buildin_type::cross, "cross", ":cross:" } ;
-            if( name == "pulse" ) return { buildin_type::pulse, "pulse", ":pulse:" } ;
-            if( name == "step" ) return { buildin_type::step, "step", ":step:" } ;
-            if( name == "ceil" ) return { buildin_type::ceil, "ceil", ":ceil:" } ;
-            if( name == "floor" ) return { buildin_type::floor, "floor", ":floor:" } ;
-            if( name == "mix" ) return { buildin_type::mix, "mix", ":mix:" } ;
-            if( name == "pow" ) return { buildin_type::pow, "pow", ":pow:" } ;
-            if( name == "fract" ) return { buildin_type::pow, "fract", ":fract:" } ;
-            if( name == "texture" ) return { buildin_type::texture, "texture", ":texture:" } ;
-            if( name == "rt_texture" ) return { buildin_type::rt_texture, "rt_texture", ":rt_texture:" } ;
-            if( name == "as_vec2" ) return { buildin_type::as_vec2, "as_vec2", ":as_vec2:" } ;
-            if( name == "as_vec3" ) return { buildin_type::as_vec3, "as_vec3", ":as_vec3:" } ;
-            if( name == "as_vec4" ) return { buildin_type::as_vec4, "as_vec4", ":as_vec4:" } ;
-            if( name == "fetch_data" ) return { buildin_type::fetch_data, "fetch_data", ":fetch_data:" } ;
-            return { buildin_type::unknown, "unknown-buildin", ":unknown-buildin:" } ;
+            for( size_t i=0; i<size_t(buildin_type::num_build_ins); ++i )
+            {
+                if( name == buildins[i].fname ) return buildins[i] ;
+            }
+            return buildins[0] ;
+        }
+
+        static build_in get_build_in_by_opcode( natus::ntd::string_in_t name ) noexcept
+        {
+            for( size_t i=0; i<size_t(buildin_type::num_build_ins); ++i )
+            {
+                if( name == buildins[i].opcode ) return buildins[i] ;
+            }
+            return buildins[0] ;
         }
 
         #if UNUSED

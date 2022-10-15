@@ -261,7 +261,13 @@ natus::ntd::string_t generator::map_variable_type( natus::nsl::type_cref_t type 
         mapping_t( natus::nsl::type_t(), "unknown" ),
         mapping_t( natus::nsl::type_t::as_void(), "void" ),
         mapping_t( natus::nsl::type_t::as_int(), "int" ),
+        mapping_t( natus::nsl::type_t::as_vec2(natus::nsl::type_base::tint), "int2" ),
+        mapping_t( natus::nsl::type_t::as_vec3(natus::nsl::type_base::tint), "int3" ),
+        mapping_t( natus::nsl::type_t::as_vec4(natus::nsl::type_base::tint), "int4" ),
         mapping_t( natus::nsl::type_t::as_uint(), "uint" ),
+        mapping_t( natus::nsl::type_t::as_vec2(natus::nsl::type_base::tuint), "uint2" ),
+        mapping_t( natus::nsl::type_t::as_vec3(natus::nsl::type_base::tuint), "uint3" ),
+        mapping_t( natus::nsl::type_t::as_vec4(natus::nsl::type_base::tuint), "uint4" ),
         mapping_t( natus::nsl::type_t::as_float(), "float" ),
         mapping_t( natus::nsl::type_t::as_vec2(), "float2" ),
         mapping_t( natus::nsl::type_t::as_vec3(), "float3" ),
@@ -409,6 +415,26 @@ natus::nsl::generated_code_t::shaders_t generator::generate( natus::nsl::generat
                 }
             }
         }
+    }
+
+    // inject composite buildins
+    {
+        natus::nsl::signature_t sig ;
+
+        natus::nsl::signature_t::arg_t a { natus::nsl::type_t::as_tex2d(), "tex" } ;
+        natus::nsl::signature_t::arg_t b { natus::nsl::type_t::as_vec2(natus::nsl::type_base::tint), "off" } ;
+
+        sig = natus::nsl::signature_t{ natus::nsl::type_t::as_vec2(natus::nsl::type_base::tint), "__d3d11_texture_offset__", { a, b } } ;
+
+        natus::nsl::post_parse::library_t::fragment_t frg ;
+
+        natus::ntd::vector< natus::ntd::string_t > lines { "/// Hello World" } ;
+
+        frg.sym_long = natus::nsl::symbol_t("__d3d11_texture_offset__") ;
+        frg.sig = std::move( sig ) ;
+        frg.fragments = std::move( lines ) ;
+
+        genable.frags.emplace_back( std::move( frg ) ) ;
     }
 
     natus::nsl::generated_code_t::shaders_t ret ;

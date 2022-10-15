@@ -81,6 +81,8 @@ namespace natus
             natus::ntd::string_t remove_comment_lines( natus::ntd::string_rref_t s ) const noexcept ;
 
             natus::ntd::vector< natus::ntd::string_t > tokenize( natus::ntd::string_cref_t s ) const noexcept ;
+
+            natus::nsl::post_parse::used_buildins_t determine_used_buildins( natus::ntd::vector< natus::ntd::string_t > const & ) const noexcept ;
             
         };
         natus_res_typedef( parser ) ;
