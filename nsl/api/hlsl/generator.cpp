@@ -7,7 +7,77 @@
 
 using namespace natus::nsl::hlsl ;
 
-natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_t code ) noexcept
+namespace this_file
+{
+    natus::core::types::bool_t fragment_by_opcode( natus::nsl::buildin_type bit, natus::nsl::post_parse::library_t::fragment_out_t ret ) noexcept
+    {
+        #if 0
+        // texture offset is available in hlsl but kept this as an example.
+        if( bit == natus::nsl::buildin_type::texture_offset )
+        {
+            natus::nsl::signature_t::arg_t a { natus::nsl::type_t::as_tex2d(), "tex" } ;
+            natus::nsl::signature_t::arg_t b { natus::nsl::type_t::as_vec2(natus::nsl::type_base::tfloat), "uv" } ;
+            natus::nsl::signature_t::arg_t c { natus::nsl::type_t::as_vec2(natus::nsl::type_base::tint), "off" } ;
+
+            natus::nsl::signature_t sig = natus::nsl::signature_t
+            { 
+                natus::nsl::type_t::as_vec4(), "__d3d11_texture_offset__", { a, b, c } 
+            } ;
+
+            natus::ntd::vector< natus::ntd::string_t > lines 
+            { 
+                "float2 rwh = float2(1.0) / float2( texture_dims( tex ) ) ;" 
+                "float2 uvr = float2( off ) * rwh ;"
+                "return texture( tex, uv + uvr ) ;"
+            } ;
+
+            natus::nsl::post_parse::library_t::fragment_t frg ;
+            frg.sym_long = natus::nsl::symbol_t("__d3d11_texture_offset__") ;
+            frg.sig = std::move( sig ) ;
+            frg.fragments = std::move( lines ) ;
+            frg.buildins.emplace_back( natus::nsl::post_parse::used_buildin{ 0, 0, 
+                natus::nsl::get_build_in( natus::nsl::buildin_type::texture_dims ) }) ;
+
+            ret = std::move( frg ) ;
+
+            return true ;
+        }
+        else 
+        #endif
+
+        if( bit == natus::nsl::buildin_type::texture_dims )
+        {
+            natus::nsl::signature_t::arg_t a { natus::nsl::type_t::as_tex2d(), "tex" } ;
+            natus::nsl::signature_t::arg_t b { natus::nsl::type_t::as_int(), "lod" } ;
+
+            natus::nsl::signature_t sig = natus::nsl::signature_t
+            { 
+                natus::nsl::type_t::as_vec2(natus::nsl::type_base::tuint), "__d3d11_texture_dims__", { a, b } 
+            } ;
+
+            natus::ntd::vector< natus::ntd::string_t > lines 
+            { 
+                "uint width = 0 ; uint height = 0 ; int elements = 0 ; int depth = 0 ; int num_levels = 0 ; int num_samples = 0 ;",
+                "tex.GetDimensions( lod, width, height, num_levels ) ;",
+                "return uint2( width, height ) ;"
+            } ;
+
+            natus::nsl::post_parse::library_t::fragment_t frg ;
+            frg.sym_long = natus::nsl::symbol_t("__d3d11_texture_dims__") ;
+            frg.sig = std::move( sig ) ;
+            frg.fragments = std::move( lines ) ;
+
+            ret = std::move( frg ) ;
+
+            return true ;
+        }
+
+        return false ;
+    }
+}
+
+
+natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_rref_t code ) noexcept
 {
     natus::nsl::repl_syms_t repls =
     {
@@ -28,11 +98,43 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_t co
             }
         },
         {
+            natus::ntd::string_t( ":add_asg:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 2 ) return "add_asg ( INVALID_ARGS ) " ;
+                return args[ 0 ] + " += " + args[ 1 ] ;
+            }
+        },
+        {
+            natus::ntd::string_t( ":sub_asg:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 2 ) return "sub_asg ( INVALID_ARGS ) " ;
+                return args[ 0 ] + " -= " + args[ 1 ] ;
+            }
+        },
+        {
             natus::ntd::string_t( ":mul_asg:" ),
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {
                 if( args.size() != 2 ) return "mul_asg ( INVALID_ARGS ) " ;
                 return args[ 0 ] + " *= " + args[ 1 ] ;
+            }
+        },
+        {
+            natus::ntd::string_t( ":lor:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 2 ) return "lor ( INVALID_ARGS ) " ;
+                return args[ 0 ] + " || " + args[ 1 ] ;
+            }
+        },
+        {
+            natus::ntd::string_t( ":land:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 2 ) return "land ( INVALID_ARGS ) " ;
+                return args[ 0 ] + " && " + args[ 1 ] ;
             }
         },
         {
@@ -86,6 +188,15 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_t co
             }
         },
         {
+            natus::ntd::string_t( ":rt_texture_offset:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 3 ) return "rt_texture_offset ( INVALID_ARGS ) " ;
+                return  args[ 0 ] + ".Sample ( smp_" + args[ 0 ] + " , "
+                    "float2 ( " + args[ 1 ] + ".x , 1.0f - " + args[ 1 ] + ".y ) , " + args[2] + " ) " ;
+            }
+        },
+        {
             natus::ntd::string_t( ":ls:" ),
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {
@@ -99,6 +210,30 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_t co
             {
                 if( args.size() != 2 ) return ">> ( INVALID_ARGS ) " ;
                 return args[ 0 ] + " >> " + args[ 1 ] ;
+            }
+        },
+        {
+            natus::ntd::string_t( ":leq:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 2 ) return "leq ( INVALID_ARGS ) " ;
+                return args[ 0 ] + " <= " + args[ 1 ] ;
+            }
+        },
+        {
+            natus::ntd::string_t( ":geq:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 2 ) return "geq ( INVALID_ARGS ) " ;
+                return args[ 0 ] + " >= " + args[ 1 ] ;
+            }
+        },
+        {
+            natus::ntd::string_t( ":neq:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 2 ) return "neq ( INVALID_ARGS ) " ;
+                return args[ 0 ] + " != " + args[ 1 ] ;
             }
         },
         {
@@ -190,6 +325,14 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_t co
             }
         },
         {
+            natus::ntd::string_t( ":abs:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 1 ) return "abs ( INVALID_ARGS ) " ;
+                return "abs ( " + args[ 0 ] + " ) " ;
+            }
+        },
+        {
             natus::ntd::string_t( ":dot:" ),
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {
@@ -203,6 +346,22 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_t co
             {
                 if( args.size() != 2 ) return "pow ( INVALID_ARGS ) " ;
                 return "pow ( " + args[ 0 ] + " , " + args[ 1 ] + " ) " ;
+            }
+        },
+        {
+            natus::ntd::string_t( ":min:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 2 ) return "min ( INVALID_ARGS ) " ;
+                return "min ( " + args[ 0 ] + " , " + args[ 1 ] + " ) " ;
+            }
+        },
+        {
+            natus::ntd::string_t( ":max:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 2 ) return "max ( INVALID_ARGS ) " ;
+                return "max ( " + args[ 0 ] + " , " + args[ 1 ] + " ) " ;
             }
         },
         {
@@ -247,6 +406,24 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_t co
                 if( args.size() != 2 ) return "fetch_data ( INVALID_ARGS ) " ;
                 return args[ 0 ] + ".Load( " + args[ 1 ] + " ) " ;
             }
+        },
+        {
+            natus::ntd::string_t( ":texture_offset:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 3 ) return "texture_offset ( INVALID_ARGS ) " ;
+                return  args[ 0 ] + ".Sample ( smp_" + args[ 0 ] + " , " + args[ 1 ] + " , " + args[2] + " ) " ;
+            }
+        },
+        {
+            natus::ntd::string_t( ":texture_dims:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() == 1 ) return "__d3d11_texture_dims__( " + args[ 0 ] + " , 0 ) " ;
+                if( args.size() == 2 ) return "__d3d11_texture_dims__( " + args[ 0 ] + " , " + args[ 1 ] + " ) " ;
+
+                return "texture_dims ( INVALID_ARGS ) " ;
+            }
         }
     } ;
 
@@ -260,6 +437,7 @@ natus::ntd::string_t generator::map_variable_type( natus::nsl::type_cref_t type 
     {
         mapping_t( natus::nsl::type_t(), "unknown" ),
         mapping_t( natus::nsl::type_t::as_void(), "void" ),
+        mapping_t( natus::nsl::type_t::as_bool(), "bool" ),
         mapping_t( natus::nsl::type_t::as_int(), "int" ),
         mapping_t( natus::nsl::type_t::as_vec2(natus::nsl::type_base::tint), "int2" ),
         mapping_t( natus::nsl::type_t::as_vec3(natus::nsl::type_base::tint), "int3" ),
@@ -419,22 +597,46 @@ natus::nsl::generated_code_t::shaders_t generator::generate( natus::nsl::generat
 
     // inject composite buildins
     {
-        natus::nsl::signature_t sig ;
+        auto test_configs = [&]( natus::nsl::buildin_type const test_bi )
+        {
+            for( auto& s : genable.config.shaders )
+            {
+                for( auto& c : s.codes )
+                {
+                    for( auto& ubi : c.buildins)
+                    {
+                        if( test_bi == ubi.bi.t ) return true ;
+                    }
+                }
+            }
+            return false ;
+        } ;
 
-        natus::nsl::signature_t::arg_t a { natus::nsl::type_t::as_tex2d(), "tex" } ;
-        natus::nsl::signature_t::arg_t b { natus::nsl::type_t::as_vec2(natus::nsl::type_base::tint), "off" } ;
+        auto test_fragments = [&]( natus::nsl::buildin_type const test_bi )
+        {
+            for( auto& frg : genable.frags )
+            {
+                for( auto const & ubi : frg.buildins )
+                {
+                    if( test_bi == ubi.bi.t ) return true ;
+                }
+            }
+            return false ;
+        } ;
 
-        sig = natus::nsl::signature_t{ natus::nsl::type_t::as_vec2(natus::nsl::type_base::tint), "__d3d11_texture_offset__", { a, b } } ;
-
-        natus::nsl::post_parse::library_t::fragment_t frg ;
-
-        natus::ntd::vector< natus::ntd::string_t > lines { "/// Hello World" } ;
-
-        frg.sym_long = natus::nsl::symbol_t("__d3d11_texture_offset__") ;
-        frg.sig = std::move( sig ) ;
-        frg.fragments = std::move( lines ) ;
-
-        genable.frags.emplace_back( std::move( frg ) ) ;
+        for( size_t i=0; i<size_t(natus::nsl::buildin_type::num_build_ins); ++i )
+        {
+            natus::nsl::buildin_type test_bi = natus::nsl::buildin_type(i) ;
+            if( test_configs( test_bi ) || test_fragments( test_bi ) )
+            {
+                natus::nsl::post_parse::library_t::fragment_t new_frg ;
+                if( this_file::fragment_by_opcode( test_bi, new_frg ) ) 
+                {
+                    genable.frags.emplace_back( std::move( new_frg ) ) ;
+                }
+                continue ;
+            }
+        }
     }
 
     natus::nsl::generated_code_t::shaders_t ret ;
@@ -693,13 +895,14 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
     {
         for( auto const& v : genable.vars )
         {
-            size_t p0 = shd.find( v.sym_long.expand() ) ; 
+            auto const find_what = v.sym_long.expand() + " " ;
+            size_t p0 = shd.find( find_what ) ; 
                     
             while( p0 != std::string::npos ) 
             {
                 size_t const p1 = shd.find_first_of( " ", p0 ) ;
-                shd = shd.substr( 0, p0 ) + v.value + shd.substr( p1 ) ;
-                p0 = shd.find( v.sym_long.expand(), p1 ) ;
+                shd = shd.substr( 0, p0 ) + this_t::replace_buildin_symbols( natus::ntd::string_t(v.value) ) + shd.substr( p1 ) ;
+                p0 = shd.find( find_what, p1 ) ;
             }
         }
     }

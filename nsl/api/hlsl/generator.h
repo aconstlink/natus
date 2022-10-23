@@ -38,7 +38,7 @@ namespace natus
                 };
                 natus_typedef( varying ) ;
 
-                static natus::ntd::string_t replace_buildin_symbols( natus::ntd::string_t code ) noexcept ;
+                static natus::ntd::string_t replace_buildin_symbols( natus::ntd::string_rref_t code ) noexcept ;
 
                 static natus::ntd::string_t map_variable_type( natus::nsl::type_cref_t type ) noexcept ;
 

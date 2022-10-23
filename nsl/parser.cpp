@@ -480,7 +480,8 @@ parser::statements_t parser::replace_operators( statements_rref_t ss ) const
             { "+=", ":add_asg:" },
             { "-=", ":sub_asg:" },
             { "<=", ":leq:" },
-            { ">=", ":geq:" }
+            { ">=", ":geq:" },
+            { "!=", ":neq:" }
         } ;
 
         auto is_stop = [&] ( char const t, size_t const l )
@@ -514,7 +515,9 @@ parser::statements_t parser::replace_operators( statements_rref_t ss ) const
             { ">>", ":rs:" },
             { "<<", ":ls:" },
             { "<", ":lt:" },
-            { ">", ":gt:" }
+            { ">", ":gt:" },
+            { "||", ":lor:" },
+            { "&&", ":land:" }
         } ;
 
         auto is_stop = [&] ( char const t, size_t const l )
@@ -962,7 +965,7 @@ natus::ntd::string_t parser::insert_spaces( natus::ntd::string_rref_t s ) const 
     for( auto iter = s.begin(); iter != s.end(); ++iter )
     {
         if( *iter == '+' || *iter == '-' || *iter == '*' || *iter == '/' || 
-            *iter == '<' || *iter == '>' || *iter == '/' )
+            *iter == '<' || *iter == '>' || *iter == '/' || *iter == '!' )
         {
             auto iter_next = iter + 1 ;
             auto iter_last = iter - 1 ;

@@ -166,6 +166,7 @@ namespace natus
         {
             unknown,
             tvoid,
+            tbool,
             tfloat,
             tint,
             tuint,
@@ -239,6 +240,11 @@ namespace natus
             static this_t as_void( void_t ) noexcept
             {
                 return { type_base::tvoid, type_struct::unknown, type_ext::singular } ;
+            }
+
+            static this_t as_bool( void_t ) noexcept
+            {
+                return { type_base::tbool, type_struct::vec1, type_ext::singular } ;
             }
 
             static this_t as_float( void_t ) noexcept
@@ -322,6 +328,7 @@ namespace natus
             typedef std::pair< natus::ntd::string_t, natus::nsl::type_t > __mapping_t ;
             static __mapping_t const __mappings[] = {
                 __mapping_t( "void_t", type_t::as_void() ),
+                __mapping_t( "bool_t", type_t::as_bool() ),
                 __mapping_t( "float_t", type_t::as_float() ),
                 __mapping_t( "int_t", type_t::as_int() ),
                 __mapping_t( "uint_t", type_t::as_uint() ),
@@ -329,6 +336,14 @@ namespace natus
                 __mapping_t( "vec2_t", type_t::as_vec2() ),
                 __mapping_t( "vec3_t", type_t::as_vec3() ),
                 __mapping_t( "vec4_t", type_t::as_vec4() ),
+                __mapping_t( "vec1i_t", type_t::as_vec1(natus::nsl::type_base::tint) ),
+                __mapping_t( "vec2i_t", type_t::as_vec2(natus::nsl::type_base::tint) ),
+                __mapping_t( "vec3i_t", type_t::as_vec3(natus::nsl::type_base::tint) ),
+                __mapping_t( "vec4i_t", type_t::as_vec4(natus::nsl::type_base::tint) ),
+                __mapping_t( "vec1ui_t", type_t::as_vec1(natus::nsl::type_base::tuint) ),
+                __mapping_t( "vec2ui_t", type_t::as_vec2(natus::nsl::type_base::tuint) ),
+                __mapping_t( "vec3ui_t", type_t::as_vec3(natus::nsl::type_base::tuint) ),
+                __mapping_t( "vec4ui_t", type_t::as_vec4(natus::nsl::type_base::tuint) ),
                 __mapping_t( "mat2_t", type_t::as_mat2() ),
                 __mapping_t( "mat3_t", type_t::as_mat3() ),
                 __mapping_t( "mat4_t", type_t::as_mat4() ),
@@ -384,6 +399,7 @@ namespace natus
             sub,
             div,
             mul,
+            abs,
             dot,
             cross,
             pulse,
@@ -392,9 +408,12 @@ namespace natus
             floor,
             mix,
             pow,
+            min,
+            max,
             fract,
             texture,
             rt_texture,
+            rt_texture_offset,
             as_vec2,
             as_vec3,
             as_vec4,
@@ -415,6 +434,7 @@ namespace natus
         static const build_in_t buildins[] = 
         {
             { buildin_type::unknown, "unknown-buildin", ":unknown-buildin:" },
+            { buildin_type::abs, "abs", ":abs:" },
             { buildin_type::dot, "dot", ":dot:" },
             { buildin_type::cross, "cross", ":cross:" },
             { buildin_type::pulse, "pulse", ":pulse:" },
@@ -423,13 +443,15 @@ namespace natus
             { buildin_type::floor, "floor", ":floor:" },
             { buildin_type::mix, "mix", ":mix:" },
             { buildin_type::pow, "pow", ":pow:" },
+            { buildin_type::min, "min", ":min:" },
+            { buildin_type::max, "max", ":max:" },
             { buildin_type::fract, "fract", ":fract:" },
             { buildin_type::texture, "texture", ":texture:" },
-            { buildin_type::texture, "texture", ":texture:" },
             { buildin_type::rt_texture, "rt_texture", ":rt_texture:" },
+            { buildin_type::rt_texture_offset, "rt_texture_offset", ":rt_texture_offset:" },
             { buildin_type::as_vec2, "as_vec2", ":as_vec2:" },
             { buildin_type::as_vec3, "as_vec3", ":as_vec3:" },
-            { buildin_type::as_vec4, "as_vec3", ":as_vec4:" },
+            { buildin_type::as_vec4, "as_vec4", ":as_vec4:" },
             { buildin_type::fetch_data, "fetch_data", ":fetch_data:" },
             { buildin_type::texture_offset, "texture_offset", ":texture_offset:" },
             { buildin_type::texture_dims, "texture_dims", ":texture_dims:" }

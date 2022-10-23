@@ -26,11 +26,43 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::nsl::api_type co
             }
         },
         {
+            natus::ntd::string_t( ":add_asg:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 2 ) return "add_asg ( INVALID_ARGS ) " ;
+                return args[ 0 ] + " += " + args[ 1 ] ;
+            }
+        },
+        {
+            natus::ntd::string_t( ":sub_asg:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 2 ) return "sub_asg ( INVALID_ARGS ) " ;
+                return args[ 0 ] + " -= " + args[ 1 ] ;
+            }
+        },
+        {
             natus::ntd::string_t( ":mul_asg:" ),
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {
                 if( args.size() != 2 ) return "mul_asg ( INVALID_ARGS ) " ;
                 return args[ 0 ] + " *= " + args[ 1 ] ;
+            }
+        },
+        {
+            natus::ntd::string_t( ":lor:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 2 ) return "lor ( INVALID_ARGS ) " ;
+                return args[ 0 ] + " || " + args[ 1 ] ;
+            }
+        },
+        {
+            natus::ntd::string_t( ":land:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 2 ) return "land ( INVALID_ARGS ) " ;
+                return args[ 0 ] + " && " + args[ 1 ] ;
             }
         },
         {
@@ -83,6 +115,14 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::nsl::api_type co
             }
         },
         {
+            natus::ntd::string_t( ":rt_texture_offset:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 3 ) return "rt_texture_offset ( INVALID_ARGS ) " ;
+                return  "textureOffset( " + args[ 0 ] + " , " + args[ 1 ] + " , " + args[2] + " ) " ;
+            }
+        },
+        {
             natus::ntd::string_t( ":ls:" ),
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {
@@ -96,6 +136,30 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::nsl::api_type co
             {
                 if( args.size() != 2 ) return ">> ( INVALID_ARGS ) " ;
                 return args[ 0 ] + " >> " + args[ 1 ] ;
+            }
+        },
+        {
+            natus::ntd::string_t( ":leq:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 2 ) return "leq ( INVALID_ARGS ) " ;
+                return args[ 0 ] + " <= " + args[ 1 ] ;
+            }
+        },
+        {
+            natus::ntd::string_t( ":geq:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 2 ) return "geq ( INVALID_ARGS ) " ;
+                return args[ 0 ] + " >= " + args[ 1 ] ;
+            }
+        },
+        {
+            natus::ntd::string_t( ":neq:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 2 ) return "neq ( INVALID_ARGS ) " ;
+                return args[ 0 ] + " != " + args[ 1 ] ;
             }
         },
         {
@@ -187,6 +251,14 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::nsl::api_type co
             }
         },
         {
+            natus::ntd::string_t( ":abs:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 1 ) return "abs ( INVALID_ARGS ) " ;
+                return "abs ( " + args[ 0 ] + " ) " ;
+            }
+        },
+        {
             natus::ntd::string_t( ":dot:" ),
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {
@@ -200,6 +272,22 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::nsl::api_type co
             {
                 if( args.size() != 2 ) return "pow ( INVALID_ARGS ) " ;
                 return "pow ( " + args[ 0 ] + " , " + args[ 1 ] + " ) " ;
+            }
+        },
+        {
+            natus::ntd::string_t( ":min:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 2 ) return "min ( INVALID_ARGS ) " ;
+                return "min ( " + args[ 0 ] + " , " + args[ 1 ] + " ) " ;
+            }
+        },
+        {
+            natus::ntd::string_t( ":max:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 2 ) return "max ( INVALID_ARGS ) " ;
+                return "max ( " + args[ 0 ] + " , " + args[ 1 ] + " ) " ;
             }
         },
         {
@@ -235,6 +323,24 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::nsl::api_type co
                 for( size_t i=0; i<args.size()-3; ++i ) tmp += args[3+i] + " , " ;
                 tmp = tmp.substr( 0, tmp.size() - 3 ) ;
                 return args[0] + " " + args[1] + " [ " + args[2] + " ] = " + args[0] + " [ " + args[2] + " ] " + " ( " + tmp + " ) " ;
+            }
+        },
+        {
+            natus::ntd::string_t( ":texture_offset:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 3 ) return "texture_offset ( INVALID_ARGS ) " ;
+                return  "textureOffset ( " + args[ 0 ] + " , " + args[ 1 ] + " , " + args[2] + " ) " ;
+            }
+        },
+        {
+            natus::ntd::string_t( ":texture_dims:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() == 1 ) return "textureSize( " + args[ 0 ] + " , 0 ) " ;
+                if( args.size() == 2 ) return "textureSize( " + args[ 0 ] + " , " + args[1] + " ) " ;
+
+                return "texture_dims ( INVALID_ARGS ) " ;
             }
         }
     } ;
@@ -282,8 +388,15 @@ namespace this_file
             {
                 mapping_t( natus::nsl::type_t(), "unknown" ),
                 mapping_t( natus::nsl::type_t::as_void(), "void" ),
+                mapping_t( natus::nsl::type_t::as_bool(), "bool" ),
                 mapping_t( natus::nsl::type_t::as_int(), "int" ),
+                mapping_t( natus::nsl::type_t::as_vec2(natus::nsl::type_base::tint), "ivec2" ),
+                mapping_t( natus::nsl::type_t::as_vec3(natus::nsl::type_base::tint), "ivec3" ),
+                mapping_t( natus::nsl::type_t::as_vec4(natus::nsl::type_base::tint), "ivec4" ),
                 mapping_t( natus::nsl::type_t::as_uint(), "uint" ),
+                mapping_t( natus::nsl::type_t::as_vec2(natus::nsl::type_base::tint), "uvec2" ),
+                mapping_t( natus::nsl::type_t::as_vec3(natus::nsl::type_base::tint), "uvec3" ),
+                mapping_t( natus::nsl::type_t::as_vec4(natus::nsl::type_base::tint), "uvec4" ),
                 mapping_t( natus::nsl::type_t::as_float(), "float" ),
                 mapping_t( natus::nsl::type_t::as_vec2(), "vec2" ),
                 mapping_t( natus::nsl::type_t::as_vec3(), "vec3" ),
@@ -306,6 +419,7 @@ namespace this_file
             static mapping_t const __mappings[] =
             {
                 mapping_t( natus::nsl::type_t(), "unknown" ),
+                mapping_t( natus::nsl::type_t::as_bool(), "bool" ),
                 mapping_t( natus::nsl::type_t::as_void(), "void" ),
                 mapping_t( natus::nsl::type_t::as_int(), "int" ),
                 mapping_t( natus::nsl::type_t::as_vec2(natus::nsl::type_base::tint), "ivec2" ),
@@ -635,13 +749,14 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
         {
             for( auto const& v : genable.vars )
             {
-                size_t p0 = shd.find( v.sym_long.expand() ) ; 
+                auto const find_what = v.sym_long.expand() + " " ;
+                size_t p0 = shd.find( find_what ) ; 
                     
                 while( p0 != std::string::npos ) 
                 {
                     size_t const p1 = shd.find_first_of( " ", p0 ) ;
                     shd = shd.substr( 0, p0 ) + v.value + shd.substr( p1 ) ;
-                    p0 = shd.find( v.sym_long.expand(), p1 ) ;
+                    p0 = shd.find( find_what, p1 ) ;
                 }
             }
         }
