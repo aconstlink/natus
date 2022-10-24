@@ -163,6 +163,14 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::nsl::api_type co
             }
         },
         {
+            natus::ntd::string_t( ":eqeq:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 2 ) return "eqeq ( INVALID_ARGS ) " ;
+                return args[ 0 ] + " == " + args[ 1 ] ;
+            }
+        },
+        {
             natus::ntd::string_t( ":lt:" ),
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {

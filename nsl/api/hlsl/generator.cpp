@@ -25,10 +25,8 @@ namespace this_file
             } ;
 
             natus::ntd::vector< natus::ntd::string_t > lines 
-            { 
-                "float2 rwh = float2(1.0) / float2( texture_dims( tex ) ) ;" 
-                "float2 uvr = float2( off ) * rwh ;"
-                "return texture( tex, uv + uvr ) ;"
+            {                 
+                "return :texture_( tex, uv + uvr ) ;"
             } ;
 
             natus::nsl::post_parse::library_t::fragment_t frg ;
@@ -193,7 +191,7 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_rref
             {
                 if( args.size() != 3 ) return "rt_texture_offset ( INVALID_ARGS ) " ;
                 return  args[ 0 ] + ".Sample ( smp_" + args[ 0 ] + " , "
-                    "float2 ( " + args[ 1 ] + ".x , 1.0f - " + args[ 1 ] + ".y ) , " + args[2] + " ) " ;
+                    "float2 ( " + args[ 1 ] + ".x , 1.0f - " + args[ 1 ] + ".y ) , int2( 1, -1 ) * " + args[2] + " ) " ;
             }
         },
         {
@@ -234,6 +232,14 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_rref
             {
                 if( args.size() != 2 ) return "neq ( INVALID_ARGS ) " ;
                 return args[ 0 ] + " != " + args[ 1 ] ;
+            }
+        },
+        {
+            natus::ntd::string_t( ":eqeq:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 2 ) return "eqeq ( INVALID_ARGS ) " ;
+                return args[ 0 ] + " == " + args[ 1 ] ;
             }
         },
         {
