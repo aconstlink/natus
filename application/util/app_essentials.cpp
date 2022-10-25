@@ -119,7 +119,7 @@ void_t app_essentials::init_graphics( natus::ntd::string_cref_t name ) noexcept
     // root render states
     {
         natus::graphics::state_object_t so = natus::graphics::state_object_t(
-            name + "root_render_states" ) ;
+            name + ".root_render_states" ) ;
 
         {
             natus::graphics::render_state_sets_t rss ;
