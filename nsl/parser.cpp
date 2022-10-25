@@ -420,24 +420,40 @@ parser::statements_t parser::replace_operators( statements_rref_t ss ) const
                 end = p1 ;
             }
 
-            if( arg0.empty() )
+            if( r.single )
             {
-                if( r.single )
+                // prefix
+                if( arg0.empty() )
+                {
                     line = line.replace( beg, end - beg,
                         r.with + " ( " + arg1 + " ) " ) ;
-                else
+                }
+                // postfix
+                else if( arg1.empty() )
+                {
                     line = line.replace( beg, end - beg,
-                        r.with + " ( " + arg1 + " ) " ) ;
-            } 
-            else if ( arg1.empty() && r.single)
-            {
-                line = line.replace( beg, end - beg,
                         r.with.substr(0, r.with.size()-1) + "_post: ( " + arg0 + " ) " ) ;
+                }
+                // else ambiguous operator 
+                else {}
             }
             else
             {
-                line = line.replace( beg, end - beg,
-                    r.with + " ( " + arg0 + " , " + arg1 + " ) " ) ;
+                if( arg0.empty() )
+                {
+                    line = line.replace( beg, end - beg,
+                        r.with + " ( " + arg1 + " ) " ) ;
+                }
+                else if( arg1.empty() )
+                {
+                    line = line.replace( beg, end - beg,
+                        r.with + " ( " + arg0 + " ) " ) ;
+                }
+                else
+                {
+                    line = line.replace( beg, end - beg,
+                        r.with + " ( " + arg0 + " , " + arg1 + " ) " ) ;
+                }
             }
 
             // find another
@@ -508,8 +524,8 @@ parser::statements_t parser::replace_operators( statements_rref_t ss ) const
         {
             { "++", ":inc:", true },
             { "--", ":dec:", true },
-            { "+", ":add:", true },
-            { "-", ":sub:", true },
+            { "+", ":plus:", true },
+            { "-", ":minus:", true },
             { "*", ":mmul:" },    // math multiplication
             { "'", ":cmul:" },    // component-wise multiplication
             { "/", ":div:" },

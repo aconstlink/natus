@@ -82,6 +82,22 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::nsl::api_type co
             }
         },
         {
+            natus::ntd::string_t( ":plus:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 1 ) return "plus ( INVALID_ARGS ) " ;
+                return " + " + args[ 0 ] ;
+            }
+        },
+        {
+            natus::ntd::string_t( ":minus:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 1 ) return "minus ( INVALID_ARGS ) " ;
+                return " - " + args[ 0 ] ;
+            }
+        },
+        {
             natus::ntd::string_t( ":div:" ),
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {
