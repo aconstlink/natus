@@ -1104,7 +1104,7 @@ natus::ntd::vector< natus::ntd::string_t > parser::tokenize( natus::ntd::string_
     size_t pos = s.find_first_of( ' ' ) ;
     while( pos != std::string::npos )
     {
-        tokens.emplace_back( s.substr( off, pos - off ) ) ;
+        if( (pos - off) != 0 ) tokens.emplace_back( s.substr( off, pos - off ) ) ;
 
         off = pos + 1 ;
         pos = s.find_first_of( ' ', off ) ;
