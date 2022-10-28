@@ -279,7 +279,7 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_rref
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {
                 if( args.size() != 1 ) return "ret ( INVALID_ARGS ) " ;
-                return "return " + args[ 0 ] ;
+                return args[0].empty() ? "return" : "return " + args[ 0 ] ;
             }
         },
         {
@@ -884,29 +884,37 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
                 {
                     if( s.type == natus::nsl::shader_type::vertex_shader )
                     {
-                        text << output_name << " " << funk_name << " ( VS_INPUT input )" << std::endl ;
+                        text << output_name << " " << funk_name << " ( VS_INPUT __input__ )" << std::endl ;
                         text << "{" << std::endl ; ++iter ;
-                        text << output_name << " output = (" << output_name << ")0 ; " << std::endl ;
+                        text << output_name << " __output__ = (" << output_name << ")0 ; " << std::endl ;
                     } else if( s.type == natus::nsl::shader_type::pixel_shader )
                     {
-                        text << output_name << " PS( " << last_varying.name << " input )" << std::endl ;
+                        text << output_name << " PS( " << last_varying.name << " __input__ )" << std::endl ;
                         text << "{" << std::endl ; ++iter ;
-                        text << output_name << " output = (" << output_name << ")0 ; " << std::endl ;
+                        text << output_name << " __output__ = (" << output_name << ")0 ; " << std::endl ;
                     }
                     curlies++ ;
                     in_main = true ;
-                } else
+                } 
+                // early exit
+                else if( in_main && iter->find( "return ;" ) != std::string::npos )
+                {
+                    text << "return __output__ ;" << std::endl ;
+                }
+                else
                 {
                     if( in_main && *iter == "{" ) curlies++ ;
                     else if( in_main && *iter == "}" ) curlies--  ;
 
                     if( in_main && curlies == 0 )
                     {
-                        text << "return output ;" << std::endl ;
+                        text << "return __output__ ;" << std::endl ;
                         in_main = false ;
                     }
                     text << " " << *iter << std::endl ;
                 }
+
+                
             }
         }
     }
@@ -976,15 +984,15 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
             if( v.fq == natus::nsl::flow_qualifier::in )
             {
                 flow = "in." ;
-                struct_name = "input." ;
+                struct_name = "__input__." ;
             } else if( v.fq == natus::nsl::flow_qualifier::out )
             {
                 flow = "out." ;
-                struct_name = "output." ;
+                struct_name = "__output__." ;
             } else if( v.fq == natus::nsl::flow_qualifier::local )
             {
                 flow = "" ;
-                struct_name = "input." ;
+                struct_name = "__input__." ;
             } 
 
             // replace in./out. with 
