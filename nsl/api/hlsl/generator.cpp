@@ -185,6 +185,14 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_rref
             }
         },
         {
+            natus::ntd::string_t( ":clamp:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 3 ) return "clamp ( INVALID_ARGS ) " ;
+                return  "clamp ( " + args[ 0 ] + " , " + args[ 1 ] + " , " + args[ 2 ] + " )" ;
+            }
+        },
+        {
             natus::ntd::string_t( ":texture:" ),
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {
@@ -287,7 +295,7 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_rref
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {
                 if( args.size() != 3 ) return "mix ( INVALID_ARGS ) " ;
-                return "lerp (" + args[ 0 ] + " , " + args[ 1 ] + " , " + args[ 2 ] + " ) " ;
+                return "lerp ( " + args[ 0 ] + " , " + args[ 1 ] + " , " + args[ 2 ] + " ) " ;
             }
         },
         {

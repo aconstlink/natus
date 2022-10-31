@@ -262,6 +262,11 @@ namespace natus
                 return { type_base::tuint, type_struct::vec1, type_ext::singular } ;
             }
 
+            static this_t as_vec( size_t const c, natus::nsl::type_base bt ) noexcept
+            {
+                return { bt, type_struct(size_t(type_struct::vec1)+c), type_ext::singular } ;
+            }
+
             static this_t as_vec1( natus::nsl::type_base bt = type_base::tfloat ) noexcept
             {
                 return { bt, type_struct::vec1, type_ext::singular } ;
@@ -395,22 +400,23 @@ namespace natus
         enum class buildin_type
         {
             unknown,
-            add,
-            sub,
-            div,
-            mul,
+            //add,
+            //sub,
+            //div,
+            //mul,
             abs,
             dot,
             cross,
             pulse,
             step,
+            clamp,
             ceil,
             floor,
             mix,
             pow,
             min,
             max,
-            fract,
+            fract,            
             texture,
             rt_texture,
             rt_texture_offset,
@@ -439,6 +445,7 @@ namespace natus
             { buildin_type::cross, "cross", ":cross:" },
             { buildin_type::pulse, "pulse", ":pulse:" },
             { buildin_type::step, "step", ":step:" },
+            { buildin_type::clamp, "clamp", ":clamp:" },
             { buildin_type::ceil, "ceil", ":ceil:" },
             { buildin_type::floor, "floor", ":floor:" },
             { buildin_type::mix, "mix", ":mix:" },
