@@ -115,6 +115,23 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::nsl::api_type co
             }
         },
         {
+            natus::ntd::string_t( ":smoothstep:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 3 ) return "smoothstep ( INVALID_ARGS ) " ;
+                return  "smoothstep ( " + args[ 0 ] + " , " + args[ 1 ] + " , " + args[ 2 ] + " )" ;
+            }
+        },
+        {
+            natus::ntd::string_t( ":smoothpulse:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 3 ) return "smoothpulse ( INVALID_ARGS ) " ;
+                return  "( smoothstep ( " + args[ 0 ] + " , " + args[ 1 ] + " , " + args[ 4 ] + " ) - " +
+                    "smoothstep ( " + args[ 2 ] + " , " + args[ 3 ] + " , " + args[ 4 ] + " ) )" ;
+            }
+        },
+        {
             natus::ntd::string_t( ":clamp:" ),
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {
@@ -627,7 +644,6 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
                             break ;
                         }
                     }
-
                 }
             }
             text << std::endl ;
@@ -637,8 +653,6 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
             text << "#version " << "glsl_type case missing" << std::endl << std::endl ;
             break ;
         }
-
-        
     }
 
     // add extensions for pixel shader
