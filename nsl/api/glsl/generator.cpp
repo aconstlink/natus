@@ -148,6 +148,14 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::nsl::api_type co
             }
         },
         {
+            natus::ntd::string_t( ":rt_texcoords:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 1 ) return "rt_texcoords ( INVALID_ARGS ) " ;
+                return  args[0] ;
+            }
+        },
+        {
             natus::ntd::string_t( ":rt_texture:" ),
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {

@@ -218,6 +218,14 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_rref
             }
         },
         {
+            natus::ntd::string_t( ":rt_texcoords:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 1 ) return "rt_texcoords ( INVALID_ARGS ) " ;
+                return  "float2 ( " + args[ 0 ] + ".x , 1.0f - " + args[ 0 ] + ".y ) " ;
+            }
+        },
+        {
             natus::ntd::string_t( ":rt_texture:" ),
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {
