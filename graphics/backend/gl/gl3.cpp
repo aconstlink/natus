@@ -2638,6 +2638,11 @@ natus::graphics::result gl3_backend::configure( natus::graphics::array_object_re
     return natus::graphics::result::ok ;
 }
 
+natus::graphics::result gl3_backend::configure( natus::graphics::feedback_object_res_t ) noexcept 
+{
+    return natus::graphics::result::ok ;
+}
+
 natus::graphics::result gl3_backend::release( natus::graphics::geometry_object_res_t obj ) noexcept 
 {
     if( !obj.is_valid() || obj->name().empty() )
@@ -2757,6 +2762,11 @@ natus::graphics::result gl3_backend::release( natus::graphics::array_object_res_
     return natus::graphics::result::ok ;
 }
 
+natus::graphics::result gl3_backend::release( natus::graphics::feedback_object_res_t ) noexcept 
+{
+    return natus::graphics::result::ok ;
+}
+
 //***
 natus::graphics::result gl3_backend::connect( natus::graphics::render_object_res_t config, natus::graphics::variable_set_res_t vs ) noexcept
 {
@@ -2850,6 +2860,11 @@ natus::graphics::result gl3_backend::use( natus::graphics::framebuffer_object_re
     if( !res ) return natus::graphics::result::failed ;
 
     return natus::graphics::result::ok ;
+}
+
+natus::graphics::result gl3_backend::use( natus::graphics::feedback_object_res_t ) noexcept 
+{
+    return natus::graphics::result::failed ;
 }
 
 //****

@@ -35,35 +35,47 @@ namespace natus
             {
                 natus_this_typedefs( vertex_input_binding ) ;
 
-                vertex_input_binding( void_t ) {}
+                vertex_input_binding( void_t ) noexcept {}
                 vertex_input_binding( natus::ntd::string_cref_t name_,
-                    natus::graphics::vertex_attribute const va_ ) : name( name_ ), va( va_ ) {}
-                vertex_input_binding( vertex_input_binding const& rhv )
-                {
-                    *this = rhv ;
-                }
-                vertex_input_binding( vertex_input_binding&& rhv )
-                {
-                    *this = rhv ;
-                }
-                ~vertex_input_binding( void_t ) {}
+                    natus::graphics::vertex_attribute const va_ ) noexcept : name( name_ ), va( va_ ) {}
+                vertex_input_binding( this_cref_t rhv ) noexcept { *this = rhv ; }
+                vertex_input_binding( this_rref_t rhv ) noexcept { *this = std::move( rhv ) ; }
+                ~vertex_input_binding( void_t ) noexcept {}
 
-                this_ref_t operator = ( this_cref_t rhv )
-                {
-                    name = rhv.name; va = rhv.va ;
-                    return *this ;
-                }
+                this_ref_t operator = ( this_cref_t rhv ) noexcept
+                    { name = rhv.name; va = rhv.va ; return *this ; }
 
-                this_ref_t operator = ( this_rref_t rhv )
-                {
-                    name = ::std::move( rhv.name ) ; va = rhv.va ;
-                    return *this ;
-                }
+                this_ref_t operator = ( this_rref_t rhv ) noexcept
+                    { name = std::move( rhv.name ) ; va = rhv.va ; return *this ; }
 
                 natus::ntd::string name ;
-                natus::graphics::vertex_attribute va ;
+                natus::graphics::vertex_attribute va = natus::graphics::vertex_attribute::undefined ;
             };
             natus::ntd::vector< vertex_input_binding > _vertex_inputs ;
+
+        private: // vertex output
+
+            struct vertex_output_binding
+            {
+                natus_this_typedefs( vertex_output_binding ) ;
+
+                vertex_output_binding( void_t ) noexcept {}
+                vertex_output_binding( natus::ntd::string_cref_t name_,
+                    natus::graphics::vertex_attribute const va_ ) noexcept : name( name_ ), va( va_ ) {}
+                vertex_output_binding( this_cref_t rhv ) noexcept { *this = rhv ; }
+                vertex_output_binding( this_rref_t rhv ) noexcept { *this = std::move( rhv ) ; }
+                ~vertex_output_binding( void_t ) noexcept {}
+
+                this_ref_t operator = ( this_cref_t rhv ) noexcept
+                    { name = rhv.name; va = rhv.va ; return *this ; }
+
+                this_ref_t operator = ( this_rref_t rhv ) noexcept
+                    { name = std::move( rhv.name ) ; va = rhv.va ; return *this ; }
+
+                natus::ntd::string name ;
+                natus::graphics::vertex_attribute va = natus::graphics::vertex_attribute::undefined ;
+            };
+            natus::ntd::vector< vertex_output_binding > _vertex_outputs ;
 
         private: // input bindings
 

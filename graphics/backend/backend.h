@@ -14,6 +14,7 @@
 #include "../object/framebuffer_object.h"
 #include "../object/state_object.h"
 #include "../object/array_object.h"
+#include "../object/feedback_object.h"
 #include "../variable/variable_set.hpp"
 #include "../state/state_set.h"
 
@@ -55,7 +56,8 @@ namespace natus
 
             enum class unuse_type
             {
-                framebuffer
+                framebuffer,
+                feedback
             };
 
         public: // user interface
@@ -67,6 +69,7 @@ namespace natus
             virtual natus::graphics::result configure( natus::graphics::framebuffer_object_res_t ) noexcept = 0 ;
             virtual natus::graphics::result configure( natus::graphics::state_object_res_t ) noexcept = 0 ;
             virtual natus::graphics::result configure( natus::graphics::array_object_res_t ) noexcept = 0 ;
+            virtual natus::graphics::result configure( natus::graphics::feedback_object_res_t ) noexcept = 0 ;
 
             virtual natus::graphics::result release( natus::graphics::geometry_object_res_t ) noexcept = 0 ;
             virtual natus::graphics::result release( natus::graphics::render_object_res_t ) noexcept = 0 ;
@@ -75,6 +78,7 @@ namespace natus
             virtual natus::graphics::result release( natus::graphics::framebuffer_object_res_t ) noexcept = 0 ;
             virtual natus::graphics::result release( natus::graphics::state_object_res_t ) noexcept = 0 ;
             virtual natus::graphics::result release( natus::graphics::array_object_res_t ) noexcept = 0 ;
+            virtual natus::graphics::result release( natus::graphics::feedback_object_res_t ) noexcept = 0 ;
 
             // @obsolete
             virtual natus::graphics::result connect( natus::graphics::render_object_res_t, natus::graphics::variable_set_res_t ) noexcept = 0 ;
@@ -85,6 +89,7 @@ namespace natus
             virtual natus::graphics::result update( natus::graphics::render_object_res_t, size_t const varset ) noexcept = 0 ;
 
             virtual natus::graphics::result use( natus::graphics::framebuffer_object_res_t ) noexcept = 0 ;
+            virtual natus::graphics::result use( natus::graphics::feedback_object_res_t ) noexcept = 0 ;
             virtual natus::graphics::result unuse( natus::graphics::backend::unuse_type const ) noexcept = 0 ;
             virtual natus::graphics::result push( natus::graphics::state_object_res_t, size_t const, bool_t const ) noexcept = 0 ;
             virtual natus::graphics::result pop( pop_type const ) noexcept = 0 ;

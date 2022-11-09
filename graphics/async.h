@@ -58,6 +58,7 @@ namespace natus
             this_ref_t configure( natus::graphics::framebuffer_object_res_t, natus::graphics::result_res_t = natus::graphics::result_res_t() ) noexcept ;
             this_ref_t configure( natus::graphics::state_object_res_t, natus::graphics::result_res_t = natus::graphics::result_res_t() ) noexcept ;
             this_ref_t configure( natus::graphics::array_object_res_t, natus::graphics::result_res_t = natus::graphics::result_res_t() ) noexcept ;
+            this_ref_t configure( natus::graphics::feedback_object_res_t, natus::graphics::result_res_t = natus::graphics::result_res_t() ) noexcept ;
 
             this_ref_t release( natus::graphics::geometry_object_res_t, natus::graphics::result_res_t = natus::graphics::result_res_t() ) noexcept ;
             this_ref_t release( natus::graphics::render_object_res_t, natus::graphics::result_res_t = natus::graphics::result_res_t() ) noexcept ;
@@ -66,12 +67,14 @@ namespace natus
             this_ref_t release( natus::graphics::framebuffer_object_res_t, natus::graphics::result_res_t = natus::graphics::result_res_t() ) noexcept ;
             this_ref_t release( natus::graphics::state_object_res_t, natus::graphics::result_res_t = natus::graphics::result_res_t() ) noexcept ;
             this_ref_t release( natus::graphics::array_object_res_t, natus::graphics::result_res_t = natus::graphics::result_res_t() ) noexcept ;
-            
+            this_ref_t release( natus::graphics::feedback_object_res_t, natus::graphics::result_res_t = natus::graphics::result_res_t() ) noexcept ;
+
             this_ref_t update( natus::graphics::geometry_object_res_t, natus::graphics::result_res_t = natus::graphics::result_res_t() ) noexcept ;
             this_ref_t update( natus::graphics::array_object_res_t, natus::graphics::result_res_t = natus::graphics::result_res_t() ) noexcept ;
             this_ref_t update( natus::graphics::image_object_res_t, natus::graphics::result_res_t = natus::graphics::result_res_t() ) noexcept ;
 
             this_ref_t use( natus::graphics::framebuffer_object_res_t, natus::graphics::result_res_t = natus::graphics::result_res_t() ) noexcept ;
+            this_ref_t use( natus::graphics::feedback_object_res_t, natus::graphics::result_res_t = natus::graphics::result_res_t() ) noexcept ;
             this_ref_t unuse( natus::graphics::backend::unuse_type const, natus::graphics::result_res_t = natus::graphics::result_res_t() ) noexcept ;
 
             this_ref_t push( natus::graphics::state_object_res_t, size_t const = 0, bool_t const = true, natus::graphics::result_res_t = natus::graphics::result_res_t() ) noexcept ;
@@ -178,6 +181,12 @@ namespace natus
                 return *this ;
             }
 
+            this_ref_t configure( natus::graphics::feedback_object_res_t obj, natus::graphics::result_res_t res = natus::graphics::result_res_t() ) noexcept 
+            {
+                _async->configure( obj, res ) ;
+                return *this ;
+            }
+
             this_ref_t release( natus::graphics::geometry_object_res_t obj, natus::graphics::result_res_t res = natus::graphics::result_res_t() ) noexcept 
             {
                 _async->release( obj, res ) ;
@@ -220,6 +229,12 @@ namespace natus
                 return *this ;
             }
 
+            this_ref_t release( natus::graphics::feedback_object_res_t obj, natus::graphics::result_res_t res = natus::graphics::result_res_t() ) noexcept 
+            {
+                _async->release( obj, res ) ;
+                return *this ;
+            }
+
             this_ref_t update( natus::graphics::geometry_object_res_t gs,
                 natus::graphics::result_res_t res = natus::graphics::result_res_t() ) noexcept
             {
@@ -240,6 +255,12 @@ namespace natus
             }
 
             this_ref_t use( natus::graphics::framebuffer_object_res_t obj, natus::graphics::result_res_t res = natus::graphics::result_res_t() ) noexcept
+            {
+                _async->use( obj, res ) ;
+                return *this ;
+            }
+
+            this_ref_t use( natus::graphics::feedback_object_res_t obj, natus::graphics::result_res_t res = natus::graphics::result_res_t() ) noexcept
             {
                 _async->use( obj, res ) ;
                 return *this ;

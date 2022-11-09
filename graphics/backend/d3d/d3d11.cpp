@@ -3101,6 +3101,11 @@ natus::graphics::result d3d11_backend::configure( natus::graphics::array_object_
     return natus::graphics::result::ok ;
 }
 
+natus::graphics::result d3d11_backend::configure( natus::graphics::feedback_object_res_t ) noexcept 
+{
+    return natus::graphics::result::ok ;
+}
+
 natus::graphics::result d3d11_backend::release( natus::graphics::geometry_object_res_t obj ) noexcept 
 {
     if( !obj.is_valid() || obj->name().empty() )
@@ -3207,6 +3212,11 @@ natus::graphics::result d3d11_backend::release( natus::graphics::array_object_re
     return natus::graphics::result::ok ;
 }
 
+natus::graphics::result d3d11_backend::release( natus::graphics::feedback_object_res_t ) noexcept 
+{
+    return natus::graphics::result::ok ;
+}
+
 //***
 natus::graphics::result d3d11_backend::connect( natus::graphics::render_object_res_t config, natus::graphics::variable_set_res_t vs ) noexcept
 {
@@ -3307,6 +3317,11 @@ natus::graphics::result d3d11_backend::use( natus::graphics::framebuffer_object_
     if( !res ) return natus::graphics::result::failed ;
 
     return natus::graphics::result::ok ;
+}
+
+natus::graphics::result d3d11_backend::use( natus::graphics::feedback_object_res_t ) noexcept 
+{
+    return natus::graphics::result::failed ;
 }
 
 //****
