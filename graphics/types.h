@@ -283,4 +283,14 @@ namespace natus
             depth24_stencil8
         };
     }
+
+    namespace graphics
+    {
+        enum class streamout_mode
+        {
+            unknown,
+            interleaved,
+            separate
+        };
+    }
 }

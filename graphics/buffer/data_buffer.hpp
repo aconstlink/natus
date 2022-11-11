@@ -102,8 +102,7 @@ namespace natus
             }
 
             void_cptr_t data( void_t ) const noexcept { return _data ; }
-
-            // only one element supported for the moment
+            
             this_ref_t add_layout_element( natus::graphics::type const t, 
                 natus::graphics::type_struct const ts ) noexcept
             {

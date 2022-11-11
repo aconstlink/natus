@@ -21,6 +21,18 @@ namespace natus
                 return 0 ;
             }
 
+            static GLenum convert_to_transform_feedback_output( natus::graphics::primitive_type const pt ) noexcept
+            {
+                switch( pt )
+                {
+                case natus::graphics::primitive_type::lines: return GL_LINES ;
+                case natus::graphics::primitive_type::triangles: return GL_TRIANGLES ;
+                case natus::graphics::primitive_type::points: return GL_POINTS ;
+                default:break ;
+                }
+                return 0 ;
+            }
+
             static ::std::pair< natus::graphics::type, natus::graphics::type_struct >  
                 to_type_type_struct( GLenum const e ) noexcept
             {
@@ -447,6 +459,20 @@ namespace natus
                 default: break ;
                 }
 
+                return GL_NONE ;
+            }
+        }
+
+        namespace gl3
+        {
+            static GLenum convert( natus::graphics::streamout_mode const sm ) noexcept
+            {
+                switch( sm ) 
+                {
+                case natus::graphics::streamout_mode::interleaved: return GL_INTERLEAVED_ATTRIBS ;
+                case natus::graphics::streamout_mode::separate: return GL_SEPARATE_ATTRIBS ;
+                default: break ;
+                }
                 return GL_NONE ;
             }
         }

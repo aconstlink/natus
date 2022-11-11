@@ -22,6 +22,25 @@ struct gl3_backend::pimpl
 {
     natus_this_typedefs( pimpl ) ;
 
+    //********************************************************************************
+    // transform feedback buffers
+    struct tf_data
+    {
+        bool_t valid = false ;
+        natus::ntd::string_t name ;
+
+        static const size_t max_buffers = 4 ;
+
+        struct buffer
+        {
+            GLuint id = GLuint(-1) ;
+            GLuint sib = 0 ;
+        };
+        buffer buffers[max_buffers] ;
+    };
+    natus_typedef( tf_data ) ;
+
+    //********************************************************************************
     struct geo_data
     {
         bool_t valid = false ;
@@ -75,6 +94,7 @@ struct gl3_backend::pimpl
     };
     natus_typedef( geo_data ) ;
 
+    //********************************************************************************
     struct shader_data
     {
         bool_t valid = false ;
@@ -95,15 +115,38 @@ struct gl3_backend::pimpl
         };
         natus::ntd::vector< vertex_input_binding > vertex_inputs ;
 
+        struct vertex_output_binding
+        {
+            natus::graphics::vertex_attribute va ;
+            natus::ntd::string_t name ;
+        };
+        natus::ntd::vector< vertex_output_binding > vertex_outputs ;
+        char const ** output_names = nullptr ;
+
         bool_t find_vertex_input_binding_by_name( natus::ntd::string_cref_t name_,
             natus::graphics::vertex_attribute& va ) const noexcept
         {
-            auto iter = ::std::find_if( vertex_inputs.begin(), vertex_inputs.end(),
+            auto iter = std::find_if( vertex_inputs.begin(), vertex_inputs.end(),
                 [&] ( vertex_input_binding const& b )
             {
                 return b.name == name_ ;
             } ) ;
             if( iter == vertex_inputs.end() ) return false ;
+
+            va = iter->va ;
+
+            return true ;
+        }
+
+        bool_t find_vertex_output_binding_by_name( natus::ntd::string_cref_t name_,
+            natus::graphics::vertex_attribute& va ) const noexcept
+        {
+            auto iter = std::find_if( vertex_outputs.begin(), vertex_outputs.end(),
+                [&] ( vertex_output_binding const& b )
+            {
+                return b.name == name_ ;
+            } ) ;
+            if( iter == vertex_outputs.end() ) return false ;
 
             va = iter->va ;
 
@@ -147,6 +190,7 @@ struct gl3_backend::pimpl
     } ;
     natus_typedef( shader_data ) ;
 
+    //********************************************************************************
     struct state_data
     {
         bool_t valid = false ;
@@ -155,6 +199,7 @@ struct gl3_backend::pimpl
     } ;
     natus_typedef( state_data ) ;
 
+    //********************************************************************************
     struct render_data
     {
         bool_t valid = false ;
@@ -217,6 +262,7 @@ struct gl3_backend::pimpl
     };
     natus_typedef( render_data ) ;
 
+    //********************************************************************************
     struct image_data
     {
         natus::ntd::string_t name ;
@@ -233,6 +279,7 @@ struct gl3_backend::pimpl
     };
     natus_typedef( image_data ) ;
 
+    //********************************************************************************
     struct array_data
     {
         bool_t valid = false ;
@@ -245,6 +292,7 @@ struct gl3_backend::pimpl
     } ;
     natus_typedef( array_data ) ;
 
+    //********************************************************************************
     struct framebuffer_data
     {
         bool_t valid = false ;
@@ -286,6 +334,9 @@ struct gl3_backend::pimpl
     typedef natus::ntd::vector< this_t::array_data_t > array_datas_t ;
     array_datas_t _arrays ;
 
+    typedef natus::ntd::vector< this_t::tf_data_t > tf_datas_t ;
+    tf_datas_t _feedbacks ;
+
     GLsizei vp_width = 0 ;
     GLsizei vp_height = 0 ;
 
@@ -297,6 +348,9 @@ struct gl3_backend::pimpl
 
     natus::graphics::gl_context_ptr_t _ctx ;
 
+    size_t _tf_active_id = size_t( -1 ) ;
+
+    //****************************************************************************************
     pimpl( natus::graphics::gl_context_ptr_t ctx ) 
     {
         _ctx = ctx ;
@@ -321,6 +375,8 @@ struct gl3_backend::pimpl
             /*size_t const oid =*/ this_t::construct_state( size_t( -1 ), obj ) ;
         }
     }
+
+    //****************************************************************************************
     ~pimpl( void_t ) noexcept
     {
         for( size_t i = 0; i<_framebuffers.size(); ++i )
@@ -353,14 +409,21 @@ struct gl3_backend::pimpl
             this_t::release_array_data( i ) ;
         }
 
+        for( size_t i = 0; i<_feedbacks.size(); ++i )
+        {
+            this_t::release_tf_data( i ) ;
+        }
+
         _geometries.clear() ;
         _shaders.clear() ;
         _renders.clear() ;
         _framebuffers.clear() ;
         _arrays.clear() ;
         _images.clear() ;
+        _feedbacks.clear() ;
     }
 
+    //****************************************************************************************
     template< typename T >
     static size_t determine_oid( natus::ntd::string_cref_t name, natus::ntd::vector< T >& v ) noexcept
     {
@@ -402,6 +465,7 @@ struct gl3_backend::pimpl
         return oid ;
     }
 
+    //****************************************************************************************
     size_t construct_state( size_t oid, natus::graphics::state_object_ref_t obj ) noexcept
     {
         oid = determine_oid( obj.name(), _states ) ;
@@ -421,6 +485,7 @@ struct gl3_backend::pimpl
         return oid ;
     }
 
+    //****************************************************************************************
     void_t handle_render_state( natus::graphics::render_state_sets_cref_t new_states, bool_t const popped = false )
     {
         // depth test
@@ -554,6 +619,7 @@ struct gl3_backend::pimpl
         }
     }
 
+    //****************************************************************************************
     // if oid == -1, the state is popped.
     void_t handle_render_state( size_t const oid, size_t const rs_id ) noexcept
     {
@@ -576,6 +642,7 @@ struct gl3_backend::pimpl
         }
     }
 
+    //****************************************************************************************
     size_t construct_framebuffer( size_t oid, natus::graphics::framebuffer_object_ref_t obj ) noexcept
     {
         oid = determine_oid( obj.name(), _framebuffers ) ;
@@ -778,6 +845,7 @@ struct gl3_backend::pimpl
         return oid ;
     }
 
+    //****************************************************************************************
     bool_t release_framebuffer( size_t const oid ) noexcept
     {
         auto & fbd = _framebuffers[ oid ] ;
@@ -847,7 +915,8 @@ struct gl3_backend::pimpl
         return true ;
     }
 
-    bool_t activate_framebuffer( size_t const oid )
+    //****************************************************************************************
+    bool_t activate_framebuffer( size_t const oid ) noexcept
     {
         framebuffer_data_ref_t fb = _framebuffers[ oid ] ;
 
@@ -874,17 +943,86 @@ struct gl3_backend::pimpl
         return true ;
     }
 
-    void_t deactivate_framebuffer( void_t )
+    //****************************************************************************************
+    bool_t deactivate_framebuffer( void_t ) noexcept
     {
         // unbind
         {
             glBindFramebuffer( GL_FRAMEBUFFER, 0 ) ;
-            natus::ogl::error::check_and_log( natus_log_fn( "glGenFramebuffers" ) ) ;
+            if( !natus::ogl::error::check_and_log( natus_log_fn( "glGenFramebuffers" ) ) ) return false ;
+        }
+
+        return true ;
+    }
+
+    //****************************************************************************************
+    bool_t use_transform_feedback( size_t const oid ) noexcept
+    {
+        if( oid == _tf_active_id ) return true ;
+        _tf_active_id = oid ;
+
+        return true ;
+    }
+
+    //****************************************************************************************
+    void_t unuse_transform_feedback( void_t ) noexcept
+    {
+        _tf_active_id = size_t(-1) ;
+    }
+
+    //****************************************************************************************
+    void_t activate_transform_feedback( this_t::geo_data & gdata ) noexcept
+    {
+        if( _tf_active_id == size_t(-1) ) return ;
+
+        auto & data = _feedbacks[_tf_active_id] ;
+        
+        // bind buffers
+        {
+            GLuint i = 0 ;
+            while( data.buffers[i].id != GLuint(-1) )
+            {
+                glBindBufferRange( GL_TRANSFORM_FEEDBACK_BUFFER, i, data.buffers[i].id, 0, data.buffers[i].sib ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glBindBufferRange" ) ) ;
+                ++i ;
+            }
+        }
+
+        // disable raster
+        {
+            glEnable( GL_RASTERIZER_DISCARD ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glEnable( GL_RASTERIZER_DISCARD ) " ) ) ;
+        }
+
+        // begin 
+        {
+            // lets just use the primitive type of the used geometry
+            GLenum const mode = gdata.pt ;
+            glBeginTransformFeedback( mode ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glBeginTransformFeedback" ) ) ;
         }
     }
 
-    size_t construct_shader_config( size_t oid,
-        natus::graphics::shader_object_ref_t obj ) noexcept
+    //****************************************************************************************
+    void_t deactivate_transform_feedback( void_t ) noexcept
+    {
+        if( _tf_active_id == size_t(-1) ) return ;
+
+        {
+            glEndTransformFeedback() ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glEndTransformFeedback" ) ) ;
+        }
+
+        // enable raster
+        {
+            glDisable( GL_RASTERIZER_DISCARD ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glDisable( GL_RASTERIZER_DISCARD ) " ) ) ;
+        }
+        _tf_active_id = size_t(-1) ;
+    }
+
+    //****************************************************************************************
+    size_t construct_shader_config( size_t oid, natus::graphics::shader_object_ref_t obj ) noexcept
     {
         oid = determine_oid( obj.name(), _shaders ) ;
 
@@ -1015,6 +1153,7 @@ struct gl3_backend::pimpl
         return oid ;
     }
 
+    //****************************************************************************************
     bool_t release_shader_data( size_t const oid ) noexcept
     {
         auto & shd = _shaders[ oid ] ;
@@ -1054,6 +1193,11 @@ struct gl3_backend::pimpl
             natus::ogl::error::check_and_log( natus_log_fn( "glDeleteProgram" ) ) ;
         }
 
+        if( shd.output_names != nullptr )
+        {
+            natus::memory::global_t::dealloc_raw( shd.output_names ) ;
+        }
+
         shd.valid = false ;
         shd.pg_id = GLuint( -1 ) ;
         shd.gs_id = GLuint( -1 ) ;
@@ -1068,7 +1212,7 @@ struct gl3_backend::pimpl
         return true ;
     }
 
-    //***********************
+    //****************************************************************************************
     void_t detach_shaders( GLuint const program_id )
     {
         GLsizei count = 0 ;
@@ -1084,7 +1228,7 @@ struct gl3_backend::pimpl
         }
     }
 
-    //***********************
+    //****************************************************************************************
     void_t delete_all_variables( this_t::shader_data & config )
     {
         config.vertex_inputs.clear() ;
@@ -1097,7 +1241,7 @@ struct gl3_backend::pimpl
         config.uniforms.clear() ;
     }
 
-    //***********************
+    //****************************************************************************************
     bool_t compile_shader( GLuint const id, natus::ntd::string_cref_t code )
     {
         if( code.empty() ) return true ;
@@ -1148,7 +1292,7 @@ struct gl3_backend::pimpl
         return true ;
     }
 
-    //***********************
+    //****************************************************************************************
     bool_t link( GLuint const program_id )
     {
         glLinkProgram( program_id ) ;
@@ -1189,7 +1333,7 @@ struct gl3_backend::pimpl
         return false ;
     }
 
-    //***********************
+    //****************************************************************************************
     void_t post_link_attributes( this_t::shader_data & config )
     {
         GLuint const program_id = config.pg_id ;
@@ -1244,7 +1388,7 @@ struct gl3_backend::pimpl
         }
     }
 
-    //***********************
+    //****************************************************************************************
     bool_t bind_attributes( this_t::shader_data & sconfig, this_t::geo_data & gconfig )
     {
         // bind vertex array object
@@ -1324,7 +1468,7 @@ struct gl3_backend::pimpl
         return true ;
     }
 
-    //***********************
+    //****************************************************************************************
     void_t post_link_uniforms( this_t::shader_data & config )
     {
         GLuint const program_id = config.pg_id ;
@@ -1374,7 +1518,7 @@ struct gl3_backend::pimpl
         }
     }
 
-    //***********************
+    //****************************************************************************************
     size_t construct_image_config( size_t /*oid*/, natus::ntd::string_cref_t name, 
         natus::graphics::image_object_ref_t config )
     {
@@ -1434,6 +1578,7 @@ struct gl3_backend::pimpl
         return i ;
     }
 
+    //****************************************************************************************
     bool_t release_image_data( size_t const oid ) noexcept
     {
         auto & id = _images[ oid ] ;
@@ -1454,17 +1599,40 @@ struct gl3_backend::pimpl
         return true ;
     }
 
+    //****************************************************************************************
     bool_t update( size_t const id, natus::graphics::shader_object_cref_t sc )
     {
         auto& sconfig = _shaders[ id ] ;
 
         {
-            sc.for_each_vertex_input_binding( [&]( 
+            sc.for_each_vertex_input_binding( [&]( size_t const,
                 natus::graphics::vertex_attribute const va, natus::ntd::string_cref_t name )
             {
-                sconfig.vertex_inputs.emplace_back( this_t::shader_data::vertex_input_binding 
-                    { va, name } ) ;
+                sconfig.vertex_inputs.emplace_back( 
+                    this_t::shader_data::vertex_input_binding { va, name } ) ;
             } ) ;
+        }
+
+        // !!! must be done pre-link !!!
+        // set transform feedback varyings
+        if( sc.get_num_output_bindings() != 0 )
+        {
+            sconfig.output_names = (char const **)natus::memory::global_t::alloc_raw<char *>( sc.get_num_output_bindings() ) ;
+            sc.for_each_vertex_output_binding( [&]( size_t const i,
+                natus::graphics::vertex_attribute const va, natus::ntd::string_cref_t name )
+            {
+                sconfig.vertex_outputs.emplace_back( 
+                    this_t::shader_data::vertex_output_binding { va, name } ) ;
+                sconfig.output_names[i] = name.c_str() ;
+            } ) ;
+
+            // the mode interleaved or separate depends on the number of buffers in the streamout object. So if a streamout
+            // object is used, the engine needs to relink this shader based on the number of buffers attached to the streamout
+            // object.
+            GLenum const mode = natus::graphics::gl3::convert( sc.get_streamout_mode() ) ;
+            glTransformFeedbackVaryings( sconfig.pg_id, GLsizei( sc.get_num_output_bindings() ), sconfig.output_names, mode ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glTransformFeedbackVaryings" ) ) ;
+            natus::log::global_t::status( mode == GL_NONE, "Did you miss to set the streamout mode in the shader object?" ) ;
         }
 
         // compile
@@ -1522,7 +1690,7 @@ struct gl3_backend::pimpl
         return true ;
     }
 
-    //***********************
+    //****************************************************************************************
     size_t construct_render_data( size_t oid, natus::graphics::render_object_ref_t obj )
     {
         oid = determine_oid( obj.name(), _renders ) ;
@@ -1541,6 +1709,7 @@ struct gl3_backend::pimpl
         return oid ;
     }
 
+    //****************************************************************************************
     bool_t release_render_data( size_t const oid ) noexcept
     {
         auto & rd = _renders[ oid ] ;
@@ -1567,6 +1736,7 @@ struct gl3_backend::pimpl
         return true ;
     }
 
+    //****************************************************************************************
     bool_t update( size_t const id, natus::graphics::render_object_ref_t rc )
     {
         auto& config = _renders[ id ] ;
@@ -1635,6 +1805,7 @@ struct gl3_backend::pimpl
         return true ;
     }
 
+    //****************************************************************************************
     void_t render_object_variable_memory( this_t::render_data & rd, this_t::shader_data & shader )
     {
         auto& config = rd ;
@@ -1711,6 +1882,7 @@ struct gl3_backend::pimpl
         }
     }
 
+    //****************************************************************************************
     size_t construct_geo( size_t oid, natus::graphics::geometry_object_ref_t obj ) 
     {
         oid = determine_oid( obj.name(), _geometries ) ;
@@ -1772,6 +1944,7 @@ struct gl3_backend::pimpl
         return oid ;
     }
 
+    //****************************************************************************************
     bool_t release_geometry( size_t const oid ) noexcept
     {
         auto & geo = _geometries[ oid ] ;
@@ -1817,6 +1990,7 @@ struct gl3_backend::pimpl
         return true ;
     }
 
+    //****************************************************************************************
     bool_t update( size_t const id, natus::graphics::geometry_object_res_t geo, bool_t const is_config = false )
     {
         auto& config = _geometries[ id ] ;
@@ -1906,6 +2080,7 @@ struct gl3_backend::pimpl
         return true ;
     }
 
+    //****************************************************************************************
     // @param is_config used to determine recreating the texture on the gpu side.
     //          This param should be true if an image is configured or re-configured.
     bool_t update( size_t const id, natus::graphics::image_object_ref_t confin, bool_t const is_config = false )
@@ -1984,6 +2159,7 @@ struct gl3_backend::pimpl
         return false ;
     }
 
+    //****************************************************************************************
     bool_t connect( size_t const id, natus::graphics::variable_set_res_t vs )
     {
         auto& config = _renders[ id ] ;
@@ -1995,6 +2171,7 @@ struct gl3_backend::pimpl
         return true ;
     }
 
+    //****************************************************************************************
     bool_t connect( this_t::render_data & config, natus::graphics::variable_set_res_t vs )
     {
         auto item_data = ::std::make_pair( vs,
@@ -2106,7 +2283,8 @@ struct gl3_backend::pimpl
         return true ;
     }
 
-    size_t construct_array_data( size_t oid, natus::graphics::array_object_ref_t obj ) 
+    //****************************************************************************************
+    size_t construct_array_data( size_t oid, natus::graphics::array_object_ref_t obj ) noexcept
     {
         oid = determine_oid( obj.name(), _arrays ) ;
 
@@ -2138,6 +2316,7 @@ struct gl3_backend::pimpl
         return oid ;
     }
 
+    //****************************************************************************************
     bool_t release_array_data( size_t const oid ) noexcept
     {
         auto & data = _arrays[ oid ] ;
@@ -2163,7 +2342,62 @@ struct gl3_backend::pimpl
         return true ;
     }
 
-    size_t update( size_t oid, natus::graphics::array_object_ref_t obj, bool_t const is_config = false ) 
+    //****************************************************************************************
+    size_t construct_tf_data( size_t oid, natus::graphics::streamout_object_ref_t obj ) noexcept
+    {
+        oid = determine_oid( obj.name(), _feedbacks ) ;
+
+        bool_t error = false ;
+        auto & data = _feedbacks[ oid ] ;
+
+        size_t const req_buffers = std::min( obj.num_buffers(), this_t::tf_data::max_buffers ) ;
+
+        for( size_t i=0; i<req_buffers; ++i )
+        {
+            if( data.buffers[i].id != GLuint(-1) ) continue ;
+            
+            GLuint id = GLuint( -1 ) ;
+            glGenBuffers( 1, &id ) ;
+            error = natus::ogl::error::check_and_log( 
+                natus_log_fn( "[construct_tf_data] : glGenBuffers" ) ) ;
+
+            data.buffers[i].id = id ;
+            data.buffers[i].sib = 0 ;
+        }
+
+        for( size_t i=req_buffers; i<this_t::tf_data::max_buffers; ++i )
+        {
+            if( data.buffers[i].id == GLuint(-1) ) break ;
+            glDeleteBuffers( 1, &data.buffers[i].id ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glDeleteBuffers" ) ) ;
+        }
+
+        return oid ;
+    }
+
+    //****************************************************************************************
+    bool_t release_tf_data( size_t const oid ) noexcept
+    {
+        auto & d = _feedbacks[ oid ] ;
+
+        for( GLuint i=0; i<tf_data_t::max_buffers; ++i )
+        {
+            if( d.buffers[i].id == GLuint( -1 ) ) break ;
+
+            glDeleteBuffers( 1, &d.buffers[i].id ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glDeleteBuffers" ) ) ;
+            d.buffers[i].id = GLuint( -1 ) ;
+            d.buffers[i].sib = 0 ;
+        }
+
+        d.valid = false ;
+        d.name = "released" ;
+
+        return true ;
+    }
+
+    //****************************************************************************************
+    bool_t update( size_t oid, natus::graphics::array_object_ref_t obj, bool_t const is_config = false ) 
     {
         auto & data = _arrays[ oid ] ;
 
@@ -2210,6 +2444,46 @@ struct gl3_backend::pimpl
         return true ;
     }
 
+    //****************************************************************************************
+    bool_t update( size_t oid, natus::graphics::streamout_object_ref_t obj, bool_t const is_config = false ) 
+    {
+        auto & data = _feedbacks[ oid ] ;
+
+        size_t const ne = obj.size() ;
+
+        size_t i=0; 
+        while( data.buffers[i].id != GLuint(-1) )
+        {
+            // bind buffer
+            {
+                glBindBuffer( GL_TRANSFORM_FEEDBACK_BUFFER, data.buffers[i].id ) ;
+                if( natus::ogl::error::check_and_log( natus_log_fn("glBindBuffer") ) )
+                    return false ;
+            }
+
+            // allocate data
+            GLuint const sib = GLuint( obj.buffer( i ).get_layout_sib() * obj.size() ) ;
+            if( is_config || sib > data.buffers[i].sib )
+            {
+                glBufferData( GL_TRANSFORM_FEEDBACK_BUFFER, sib, nullptr, GL_DYNAMIC_DRAW ) ;
+                if( natus::ogl::error::check_and_log( natus_log_fn( "glBufferData" ) ) )
+                    return false ;
+                data.buffers[i].sib = sib ;
+            }
+            ++i ;
+        }
+
+        // unbind
+        {
+            glBindBuffer( GL_TRANSFORM_FEEDBACK_BUFFER, 0 ) ;
+            if( natus::ogl::error::check_and_log( natus_log_fn("glBindBuffer") ) )
+                return false ;
+        }
+
+        return false ;
+    }
+
+    //****************************************************************************************
     bool_t update_variables( size_t const rd_id, size_t const varset_id )
     {
         this_t::render_data & config = _renders[ rd_id ] ;
@@ -2272,6 +2546,7 @@ struct gl3_backend::pimpl
         return true ;
     }
 
+    //****************************************************************************************
     bool_t render( size_t const id, size_t const varset_id = size_t(0), GLsizei const start_element = GLsizei(0), 
         GLsizei const num_elements = GLsizei(-1) )
     {
@@ -2364,6 +2639,10 @@ struct gl3_backend::pimpl
             }
         }
 
+        {
+            this_t::activate_transform_feedback( gconfig ) ;
+        }
+
         // render section
         {
             GLenum const pt = gconfig.pt ;
@@ -2395,6 +2674,10 @@ struct gl3_backend::pimpl
         }
 
         {
+            this_t::deactivate_transform_feedback() ;
+        }
+
+        {
             glBindVertexArray( 0 ) ;
             if( natus::ogl::error::check_and_log( natus_log_fn( "glBindVertexArray" ) ) )
                 return false ;
@@ -2403,6 +2686,7 @@ struct gl3_backend::pimpl
         return true ;
     }
 
+    //****************************************************************************************
     void_t begin_frame( void_t ) 
     {
         // set default render states
@@ -2435,6 +2719,7 @@ struct gl3_backend::pimpl
         }
     }
 
+    //****************************************************************************************
     void_t end_frame( void_t ) 
     {
         glFlush() ;
@@ -2638,8 +2923,22 @@ natus::graphics::result gl3_backend::configure( natus::graphics::array_object_re
     return natus::graphics::result::ok ;
 }
 
-natus::graphics::result gl3_backend::configure( natus::graphics::feedback_object_res_t ) noexcept 
+natus::graphics::result gl3_backend::configure( natus::graphics::streamout_object_res_t obj ) noexcept 
 {
+    natus::graphics::id_res_t id = obj->get_id() ;
+
+    {
+        id->set_oid( this_t::get_bid(), _pimpl->construct_tf_data( 
+            id->get_oid( this_t::get_bid() ), *obj ) ) ;
+    }
+
+    size_t const oid = id->get_oid( this_t::get_bid() ) ;
+
+    {
+        auto const res = _pimpl->update( oid, *obj, true ) ;
+        if( natus::core::is_not( res ) ) return natus::graphics::result::failed ;
+    }
+
     return natus::graphics::result::ok ;
 }
 
@@ -2762,12 +3061,12 @@ natus::graphics::result gl3_backend::release( natus::graphics::array_object_res_
     return natus::graphics::result::ok ;
 }
 
-natus::graphics::result gl3_backend::release( natus::graphics::feedback_object_res_t ) noexcept 
+natus::graphics::result gl3_backend::release( natus::graphics::streamout_object_res_t ) noexcept 
 {
     return natus::graphics::result::ok ;
 }
 
-//***
+//********************************************************************************************************************
 natus::graphics::result gl3_backend::connect( natus::graphics::render_object_res_t config, natus::graphics::variable_set_res_t vs ) noexcept
 {
     natus::graphics::id_res_t id = config->get_id() ;
@@ -2787,7 +3086,7 @@ natus::graphics::result gl3_backend::connect( natus::graphics::render_object_res
     return natus::graphics::result::ok ;
 }
 
-//****
+//********************************************************************************************************************
 natus::graphics::result gl3_backend::update( natus::graphics::geometry_object_res_t config ) noexcept 
 {
     natus::graphics::id_res_t id = config->get_id() ;
@@ -2807,7 +3106,21 @@ natus::graphics::result gl3_backend::update( natus::graphics::geometry_object_re
     return natus::graphics::result::ok ;
 }
 
-//****
+//********************************************************************************************************************
+natus::graphics::result gl3_backend::update( natus::graphics::streamout_object_res_t obj ) noexcept
+{
+    natus::graphics::id_res_t id = obj->get_id() ;
+    size_t const oid = id->get_oid( this_t::get_bid() ) ;
+
+    {
+        auto const res = _pimpl->update( oid, *obj, false ) ;
+        if( natus::core::is_not( res ) ) return natus::graphics::result::failed ;
+    }
+
+    return natus::graphics::result::ok ;
+}
+
+//********************************************************************************************************************
 natus::graphics::result gl3_backend::update( natus::graphics::array_object_res_t obj ) noexcept 
 {
     natus::graphics::id_res_t id = obj->get_id() ;
@@ -2821,12 +3134,13 @@ natus::graphics::result gl3_backend::update( natus::graphics::array_object_res_t
     return natus::graphics::result::ok ;
 }
 
-//****
+//********************************************************************************************************************
 natus::graphics::result gl3_backend::update( natus::graphics::image_object_res_t ) noexcept 
 {
     return natus::graphics::result::ok ;
 }
 
+//********************************************************************************************************************
 natus::graphics::result gl3_backend::update( natus::graphics::render_object_res_t obj, size_t const varset ) noexcept 
 {
     natus::graphics::id_res_t id = obj->get_id() ;
@@ -2840,7 +3154,7 @@ natus::graphics::result gl3_backend::update( natus::graphics::render_object_res_
     return natus::graphics::result::ok ;
 }
 
-//****
+//********************************************************************************************************************
 natus::graphics::result gl3_backend::use( natus::graphics::framebuffer_object_res_t obj ) noexcept
 {
     if( !obj.is_valid() )
@@ -2862,19 +3176,41 @@ natus::graphics::result gl3_backend::use( natus::graphics::framebuffer_object_re
     return natus::graphics::result::ok ;
 }
 
-natus::graphics::result gl3_backend::use( natus::graphics::feedback_object_res_t ) noexcept 
+//********************************************************************************************************************
+natus::graphics::result gl3_backend::use( natus::graphics::streamout_object_res_t obj ) noexcept 
 {
-    return natus::graphics::result::failed ;
-}
+    if( !obj.is_valid() )
+    {
+        return this_t::unuse( natus::graphics::backend::unuse_type::streamout ) ;
+    }
 
-//****
-natus::graphics::result gl3_backend::unuse( natus::graphics::backend::unuse_type const ) noexcept 
-{
-    _pimpl->deactivate_framebuffer() ;
+    natus::graphics::id_res_t id = obj->get_id() ;
+
+    if( id->is_not_valid( this_t::get_bid() ) )
+    {
+        return this_t::unuse( natus::graphics::backend::unuse_type::streamout ) ;
+    }
+
+    size_t const oid = id->get_oid( this_t::get_bid() ) ;
+    auto const res = _pimpl->use_transform_feedback( oid ) ;
+    if( !res ) return natus::graphics::result::failed ;
+
     return natus::graphics::result::ok ;
 }
 
-//****
+//********************************************************************************************************************
+natus::graphics::result gl3_backend::unuse( natus::graphics::backend::unuse_type const t ) noexcept 
+{
+    switch( t ) 
+    {
+    case natus::graphics::backend::unuse_type::framebuffer: _pimpl->deactivate_framebuffer() ; break ;
+    case natus::graphics::backend::unuse_type::streamout: _pimpl->unuse_transform_feedback() ; break ;
+    }
+    
+    return natus::graphics::result::ok ;
+}
+
+//********************************************************************************************************************
 natus::graphics::result gl3_backend::push( natus::graphics::state_object_res_t obj, size_t const sid, bool_t const ) noexcept 
 {
     if( !obj.is_valid() )
@@ -2895,13 +3231,14 @@ natus::graphics::result gl3_backend::push( natus::graphics::state_object_res_t o
     return natus::graphics::result::ok ;
 }
 
+//********************************************************************************************************************
 natus::graphics::result gl3_backend::pop( natus::graphics::backend::pop_type const ) noexcept 
 {
     _pimpl->handle_render_state( size_t( -1 ), size_t( -1 ) ) ;
     return natus::graphics::result::ok ;
 }
 
-//****
+//********************************************************************************************************************
 natus::graphics::result gl3_backend::render( natus::graphics::render_object_res_t config, natus::graphics::backend::render_detail_cref_t detail ) noexcept 
 { 
     natus::graphics::id_res_t id = config->get_id() ;
@@ -2922,12 +3259,13 @@ natus::graphics::result gl3_backend::render( natus::graphics::render_object_res_
     return natus::graphics::result::ok ;
 }
 
-//****
+//********************************************************************************************************************
 void_t gl3_backend::render_begin( void_t ) noexcept 
 {
     _pimpl->begin_frame() ;
 }
 
+//********************************************************************************************************************
 void_t gl3_backend::render_end( void_t ) noexcept 
 {
     _pimpl->end_frame() ;

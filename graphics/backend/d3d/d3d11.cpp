@@ -1843,7 +1843,7 @@ public: // functions
         // is done if the render configuration is known.
         {
             shd.vertex_inputs.clear() ;
-            obj.for_each_vertex_input_binding( [&] (
+            obj.for_each_vertex_input_binding( [&] ( size_t const,
                 natus::graphics::vertex_attribute const va, natus::ntd::string_cref_t name )
             {
                 shd.vertex_inputs.emplace_back( this_t::shader_data::vertex_input_binding
@@ -2488,6 +2488,11 @@ public: // functions
         return true ;
     }
 
+    bool_t update( size_t const id, natus::graphics::streamout_object_ref_t obj, bool_t const is_config )
+    {
+        return false ;
+    }
+
     bool_t update( size_t const id, natus::graphics::render_object_ref_t obj, size_t const varset_id )
     {
         this_t::render_data_ref_t rnd = renders[ id ] ;
@@ -3101,7 +3106,7 @@ natus::graphics::result d3d11_backend::configure( natus::graphics::array_object_
     return natus::graphics::result::ok ;
 }
 
-natus::graphics::result d3d11_backend::configure( natus::graphics::feedback_object_res_t ) noexcept 
+natus::graphics::result d3d11_backend::configure( natus::graphics::streamout_object_res_t ) noexcept 
 {
     return natus::graphics::result::ok ;
 }
@@ -3212,7 +3217,7 @@ natus::graphics::result d3d11_backend::release( natus::graphics::array_object_re
     return natus::graphics::result::ok ;
 }
 
-natus::graphics::result d3d11_backend::release( natus::graphics::feedback_object_res_t ) noexcept 
+natus::graphics::result d3d11_backend::release( natus::graphics::streamout_object_res_t ) noexcept 
 {
     return natus::graphics::result::ok ;
 }
@@ -3276,6 +3281,20 @@ natus::graphics::result d3d11_backend::update( natus::graphics::array_object_res
 }
 
 //****
+natus::graphics::result d3d11_backend::update( natus::graphics::streamout_object_res_t obj ) noexcept 
+{
+    natus::graphics::id_res_t id = obj->get_id() ;
+    size_t const oid = id->get_oid( this_t::get_bid() ) ;
+
+    {
+        auto const res = _pimpl->update( oid, *obj, false ) ;
+        if( natus::core::is_not( res ) ) return natus::graphics::result::failed ;
+    }
+
+    return natus::graphics::result::ok ;
+}
+
+//****
 natus::graphics::result d3d11_backend::update( natus::graphics::image_object_res_t ) noexcept 
 {
     return natus::graphics::result::ok ;
@@ -3319,7 +3338,7 @@ natus::graphics::result d3d11_backend::use( natus::graphics::framebuffer_object_
     return natus::graphics::result::ok ;
 }
 
-natus::graphics::result d3d11_backend::use( natus::graphics::feedback_object_res_t ) noexcept 
+natus::graphics::result d3d11_backend::use( natus::graphics::streamout_object_res_t ) noexcept 
 {
     return natus::graphics::result::failed ;
 }

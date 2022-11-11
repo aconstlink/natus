@@ -42,7 +42,7 @@ set( sources
     "object/framebuffer_object.h"
     "object/state_object.h"
     "object/array_object.h"
-    "object/feedback_object.h"
+    "object/streamout_object.h"
 
     "variable/variables.hpp"
     "variable/variable_set.hpp"

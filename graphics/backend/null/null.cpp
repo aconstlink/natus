@@ -58,7 +58,7 @@ natus::graphics::result null_backend::configure( natus::graphics::array_object_r
     return natus::graphics::result::ok ;
 }
 
-natus::graphics::result null_backend::configure( natus::graphics::feedback_object_res_t ) noexcept 
+natus::graphics::result null_backend::configure( natus::graphics::streamout_object_res_t ) noexcept 
 {
     return natus::graphics::result::ok ;
 }
@@ -98,7 +98,7 @@ natus::graphics::result null_backend::release( natus::graphics::array_object_res
     return natus::graphics::result::ok ;
 }
 
-natus::graphics::result null_backend::release( natus::graphics::feedback_object_res_t ) noexcept 
+natus::graphics::result null_backend::release( natus::graphics::streamout_object_res_t ) noexcept 
 {
     return natus::graphics::result::ok ;
 }
@@ -120,6 +120,11 @@ natus::graphics::result null_backend::update( natus::graphics::array_object_res_
     return natus::graphics::result::ok ;
 }
 
+natus::graphics::result null_backend::update( natus::graphics::streamout_object_res_t ) noexcept
+{
+    return natus::graphics::result::ok ;
+}
+
 natus::graphics::result null_backend::update( natus::graphics::image_object_res_t ) noexcept
 {
     return natus::graphics::result::ok ;
@@ -136,7 +141,7 @@ natus::graphics::result null_backend::use( natus::graphics::framebuffer_object_r
     return natus::graphics::result::ok ;
 }
 
-natus::graphics::result null_backend::use( natus::graphics::feedback_object_res_t ) noexcept 
+natus::graphics::result null_backend::use( natus::graphics::streamout_object_res_t ) noexcept 
 {
     return natus::graphics::result::ok ;
 }

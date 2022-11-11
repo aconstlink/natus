@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include "../types.h"
 #include "../object.hpp"
 
 #include "../shader/shader_set.hpp"
@@ -89,20 +90,29 @@ namespace natus
 
         public: 
 
-            typedef ::std::function < void_t ( 
+            typedef ::std::function < void_t ( size_t const i,
                 natus::graphics::vertex_attribute const va, natus::ntd::string_cref_t name ) > for_each_vab_funk_t ;
-            void_t for_each_vertex_input_binding( for_each_vab_funk_t funk ) const
+            
+            //**************************************************************************
+            void_t for_each_vertex_input_binding( for_each_vab_funk_t funk ) const noexcept
             {
-                for( auto const & vib : _vertex_inputs )
-                {
-                    funk( vib.va, vib.name ) ;
-                }
+                size_t i = 0 ;
+                for( auto const & vib : _vertex_inputs ) funk( i++, vib.va, vib.name ) ;
+                
             }
 
-            this_ref_t add_vertex_input_binding( natus::graphics::vertex_attribute const va,
-                natus::ntd::string_cref_t name )
+            //**************************************************************************
+            void_t for_each_vertex_output_binding( for_each_vab_funk_t funk ) const noexcept
             {
-                auto iter = ::std::find_if( _vertex_inputs.begin(), _vertex_inputs.end(),
+                size_t i = 0 ;
+                for( auto const & vb : _vertex_outputs ) funk( i++, vb.va, vb.name ) ;
+            }
+
+            //**************************************************************************
+            this_ref_t add_vertex_input_binding( natus::graphics::vertex_attribute const va,
+                natus::ntd::string_cref_t name ) noexcept
+            {
+                auto iter = std::find_if( _vertex_inputs.begin(), _vertex_inputs.end(),
                     [&] ( vertex_input_binding const& b )
                 {
                     return b.name == name ;
@@ -110,7 +120,7 @@ namespace natus
 
                 if( iter == _vertex_inputs.end() )
                 {
-                    iter = ::std::find_if( _vertex_inputs.begin(), _vertex_inputs.end(),
+                    iter = std::find_if( _vertex_inputs.begin(), _vertex_inputs.end(),
                         [&] ( vertex_input_binding const& b )
                     {
                         return b.va == va ;
@@ -126,10 +136,39 @@ namespace natus
                 return *this ;
             }
 
+            //**************************************************************************
+            this_ref_t add_vertex_output_binding( natus::graphics::vertex_attribute const va,
+                natus::ntd::string_cref_t name ) noexcept
+            {
+                auto iter = std::find_if( _vertex_outputs.begin(), _vertex_outputs.end(),
+                    [&] ( vertex_output_binding const& b )
+                {
+                    return b.name == name ;
+                } ) ;
+
+                if( iter == _vertex_outputs.end() )
+                {
+                    iter = std::find_if( _vertex_outputs.begin(), _vertex_outputs.end(),
+                        [&] ( vertex_output_binding const& b )
+                    {
+                        return b.va == va ;
+                    } ) ;
+                }
+
+                if( iter == _vertex_outputs.end() )
+                {
+                    _vertex_outputs.push_back( vertex_output_binding( name, va ) ) ;
+                    return *this ;
+                }
+                iter->va = va ;
+                return *this ;
+            }
+
+            //**************************************************************************
             bool_t find_vertex_input_binding_by_name( natus::ntd::string_cref_t name,
                 natus::graphics::vertex_attribute& va ) const noexcept
             {
-                auto iter = ::std::find_if( _vertex_inputs.begin(), _vertex_inputs.end(),
+                auto iter = std::find_if( _vertex_inputs.begin(), _vertex_inputs.end(),
                     [&] ( vertex_input_binding const& b )
                 {
                     return b.name == name ;
@@ -141,10 +180,27 @@ namespace natus
                 return true ;
             }
 
+            //**************************************************************************
+            bool_t find_vertex_output_binding_by_name( natus::ntd::string_cref_t name,
+                natus::graphics::vertex_attribute& va ) const noexcept
+            {
+                auto iter = std::find_if( _vertex_outputs.begin(), _vertex_outputs.end(),
+                    [&] ( vertex_output_binding const& b )
+                {
+                    return b.name == name ;
+                } ) ;
+                if( iter == _vertex_outputs.end() ) return false ;
+
+                va = iter->va ;
+
+                return true ;
+            }
+
+            //**************************************************************************
             bool_t find_vertex_input_binding_by_attribute( natus::graphics::vertex_attribute const va,
                 natus::ntd::string_out_t name ) const noexcept
             {
-                auto iter = ::std::find_if( _vertex_inputs.begin(), _vertex_inputs.end(),
+                auto iter = std::find_if( _vertex_inputs.begin(), _vertex_inputs.end(),
                     [&] ( vertex_input_binding const& b )
                 {
                     return b.va == va ;
@@ -156,8 +212,25 @@ namespace natus
                 return true ;
             }
 
+            //**************************************************************************
+            bool_t find_vertex_output_binding_by_attribute( natus::graphics::vertex_attribute const va,
+                natus::ntd::string_out_t name ) const noexcept
+            {
+                auto iter = std::find_if( _vertex_outputs.begin(), _vertex_outputs.end(),
+                    [&] ( vertex_output_binding const& b )
+                {
+                    return b.va == va ;
+                } ) ;
+                if( iter == _vertex_outputs.end() ) return false ;
+
+                name = iter->name ;
+
+                return true ;
+            }
+
+            //**************************************************************************
             this_ref_t add_input_binding( natus::graphics::binding_point const bp,
-                natus::ntd::string_cref_t name )
+                natus::ntd::string_cref_t name ) noexcept
             {
                 variable_binding vb ;
                 vb.name = name ;
@@ -168,13 +241,27 @@ namespace natus
                 return *this ;
             }
 
-            bool_t has_input_binding( natus::graphics::binding_point const bp ) const 
+            //**************************************************************************
+            bool_t has_input_binding( natus::graphics::binding_point const bp ) const noexcept
             {
                 for( auto const & b : _bindings )
                 {
                     if( b.bp == bp ) return true ;
                 }
                 return false ;
+            }
+
+            //**************************************************************************
+            this_ref_t set_streamout_mode( natus::graphics::streamout_mode sm ) noexcept
+            {
+                _sm = sm ;
+                return *this ;
+            }
+
+            //**************************************************************************
+            natus::graphics::streamout_mode get_streamout_mode( void_t ) const noexcept
+            {
+                return _sm ;
             }
 
         private:
@@ -186,49 +273,59 @@ namespace natus
 
             natus::ntd::string_t _name ;
 
+            natus::graphics::streamout_mode _sm = natus::graphics::streamout_mode::unknown ;
+
         public:
             
-            shader_object( void_t ) {}
+            shader_object( void_t ) noexcept {}
 
-            shader_object( natus::ntd::string_cref_t name ) 
+            shader_object( natus::ntd::string_cref_t name ) noexcept
                 : _name( name ) {}
 
-            shader_object( this_cref_t rhv ) : object( rhv )
+            shader_object( this_cref_t rhv ) noexcept : object( rhv )
             {
                 _name = rhv._name ;
                 _vertex_inputs = rhv._vertex_inputs ;
+                _vertex_outputs = rhv._vertex_outputs ;
                 _shader_sets = rhv._shader_sets ;
                 _bindings = rhv._bindings ;
+                _sm = rhv._sm ;
             }
 
-            shader_object( this_rref_t rhv ) : object( ::std::move(rhv) )
+            shader_object( this_rref_t rhv ) noexcept : object( ::std::move(rhv) )
             {
                 _name = ::std::move( rhv._name ) ;
                 _vertex_inputs = ::std::move( rhv._vertex_inputs ) ;
+                _vertex_outputs = ::std::move( rhv._vertex_outputs ) ;
                 _shader_sets = ::std::move( rhv._shader_sets ) ;
                 _bindings = ::std::move( rhv._bindings ) ;
+                _sm = rhv._sm ;
             }
 
-            this_ref_t operator = ( this_cref_t rhv )
+            this_ref_t operator = ( this_cref_t rhv ) noexcept
             {
                 object::operator=( rhv ) ;
 
                 _name = rhv._name ;
                 _vertex_inputs = rhv._vertex_inputs ;
+                _vertex_outputs = rhv._vertex_outputs ;
                 _shader_sets = rhv._shader_sets ;
                 _bindings = rhv._bindings ;
+                _sm = rhv._sm ;
 
                 return *this ;
             }
 
-            this_ref_t operator = ( this_rref_t rhv )
+            this_ref_t operator = ( this_rref_t rhv ) noexcept
             {
                 object::operator=( ::std::move( rhv ) ) ;
 
-                _name = ::std::move( rhv._name ) ;
-                _vertex_inputs = ::std::move( rhv._vertex_inputs ) ;
-                _shader_sets = ::std::move( rhv._shader_sets ) ;
-                _bindings = ::std::move( rhv._bindings ) ;
+                _name = std::move( rhv._name ) ;
+                _vertex_inputs = std::move( rhv._vertex_inputs ) ;
+                _vertex_outputs = std::move( rhv._vertex_outputs ) ;
+                _shader_sets = std::move( rhv._shader_sets ) ;
+                _bindings = std::move( rhv._bindings ) ;
+                _sm = rhv._sm ;
 
                 return *this ;
             }
@@ -241,7 +338,7 @@ namespace natus
 
         public:
            
-            this_ref_t insert( natus::graphics::shader_api_type const bt, natus::graphics::shader_set_in_t ss )
+            this_ref_t insert( natus::graphics::shader_api_type const bt, natus::graphics::shader_set_in_t ss ) noexcept
             {
                 auto iter = ::std::find_if( _shader_sets.begin(), _shader_sets.end(),
                     [&] ( this_t::ss_item_t const& item )
@@ -261,7 +358,7 @@ namespace natus
                 return *this ;
             }
 
-            bool_t shader_set( natus::graphics::shader_api_type const bt, natus::graphics::shader_set_out_t ss ) const
+            bool_t shader_set( natus::graphics::shader_api_type const bt, natus::graphics::shader_set_out_t ss ) const noexcept
             {
                 auto const iter = ::std::find_if( _shader_sets.begin(), _shader_sets.end(), 
                     [&] ( this_t::ss_item_t const & item ) 
@@ -278,7 +375,10 @@ namespace natus
 
         public:
 
-            
+            size_t get_num_output_bindings( void_t ) const noexcept
+            {
+                return _vertex_outputs.size() ;
+            }
 
             natus::ntd::string_cref_t name( void_t ) const noexcept
             {
