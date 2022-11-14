@@ -3101,8 +3101,20 @@ natus::graphics::result gl3_backend::release( natus::graphics::array_object_res_
     return natus::graphics::result::ok ;
 }
 
-natus::graphics::result gl3_backend::release( natus::graphics::streamout_object_res_t ) noexcept 
+natus::graphics::result gl3_backend::release( natus::graphics::streamout_object_res_t obj ) noexcept 
 {
+    if( !obj.is_valid() || obj->name().empty() )
+    {
+        natus::log::global_t::error( natus_log_fn( "Object must be valid and requires a name" ) ) ;
+        return natus::graphics::result::invalid_argument ;
+    }
+
+    {
+        natus::graphics::id_res_t id = obj->get_id() ;
+        _pimpl->release_array_data( id->get_oid( this_t::get_bid() ) ) ;
+        id->set_oid( this_t::get_bid(), size_t( -1 ) ) ;
+    }
+
     return natus::graphics::result::ok ;
 }
 
