@@ -983,7 +983,7 @@ struct es3_backend::pimpl
         return true ;
     }
 
-    //***********************
+    //***************************************************************************************************************************************
     void_t detach_shaders( GLuint const program_id )
     {
         GLsizei count = 0 ;
@@ -999,7 +999,7 @@ struct es3_backend::pimpl
         }
     }
 
-    //***********************
+    //***************************************************************************************************************************************
     void_t delete_all_variables( this_t::shader_data & config )
     {
         config.vertex_inputs.clear() ;
@@ -1012,7 +1012,7 @@ struct es3_backend::pimpl
         config.uniforms.clear() ;
     }
 
-    //***********************
+    //***************************************************************************************************************************************
     bool_t compile_shader( GLuint const id, natus::ntd::string_cref_t code )
     {
         if( code.empty() ) return true ;
@@ -1063,7 +1063,7 @@ struct es3_backend::pimpl
         return true ;
     }
 
-    //***********************
+    //***************************************************************************************************************************************
     bool_t link( GLuint const program_id )
     {
         glLinkProgram( program_id ) ;
@@ -1104,7 +1104,7 @@ struct es3_backend::pimpl
         return false ;
     }
 
-    //***********************
+    //***************************************************************************************************************************************
     void_t post_link_attributes( this_t::shader_data & config )
     {
         GLuint const program_id = config.pg_id ;
@@ -1159,7 +1159,7 @@ struct es3_backend::pimpl
         }
     }
 
-    //***********************
+    //***************************************************************************************************************************************
     bool_t bind_attributes( this_t::shader_data & sconfig, this_t::geo_data & gconfig )
     {
         // bind vertex array object
@@ -1232,7 +1232,7 @@ struct es3_backend::pimpl
         return true ;
     }
 
-    //***********************
+    //***************************************************************************************************************************************
     void_t post_link_uniforms( this_t::shader_data & config )
     {
         GLuint const program_id = config.pg_id ;
@@ -1282,7 +1282,7 @@ struct es3_backend::pimpl
         }
     }
 
-    //***********************
+    //***************************************************************************************************************************************
     size_t construct_image_config( size_t oid, natus::graphics::image_object_ref_t obj )
     {
         oid = determine_oid( obj.name(), img_configs ) ;
@@ -1337,7 +1337,7 @@ struct es3_backend::pimpl
         return true ;
     }
 
-    //***********************
+    //***************************************************************************************************************************************
     size_t construct_render_config( size_t oid, natus::graphics::render_object_ref_t obj )
     {
         oid = determine_oid( obj.name(), rconfigs ) ;
@@ -2272,12 +2272,12 @@ struct es3_backend::pimpl
     }
 };
 
-//************************************************************************************************
+//****************************************************************************************************************************************************************************************************************
 //
 //
-//************************************************************************************************
+//****************************************************************************************************************************************************************************************************************
 
-//****
+//********************************************************************************************************************
 es3_backend::es3_backend( natus::graphics::es_context_ptr_t ctx ) noexcept : 
     backend( natus::graphics::backend_type::es3 )
 {
@@ -2287,20 +2287,20 @@ es3_backend::es3_backend( natus::graphics::es_context_ptr_t ctx ) noexcept :
     _context = ctx ;
 }
 
-//****
+//********************************************************************************************************************
 es3_backend::es3_backend( this_rref_t rhv ) noexcept : backend( ::std::move( rhv ) )
 {
     natus_move_member_ptr( _pimpl, rhv ) ;
     natus_move_member_ptr( _context, rhv ) ;
 }
 
-//****
+//********************************************************************************************************************
 es3_backend::~es3_backend( void_t ) 
 {
     natus::memory::global_t::dealloc( _pimpl ) ;
 }
 
-//****
+//********************************************************************************************************************
 void_t es3_backend::set_window_info( window_info_cref_t wi ) noexcept 
 {
     {
@@ -2315,7 +2315,7 @@ void_t es3_backend::set_window_info( window_info_cref_t wi ) noexcept
     }
 }
 
-//****
+//********************************************************************************************************************
 natus::graphics::result es3_backend::configure( natus::graphics::geometry_object_res_t gconf ) noexcept 
 {
     natus::graphics::id_res_t id = gconf->get_id() ;
@@ -2336,7 +2336,7 @@ natus::graphics::result es3_backend::configure( natus::graphics::geometry_object
     return natus::graphics::result::ok ;
 }
 
-//****
+//********************************************************************************************************************
 natus::graphics::result es3_backend::configure( natus::graphics::render_object_res_t config ) noexcept 
 {
     natus::graphics::id_res_t id = config->get_id() ;
@@ -2611,7 +2611,7 @@ natus::graphics::result es3_backend::connect( natus::graphics::render_object_res
     return natus::graphics::result::ok ;
 }
 
-//****
+//********************************************************************************************************************
 natus::graphics::result es3_backend::update( natus::graphics::geometry_object_res_t config ) noexcept 
 {
     natus::graphics::id_res_t id = config->get_id() ;
@@ -2631,13 +2631,13 @@ natus::graphics::result es3_backend::update( natus::graphics::geometry_object_re
     return natus::graphics::result::ok ;
 }
 
-//********************************************************************************************************************
+//************************************************************************************************************************************************************************************************************************************
 natus::graphics::result es3_backend::update( natus::graphics::streamout_object_res_t obj ) noexcept
 {
     return natus::graphics::result::ok ;
 }
 
-//****
+//********************************************************************************************************************
 natus::graphics::result es3_backend::update( natus::graphics::array_object_res_t obj ) noexcept 
 {
     natus::graphics::id_res_t id = obj->get_id() ;
@@ -2651,13 +2651,13 @@ natus::graphics::result es3_backend::update( natus::graphics::array_object_res_t
     return natus::graphics::result::ok ;
 }
 
-//****
+//********************************************************************************************************************
 natus::graphics::result es3_backend::update( natus::graphics::image_object_res_t ) noexcept 
 {
     return natus::graphics::result::ok ;
 }
 
-//****
+//********************************************************************************************************************
 natus::graphics::result es3_backend::update( natus::graphics::render_object_res_t obj, size_t const varset ) noexcept 
 {
     natus::graphics::id_res_t id = obj->get_id() ;
@@ -2671,7 +2671,7 @@ natus::graphics::result es3_backend::update( natus::graphics::render_object_res_
     return natus::graphics::result::ok ;
 }
 
-//****
+//********************************************************************************************************************
 natus::graphics::result es3_backend::use( natus::graphics::framebuffer_object_res_t obj ) noexcept 
 {
     if( !obj.is_valid() )
@@ -2693,14 +2693,20 @@ natus::graphics::result es3_backend::use( natus::graphics::framebuffer_object_re
     return natus::graphics::result::ok ;
 }
 
-//****
+//********************************************************************************************************************
+natus::graphics::result es3_backend::use( natus::graphics::streamout_object_res_t obj ) noexcept 
+{
+    return natus::graphics::result::ok ;
+}
+
+//********************************************************************************************************************
 natus::graphics::result es3_backend::unuse( natus::graphics::backend::unuse_type const ) noexcept 
 {
     _pimpl->deactivate_framebuffer() ;
     return natus::graphics::result::ok ;
 }
 
-//****
+//********************************************************************************************************************
 natus::graphics::result es3_backend::push( natus::graphics::state_object_res_t obj, size_t const sid, bool_t const ) noexcept 
 {
     if( !obj.is_valid() )
@@ -2727,7 +2733,7 @@ natus::graphics::result es3_backend::pop( natus::graphics::backend::pop_type con
     return natus::graphics::result::ok ;
 }
 
-//****
+//********************************************************************************************************************
 natus::graphics::result es3_backend::render( natus::graphics::render_object_res_t config, natus::graphics::backend::render_detail_cref_t detail ) noexcept 
 { 
     natus::graphics::id_res_t id = config->get_id() ;
@@ -2745,7 +2751,7 @@ natus::graphics::result es3_backend::render( natus::graphics::render_object_res_
     return natus::graphics::result::ok ;
 }
 
-//****
+//********************************************************************************************************************
 void_t es3_backend::render_begin( void_t ) noexcept 
 {
     _pimpl->begin_frame() ;

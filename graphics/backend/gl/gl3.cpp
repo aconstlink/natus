@@ -3111,7 +3111,7 @@ natus::graphics::result gl3_backend::release( natus::graphics::streamout_object_
 
     {
         natus::graphics::id_res_t id = obj->get_id() ;
-        _pimpl->release_array_data( id->get_oid( this_t::get_bid() ) ) ;
+        _pimpl->release_tf_data( id->get_oid( this_t::get_bid() ) ) ;
         id->set_oid( this_t::get_bid(), size_t( -1 ) ) ;
     }
 
