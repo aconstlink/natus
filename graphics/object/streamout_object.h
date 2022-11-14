@@ -38,14 +38,18 @@ namespace natus
                 _dbs.emplace_back( std::move( db ) ) ;
             }
 
-            streamout_object( this_cref_t rhv ) noexcept
+            streamout_object( this_cref_t rhv ) noexcept : object( rhv ) 
             {
-                *this = rhv ;
+                _dbs = rhv._dbs ;
+                _name = rhv._name ;
+                _ne = rhv._ne ;
             }
 
-            streamout_object( this_rref_t rhv ) noexcept
+            streamout_object( this_rref_t rhv ) noexcept : object( std::move( rhv ) ) 
             {
-                *this = std::move( rhv ) ;
+                _dbs = std::move( rhv._dbs ) ;
+                _name = std::move( rhv._name ) ;
+                _ne = rhv._ne ;
             }
 
             this_ref_t operator = ( this_cref_t rhv ) noexcept

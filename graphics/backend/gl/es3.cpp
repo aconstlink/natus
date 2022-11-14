@@ -1385,7 +1385,7 @@ struct es3_backend::pimpl
         auto& sconfig = shaders[ id ] ;
 
         {
-            sc.for_each_vertex_input_binding( [&]( 
+            sc.for_each_vertex_input_binding( [&]( size_t const,
                 natus::graphics::vertex_attribute const va, natus::ntd::string_cref_t name )
             {
                 sconfig.vertex_inputs.emplace_back( this_t::shader_data::vertex_input_binding 
