@@ -37,6 +37,9 @@ struct gl3_backend::pimpl
             GLuint sib = 0 ;
         };
         buffer buffers[max_buffers] ;
+
+        // query object id
+        GLuint qid = GLuint( -1 ) ;
     };
     natus_typedef( tf_data ) ;
 
@@ -988,10 +991,10 @@ struct gl3_backend::pimpl
             }
         }
 
-        // disable raster
+        // query written primitives
         {
-            glEnable( GL_RASTERIZER_DISCARD ) ;
-            natus::ogl::error::check_and_log( natus_log_fn( "glEnable( GL_RASTERIZER_DISCARD ) " ) ) ;
+            glBeginQuery( GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN, data.qid ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glBeginQuery" ) ) ;
         }
 
         // begin 
@@ -1013,11 +1016,21 @@ struct gl3_backend::pimpl
             natus::ogl::error::check_and_log( natus_log_fn( "glEndTransformFeedback" ) ) ;
         }
 
-        // enable raster
+        // query written primitives
         {
-            glDisable( GL_RASTERIZER_DISCARD ) ;
-            natus::ogl::error::check_and_log( natus_log_fn( "glDisable( GL_RASTERIZER_DISCARD ) " ) ) ;
+            glEndQuery( GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glEndQuery" ) ) ;
         }
+
+        // DEBUG PURPOSE ONLY: Check number of written primitives
+        #if 1
+        {
+            GLuint num_written = 0 ;
+            glGetQueryObjectuiv( _feedbacks[ _tf_active_id ].qid, GL_QUERY_RESULT, &num_written ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glGetQueryObjectuiv" ) ) ;
+        }
+        #endif
+        
         _tf_active_id = size_t(-1) ;
     }
 
@@ -2372,6 +2385,12 @@ struct gl3_backend::pimpl
             natus::ogl::error::check_and_log( natus_log_fn( "glDeleteBuffers" ) ) ;
         }
 
+        if( data.qid == GLuint(-1) )
+        {
+            glGenQueries( 1, &data.qid ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glGenQueries" ) ) ;
+        }
+
         return oid ;
     }
 
@@ -2388,6 +2407,13 @@ struct gl3_backend::pimpl
             natus::ogl::error::check_and_log( natus_log_fn( "glDeleteBuffers" ) ) ;
             d.buffers[i].id = GLuint( -1 ) ;
             d.buffers[i].sib = 0 ;
+        }
+
+        if( d.qid != GLuint(-1) )
+        {
+            glDeleteQueries( 1, &d.qid ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glDeleteBuffers" ) ) ;
+            d.qid = GLuint( -1 ) ;
         }
 
         d.valid = false ;
@@ -2639,6 +2665,13 @@ struct gl3_backend::pimpl
             }
         }
 
+        // disable raster if no pixel shader
+        if( sconfig.ps_id == GLuint(-1) )
+        {
+            glEnable( GL_RASTERIZER_DISCARD ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glEnable( GL_RASTERIZER_DISCARD ) " ) ) ;
+        }
+
         {
             this_t::activate_transform_feedback( gconfig ) ;
         }
@@ -2675,6 +2708,13 @@ struct gl3_backend::pimpl
 
         {
             this_t::deactivate_transform_feedback() ;
+        }
+
+        // enable raster back again.
+        if( sconfig.ps_id == GLuint(-1) )
+        {
+            glDisable( GL_RASTERIZER_DISCARD ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glDisable( GL_RASTERIZER_DISCARD ) " ) ) ;
         }
 
         {
