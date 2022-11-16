@@ -161,7 +161,8 @@ struct es3_backend::pimpl
         bool_t valid = false ;
         natus::ntd::string_t name ;
 
-        size_t geo_id = size_t( -1 ) ;
+        natus::ntd::vector< size_t > geo_ids ;
+        natus::ntd::vector< size_t > tf_ids ; // feed from for geometry
         size_t shd_id = size_t( -1 ) ;
 
         struct uniform_variable_link
@@ -212,6 +213,16 @@ struct es3_backend::pimpl
 
         // memory block for all variables in all variable sets.
         void_ptr_t mem_block = nullptr ;
+
+        void_t remove_geometry_id( size_t const id ) noexcept
+        {
+            auto iter = std::find_if( geo_ids.begin(), geo_ids.end(), [&]( size_t const d )
+            {
+                return d == id ;
+            } ) ;
+            if( iter == geo_ids.end() ) return ;
+            geo_ids.erase( iter ) ;
+        }
     };
     natus_typedef( render_data ) ;
 
@@ -1317,6 +1328,7 @@ struct es3_backend::pimpl
         return oid ;
     }
 
+    //***************************************************************************************************************************************
     bool_t release_image_data( size_t const oid ) noexcept
     {
         auto & id = img_configs[ oid ] ;
@@ -1348,6 +1360,10 @@ struct es3_backend::pimpl
             rconfigs[ oid ].var_sets_texture.clear() ;
             rconfigs[ oid ].var_sets.clear() ;
 
+            _renders[ oid ].geo_ids.clear();
+            _renders[ oid ].tf_ids.clear() ;
+            _renders[ oid ].shd_id = size_t( -1 ) ;
+
             natus::memory::global_t::dealloc( rconfigs[ oid ].mem_block ) ;
             rconfigs[ oid ].mem_block = nullptr ;
         }
@@ -1355,6 +1371,7 @@ struct es3_backend::pimpl
         return oid ;
     }
 
+    //***************************************************************************************************************************************
     bool_t release_render_data( size_t const oid ) noexcept
     {
         auto & rd = rconfigs[ oid ] ;
@@ -1362,11 +1379,8 @@ struct es3_backend::pimpl
         rd.valid = false ;
         rd.name = "released" ;
 
-        if( rd.geo_id != size_t( -1 ) ) 
-        {
-            geo_datas[ rd.geo_id ].remove_render_data_id( oid ) ;
-            rd.geo_id = size_t( -1 ) ;
-        }
+        for( auto id : rd.geo_ids ) _geometries[ id ].remove_render_data_id( oid ) ;
+        rd.geo_ids.clear() ;
 
         rd.shd_id = GLuint( -1 ) ;
         rd.var_sets.clear() ;
@@ -1380,6 +1394,7 @@ struct es3_backend::pimpl
         return true ;
     }
 
+    //***************************************************************************************************************************************
     bool_t update( size_t const id, natus::graphics::shader_object_cref_t sc )
     {
         auto& sconfig = shaders[ id ] ;
@@ -1447,34 +1462,38 @@ struct es3_backend::pimpl
         return true ;
     }
 
+    //***************************************************************************************************************************************
     bool_t update( size_t const id, natus::graphics::render_object_ref_t rc )
     {
         auto& config = rconfigs[ id ] ;
 
-        // find geometry
+        // handle geometry links
         {
-            auto const iter = ::std::find_if( geo_datas.begin(), geo_datas.end(),
-                [&] ( this_t::geo_data const& d )
-            {
-                return d.name == rc.get_geometry() ;
-            } ) ;
-            if( iter == geo_datas.end() )
-            {
-                natus::log::global_t::warning( natus_log_fn(
-                    "no geometry with name [" + rc.get_geometry() + "] for render_config [" + rc.name() + "]" ) ) ;
-                return false ;
-            }
-
             // remove this render data id from the old geometry
-            if( config.geo_id != size_t( -1 ) )
-                geo_datas[ config.geo_id ].remove_render_data_id( id ) ;
+            for( auto gid : config.geo_ids ) geo_datas[ gid ].remove_render_data_id( id ) ;
+            config.geo_ids.clear() ;
 
-            config.geo_id = std::distance( geo_datas.begin(), iter ) ;
+            // find geometry
+            for( size_t i=0; i<rc.get_num_geometry(); ++i )
+            {
+                auto const iter = std::find_if( geo_datas.begin(), geo_datas.end(),
+                    [&] ( this_t::geo_data const& d )
+                {
+                    return d.name == rc.get_geometry(i) ;
+                } ) ;
+            
+                if( iter == geo_datas.end() )
+                {
+                    natus::log::global_t::warning( natus_log_fn(
+                        "no geometry with name [" + rc.get_geometry() + "] for render_data [" + rc.name() + "]" ) ) ;
+                    continue ;
+                }
 
-            // add this render data id to the new geometry
-            if( config.geo_id != size_t( -1 ) )
-                geo_datas[ config.geo_id ].add_render_data_id( id ) ;
-
+                config.geo_ids.emplace_back( std::distance( _geometries.begin(), iter ) ) ;
+                
+                // add this render data id to the new geometry
+                geo_datas[ config.geo_ids.back() ].add_render_data_id( id ) ;
+            }
         }
 
         // find shader
@@ -1495,9 +1514,10 @@ struct es3_backend::pimpl
         }
         
         // for binding attributes, the shader and the geometry is required.
+        for( size_t i=0; i<config.geo_ids.size(); ++i )
         {
             this_t::shader_data_ref_t shd = shaders[ config.shd_id ] ;
-            this_t::geo_data_ref_t geo = geo_datas[ config.geo_id ] ;
+            this_t::geo_data_ref_t geo = geo_datas[ config.geo_ids[i] ] ;
             this_t::bind_attributes( shd, geo ) ;
         }
 
@@ -1515,6 +1535,7 @@ struct es3_backend::pimpl
         return true ;
     }
 
+    //***************************************************************************************************************************************
     void_t render_object_variable_memory( this_t::render_data & rd, this_t::shader_data & shader )
     {
         auto& config = rd ;
@@ -1591,6 +1612,7 @@ struct es3_backend::pimpl
         }
     }
 
+    //***************************************************************************************************************************************
     size_t construct_geo( size_t oid, natus::graphics::geometry_object_ref_t obj ) 
     {
         oid = determine_oid( obj.name(), geo_datas ) ;
@@ -1652,6 +1674,7 @@ struct es3_backend::pimpl
         return oid ;
     }
 
+    //***************************************************************************************************************************************
     bool_t release_geometry( size_t const oid ) noexcept
     {
         auto & geo = geo_datas[ oid ] ;
@@ -1690,13 +1713,14 @@ struct es3_backend::pimpl
         {
             if( rd_id == size_t( -1 ) ) continue ;
             auto & rd = rconfigs[ rd_id ] ;
-            rd.geo_id = GLuint( -1 ) ;
+            rd.remove_geometry_id( oid ) ;
         }
         geo.rd_ids.clear() ;
 
         return true ;
     }
 
+    //***************************************************************************************************************************************
     bool_t update( size_t const id, natus::graphics::geometry_object_res_t geo, bool_t const is_config = false )
     {
         auto& config = geo_datas[ id ] ;
@@ -1785,6 +1809,7 @@ struct es3_backend::pimpl
         return true ;
     }
 
+    //***************************************************************************************************************************************
     bool_t update( size_t const id, natus::graphics::image_object_ref_t confin, bool_t const do_config )
     {
         this_t::image_config& config = img_configs[ id ] ;
@@ -1860,6 +1885,7 @@ struct es3_backend::pimpl
         return true ;
     }
 
+    //***************************************************************************************************************************************
     bool_t connect( size_t const id, natus::graphics::variable_set_res_t vs )
     {
         auto& config = rconfigs[ id ] ;
@@ -1871,6 +1897,7 @@ struct es3_backend::pimpl
         return true ;
     }
 
+    //***************************************************************************************************************************************
     bool_t connect( this_t::render_data & config, natus::graphics::variable_set_res_t vs )
     {
         auto item_data = ::std::make_pair( vs,
@@ -1947,6 +1974,7 @@ struct es3_backend::pimpl
         return true ;
     }
 
+    //***************************************************************************************************************************************
     size_t construct_array_data( size_t oid, natus::graphics::array_object_ref_t obj ) 
     {
         oid = determine_oid( obj.name(), _arrays ) ;
@@ -1989,6 +2017,7 @@ struct es3_backend::pimpl
         return oid ;
     }
 
+    //***************************************************************************************************************************************
     bool_t release_array_data( size_t const oid ) noexcept
     {
         auto & data = _arrays[ oid ] ;
@@ -2008,6 +2037,7 @@ struct es3_backend::pimpl
         return true ;
     }
 
+    //***************************************************************************************************************************************
     size_t update( size_t oid, natus::graphics::array_object_ref_t obj, bool_t const is_config = false ) 
     {
         auto & data = _arrays[ oid ] ;
@@ -2084,6 +2114,7 @@ struct es3_backend::pimpl
         return true ;
     }
 
+    //***************************************************************************************************************************************
     bool_t update_variables( size_t const rd_id, size_t const varset_id )
     {
         this_t::render_data & config = rconfigs[ rd_id ] ;
@@ -2132,12 +2163,20 @@ struct es3_backend::pimpl
         return true ;
     }
 
-    bool_t render( size_t const id, size_t const varset_id = size_t(0), GLsizei const start_element = GLsizei(0), 
+    //***************************************************************************************************************************************
+    bool_t render( size_t const id, size_t const geo_idx = 0, size_t const varset_id = size_t(0), GLsizei const start_element = GLsizei(0), 
         GLsizei const num_elements = GLsizei(-1) )
     {
         this_t::render_data & config = rconfigs[ id ] ;
         this_t::shader_data& sconfig = shaders[ config.shd_id ] ;
-        this_t::geo_data& gconfig = geo_datas[ config.geo_id ] ;
+
+        if( config.geo_ids.size() <= geo_idx ) 
+        {
+            natus::log::global_t::error( "[es3::render] : used geometry idx invalid because exceeds array size for render object : " + config.name ) ;
+            return false ;
+        }
+
+        this_t::geo_data& gconfig = geo_datas[ config.geo_ids[geo_idx] ] ;
 
         if( !sconfig.is_compilation_ok )
             return false ;
@@ -2221,7 +2260,7 @@ struct es3_backend::pimpl
             else
             {
                 GLsizei const max_elems = GLsizei( gconfig.num_elements_vb ) ;
-                GLsizei const ne = ::std::min( num_elements, max_elems ) ;
+                GLsizei const ne = std::max( 0, std::min( num_elements, max_elems ) ) ;
 
                 glDrawArrays( pt, start_element, ne ) ;
 
@@ -2231,6 +2270,7 @@ struct es3_backend::pimpl
         return true ;
     }
 
+    //***************************************************************************************************************************************
     void_t begin_frame( void_t ) 
     {
         // set default render states
@@ -2746,7 +2786,7 @@ natus::graphics::result es3_backend::render( natus::graphics::render_object_res_
         return natus::graphics::result::failed ;
     }
 
-    _pimpl->render( id->get_oid( this_t::get_bid()), detail.varset, (GLsizei)detail.start, (GLsizei)detail.num_elems ) ;
+    _pimpl->render( id->get_oid( this_t::get_bid()), detail.geo, detail.varset, (GLsizei)detail.start, (GLsizei)detail.num_elems ) ;
 
     return natus::graphics::result::ok ;
 }

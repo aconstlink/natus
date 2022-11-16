@@ -300,7 +300,6 @@ struct gl3_backend::pimpl
 
         natus::ntd::vector< render_state_sets > rss ;
 
-
         void_t remove_geometry_id( size_t const id ) noexcept
         {
             auto iter = std::find_if( geo_ids.begin(), geo_ids.end(), [&]( size_t const d )
@@ -1774,8 +1773,8 @@ struct gl3_backend::pimpl
             _renders[ oid ].var_sets.clear() ;
             
             _renders[ oid ].geo_ids.clear();
+            _renders[ oid ].tf_ids.clear() ;
             _renders[ oid ].shd_id = size_t( -1 ) ;
-            _renders[ oid ].tf_ids ;
 
             natus::memory::global_t::dealloc( _renders[ oid ].mem_block ) ;
             _renders[ oid ].mem_block = nullptr ;
