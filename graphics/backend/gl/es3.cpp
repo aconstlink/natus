@@ -1379,7 +1379,7 @@ struct es3_backend::pimpl
         rd.valid = false ;
         rd.name = "released" ;
 
-        for( auto id : rd.geo_ids ) rconfigs[ id ].remove_render_data_id( oid ) ;
+        for( auto id : rd.geo_ids ) geo_datas[ id ].remove_render_data_id( oid ) ;
         rd.geo_ids.clear() ;
 
         rd.shd_id = GLuint( -1 ) ;
