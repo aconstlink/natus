@@ -498,7 +498,7 @@ struct d3d11_backend::pimpl
 
         natus::ntd::string_t name ;
 
-        size_t geo_id = size_t( -1 ) ;
+        natus::ntd::vector< size_t > geo_ids ;
         size_t shd_id = size_t( -1 ) ;
 
         // the layout requires information about the layout elements' type
@@ -591,8 +591,7 @@ struct d3d11_backend::pimpl
         {
             valid = rhv.valid ;
             name = std::move( rhv.name ) ;
-            geo_id = rhv.geo_id ;
-            rhv.geo_id = size_t( -1 ) ;
+            geo_ids = std::move( rhv.geo_ids ) ;
             shd_id = rhv.shd_id ;
             rhv.shd_id = size_t( -1 ) ;
 
@@ -616,8 +615,9 @@ struct d3d11_backend::pimpl
         {
             valid = false ;
             name = "" ;
-            geo_id = size_t( -1 ) ;
             shd_id = size_t( -1 ) ;
+
+            geo_ids.clear() ;
 
             std::memset( layout, 0, sizeof( D3D11_INPUT_ELEMENT_DESC ) * size_t( natus::graphics::vertex_attribute::num_attributes ) ) ;
             if( vertex_layout != nullptr )
@@ -637,8 +637,6 @@ struct d3d11_backend::pimpl
                 blend_state->Release() ;
                 blend_state = nullptr ;
             }
-
-
 
             var_sets_imgs_vs.clear() ;
             var_sets_imgs_ps.clear() ;
@@ -1516,7 +1514,11 @@ public: // functions
     {
         for( auto & r : renders )
         {
-            if( r.geo_id == oid ) r.geo_id = size_t( -1 ) ;
+            auto iter = std::find_if( r.geo_ids.begin(), r.geo_ids.end(), [&]( size_t const gid )
+            {
+                return gid == oid ;
+            } ) ;
+            if( iter != r.geo_ids.end() ) r.geo_ids.erase( iter ) ;
         }
 
         auto & o = geo_datas[ oid ] ;
@@ -1902,24 +1904,28 @@ public: // functions
     bool_t update( size_t const id, natus::graphics::render_object_ref_t rc )
     {
         auto& rd = renders[ id ] ;
-        rd.geo_id = size_t( -1 ) ;
+        rd.geo_ids.clear() ;
         rd.shd_id = size_t( -1 ) ;
 
         // find geometry
         {
-            auto const iter = std::find_if( geo_datas.begin(), geo_datas.end(),
+            for( size_t i=0; i<rc.get_num_geometry(); ++i )
+            {
+                auto const iter = std::find_if( geo_datas.begin(), geo_datas.end(),
                 [&] ( this_t::geo_data_cref_t d )
-            {
-                return d.name == rc.get_geometry() ;
-            } ) ;
-            if( iter == geo_datas.end() )
-            {
-                natus::log::global_t::warning( natus_log_fn(
-                    "no geometry with name [" + rc.get_geometry() + "] for render_config [" + rc.name() + "]" ) ) ;
-                return false ;
-            }
+                {
+                    return d.name == rc.get_geometry( i ) ;
+                } ) ;
 
-            rd.geo_id = std::distance( geo_datas.begin(), iter ) ;
+                if( iter == geo_datas.end() )
+                {
+                    natus::log::global_t::warning( natus_log_fn(
+                        "no geometry with name [" + rc.get_geometry() + "] for render_config [" + rc.name() + "]" ) ) ;
+                    continue ;
+                }
+
+                rd.geo_ids.emplace_back( std::distance( geo_datas.begin(), iter ) ) ;
+            }
         }
 
         // find shader
@@ -1953,7 +1959,7 @@ public: // functions
         // attribute order.
         {
             this_t::shader_data_ref_t shd = shaders[ rd.shd_id ] ;
-            this_t::geo_data_ref_t geo = geo_datas[ rd.geo_id ] ;
+            this_t::geo_data_ref_t geo = geo_datas[ rd.geo_ids[0] ] ;
 
             for( size_t i = 0; i<shd.vertex_inputs.size(); ++i )
             {
@@ -1988,7 +1994,7 @@ public: // functions
             {
                 char_cptr_t name = natus::graphics::d3d11::vertex_binding_to_semantic( b.va ).c_str() ;
                 UINT const semantic_index = 0 ;
-                DXGI_FORMAT const fmt = geo_datas[rd.geo_id].get_format_from_element( b.va ) ;
+                DXGI_FORMAT const fmt = geo_datas[rd.geo_ids[0]].get_format_from_element( b.va ) ;
                 UINT input_slot = 0 ;
                 UINT aligned_byte_offset = offset ;
                 D3D11_INPUT_CLASSIFICATION const iclass = D3D11_INPUT_PER_VERTEX_DATA ;
@@ -1997,7 +2003,7 @@ public: // functions
                 rd.layout[ i++ ] = { name, semantic_index, fmt, input_slot, 
                     aligned_byte_offset, iclass, instance_data_step_rate } ;
 
-                offset += geo_datas[rd.geo_id].get_sib( b.va ) ;
+                offset += geo_datas[rd.geo_ids[0]].get_sib( b.va ) ;
             }
 
             UINT const num_elements = UINT( i ) ;
@@ -2581,9 +2587,14 @@ public: // functions
             return false ;
         }
 
+        if( geo_idx >= rnd.geo_ids.size() ) 
+        {
+            natus::log::global_t::error( "[d3d11::render] : used geometry idx invalid because exceeds array size for render object : " + rnd.name ) ;
+            return false ;
+        }
         
         this_t::shader_data_ref_t shd = shaders[ rnd.shd_id ] ;
-        this_t::geo_data_ref_t geo = geo_datas[ rnd.geo_id ] ;
+        this_t::geo_data_ref_t geo = geo_datas[ rnd.geo_ids[geo_idx] ] ;
 
         if( shd.vs == nullptr )
         {
