@@ -1360,9 +1360,9 @@ struct es3_backend::pimpl
             rconfigs[ oid ].var_sets_texture.clear() ;
             rconfigs[ oid ].var_sets.clear() ;
 
-            _renders[ oid ].geo_ids.clear();
-            _renders[ oid ].tf_ids.clear() ;
-            _renders[ oid ].shd_id = size_t( -1 ) ;
+            rconfigs[ oid ].geo_ids.clear();
+            rconfigs[ oid ].tf_ids.clear() ;
+            rconfigs[ oid ].shd_id = size_t( -1 ) ;
 
             natus::memory::global_t::dealloc( rconfigs[ oid ].mem_block ) ;
             rconfigs[ oid ].mem_block = nullptr ;
@@ -1379,7 +1379,7 @@ struct es3_backend::pimpl
         rd.valid = false ;
         rd.name = "released" ;
 
-        for( auto id : rd.geo_ids ) _geometries[ id ].remove_render_data_id( oid ) ;
+        for( auto id : rd.geo_ids ) rconfigs[ id ].remove_render_data_id( oid ) ;
         rd.geo_ids.clear() ;
 
         rd.shd_id = GLuint( -1 ) ;
@@ -1489,7 +1489,7 @@ struct es3_backend::pimpl
                     continue ;
                 }
 
-                config.geo_ids.emplace_back( std::distance( _geometries.begin(), iter ) ) ;
+                config.geo_ids.emplace_back( std::distance( geo_datas.begin(), iter ) ) ;
                 
                 // add this render data id to the new geometry
                 geo_datas[ config.geo_ids.back() ].add_render_data_id( id ) ;
