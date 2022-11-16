@@ -43,6 +43,7 @@ namespace natus
                 size_t start = size_t( 0 ) ;
                 size_t num_elems = size_t( -1 ) ;
                 size_t varset = size_t( 0 ) ;
+                size_t geo = size_t( 0 ) ;
                 size_t state_set = size_t( -1 ) ;
                 bool_t feed_from_streamout = false ;
                 natus::graphics::render_state_sets_res_t render_states = 

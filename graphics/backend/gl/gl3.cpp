@@ -245,11 +245,9 @@ struct gl3_backend::pimpl
 
         natus::ntd::string_t name ;
 
-        size_t geo_id = size_t( -1 ) ;
+        natus::ntd::vector< size_t > geo_ids ;
+        natus::ntd::vector< size_t > tf_ids ; // feed from for geometry
         size_t shd_id = size_t( -1 ) ;
-
-        // feed from for geometry
-        size_t tf_id = size_t( -1 ) ;
 
         struct uniform_variable_link
         {
@@ -301,6 +299,17 @@ struct gl3_backend::pimpl
         void_ptr_t mem_block = nullptr ;
 
         natus::ntd::vector< render_state_sets > rss ;
+
+
+        void_t remove_geometry_id( size_t const id ) noexcept
+        {
+            auto iter = std::find_if( geo_ids.begin(), geo_ids.end(), [&]( size_t const d )
+            {
+                return d == id ;
+            } ) ;
+            if( iter == geo_ids.end() ) return ;
+            geo_ids.erase( iter ) ;
+        }
     };
     natus_typedef( render_data ) ;
 
@@ -1764,9 +1773,9 @@ struct gl3_backend::pimpl
             _renders[ oid ].var_sets_array.clear() ;
             _renders[ oid ].var_sets.clear() ;
             
-            _renders[ oid ].geo_id = size_t( -1 ) ;
+            _renders[ oid ].geo_ids.clear();
             _renders[ oid ].shd_id = size_t( -1 ) ;
-            _renders[ oid ].tf_id = size_t( -1 ) ;
+            _renders[ oid ].tf_ids ;
 
             natus::memory::global_t::dealloc( _renders[ oid ].mem_block ) ;
             _renders[ oid ].mem_block = nullptr ;
@@ -1783,11 +1792,8 @@ struct gl3_backend::pimpl
         rd.valid = false ;
         rd.name = "released" ;
 
-        if( rd.geo_id != size_t( -1 ) ) 
-        {
-            _geometries[ rd.geo_id ].remove_render_data_id( oid ) ;
-            rd.geo_id = size_t( -1 ) ;
-        }
+        for( auto id : rd.geo_ids ) _geometries[ id ].remove_render_data_id( oid ) ;
+        rd.geo_ids.clear() ;
         
         rd.shd_id = GLuint( -1 ) ;
         rd.rss.clear() ;
@@ -1807,54 +1813,61 @@ struct gl3_backend::pimpl
     {
         auto& config = _renders[ id ] ;
 
-        // find geometry
+        // handle geometry links
         {
-            auto const iter = std::find_if( _geometries.begin(), _geometries.end(),
-                [&] ( this_t::geo_data const& d )
-            {
-                return d.name == rc.get_geometry() ;
-            } ) ;
-            
-            if( iter == _geometries.end() )
-            {
-                natus::log::global_t::warning( natus_log_fn(
-                    "no geometry with name [" + rc.get_geometry() + "] for render_data [" + rc.name() + "]" ) ) ;
-                return false ;
-            }
-
             // remove this render data id from the old geometry
-            if( config.geo_id != size_t( -1 ) ) 
-                _geometries[ config.geo_id ].remove_render_data_id( id ) ;
+            for( auto gid : config.geo_ids ) _geometries[ gid ].remove_render_data_id( id ) ;
+            config.geo_ids.clear() ;
 
-            config.geo_id = std::distance( _geometries.begin(), iter ) ;
-
-            // add this render data id to the new geometry
-            if( config.geo_id != size_t( -1 ) )
-                _geometries[ config.geo_id ].add_render_data_id( id ) ;
-        }
-
-        // find stream out object
-        if( rc.has_streamout_link() )
-        {
-            auto const iter = std::find_if( _feedbacks.begin(), _feedbacks.end(),
-                [&] ( this_t::tf_data const& d )
+            // find geometry
+            for( size_t i=0; i<rc.get_num_geometry(); ++i )
             {
-                return d.name == rc.get_streamout() ;
-            } ) ;
+                auto const iter = std::find_if( _geometries.begin(), _geometries.end(),
+                    [&] ( this_t::geo_data const& d )
+                {
+                    return d.name == rc.get_geometry(i) ;
+                } ) ;
+            
+                if( iter == _geometries.end() )
+                {
+                    natus::log::global_t::warning( natus_log_fn(
+                        "no geometry with name [" + rc.get_geometry() + "] for render_data [" + rc.name() + "]" ) ) ;
+                    continue ;
+                }
 
-            if( iter == _feedbacks.end() )
-            {
-                natus::log::global_t::warning( natus_log_fn(
-                    "no streamout object with name [" + rc.get_streamout() + "] for render_data [" + rc.name() + "]" ) ) ;
-                return false ;
+                config.geo_ids.emplace_back( std::distance( _geometries.begin(), iter ) ) ;
+                
+                // add this render data id to the new geometry
+                _geometries[ config.geo_ids.back() ].add_render_data_id( id ) ;
             }
-
-            // remove this render data id from the tf data
-            if( config.tf_id != size_t( -1 ) ) 
-                _feedbacks[ config.tf_id ].remove_render_data_id( id ) ;
-
-            config.tf_id = std::distance( _feedbacks.begin(), iter ) ;
         }
+
+        #if 0
+        {
+            // find stream out object
+            for( size_t i=0; i<rc.get_num_streamout(); ++i )
+            {
+                auto const iter = std::find_if( _feedbacks.begin(), _feedbacks.end(),
+                    [&] ( this_t::tf_data const& d )
+                {
+                    return d.name == rc.get_streamout(i) ;
+                } ) ;
+
+                if( iter == _feedbacks.end() )
+                {
+                    natus::log::global_t::warning( natus_log_fn(
+                        "no streamout object with name [" + rc.get_streamout() + "] for render_data [" + rc.name() + "]" ) ) ;
+                    return false ;
+                }
+
+                // remove this render data id from the tf data
+                if( config.tf_id != size_t( -1 ) ) 
+                    _feedbacks[ config.tf_id ].remove_render_data_id( id ) ;
+
+                config.tf_id = std::distance( _feedbacks.begin(), iter ) ;
+            }
+        }
+        #endif
 
         // find shader
         {
@@ -1874,9 +1887,10 @@ struct gl3_backend::pimpl
         }
         
         // for binding attributes, the shader and the geometry is required.
+        for( size_t i=0; i<config.geo_ids.size(); ++i )
         {
             this_t::shader_data_ref_t shd = _shaders[ config.shd_id ] ;
-            this_t::geo_data_ref_t geo = _geometries[ config.geo_id ] ;
+            this_t::geo_data_ref_t geo = _geometries[ config.geo_ids[i] ] ;
             this_t::bind_attributes( shd, geo ) ;
         }
 
@@ -2072,7 +2086,7 @@ struct gl3_backend::pimpl
         {
             if( rd_id == size_t( -1 ) ) continue ;
             auto & rd = _renders[ rd_id ] ;
-            rd.geo_id = GLuint( -1 ) ;
+            rd.remove_geometry_id( oid ) ;
         }
         geo.rd_ids.clear() ;
 
@@ -2657,12 +2671,19 @@ struct gl3_backend::pimpl
     }
 
     //****************************************************************************************
-    bool_t render( size_t const id, bool_t feed_from_tf = false, size_t const varset_id = size_t(0), GLsizei const start_element = GLsizei(0), 
+    bool_t render( size_t const id, size_t const geo_idx = 0, bool_t feed_from_tf = false, size_t const varset_id = size_t(0), GLsizei const start_element = GLsizei(0), 
         GLsizei const num_elements = GLsizei(-1) )
     {
         this_t::render_data & config = _renders[ id ] ;
         this_t::shader_data & sconfig = _shaders[ config.shd_id ] ;
-        this_t::geo_data & gconfig = _geometries[ config.geo_id ] ;
+
+        if( config.geo_ids.size() <= geo_idx ) 
+        {
+            natus::log::global_t::error( "[gl3::render] : used geometry idx invalid because exceeds array size for render object : " + config.name ) ;
+            return false ;
+        }
+
+        this_t::geo_data & gconfig = _geometries[ config.geo_ids[geo_idx] ] ;
 
         if( !sconfig.is_compilation_ok ) return false ;
 
@@ -2672,6 +2693,7 @@ struct gl3_backend::pimpl
                 return false ;
         }
 
+        #if 0
         if( feed_from_tf )
         {
             if( config.tf_id != size_t( -1 ) )
@@ -2689,6 +2711,7 @@ struct gl3_backend::pimpl
                 feed_from_tf = false ;
             }
         }
+        #endif
 
         {
             glUseProgram( sconfig.pg_id ) ;
@@ -2784,6 +2807,7 @@ struct gl3_backend::pimpl
             GLuint const ib = gconfig.ib_id ;
             //GLuint const vb = config.geo->vb_id ;
 
+            #if 0
             if( feed_from_tf && config.tf_id != size_t( -1 ) )
             {
                 GLuint num_prims = 0 ;
@@ -2795,7 +2819,9 @@ struct gl3_backend::pimpl
                 glDrawArrays( pt, start_element, num_prims ) ;
                 natus::ogl::error::check_and_log( natus_log_fn( "glDrawArrays" ) ) ;
             }
-            else if( gconfig.num_elements_ib > 0 )
+            else 
+                #endif
+                if( gconfig.num_elements_ib > 0 )
             {
                 GLsizei const max_elems = GLsizei( gconfig.num_elements_ib ) ;
                 GLsizei const ne = std::min( num_elements>=0?num_elements:max_elems, max_elems ) ;
@@ -2812,7 +2838,7 @@ struct gl3_backend::pimpl
             else
             {
                 GLsizei const max_elems = GLsizei( gconfig.num_elements_vb ) ;
-                GLsizei const ne = std::min( num_elements, max_elems ) ;
+                GLsizei const ne = std::max( 0, std::min( num_elements, max_elems ) ) ;
 
                 glDrawArrays( pt, start_element, ne ) ;
                 natus::ogl::error::check_and_log( natus_log_fn( "glDrawArrays" ) ) ;
@@ -3419,7 +3445,8 @@ natus::graphics::result gl3_backend::render( natus::graphics::render_object_res_
     // @todo
     // change per object render states here.
 
-    _pimpl->render( id->get_oid( this_t::get_bid() ), detail.feed_from_streamout, detail.varset, (GLsizei)detail.start, (GLsizei)detail.num_elems ) ;
+    _pimpl->render( id->get_oid( this_t::get_bid() ), detail.geo, detail.feed_from_streamout, 
+        detail.varset, (GLsizei)detail.start, (GLsizei)detail.num_elems ) ;
 
     return natus::graphics::result::ok ;
 }

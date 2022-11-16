@@ -106,6 +106,8 @@ struct d3d11_backend::pimpl
 {
     natus_this_typedefs( d3d11_backend::pimpl ) ;
 
+
+    //*******************************************************************************************
     struct geo_data
     {
         bool_t valid = false ;
@@ -229,6 +231,7 @@ struct d3d11_backend::pimpl
     };
     natus_typedef( geo_data ) ;
 
+    //*******************************************************************************************
     struct shader_data
     {
         bool_t valid = false ;
@@ -349,6 +352,8 @@ struct d3d11_backend::pimpl
     } ;
     natus_typedef( shader_data ) ;
 
+
+    //*******************************************************************************************
     struct image_data
     {
         bool_t valid = false ;
@@ -396,6 +401,7 @@ struct d3d11_backend::pimpl
     };
     natus_typedef( image_data ) ;
 
+    //*******************************************************************************************
     struct array_data
     {
         bool_t valid = false ;
@@ -428,6 +434,7 @@ struct d3d11_backend::pimpl
     };
     natus_typedef( array_data ) ;
 
+    //*******************************************************************************************
     struct render_state_sets
     {
         natus::graphics::render_state_sets_t rss ;
@@ -475,6 +482,7 @@ struct d3d11_backend::pimpl
     };
     natus_typedef( render_state_sets ) ;
 
+    //*******************************************************************************************
     struct state_data
     {
         bool_t valid = false ;
@@ -483,6 +491,7 @@ struct d3d11_backend::pimpl
     } ;
     natus_typedef( state_data ) ;
 
+    //*******************************************************************************************
     struct render_data
     {
         bool_t valid = false ;
@@ -641,6 +650,7 @@ struct d3d11_backend::pimpl
     };
     natus_typedef( render_data ) ;
 
+    //*******************************************************************************************
     struct framebuffer_data
     {
         bool_t valid = false ;
@@ -2560,7 +2570,7 @@ public: // functions
         return true ;
     }
 
-    bool_t render( size_t const id, size_t const varset_id = size_t( 0 ), UINT const start_element = UINT( 0 ),
+    bool_t render( size_t const id, size_t const geo_idx, size_t const varset_id = size_t( 0 ), UINT const start_element = UINT( 0 ),
         UINT const num_elements = UINT( -1 ) )
     {
         this_t::render_data_ref_t rnd = renders[ id ] ;
@@ -3390,7 +3400,7 @@ natus::graphics::result d3d11_backend::render( natus::graphics::render_object_re
         return natus::graphics::result::failed ;
     }
 
-    _pimpl->render( id->get_oid( this_t::get_bid() ), 
+    _pimpl->render( id->get_oid( this_t::get_bid() ), detail.geo,
         detail.varset, (UINT)detail.start, (UINT)detail.num_elems ) ;
     
     return natus::graphics::result::ok ;

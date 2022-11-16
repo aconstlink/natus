@@ -23,9 +23,9 @@ namespace natus
         private:
 
             natus::ntd::string_t _name ;
-            natus::ntd::string_t _geo ;
+            natus::ntd::vector< natus::ntd::string_t > _geo ;
             natus::ntd::string_t _shader ;
-            natus::ntd::string_t _soo ;
+            natus::ntd::vector< natus::ntd::string_t > _soo ;
 
             natus::ntd::vector< natus::graphics::variable_set_res_t > _vars ;
             natus::ntd::vector< natus::graphics::render_state_sets_t > _states ;
@@ -88,7 +88,13 @@ namespace natus
             
             this_ref_t link_geometry( natus::ntd::string_cref_t name ) noexcept 
             {
-                _geo = name ;
+                _geo.emplace_back( name ) ;
+                return *this ;
+            }
+
+            this_ref_t link_geometry( std::initializer_list< natus::ntd::string_t > const & names ) noexcept 
+            {
+                for( auto const & name : names ) _geo.emplace_back( name ) ;
                 return *this ;
             }
 
@@ -96,19 +102,22 @@ namespace natus
             // the geometry is then mainly used for geometry layout.
             this_ref_t link_geometry( natus::ntd::string_cref_t name, natus::ntd::string_cref_t soo_name ) noexcept 
             {
-                _geo = name ;
-                _soo = soo_name ;
+                _geo.emplace_back( name ) ;
+                _soo.emplace_back( soo_name ) ;
                 return *this ;
             }
 
-            natus::ntd::string_cref_t get_geometry( void_t ) const noexcept
+            size_t get_num_geometry( void_t ) const noexcept{ return _geo.size() ; }
+            size_t get_num_streamout( void_t ) const noexcept{ return _soo.size() ; }
+
+            natus::ntd::string_cref_t get_geometry( size_t const i = 0 ) const noexcept
             {
-                return _geo ;
+                return _geo[i] ;
             }
 
-            natus::ntd::string_cref_t get_streamout( void_t ) const noexcept
+            natus::ntd::string_cref_t get_streamout( size_t const i = 0 ) const noexcept
             {
-                return _soo ;
+                return _soo[i] ;
             }
 
             bool_t has_streamout_link( void_t ) const noexcept
