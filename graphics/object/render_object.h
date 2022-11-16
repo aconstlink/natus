@@ -25,6 +25,7 @@ namespace natus
             natus::ntd::string_t _name ;
             natus::ntd::string_t _geo ;
             natus::ntd::string_t _shader ;
+            natus::ntd::string_t _soo ;
 
             natus::ntd::vector< natus::graphics::variable_set_res_t > _vars ;
             natus::ntd::vector< natus::graphics::render_state_sets_t > _states ;
@@ -42,15 +43,17 @@ namespace natus
                 _shader = rhv._shader ;
                 _vars = rhv._vars ;
                 _states = rhv._states ;
+                _soo = rhv._soo ;
             }
 
-            render_object( this_rref_t rhv ) : object( ::std::move( rhv ) )
+            render_object( this_rref_t rhv ) : object( std::move( rhv ) )
             {
                 _name = std::move( rhv._name ) ;
                 _geo = std::move( rhv._geo ) ;
                 _shader = std::move( rhv._shader ) ;
                 _vars = std::move( rhv._vars ) ;
                 _states = std::move( rhv._states ) ;
+                _soo = std::move( rhv._soo ) ;
             }
 
             this_ref_t operator = ( this_cref_t rhv ) noexcept
@@ -62,6 +65,7 @@ namespace natus
                 _shader = rhv._shader ;
                 _vars = rhv._vars ;
                 _states = rhv._states ;
+                _soo = rhv._soo ;
 
                 return *this ;
             }
@@ -75,14 +79,12 @@ namespace natus
                 _shader = std::move( rhv._shader ) ;
                 _vars = std::move( rhv._vars ) ;
                 _states = std::move( rhv._states ) ;
+                _soo = std::move( rhv._soo ) ;
 
                 return *this ;
             }
 
         public:
-
-            // render states
-            // textures
             
             this_ref_t link_geometry( natus::ntd::string_cref_t name ) noexcept 
             {
@@ -90,9 +92,28 @@ namespace natus
                 return *this ;
             }
 
+            // link to stream out object so geometry can be fed from there.
+            // the geometry is then mainly used for geometry layout.
+            this_ref_t link_geometry( natus::ntd::string_cref_t name, natus::ntd::string_cref_t soo_name ) noexcept 
+            {
+                _geo = name ;
+                _soo = soo_name ;
+                return *this ;
+            }
+
             natus::ntd::string_cref_t get_geometry( void_t ) const noexcept
             {
                 return _geo ;
+            }
+
+            natus::ntd::string_cref_t get_streamout( void_t ) const noexcept
+            {
+                return _soo ;
+            }
+
+            bool_t has_streamout_link( void_t ) const noexcept
+            {
+                return !_soo.empty() ;
             }
 
             this_ref_t link_shader( natus::ntd::string_cref_t name ) noexcept

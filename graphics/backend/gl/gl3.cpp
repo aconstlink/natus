@@ -33,13 +33,49 @@ struct gl3_backend::pimpl
 
         struct buffer
         {
-            GLuint id = GLuint(-1) ;
-            GLuint sib = 0 ;
+            // buffer ids
+            GLuint ids[2] = { GLuint(-1), GLuint(-1) }  ;
+            GLuint sib[2] = { 0, 0 } ;
         };
         buffer buffers[max_buffers] ;
 
         // query object id
-        GLuint qid = GLuint( -1 ) ;
+        GLuint qids[2] = { GLuint(-1), GLuint(-1) }  ;
+
+        // if the tf is read and written at the 
+        // same time, this index is used for ping-ponging
+        // the id array within a buffer.
+        size_t _widx = 0 ;
+
+        // for tf reconfig - render data ids
+        natus::ntd::vector< size_t > rd_ids ;
+        void_t remove_render_data_id( size_t const rid ) noexcept
+        {
+            if( rid == size_t( -1 ) ) return ;
+            for( auto & id : rd_ids ) if( id == rid ) { id = size_t( -1 ) ; break ; }
+        }
+
+        void_t add_render_data_id( size_t const rid ) noexcept
+        {
+            if( rid == size_t( -1 ) ) return ;
+            for( auto& id : rd_ids ) if( id == size_t( -1 ) ) { id = rid ; return ; }
+            rd_ids.push_back( rid ) ;
+        }
+
+        size_t read_index( void_t ) const noexcept
+        {
+            return (_widx + 1) & 1 ;
+        }
+
+        size_t write_index( void_t ) const noexcept
+        {
+            return _widx ;
+        }
+
+        void_t swap_index( void_t ) noexcept
+        {
+            _widx = ++_widx % 2 ;
+        }
     };
     natus_typedef( tf_data ) ;
 
@@ -211,6 +247,9 @@ struct gl3_backend::pimpl
 
         size_t geo_id = size_t( -1 ) ;
         size_t shd_id = size_t( -1 ) ;
+
+        // feed from for geometry
+        size_t tf_id = size_t( -1 ) ;
 
         struct uniform_variable_link
         {
@@ -980,20 +1019,26 @@ struct gl3_backend::pimpl
 
         auto & data = _feedbacks[_tf_active_id] ;
         
+        auto const wrt_idx = data.write_index() ;
+
         // bind buffers
         {
-            GLuint i = 0 ;
-            while( data.buffers[i].id != GLuint(-1) )
+            for( size_t i=0; i<tf_data::max_buffers; ++i )
             {
-                glBindBufferRange( GL_TRANSFORM_FEEDBACK_BUFFER, i, data.buffers[i].id, 0, data.buffers[i].sib ) ;
+                auto & buffer = data.buffers[i] ;
+                auto const id = buffer.ids[ wrt_idx ] ;
+                auto const sib = buffer.sib[ wrt_idx ] ;
+
+                if( id == GLuint(-1) ) break ;
+
+                glBindBufferRange( GL_TRANSFORM_FEEDBACK_BUFFER, GLuint(i), id, 0, sib ) ;
                 natus::ogl::error::check_and_log( natus_log_fn( "glBindBufferRange" ) ) ;
-                ++i ;
             }
         }
 
         // query written primitives
         {
-            glBeginQuery( GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN, data.qid ) ;
+            glBeginQuery( GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN, data.qids[wrt_idx] ) ;
             natus::ogl::error::check_and_log( natus_log_fn( "glBeginQuery" ) ) ;
         }
 
@@ -1021,16 +1066,20 @@ struct gl3_backend::pimpl
             glEndQuery( GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN ) ;
             natus::ogl::error::check_and_log( natus_log_fn( "glEndQuery" ) ) ;
         }
-
-        // DEBUG PURPOSE ONLY: Check number of written primitives
-        #if 1
+        
+        // swap the indices of the ping-pong buffers
         {
-            GLuint num_written = 0 ;
-            glGetQueryObjectuiv( _feedbacks[ _tf_active_id ].qid, GL_QUERY_RESULT, &num_written ) ;
+            _feedbacks[ _tf_active_id ].swap_index() ;
+        }
+
+        GLuint num_prims = 0 ;
+        {
+            auto & tfd = _feedbacks[ _tf_active_id] ;
+            auto const ridx = tfd.read_index();
+            glGetQueryObjectuiv( tfd.qids[ridx], GL_QUERY_RESULT, &num_prims ) ;
             natus::ogl::error::check_and_log( natus_log_fn( "glGetQueryObjectuiv" ) ) ;
         }
-        #endif
-        
+
         _tf_active_id = size_t(-1) ;
     }
 
@@ -1402,7 +1451,7 @@ struct gl3_backend::pimpl
     }
 
     //****************************************************************************************
-    bool_t bind_attributes( this_t::shader_data & sconfig, this_t::geo_data & gconfig )
+    bool_t bind_attributes( this_t::shader_data & sconfig, this_t::geo_data & gconfig ) noexcept
     {
         // bind vertex array object
         {
@@ -1714,6 +1763,10 @@ struct gl3_backend::pimpl
             _renders[ oid ].var_sets_texture.clear() ;
             _renders[ oid ].var_sets_array.clear() ;
             _renders[ oid ].var_sets.clear() ;
+            
+            _renders[ oid ].geo_id = size_t( -1 ) ;
+            _renders[ oid ].shd_id = size_t( -1 ) ;
+            _renders[ oid ].tf_id = size_t( -1 ) ;
 
             natus::memory::global_t::dealloc( _renders[ oid ].mem_block ) ;
             _renders[ oid ].mem_block = nullptr ;
@@ -1750,13 +1803,13 @@ struct gl3_backend::pimpl
     }
 
     //****************************************************************************************
-    bool_t update( size_t const id, natus::graphics::render_object_ref_t rc )
+    bool_t update( size_t const id, natus::graphics::render_object_ref_t rc ) noexcept
     {
         auto& config = _renders[ id ] ;
 
         // find geometry
         {
-            auto const iter = ::std::find_if( _geometries.begin(), _geometries.end(),
+            auto const iter = std::find_if( _geometries.begin(), _geometries.end(),
                 [&] ( this_t::geo_data const& d )
             {
                 return d.name == rc.get_geometry() ;
@@ -1778,6 +1831,29 @@ struct gl3_backend::pimpl
             // add this render data id to the new geometry
             if( config.geo_id != size_t( -1 ) )
                 _geometries[ config.geo_id ].add_render_data_id( id ) ;
+        }
+
+        // find stream out object
+        if( rc.has_streamout_link() )
+        {
+            auto const iter = std::find_if( _feedbacks.begin(), _feedbacks.end(),
+                [&] ( this_t::tf_data const& d )
+            {
+                return d.name == rc.get_streamout() ;
+            } ) ;
+
+            if( iter == _feedbacks.end() )
+            {
+                natus::log::global_t::warning( natus_log_fn(
+                    "no streamout object with name [" + rc.get_streamout() + "] for render_data [" + rc.name() + "]" ) ) ;
+                return false ;
+            }
+
+            // remove this render data id from the tf data
+            if( config.tf_id != size_t( -1 ) ) 
+                _feedbacks[ config.tf_id ].remove_render_data_id( id ) ;
+
+            config.tf_id = std::distance( _feedbacks.begin(), iter ) ;
         }
 
         // find shader
@@ -2367,27 +2443,31 @@ struct gl3_backend::pimpl
 
         for( size_t i=0; i<req_buffers; ++i )
         {
-            if( data.buffers[i].id != GLuint(-1) ) continue ;
+            auto & buffer = data.buffers[i] ;
+
+            if( buffer.ids[0] != GLuint(-1) ) continue ;
             
             GLuint id = GLuint( -1 ) ;
-            glGenBuffers( 1, &id ) ;
+            glGenBuffers( 2, buffer.ids ) ;
             error = natus::ogl::error::check_and_log( 
                 natus_log_fn( "[construct_tf_data] : glGenBuffers" ) ) ;
 
-            data.buffers[i].id = id ;
-            data.buffers[i].sib = 0 ;
+            data.buffers[i].sib[0] = 0 ;
+            data.buffers[i].sib[1] = 0 ;
         }
 
         for( size_t i=req_buffers; i<this_t::tf_data::max_buffers; ++i )
         {
-            if( data.buffers[i].id == GLuint(-1) ) break ;
-            glDeleteBuffers( 1, &data.buffers[i].id ) ;
+            if( data.buffers[i].ids[0] == GLuint(-1) ) break ;
+            glDeleteBuffers( 2, data.buffers[i].ids ) ;
             natus::ogl::error::check_and_log( natus_log_fn( "glDeleteBuffers" ) ) ;
+            data.buffers[i].ids[0] = GLuint( -1 ) ;
+            data.buffers[i].ids[1] = GLuint( -1 ) ;
         }
 
-        if( data.qid == GLuint(-1) )
+        if( data.qids[0] == GLuint(-1) )
         {
-            glGenQueries( 1, &data.qid ) ;
+            glGenQueries( 2, data.qids ) ;
             natus::ogl::error::check_and_log( natus_log_fn( "glGenQueries" ) ) ;
         }
 
@@ -2401,23 +2481,23 @@ struct gl3_backend::pimpl
 
         for( GLuint i=0; i<tf_data_t::max_buffers; ++i )
         {
-            if( d.buffers[i].id == GLuint( -1 ) ) break ;
+            if( d.buffers[i].ids[0] == GLuint( -1 ) ) break ;
 
-            glDeleteBuffers( 1, &d.buffers[i].id ) ;
+            glDeleteBuffers( 2, d.buffers[i].ids ) ;
             natus::ogl::error::check_and_log( natus_log_fn( "glDeleteBuffers" ) ) ;
-            d.buffers[i].id = GLuint( -1 ) ;
-            d.buffers[i].sib = 0 ;
+            d.buffers[i].ids[0] = GLuint( -1 ) ; d.buffers[i].ids[1] = GLuint( -1 ) ;
+            d.buffers[i].sib[0] = 0 ; d.buffers[i].sib[1] = 0 ;
         }
 
-        if( d.qid != GLuint(-1) )
+        if( d.qids[0] != GLuint(-1) )
         {
-            glDeleteQueries( 1, &d.qid ) ;
+            glDeleteQueries( 2, d.qids ) ;
             natus::ogl::error::check_and_log( natus_log_fn( "glDeleteBuffers" ) ) ;
-            d.qid = GLuint( -1 ) ;
+            d.qids[0] = GLuint( -1 ) ; d.qids[1] = GLuint( -1 ) ;
         }
 
         d.valid = false ;
-        d.name = "released" ;
+        d.name = "__released__" ;
 
         return true ;
     }
@@ -2478,24 +2558,28 @@ struct gl3_backend::pimpl
         size_t const ne = obj.size() ;
 
         size_t i=0; 
-        while( data.buffers[i].id != GLuint(-1) )
+        while( data.buffers[i].ids[0] != GLuint(-1) )
         {
-            // bind buffer
+            for( size_t j=0; j<2; ++j )
             {
-                glBindBuffer( GL_TRANSFORM_FEEDBACK_BUFFER, data.buffers[i].id ) ;
-                if( natus::ogl::error::check_and_log( natus_log_fn("glBindBuffer") ) )
-                    return false ;
-            }
+                // bind buffer
+                {
+                    glBindBuffer( GL_TRANSFORM_FEEDBACK_BUFFER, data.buffers[i].ids[j] ) ;
+                    if( natus::ogl::error::check_and_log( natus_log_fn("glBindBuffer") ) )
+                        return false ;
+                }
 
-            // allocate data
-            GLuint const sib = GLuint( obj.buffer( i ).get_layout_sib() * obj.size() ) ;
-            if( is_config || sib > data.buffers[i].sib )
-            {
-                glBufferData( GL_TRANSFORM_FEEDBACK_BUFFER, sib, nullptr, GL_DYNAMIC_DRAW ) ;
-                if( natus::ogl::error::check_and_log( natus_log_fn( "glBufferData" ) ) )
-                    return false ;
-                data.buffers[i].sib = sib ;
+                // allocate data
+                GLuint const sib = GLuint( obj.buffer( i ).get_layout_sib() * obj.size() ) ;
+                if( is_config || sib > data.buffers[i].sib[j] )
+                {
+                    glBufferData( GL_TRANSFORM_FEEDBACK_BUFFER, sib, nullptr, GL_DYNAMIC_DRAW ) ;
+                    if( natus::ogl::error::check_and_log( natus_log_fn( "glBufferData" ) ) )
+                        return false ;
+                    data.buffers[i].sib[j] = sib ;
+                }
             }
+            
             ++i ;
         }
 
@@ -2573,19 +2657,37 @@ struct gl3_backend::pimpl
     }
 
     //****************************************************************************************
-    bool_t render( size_t const id, size_t const varset_id = size_t(0), GLsizei const start_element = GLsizei(0), 
+    bool_t render( size_t const id, bool_t feed_from_tf = false, size_t const varset_id = size_t(0), GLsizei const start_element = GLsizei(0), 
         GLsizei const num_elements = GLsizei(-1) )
     {
         this_t::render_data & config = _renders[ id ] ;
         this_t::shader_data & sconfig = _shaders[ config.shd_id ] ;
         this_t::geo_data & gconfig = _geometries[ config.geo_id ] ;
 
-        if( !sconfig.is_compilation_ok )
-            return false ;
+        if( !sconfig.is_compilation_ok ) return false ;
+
         {
             glBindVertexArray( gconfig.va_id ) ;
             if( natus::ogl::error::check_and_log( natus_log_fn( "glBindVertexArray" ) ) )
                 return false ;
+        }
+
+        if( feed_from_tf )
+        {
+            if( config.tf_id != size_t( -1 ) )
+            {
+                this_t::tf_data & tfd = _feedbacks[ config.tf_id ] ;
+                glBindBuffer( GL_ARRAY_BUFFER, tfd.buffers[0].ids[ tfd.read_index() ] ) ;
+                if( natus::ogl::error::check_and_log( natus_log_fn("glBindBuffer(GL_ARRAY_BUFFER)") ) ) 
+                    return false ;
+            }
+            else
+            {
+                natus::log::global_t::warning( "want to feed from streamout buffer but no such buffer bound. "
+                    "Keeping geometry bound.") ;
+
+                feed_from_tf = false ;
+            }
         }
 
         {
@@ -2682,7 +2784,18 @@ struct gl3_backend::pimpl
             GLuint const ib = gconfig.ib_id ;
             //GLuint const vb = config.geo->vb_id ;
 
-            if( gconfig.num_elements_ib > 0 )
+            if( feed_from_tf && config.tf_id != size_t( -1 ) )
+            {
+                GLuint num_prims = 0 ;
+                {
+                    auto & tfd = _feedbacks[ config.tf_id ] ;
+                    glGetQueryObjectuiv( tfd.qids[tfd.read_index()], GL_QUERY_RESULT, &num_prims ) ;
+                    natus::ogl::error::check_and_log( natus_log_fn( "glGetQueryObjectuiv" ) ) ;
+                }
+                glDrawArrays( pt, start_element, num_prims ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glDrawArrays" ) ) ;
+            }
+            else if( gconfig.num_elements_ib > 0 )
             {
                 GLsizei const max_elems = GLsizei( gconfig.num_elements_ib ) ;
                 GLsizei const ne = std::min( num_elements>=0?num_elements:max_elems, max_elems ) ;
@@ -3306,7 +3419,7 @@ natus::graphics::result gl3_backend::render( natus::graphics::render_object_res_
     // @todo
     // change per object render states here.
 
-    _pimpl->render( id->get_oid( this_t::get_bid() ), detail.varset, (GLsizei)detail.start, (GLsizei)detail.num_elems ) ;
+    _pimpl->render( id->get_oid( this_t::get_bid() ), detail.feed_from_streamout, detail.varset, (GLsizei)detail.start, (GLsizei)detail.num_elems ) ;
 
     return natus::graphics::result::ok ;
 }
