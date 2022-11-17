@@ -33,6 +33,18 @@ namespace natus
                 return 0 ;
             }
 
+            static GLuint primitive_type_to_num_vertices( GLenum const pt ) noexcept
+            {
+                switch( pt )
+                {
+                case GL_LINES: return 2 ;
+                case GL_TRIANGLES: return 3 ;
+                case GL_POINTS: return 1 ;
+                default:break ;
+                }
+                return 0 ;
+            }
+
             static ::std::pair< natus::graphics::type, natus::graphics::type_struct >  
                 to_type_type_struct( GLenum const e ) noexcept
             {

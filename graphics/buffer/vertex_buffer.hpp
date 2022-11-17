@@ -109,7 +109,7 @@ namespace natus
             void_cptr_t data( void_t ) const noexcept { return _data ; }
 
             this_ref_t add_layout_element( natus::graphics::vertex_attribute const va, 
-                natus::graphics::type const t, natus::graphics::type_struct const ts )
+                natus::graphics::type const t, natus::graphics::type_struct const ts ) noexcept
             {
                 this_t::data_t d ;
                 d.va = va ;
@@ -121,7 +121,15 @@ namespace natus
                 return *this ;
             }
             
-            void_t for_each_layout_element( ::std::function< void_t ( data_cref_t d ) > funk )
+            void_t for_each_layout_element( std::function< void_t ( data_cref_t d ) > funk ) const noexcept
+            {
+                for( auto const & le : _vertex_layout )
+                {
+                    funk( le ) ;
+                }
+            }
+
+            void_t for_each_layout_element( std::function< void_t ( data_ref_t d ) > funk ) noexcept
             {
                 for( auto & le : _vertex_layout )
                 {
@@ -129,7 +137,7 @@ namespace natus
                 }
             }
 
-            size_t get_layout_element_sib( natus::graphics::vertex_attribute const va )
+            size_t get_layout_element_sib( natus::graphics::vertex_attribute const va ) const noexcept
             {
                 auto iter = ::std::find_if( _vertex_layout.begin(), _vertex_layout.end(), 
                     [&]( data_cref_t d )

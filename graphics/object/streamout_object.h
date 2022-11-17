@@ -15,7 +15,7 @@ namespace natus
 
             natus::ntd::string_t _name ;
 
-            typedef natus::ntd::vector< natus::graphics::data_buffer_t > buffers_t ;
+            typedef natus::ntd::vector< natus::graphics::vertex_buffer_t > buffers_t ;
             buffers_t _dbs ;
 
             // used for gpu only memory. So buffers do not require any CPU memory.
@@ -28,14 +28,14 @@ namespace natus
             streamout_object( natus::ntd::string_cref_t name ) : _name(name)
             {}
 
-            streamout_object( natus::ntd::string_cref_t name, natus::graphics::data_buffer_cref_t db ) : _name(name)
+            streamout_object( natus::ntd::string_cref_t name, natus::graphics::vertex_buffer_cref_t vb ) : _name(name)
             {
-                _dbs.emplace_back( db ) ;
+                _dbs.emplace_back( vb ) ;
             }
 
-            streamout_object( natus::ntd::string_cref_t name, natus::graphics::data_buffer_rref_t db ) : _name(name)
+            streamout_object( natus::ntd::string_cref_t name, natus::graphics::vertex_buffer_rref_t vb ) : _name(name)
             {
-                _dbs.emplace_back( std::move( db ) ) ;
+                _dbs.emplace_back( std::move( vb ) ) ;
             }
 
             streamout_object( this_cref_t rhv ) noexcept : object( rhv ) 
@@ -77,8 +77,24 @@ namespace natus
         public:
 
             size_t num_buffers( void_t ) const noexcept{ return _dbs.size() ; }
-            natus::graphics::data_buffer_ref_t buffer( size_t const i ) noexcept{ return _dbs[i] ; } 
-            natus::graphics::data_buffer_cref_t buffer( size_t const i ) const noexcept{ return _dbs[i] ; } 
+
+            typedef std::function< void_t ( size_t const i, natus::graphics::vertex_buffer_ref_t vb ) > for_each_buffer_funk_t ;
+
+            this_ref_t for_each( for_each_buffer_funk_t f ) noexcept
+            {
+                size_t i = 0 ;
+                for( auto & vb : _dbs ) { f( i++, vb ) ; }
+                return *this ;
+            }
+
+            this_ref_t on_buffer( size_t const i, for_each_buffer_funk_t f ) noexcept
+            {
+                if( i >= _dbs.size() ) return *this ;
+                f( i, _dbs[i] ) ;
+                return *this ;
+            }
+
+            vertex_buffer_ref_t get_buffer( size_t const i ) noexcept { return _dbs[i] ; }
 
             natus::ntd::string_cref_t name( void_t ) const noexcept
             {
