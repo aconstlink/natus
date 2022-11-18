@@ -106,6 +106,11 @@ struct d3d11_backend::pimpl
 {
     natus_this_typedefs( d3d11_backend::pimpl ) ;
 
+    //*******************************************************************************************
+    struct so_data
+    {
+        guard< ID3D11Buffer > buffers[2] ;
+    };
 
     //*******************************************************************************************
     struct geo_data
@@ -758,6 +763,7 @@ public: // variables
 
 public: // functions
 
+    //******************************************************************************************************************************
     pimpl( natus::graphics::d3d11_context_ptr_t ctx ) noexcept
     {
         _ctx = ctx ;
@@ -784,6 +790,7 @@ public: // functions
         }
     }
 
+    //******************************************************************************************************************************
     // @todo is the move required? pimpl is only used via
     // pointer movement.
     pimpl( pimpl && rhv ) noexcept
@@ -801,6 +808,7 @@ public: // functions
         _cur_fb_active = rhv._cur_fb_active ;
     }
     
+    //******************************************************************************************************************************
     ~pimpl( void_t ) 
     {
         for( auto & g : geo_datas ) g.invalidate() ;
@@ -827,6 +835,7 @@ public: // functions
         _cur_fb_active = size_t( -1 ) ;
     }
 
+    //******************************************************************************************************************************
     size_t construct_state( size_t oid, natus::graphics::state_object_ref_t obj ) noexcept
     {
         oid = determine_oid( obj.name(), state_sets ) ;
@@ -845,10 +854,13 @@ public: // functions
 
         return oid ;
     }
+
+    //******************************************************************************************************************************
     void_t release_state( size_t const oid ) noexcept 
     {
     }
 
+    //******************************************************************************************************************************
     void_t handle_render_state( this_t::render_state_sets & new_states, bool_t const popped )
     {
         //  viewport
@@ -1014,6 +1026,7 @@ public: // functions
         
     }
 
+    //******************************************************************************************************************************
     // if oid == -1, the state is popped.
     void_t handle_render_state( size_t const oid, size_t const rs_id ) noexcept
     {
@@ -1054,6 +1067,7 @@ public: // functions
         }
     }
 
+    //******************************************************************************************************************************
     size_t construct_framebuffer( size_t oid, natus::graphics::framebuffer_object_ref_t obj ) noexcept
     {
         oid = determine_oid( obj.name(), framebuffers ) ;
@@ -1351,12 +1365,15 @@ public: // functions
 
         return oid ;
     }
+
+    //******************************************************************************************************************************
     void_t release_framebuffer( size_t const oid ) noexcept 
     {
         auto & fb = framebuffers[ oid ] ;
         fb.invalidate() ;
     }
 
+    //******************************************************************************************************************************
     bool_t activate_framebuffer( size_t const oid ) noexcept
     {
         framebuffer_data_ref_t fb = framebuffer_data_ref_t( framebuffers[ oid ] ) ;
@@ -1368,6 +1385,7 @@ public: // functions
         return true ;
     }
 
+    //******************************************************************************************************************************
     void_t deactivate_framebuffer( void_t )
     {
         _ctx->activate_framebuffer() ;
@@ -1390,6 +1408,7 @@ public: // functions
 
     }
 
+    //******************************************************************************************************************************
     size_t construct_geo( size_t oid, natus::graphics::geometry_object_ref_t obj )
     {
         oid = this_t::determine_oid( obj.name(), geo_datas ) ;
@@ -1510,6 +1529,8 @@ public: // functions
 
         return oid ;
     }
+
+    //******************************************************************************************************************************
     void_t release_geometry( size_t const oid ) noexcept 
     {
         for( auto & r : renders )
@@ -1525,6 +1546,7 @@ public: // functions
         o.invalidate() ;
     }
 
+    //******************************************************************************************************************************
     bool_t update( size_t const id, natus::graphics::geometry_object_res_t geo )
     {
         auto& config = geo_datas[ id ] ;
@@ -1623,6 +1645,7 @@ public: // functions
         return true ;
     }
 
+    //******************************************************************************************************************************
     size_t construct_shader_config( size_t oid, natus::graphics::shader_object_ref_t obj )
     {
         oid = this_t::determine_oid( obj.name(), shaders ) ;
@@ -1865,6 +1888,8 @@ public: // functions
 
         return oid ;
     }
+
+    //******************************************************************************************************************************
     void_t release_shader_data( size_t const oid ) noexcept 
     {
         for( auto & r : renders )
@@ -1877,7 +1902,7 @@ public: // functions
 
     }
 
-    //***********************
+    //******************************************************************************************************************************
     size_t construct_render_config( size_t oid, natus::graphics::render_object_ref_t obj )
     {
         oid = this_t::determine_oid( obj.name(), renders ) ;
@@ -1895,12 +1920,15 @@ public: // functions
 
         return oid ;
     }
+
+    //******************************************************************************************************************************
     void_t release_render_data( size_t const oid ) noexcept 
     {
         auto & o = renders[ oid ] ;
         o.invalidate() ;
     }
 
+    //******************************************************************************************************************************
     bool_t update( size_t const id, natus::graphics::render_object_ref_t rc )
     {
         auto& rd = renders[ id ] ;
@@ -2252,7 +2280,7 @@ public: // functions
         return true ;
     }
 
-    //***********************
+    //******************************************************************************************************************************
     size_t construct_image_config( size_t oid, natus::graphics::image_object_ref_t obj )
     {
         oid = this_t::determine_oid( obj.name(), images ) ;
@@ -2376,12 +2404,15 @@ public: // functions
 
         return oid ;
     }
+
+    //******************************************************************************************************************************
     void_t release_image_data( size_t const oid ) noexcept 
     {
         auto & o = images[ oid ] ;
         o.invalidate() ;
     }
 
+    //******************************************************************************************************************************
     size_t construct_array_data( size_t oid, natus::graphics::array_object_ref_t obj ) 
     {
         oid = this_t::determine_oid( obj.name(), arrays ) ;
@@ -2469,12 +2500,15 @@ public: // functions
 
         return oid ;
     }
+
+    //******************************************************************************************************************************
     void_t release_array_data( size_t const oid ) noexcept 
     {
         auto & o = arrays[ oid ] ;
         o.invalidate() ;
     }
 
+    //******************************************************************************************************************************
     bool_t update( size_t const id, natus::graphics::array_object_ref_t obj, bool_t const is_config )
     {
         auto & data = arrays[ id ] ;
@@ -2504,11 +2538,13 @@ public: // functions
         return true ;
     }
 
+    //******************************************************************************************************************************
     bool_t update( size_t const id, natus::graphics::streamout_object_ref_t obj, bool_t const is_config )
     {
         return false ;
     }
 
+    //******************************************************************************************************************************
     bool_t update( size_t const id, natus::graphics::render_object_ref_t obj, size_t const varset_id )
     {
         this_t::render_data_ref_t rnd = renders[ id ] ;
@@ -2576,6 +2612,7 @@ public: // functions
         return true ;
     }
 
+    //******************************************************************************************************************************
     bool_t render( size_t const id, size_t const geo_idx, size_t const varset_id = size_t( 0 ), UINT const start_element = UINT( 0 ),
         UINT const num_elements = UINT( -1 ) )
     {
@@ -2661,6 +2698,7 @@ public: // functions
         return true ;
     }
 
+    //******************************************************************************************************************************
     void_t begin_frame( void_t )
     {
         // set the viewport to the default new state, 
@@ -2689,11 +2727,13 @@ public: // functions
         }
     }
 
+    //******************************************************************************************************************************
     void_t end_frame( void_t )
     {
         this->handle_render_state( size_t( -1 ), size_t( -1 ) ) ;
     }
 
+    //******************************************************************************************************************************
     natus::ntd::string_t remove_unwanded_characters( natus::ntd::string_cref_t code_in ) const noexcept
     {
         auto code = code_in ;
@@ -2719,6 +2759,7 @@ public: // functions
         return std::move( code ) ;
     }
 
+    //******************************************************************************************************************************
     static bool_t determine_texture( ID3DBlob * blob,
         shader_data_t::image_variables_out_t img_vars, 
         shader_data_t::buffer_variables_out_t buf_vars ) noexcept
@@ -2790,6 +2831,7 @@ public: // functions
         return true ;
     }
 
+    //******************************************************************************************************************************
     // performs reflection on the constant buffers present in
     // a shader for user variable binding
     static shader_data_t::cbuffers_t determine_cbuffer( ID3DBlob * blob ) noexcept
@@ -2906,7 +2948,7 @@ public: // functions
 //
 //************************************************************************************************
 
-//****
+//******************************************************************************************************************************
 d3d11_backend::d3d11_backend( natus::graphics::d3d11_context_ptr_t ctx ) noexcept : 
     backend( natus::graphics::backend_type::d3d11 )
 {
@@ -2916,20 +2958,20 @@ d3d11_backend::d3d11_backend( natus::graphics::d3d11_context_ptr_t ctx ) noexcep
     _context = ctx ;
 }
 
-//****
+//******************************************************************************************************************************
 d3d11_backend::d3d11_backend( this_rref_t rhv ) noexcept : backend( ::std::move( rhv ) )
 {
     natus_move_member_ptr( _pimpl, rhv ) ;
     natus_move_member_ptr( _context, rhv ) ;
 }
 
-//****
+//******************************************************************************************************************************
 d3d11_backend::~d3d11_backend( void_t ) 
 {
     natus::memory::global_t::dealloc( _pimpl ) ;
 }
 
-//****
+//******************************************************************************************************************************
 void_t d3d11_backend::set_window_info( window_info_cref_t wi ) noexcept 
 {
     {
@@ -2947,7 +2989,7 @@ void_t d3d11_backend::set_window_info( window_info_cref_t wi ) noexcept
     }
 }
 
-//****
+//******************************************************************************************************************************
 natus::graphics::result d3d11_backend::configure( natus::graphics::geometry_object_res_t obj ) noexcept 
 {
     if( !obj.is_valid() || obj->name().empty() )
@@ -2974,7 +3016,7 @@ natus::graphics::result d3d11_backend::configure( natus::graphics::geometry_obje
     return natus::graphics::result::ok ;
 }
 
-//****
+//******************************************************************************************************************************
 natus::graphics::result d3d11_backend::configure( natus::graphics::render_object_res_t obj ) noexcept 
 {
     if( !obj.is_valid() || obj->name().empty() )
@@ -3003,7 +3045,7 @@ natus::graphics::result d3d11_backend::configure( natus::graphics::render_object
     return natus::graphics::result::ok ;
 }
 
-//***
+//******************************************************************************************************************************
 natus::graphics::result d3d11_backend::configure( natus::graphics::shader_object_res_t obj ) noexcept
 {
     if( !obj.is_valid() || obj->name().empty() )
@@ -3033,7 +3075,7 @@ natus::graphics::result d3d11_backend::configure( natus::graphics::shader_object
     return natus::graphics::result::ok ;
 }
 
-//***
+//******************************************************************************************************************************
 natus::graphics::result d3d11_backend::configure( natus::graphics::image_object_res_t obj ) noexcept 
 {
     if( !obj.is_valid() || obj->name().empty() )
@@ -3063,7 +3105,7 @@ natus::graphics::result d3d11_backend::configure( natus::graphics::image_object_
     return natus::graphics::result::ok ;
 }
 
-//***
+//******************************************************************************************************************************
 natus::graphics::result d3d11_backend::configure( natus::graphics::framebuffer_object_res_t obj ) noexcept 
 {
     if( !obj.is_valid() || obj->name().empty() )
@@ -3082,7 +3124,7 @@ natus::graphics::result d3d11_backend::configure( natus::graphics::framebuffer_o
     return natus::graphics::result::ok ;
 }
 
-//***
+//******************************************************************************************************************************
 natus::graphics::result d3d11_backend::configure( natus::graphics::state_object_res_t obj ) noexcept
 {
     if( !obj.is_valid() || obj->name().empty() )
@@ -3101,7 +3143,7 @@ natus::graphics::result d3d11_backend::configure( natus::graphics::state_object_
     return natus::graphics::result::ok ;
 }
 
-//***
+//******************************************************************************************************************************
 natus::graphics::result d3d11_backend::configure( natus::graphics::array_object_res_t obj ) noexcept 
 {
     if( !obj.is_valid() || obj->name().empty() )
@@ -3127,11 +3169,36 @@ natus::graphics::result d3d11_backend::configure( natus::graphics::array_object_
     return natus::graphics::result::ok ;
 }
 
-natus::graphics::result d3d11_backend::configure( natus::graphics::streamout_object_res_t ) noexcept 
+//******************************************************************************************************************************
+natus::graphics::result d3d11_backend::configure( natus::graphics::streamout_object_res_t obj ) noexcept 
 {
+    #if 0
+    if( !obj.is_valid() || obj->name().empty() )
+    {
+        natus::log::global_t::error( natus_log_fn( "Object must be valid and requires a name" ) ) ;
+        return natus::graphics::result::invalid_argument ;
+    }
+
+    natus::graphics::id_res_t id = obj->get_id() ;
+
+    {
+        id->set_oid( this_t::get_bid(), _pimpl->construct_so_data( 
+            id->get_oid( this_t::get_bid() ), *obj ) ) ;
+    }
+
+    
+    size_t const oid = id->get_oid( this_t::get_bid() ) ;
+
+    {
+        auto const res = _pimpl->update( oid, *obj, true ) ;
+        if( natus::core::is_not( res ) ) return natus::graphics::result::failed ;
+    }
+    #endif
+
     return natus::graphics::result::ok ;
 }
 
+//******************************************************************************************************************************
 natus::graphics::result d3d11_backend::release( natus::graphics::geometry_object_res_t obj ) noexcept 
 {
     if( !obj.is_valid() || obj->name().empty() )
@@ -3148,6 +3215,7 @@ natus::graphics::result d3d11_backend::release( natus::graphics::geometry_object
     return natus::graphics::result::ok ;
 }
 
+//******************************************************************************************************************************
 natus::graphics::result d3d11_backend::release( natus::graphics::render_object_res_t obj ) noexcept 
 {
     if( !obj.is_valid() || obj->name().empty() )
@@ -3163,6 +3231,7 @@ natus::graphics::result d3d11_backend::release( natus::graphics::render_object_r
     return natus::graphics::result::ok ;
 }
 
+//******************************************************************************************************************************
 natus::graphics::result d3d11_backend::release( natus::graphics::shader_object_res_t obj ) noexcept
 {
     if( !obj.is_valid() || obj->name().empty() )
@@ -3178,6 +3247,7 @@ natus::graphics::result d3d11_backend::release( natus::graphics::shader_object_r
     return natus::graphics::result::ok ;
 }
 
+//******************************************************************************************************************************
 natus::graphics::result d3d11_backend::release( natus::graphics::image_object_res_t obj ) noexcept 
 {
     if( !obj.is_valid() || obj->name().empty() )
@@ -3193,6 +3263,7 @@ natus::graphics::result d3d11_backend::release( natus::graphics::image_object_re
     return natus::graphics::result::ok ;
 }
 
+//******************************************************************************************************************************
 natus::graphics::result d3d11_backend::release( natus::graphics::framebuffer_object_res_t obj ) noexcept 
 {
     if( !obj.is_valid() || obj->name().empty() )
@@ -3208,6 +3279,7 @@ natus::graphics::result d3d11_backend::release( natus::graphics::framebuffer_obj
     return natus::graphics::result::ok ;
 }
 
+//******************************************************************************************************************************
 natus::graphics::result d3d11_backend::release( natus::graphics::state_object_res_t obj ) noexcept
 {
     if( !obj.is_valid() || obj->name().empty() )
@@ -3223,6 +3295,7 @@ natus::graphics::result d3d11_backend::release( natus::graphics::state_object_re
     return natus::graphics::result::ok ;
 }
 
+//******************************************************************************************************************************
 natus::graphics::result d3d11_backend::release( natus::graphics::array_object_res_t obj ) noexcept
 {
     if( !obj.is_valid() || obj->name().empty() )
@@ -3238,12 +3311,13 @@ natus::graphics::result d3d11_backend::release( natus::graphics::array_object_re
     return natus::graphics::result::ok ;
 }
 
+//******************************************************************************************************************************
 natus::graphics::result d3d11_backend::release( natus::graphics::streamout_object_res_t ) noexcept 
 {
     return natus::graphics::result::ok ;
 }
 
-//***
+//******************************************************************************************************************************
 natus::graphics::result d3d11_backend::connect( natus::graphics::render_object_res_t config, natus::graphics::variable_set_res_t vs ) noexcept
 {
     natus::graphics::id_res_t id = config->get_id() ;
@@ -3266,7 +3340,7 @@ natus::graphics::result d3d11_backend::connect( natus::graphics::render_object_r
     return natus::graphics::result::ok ;
 }
 
-//****
+//******************************************************************************************************************************
 natus::graphics::result d3d11_backend::update( natus::graphics::geometry_object_res_t config ) noexcept 
 {
     natus::graphics::id_res_t id = config->get_id() ;
@@ -3287,7 +3361,7 @@ natus::graphics::result d3d11_backend::update( natus::graphics::geometry_object_
     return natus::graphics::result::ok ;
 }
 
-//****
+//******************************************************************************************************************************
 natus::graphics::result d3d11_backend::update( natus::graphics::array_object_res_t obj ) noexcept 
 {
     natus::graphics::id_res_t id = obj->get_id() ;
@@ -3301,7 +3375,7 @@ natus::graphics::result d3d11_backend::update( natus::graphics::array_object_res
     return natus::graphics::result::ok ;
 }
 
-//****
+//******************************************************************************************************************************
 natus::graphics::result d3d11_backend::update( natus::graphics::streamout_object_res_t obj ) noexcept 
 {
     natus::graphics::id_res_t id = obj->get_id() ;
@@ -3315,13 +3389,13 @@ natus::graphics::result d3d11_backend::update( natus::graphics::streamout_object
     return natus::graphics::result::ok ;
 }
 
-//****
+//******************************************************************************************************************************
 natus::graphics::result d3d11_backend::update( natus::graphics::image_object_res_t ) noexcept 
 {
     return natus::graphics::result::ok ;
 }
 
-//****
+//******************************************************************************************************************************
 natus::graphics::result d3d11_backend::update( natus::graphics::render_object_res_t obj, size_t const varset ) noexcept 
 {
     natus::graphics::id_res_t id = obj->get_id() ;
@@ -3337,7 +3411,7 @@ natus::graphics::result d3d11_backend::update( natus::graphics::render_object_re
     return natus::graphics::result::ok ;
 }
 
-//****
+//******************************************************************************************************************************
 natus::graphics::result d3d11_backend::use( natus::graphics::framebuffer_object_res_t obj ) noexcept
 {
     if( !obj.is_valid() )
@@ -3359,19 +3433,20 @@ natus::graphics::result d3d11_backend::use( natus::graphics::framebuffer_object_
     return natus::graphics::result::ok ;
 }
 
+//******************************************************************************************************************************
 natus::graphics::result d3d11_backend::use( natus::graphics::streamout_object_res_t ) noexcept 
 {
     return natus::graphics::result::failed ;
 }
 
-//****
+//******************************************************************************************************************************
 natus::graphics::result d3d11_backend::unuse( natus::graphics::backend::unuse_type const ) noexcept 
 {
     _pimpl->deactivate_framebuffer() ;
     return natus::graphics::result::ok ;
 }
 
-//****
+//******************************************************************************************************************************
 natus::graphics::result d3d11_backend::push( natus::graphics::state_object_res_t obj, size_t const sid, bool_t const ) noexcept 
 {
     if( !obj.is_valid() )
@@ -3392,13 +3467,14 @@ natus::graphics::result d3d11_backend::push( natus::graphics::state_object_res_t
     return natus::graphics::result::ok ;
 }
 
+//******************************************************************************************************************************
 natus::graphics::result d3d11_backend::pop( natus::graphics::backend::pop_type const ) noexcept 
 {
     _pimpl->handle_render_state( size_t( -1 ), size_t( -1 ) ) ;
     return natus::graphics::result::ok ;
 }
 
-//****
+//******************************************************************************************************************************
 natus::graphics::result d3d11_backend::render( natus::graphics::render_object_res_t config, natus::graphics::backend::render_detail_cref_t detail ) noexcept 
 { 
     natus::graphics::id_res_t id = config->get_id() ;
@@ -3417,12 +3493,13 @@ natus::graphics::result d3d11_backend::render( natus::graphics::render_object_re
     return natus::graphics::result::ok ;
 }
 
-//****
+//******************************************************************************************************************************
 void_t d3d11_backend::render_begin( void_t ) noexcept 
 {
     _pimpl->begin_frame() ;
 }
 
+//******************************************************************************************************************************
 void_t d3d11_backend::render_end( void_t ) noexcept 
 {
     _pimpl->end_frame() ;

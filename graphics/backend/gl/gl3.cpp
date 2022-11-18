@@ -2585,7 +2585,7 @@ struct gl3_backend::pimpl
         
         auto const wrt_idx = data.write_index() ;
 
-        // EITHER just set what was used for rendering.
+        // EITHER just set prim type what was used for rendering.
         // OR use for overwriting the primitive type on render
         //data.pt = gdata.pt ;
 
