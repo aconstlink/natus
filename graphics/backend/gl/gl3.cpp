@@ -2562,6 +2562,100 @@ struct gl3_backend::pimpl
     }
 
     //****************************************************************************************
+    bool_t use_transform_feedback( size_t const oid ) noexcept
+    {
+        if( oid == _tf_active_id ) return true ;
+        _tf_active_id = oid ;
+
+        return true ;
+    }
+
+    //****************************************************************************************
+    void_t unuse_transform_feedback( void_t ) noexcept
+    {
+        _tf_active_id = size_t(-1) ;
+    }
+
+    //****************************************************************************************
+    void_t activate_transform_feedback( this_t::geo_data & gdata ) noexcept
+    {
+        if( _tf_active_id == size_t(-1) ) return ;
+
+        auto & data = _feedbacks[_tf_active_id] ;
+        
+        auto const wrt_idx = data.write_index() ;
+
+        // EITHER just set what was used for rendering.
+        // OR use for overwriting the primitive type on render
+        //data.pt = gdata.pt ;
+
+        // bind buffers
+        {
+            for( size_t i=0; i<tf_data::max_buffers; ++i )
+            {
+                auto & buffer = data.buffers[i] ;
+                auto const id = buffer.ids[ wrt_idx ] ;
+                auto const sib = buffer.sib[ wrt_idx ] ;
+
+                if( id == GLuint(-1) ) break ;
+
+                _geometries[buffer.gids[ wrt_idx ]].pt = gdata.pt ;
+
+                glBindBufferRange( GL_TRANSFORM_FEEDBACK_BUFFER, GLuint(i), id, 0, sib ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glBindBufferRange" ) ) ;
+            }
+        }
+
+        // query written primitives
+        {
+            glBeginQuery( GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN, data.qids[wrt_idx] ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glBeginQuery" ) ) ;
+        }
+
+        // begin 
+        {
+            // lets just use the primitive type of the used geometry
+            GLenum const mode = gdata.pt ;
+            glBeginTransformFeedback( mode ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glBeginTransformFeedback" ) ) ;
+        }
+    }
+
+    //****************************************************************************************
+    void_t deactivate_transform_feedback( void_t ) noexcept
+    {
+        if( _tf_active_id == size_t(-1) ) return ;
+
+        {
+            glEndTransformFeedback() ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glEndTransformFeedback" ) ) ;
+        }
+
+        // query written primitives
+        {
+            glEndQuery( GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glEndQuery" ) ) ;
+        }
+        
+        // swap the indices of the ping-pong buffers
+        {
+            _feedbacks[ _tf_active_id ].swap_index() ;
+        }
+
+        #if 0
+        GLuint num_prims = 0 ;
+        {
+            auto & tfd = _feedbacks[ _tf_active_id] ;
+            auto const ridx = tfd.read_index();
+            glGetQueryObjectuiv( tfd.qids[ridx], GL_QUERY_RESULT, &num_prims ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glGetQueryObjectuiv" ) ) ;
+        }
+        #endif
+
+        _tf_active_id = size_t(-1) ;
+    }
+
+    //****************************************************************************************
     bool_t update_variables( size_t const rd_id, size_t const varset_id )
     {
         this_t::render_data & config = _renders[ rd_id ] ;
