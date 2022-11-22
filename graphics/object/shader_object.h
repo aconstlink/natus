@@ -62,19 +62,23 @@ namespace natus
 
                 vertex_output_binding( void_t ) noexcept {}
                 vertex_output_binding( natus::ntd::string_cref_t name_,
-                    natus::graphics::vertex_attribute const va_ ) noexcept : name( name_ ), va( va_ ) {}
+                    natus::graphics::vertex_attribute const va_ ) noexcept : name( name_ ), va( va_ ), 
+                        ct( natus::graphics::deduce_from( va_ ) ) {}
+                vertex_output_binding( natus::ntd::string_cref_t name_,
+                    natus::graphics::vertex_attribute const va_, natus::graphics::ctype const ct_ ) noexcept : name( name_ ), va( va_ ), ct( ct_ ) {}
                 vertex_output_binding( this_cref_t rhv ) noexcept { *this = rhv ; }
                 vertex_output_binding( this_rref_t rhv ) noexcept { *this = std::move( rhv ) ; }
                 ~vertex_output_binding( void_t ) noexcept {}
 
                 this_ref_t operator = ( this_cref_t rhv ) noexcept
-                    { name = rhv.name; va = rhv.va ; return *this ; }
+                    { name = rhv.name; va = rhv.va ; ct = rhv.ct ; return *this ; }
 
                 this_ref_t operator = ( this_rref_t rhv ) noexcept
-                    { name = std::move( rhv.name ) ; va = rhv.va ; return *this ; }
+                    { name = std::move( rhv.name ) ; va = rhv.va ; ct = std::move( rhv.ct ) ;return *this ; }
 
                 natus::ntd::string name ;
                 natus::graphics::vertex_attribute va = natus::graphics::vertex_attribute::undefined ;
+                natus::graphics::ctype ct ;
             };
             natus::ntd::vector< vertex_output_binding > _vertex_outputs ;
 
@@ -90,22 +94,25 @@ namespace natus
 
         public: 
 
-            typedef ::std::function < void_t ( size_t const i,
-                natus::graphics::vertex_attribute const va, natus::ntd::string_cref_t name ) > for_each_vab_funk_t ;
+            typedef std::function < void_t ( size_t const i,
+                natus::graphics::vertex_attribute const va, natus::ntd::string_cref_t name ) > for_each_vib_funk_t ;
             
             //**************************************************************************
-            void_t for_each_vertex_input_binding( for_each_vab_funk_t funk ) const noexcept
+            void_t for_each_vertex_input_binding( for_each_vib_funk_t funk ) const noexcept
             {
                 size_t i = 0 ;
                 for( auto const & vib : _vertex_inputs ) funk( i++, vib.va, vib.name ) ;
                 
             }
 
+            typedef std::function < void_t ( size_t const i,
+                natus::graphics::vertex_attribute const va, natus::graphics::ctype const, natus::ntd::string_cref_t name ) > for_each_vob_funk_t ;
+
             //**************************************************************************
-            void_t for_each_vertex_output_binding( for_each_vab_funk_t funk ) const noexcept
+            void_t for_each_vertex_output_binding( for_each_vob_funk_t funk ) const noexcept
             {
                 size_t i = 0 ;
-                for( auto const & vb : _vertex_outputs ) funk( i++, vb.va, vb.name ) ;
+                for( auto const & vb : _vertex_outputs ) funk( i++, vb.va, vb.ct, vb.name ) ;
             }
 
             //**************************************************************************
@@ -161,6 +168,35 @@ namespace natus
                     return *this ;
                 }
                 iter->va = va ;
+                return *this ;
+            }
+
+            //**************************************************************************
+            this_ref_t add_vertex_output_binding( natus::graphics::vertex_attribute const va, 
+                natus::graphics::ctype const ct, natus::ntd::string_cref_t name ) noexcept
+            {
+                auto iter = std::find_if( _vertex_outputs.begin(), _vertex_outputs.end(),
+                    [&] ( vertex_output_binding const& b )
+                {
+                    return b.name == name ;
+                } ) ;
+
+                if( iter == _vertex_outputs.end() )
+                {
+                    iter = std::find_if( _vertex_outputs.begin(), _vertex_outputs.end(),
+                        [&] ( vertex_output_binding const& b )
+                    {
+                        return b.va == va ;
+                    } ) ;
+                }
+
+                if( iter == _vertex_outputs.end() )
+                {
+                    _vertex_outputs.push_back( vertex_output_binding( name, va, ct ) ) ;
+                    return *this ;
+                }
+                iter->va = va ;
+                iter->ct = natus::graphics::deduce_from( va ) ;
                 return *this ;
             }
 

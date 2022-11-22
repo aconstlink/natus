@@ -1611,7 +1611,7 @@ struct gl3_backend::pimpl
         {
             sconfig.output_names = (char const **)natus::memory::global_t::alloc_raw<char *>( sc.get_num_output_bindings() ) ;
             sc.for_each_vertex_output_binding( [&]( size_t const i,
-                natus::graphics::vertex_attribute const va, natus::ntd::string_cref_t name )
+                natus::graphics::vertex_attribute const va, natus::graphics::ctype const, natus::ntd::string_cref_t name )
             {
                 sconfig.vertex_outputs.emplace_back( 
                     this_t::shader_data::vertex_output_binding { va, name } ) ;
@@ -2742,7 +2742,8 @@ struct gl3_backend::pimpl
         // #3 : otherwise we can not render
         else
         {
-            natus::log::global_t::error( "[gl3::render] : used geometry idx invalid because exceeds array size for render object : " + config.name ) ;
+            natus::log::global_t::error( "[gl3::render] : used geometry idx invalid because" 
+                "exceeds array size for render object : " + config.name ) ;
                 return false ;
         }
 

@@ -55,5 +55,37 @@ namespace natus
             return natus::graphics::vertex_attribute(
                 size_t( vertex_attribute::texcoord0 ) + i ) ;
         }
+
+        static size_t convert_to_semantic_index( natus::graphics::vertex_attribute const va ) noexcept
+        {
+            static size_t const sis[] = {0,0,0,0,0,1,2,3,4,5,0,1,2,3,4,5,6,7} ;
+            return sis[ size_t( va ) >= size_t( natus::graphics::vertex_attribute::num_attributes ) ? 0 : size_t(va) ] ;
+        }
+
+        static natus::graphics::ctype deduce_from( natus::graphics::vertex_attribute const va ) noexcept
+        {
+            switch( va ) 
+            {
+            case natus::graphics::vertex_attribute::undefined: return { natus::graphics::type::undefined, natus::graphics::type_struct::undefined } ;
+            case natus::graphics::vertex_attribute::position: return { natus::graphics::type::tfloat, natus::graphics::type_struct::vec4 } ;
+            case natus::graphics::vertex_attribute::normal: return { natus::graphics::type::tfloat, natus::graphics::type_struct::vec3 } ;
+            case natus::graphics::vertex_attribute::tangent: return { natus::graphics::type::tfloat, natus::graphics::type_struct::vec3 } ;
+            case natus::graphics::vertex_attribute::color0: return { natus::graphics::type::tfloat, natus::graphics::type_struct::vec3 } ;
+            case natus::graphics::vertex_attribute::color1: return { natus::graphics::type::tfloat, natus::graphics::type_struct::vec3 } ;
+            case natus::graphics::vertex_attribute::color2: return { natus::graphics::type::tfloat, natus::graphics::type_struct::vec3 } ;
+            case natus::graphics::vertex_attribute::color3: return { natus::graphics::type::tfloat, natus::graphics::type_struct::vec3 } ;
+            case natus::graphics::vertex_attribute::color4: return { natus::graphics::type::tfloat, natus::graphics::type_struct::vec3 } ;
+            case natus::graphics::vertex_attribute::color5: return { natus::graphics::type::tfloat, natus::graphics::type_struct::vec3 } ;
+            case natus::graphics::vertex_attribute::texcoord0: return { natus::graphics::type::tfloat, natus::graphics::type_struct::vec2 } ;
+            case natus::graphics::vertex_attribute::texcoord1: return { natus::graphics::type::tfloat, natus::graphics::type_struct::vec2 } ;
+            case natus::graphics::vertex_attribute::texcoord2: return { natus::graphics::type::tfloat, natus::graphics::type_struct::vec2 } ;
+            case natus::graphics::vertex_attribute::texcoord3: return { natus::graphics::type::tfloat, natus::graphics::type_struct::vec2 } ;
+            case natus::graphics::vertex_attribute::texcoord4: return { natus::graphics::type::tfloat, natus::graphics::type_struct::vec2 } ;
+            case natus::graphics::vertex_attribute::texcoord5: return { natus::graphics::type::tfloat, natus::graphics::type_struct::vec2 } ;
+            case natus::graphics::vertex_attribute::texcoord6: return { natus::graphics::type::tfloat, natus::graphics::type_struct::vec2 } ;
+            case natus::graphics::vertex_attribute::texcoord7: return { natus::graphics::type::tfloat, natus::graphics::type_struct::vec2 } ;
+            }
+            return { natus::graphics::type::undefined, natus::graphics::type_struct::undefined } ;
+        }
     }
 }

@@ -30,15 +30,18 @@ private:
 
     T * _ptr = nullptr ;
 
+public:
+
     void_t invalidate( void_t ) noexcept
     {
         if( _ptr != nullptr ) _ptr->Release() ;
         _ptr = nullptr ;
     }
 
-public:
-
     guard( void_t ) noexcept {}
+    guard( this_rref_t rhv ) noexcept {
+        natus_move_member_ptr( _ptr, rhv ) ;
+    }
     ~guard( void_t ) noexcept
     {
         this_t::invalidate() ;
@@ -109,8 +112,118 @@ struct d3d11_backend::pimpl
     //*******************************************************************************************
     struct so_data
     {
-        guard< ID3D11Buffer > buffers[2] ;
+        bool_t valid = false ;
+        // empty names indicate free configs
+        natus::ntd::string_t name ;
+        
+        // this is for rendering the streamout buffer
+        struct layout_element
+        {
+            natus::graphics::vertex_attribute va ;
+            natus::graphics::type type ;
+            natus::graphics::type_struct type_struct ;
+
+            size_t sib( void_t ) const noexcept
+            {
+                return size_t( natus::graphics::size_of( type ) *
+                    natus::graphics::size_of( type_struct ) ) ;
+            }
+        };
+        natus::ntd::vector< layout_element > elements ;
+
+        natus::graphics::primitive_type pt = natus::graphics::primitive_type::undefined ;
+
+        // per vertex sib
+        UINT stride = 0 ;
+
+        typedef struct 
+        {
+            guard< ID3D11Buffer > buffers[2] ;
+        } buffer_t ;
+
+        static const size_t max_buffers = 4 ;
+        size_t buffers_used = 0 ;
+        buffer_t buffers[ max_buffers ] ;
+
+        // read index of ping-pong
+        size_t rd_idx = 0 ;
+
+        size_t read_index( void_t ) const noexcept { return rd_idx ; }
+        size_t write_index( void_t ) const noexcept { return (rd_idx+1) % 2 ; }
+        void_t swap( void_t ) noexcept { rd_idx = ++rd_idx % 2 ;}
+
+        guard< ID3D11Query > queries[2] ;
+
+        so_data( void_t ) noexcept{}
+        so_data( so_data const & ) = delete ;
+        so_data( so_data && rhv ) noexcept
+        {
+            valid = rhv.valid ;
+            name = rhv.name ;
+            stride = rhv.stride ;
+            pt = rhv.pt ;
+
+            queries[0] = std::move( rhv.queries[0] ) ;
+            queries[1] = std::move( rhv.queries[1] ) ;
+
+            elements = std::move( rhv.elements ) ;
+            buffers_used = rhv.buffers_used;
+            for( size_t i=0; i<buffers_used; ++i )
+            {
+                buffers[i].buffers[0] = std::move( rhv.buffers[i].buffers[0] ) ;
+                buffers[i].buffers[1] = std::move( rhv.buffers[i].buffers[1] ) ;
+            }
+            rd_idx = rhv.rd_idx ;
+        }
+        ~so_data( void_t ) noexcept
+        {
+            invalidate() ;
+        }
+
+        DXGI_FORMAT get_format_from_element( natus::graphics::vertex_attribute const va ) const noexcept
+        {
+            for( auto const & e : elements )
+            {
+                if( e.va == va )
+                {
+                    return natus::graphics::d3d11::convert_type_to_vec_format( e.type, e.type_struct ) ;
+                }
+            }
+
+            return DXGI_FORMAT_UNKNOWN ;
+        }
+
+        UINT get_sib( natus::graphics::vertex_attribute const va ) const noexcept
+        {
+            size_t ret = 0 ;
+            for( auto const& e : elements )
+            {
+                if( e.va == va )
+                {
+                    ret = natus::graphics::size_of( e.type ) * natus::graphics::size_of( e.type_struct ) ;
+                }
+            }
+            return UINT( ret ) ;
+        }
+
+        void_t invalidate( void_t ) noexcept
+        {
+            valid = false ;
+            name = "" ;
+
+            elements.clear() ;
+
+            for( size_t i=0; i<buffers_used; ++i )
+            {
+                buffers[i].buffers[0].move_out()->Release() ;
+                buffers[i].buffers[1].move_out()->Release() ;
+            }
+            buffers_used = 0 ;
+            rd_idx = size_t( -1 ) ;
+        }
+        
     };
+    natus_typedef( so_data ) ;
 
     //*******************************************************************************************
     struct geo_data
@@ -255,7 +368,8 @@ struct d3d11_backend::pimpl
             natus::graphics::vertex_attribute va ;
             natus::ntd::string_t name ;
         };
-        natus::ntd::vector< vertex_input_binding > vertex_inputs ;
+        natus_typedefs( natus::ntd::vector< vertex_input_binding >, vibs ) ;
+        vibs_t vertex_inputs ;
 
         struct data_variable
         {
@@ -504,12 +618,17 @@ struct d3d11_backend::pimpl
         natus::ntd::string_t name ;
 
         natus::ntd::vector< size_t > geo_ids ;
+        natus::ntd::vector< size_t > so_ids ; // feed from for geometry
         size_t shd_id = size_t( -1 ) ;
 
         // the layout requires information about the layout elements' type
         // in order to determine the proper d3d enumeration
         D3D11_INPUT_ELEMENT_DESC layout[ size_t( natus::graphics::vertex_attribute::num_attributes ) ] ;
         ID3D11InputLayout* vertex_layout = nullptr ;
+
+        // streamout buffer input layout -> derived from soo vertex buffer
+        D3D11_INPUT_ELEMENT_DESC layout_so[ size_t( natus::graphics::vertex_attribute::num_attributes ) ] ;
+        ID3D11InputLayout* vertex_layout_so = nullptr ;
 
         ID3D11RasterizerState* raster_state = nullptr ;
         ID3D11BlendState* blend_state = nullptr ;
@@ -597,10 +716,12 @@ struct d3d11_backend::pimpl
             valid = rhv.valid ;
             name = std::move( rhv.name ) ;
             geo_ids = std::move( rhv.geo_ids ) ;
+            so_ids = std::move( rhv.so_ids ) ;
             shd_id = rhv.shd_id ;
             rhv.shd_id = size_t( -1 ) ;
 
             natus_move_member_ptr( vertex_layout, rhv ) ;
+            natus_move_member_ptr( vertex_layout_so, rhv ) ;
             natus_move_member_ptr( raster_state, rhv ) ;
             natus_move_member_ptr( blend_state, rhv ) ;
 
@@ -623,12 +744,20 @@ struct d3d11_backend::pimpl
             shd_id = size_t( -1 ) ;
 
             geo_ids.clear() ;
+            so_ids.clear() ;
 
             std::memset( layout, 0, sizeof( D3D11_INPUT_ELEMENT_DESC ) * size_t( natus::graphics::vertex_attribute::num_attributes ) ) ;
             if( vertex_layout != nullptr )
             {
                 vertex_layout->Release() ;
                 vertex_layout = nullptr ;
+            }
+
+            std::memset( layout_so, 0, sizeof( D3D11_INPUT_ELEMENT_DESC ) * size_t( natus::graphics::vertex_attribute::num_attributes ) ) ;
+            if( vertex_layout_so != nullptr )
+            {
+                vertex_layout_so->Release() ;
+                vertex_layout_so = nullptr ;
             }
 
             if( raster_state != nullptr ) 
@@ -649,6 +778,70 @@ struct d3d11_backend::pimpl
             var_sets_buffers_ps.clear() ;
             var_sets_data.clear() ;
             var_sets_data_ps.clear() ;
+        }
+
+        size_t link_geometry( size_t const id ) noexcept
+        {
+            if( id == size_t( -1 ) ) return size_t( -1 ) ;
+
+            for( size_t i=0; i<geo_ids.size(); ++i )
+            {
+                if( geo_ids[i] == id ) return i ;
+            }
+
+            for( size_t i=0; i<geo_ids.size(); ++i )
+            {
+                if( geo_ids[i] == size_t( -1 ) ) 
+                {
+                    geo_ids[i] = id ; return i ;
+                }
+            }
+            geo_ids.emplace_back( id ) ;
+            return geo_ids.size() - 1 ;
+        }
+
+        void_t unlink_geometry( size_t const id ) noexcept
+        {
+            if( id == size_t( -1 ) ) return  ;
+            for( size_t i=0; i<geo_ids.size(); ++i )
+            {
+                if( geo_ids[i] == id ) 
+                {
+                    geo_ids[i] = size_t( -1 ) ;
+                    return ;
+                }
+            }
+        }
+
+        size_t link_streamout( size_t const id ) noexcept
+        {
+            if( id == size_t( -1 ) ) return size_t( -1 ) ;
+
+            for( size_t i=0; i<so_ids.size(); ++i )
+            {
+                if( so_ids[i] == id ) return i ;
+            }
+
+            for( size_t i=0; i<so_ids.size(); ++i )
+            {
+                if( so_ids[i] == size_t( -1 ) ) 
+                {
+                    so_ids[i] = id ; return i ;
+                }
+            }
+            so_ids.emplace_back( id ) ;
+            return so_ids.size() - 1 ;
+        }
+
+        void_t unlink_streamout( size_t const id ) noexcept
+        {
+            if( id == size_t( -1 ) ) return  ;
+            for( size_t i=0; i<so_ids.size(); ++i )
+            {
+                if( so_ids[i] == id ) {
+                    so_ids[i] = size_t( -1 ) ; return ;
+                }
+            }
         }
     };
     natus_typedef( render_data ) ;
@@ -690,6 +883,10 @@ public: // variables
     natus::graphics::shader_api_type const sapi = natus::graphics::shader_api_type::hlsl_5_0
         ;
     natus::graphics::d3d11_context_ptr_t _ctx ;
+
+    typedef natus::ntd::vector< this_t::so_data > so_datas_t ;
+    so_datas_t _streamouts ;
+    size_t _cur_streamout_active = size_t(-1) ;
 
     typedef natus::ntd::vector< this_t::geo_data > geo_configs_t ;
     geo_configs_t geo_datas ;
@@ -1405,7 +1602,177 @@ public: // functions
         #endif
 
         _cur_fb_active = size_t( -1 ) ;
+    }
 
+    //******************************************************************************************************************************
+    size_t construct_streamout( size_t oid, natus::graphics::streamout_object_ref_t obj ) noexcept
+    {
+        oid = this_t::determine_oid( obj.name(), _streamouts ) ;
+
+        auto & config = _streamouts[ oid ] ;
+        config.valid = true ;
+        config.name = obj.name() ;
+
+        // capture the vertex layout for stream out
+        if( obj.num_buffers() > 0 )
+        {
+            obj.get_buffer(0).for_each_layout_element(
+                [&] ( natus::graphics::vertex_buffer_t::data_cref_t d )
+            {
+                this_t::so_data::layout_element le ;
+                le.va = d.va ;
+                le.type = d.type ;
+                le.type_struct = d.type_struct ;
+                config.elements.push_back( le ) ;
+            } ) ;
+
+            config.stride = UINT( obj.get_buffer(0).get_layout_sib() ) ;
+        }
+
+        // create buffers
+        {
+            obj.for_each( [&]( size_t const i, natus::graphics::vertex_buffer_cref_t vb )
+            {
+                if( i >= this_t::so_data::max_buffers ) return ;
+
+                size_t const byte_width = obj.size() * obj.get_buffer(i).get_layout_sib() ;
+
+                D3D11_BUFFER_DESC bd = {} ;
+                bd.ByteWidth = UINT( byte_width ) ;
+                bd.Usage = D3D11_USAGE_DEFAULT ;
+                bd.BindFlags = D3D11_BIND_STREAM_OUTPUT | D3D11_BIND_VERTEX_BUFFER ;
+
+                for( size_t j=0; j<2; ++j )
+                {
+                    auto & b = config.buffers[i].buffers[j] ;
+                    b.invalidate() ;
+                
+                    HRESULT const hr = _ctx->dev()->CreateBuffer( &bd, NULL, b ) ;
+                    if( FAILED( hr ) )
+                    {
+                        natus::log::global_t::error( natus_log_fn( "CreateBuffer - D3D11_BIND_STREAM_OUTPUT" ) ) ;
+                    }
+                }
+            } ) ;
+
+            config.buffers_used = std::min( obj.num_buffers(), this_t::so_data::max_buffers ) ;
+        }
+
+        // create query objects
+        {
+            D3D11_QUERY_DESC qd ;
+            qd.Query = D3D11_QUERY_SO_STATISTICS ;
+            qd.MiscFlags = 0 ;
+
+            for( size_t j=0; j<2; ++j )
+            {
+                HRESULT const hr = _ctx->dev()->CreateQuery( &qd, config.queries[j] ) ;
+                if( FAILED( hr ) )
+                {
+                    natus::log::global_t::error( natus_log_fn( "CreateQuery - D3D11_QUERY_SO_STATISTICS" ) ) ;
+                }
+            }
+        }
+
+        return oid ;
+    }
+
+    //******************************************************************************************************************************
+    void_t release_streamout( size_t const oid ) noexcept
+    {
+        auto & d = _streamouts[ oid ] ;
+        for( size_t i=0; i<renders.size(); ++i )
+            renders[i].unlink_streamout( oid ) ;
+
+        for( size_t i=0; i<this_t::so_data::max_buffers; ++i )
+        {
+            d.buffers[i].buffers[0].invalidate() ;
+            d.buffers[i].buffers[1].invalidate() ;
+        }
+
+        {
+            d.queries[0].invalidate() ;
+            d.queries[1].invalidate() ;
+        }
+    }
+
+    //******************************************************************************************************************************
+    bool_t update( size_t const oid, natus::graphics::streamout_object_ref_t obj, bool_t const is_config )
+    {
+        auto & d = _streamouts[oid] ;
+
+        if( d.buffers_used != obj.num_buffers() )
+        {
+            this_t::construct_streamout( oid, obj ) ;
+            return true ;
+        }
+
+        obj.for_each( [&]( size_t const i, natus::graphics::vertex_buffer_cref_t vb )
+        {
+            if( i >= this_t::so_data::max_buffers ) return ;
+
+            size_t const byte_width = obj.size() * obj.get_buffer(i).get_layout_sib() ;
+
+            D3D11_BUFFER_DESC bd ;
+            d.buffers[i].buffers[0]->GetDesc( &bd ) ;
+
+            if( byte_width <= bd.ByteWidth ) return ;
+
+            for( size_t j=0; j<2; ++j )
+            {
+                auto & b = d.buffers[i].buffers[j] ;
+                b.invalidate() ;
+                
+                HRESULT const hr = _ctx->dev()->CreateBuffer( &bd, NULL, b ) ;
+                if( FAILED( hr ) )
+                {
+                    natus::log::global_t::error( natus_log_fn( "CreateBuffer - D3D11_BIND_STREAM_OUTPUT" ) ) ;
+                }
+            }
+        } ) ;
+
+        return true ;
+    }
+
+    //******************************************************************************************************************************
+    bool_t activate_streamout( size_t const oid ) noexcept
+    {
+        _cur_streamout_active = oid ;
+
+        if( _cur_streamout_active == size_t(-1) ) return true ;
+
+        auto & d = _streamouts[ _cur_streamout_active] ;
+        size_t const widx = d.write_index() ;
+        _ctx->ctx()->Begin( d.queries[widx] ) ;
+        
+        {
+            UINT offsets[ this_t::so_data::max_buffers] = { 0, 0, 0, 0 } ;
+            ID3D11Buffer * buffers[ this_t::so_data::max_buffers ] ;
+            for( size_t i=0; i<this_t::so_data::max_buffers; ++i )
+            {
+                if( d.buffers[i].buffers[widx] == nullptr ) break ;
+                buffers[i] = d.buffers[i].buffers[widx] ;
+            }
+            _ctx->ctx()->SOSetTargets( UINT(d.buffers_used), buffers, offsets ) ;
+        }
+
+        return true ;
+    }
+
+    //******************************************************************************************************************************
+    void_t deactivate_streamout( void_t )
+    {
+        if( _cur_streamout_active == size_t(-1) ) return ;
+        
+        auto & d = _streamouts[_cur_streamout_active] ;
+        d.swap() ;
+
+        size_t const idx = d.read_index() ;
+        _ctx->ctx()->End( d.queries[idx] ) ;
+
+        _ctx->ctx()->SOSetTargets( 0, nullptr, nullptr ) ;
+
+        _cur_streamout_active = size_t( -1 ) ;
     }
 
     //******************************************************************************************************************************
@@ -1533,14 +1900,8 @@ public: // functions
     //******************************************************************************************************************************
     void_t release_geometry( size_t const oid ) noexcept 
     {
-        for( auto & r : renders )
-        {
-            auto iter = std::find_if( r.geo_ids.begin(), r.geo_ids.end(), [&]( size_t const gid )
-            {
-                return gid == oid ;
-            } ) ;
-            if( iter != r.geo_ids.end() ) r.geo_ids.erase( iter ) ;
-        }
+        for( size_t i=0; i<renders.size(); ++i )
+            renders[i].unlink_geometry( oid ) ;
 
         auto & o = geo_datas[ oid ] ;
         o.invalidate() ;
@@ -1851,6 +2212,41 @@ public: // functions
             shd.vs_blob = pVSBlob ;
         }
 
+        if( pGSBlob == nullptr && obj.get_num_output_bindings() > 0 )
+        {
+            static size_t const max_entries = 10 ;
+            D3D11_SO_DECLARATION_ENTRY decl[max_entries] ;
+            if( obj.get_num_output_bindings() > max_entries ) 
+            {
+                natus::log::global_t::warning( "[d3d11_backend] : you can not have more than " + 
+                    std::to_string(max_entries) + " vertex output bindings for stream out" ) ;
+            }
+
+            obj.for_each_vertex_output_binding( [&]( size_t const i, natus::graphics::vertex_attribute const va, 
+                natus::graphics::ctype const ct, natus::ntd::string_in_t )
+            {
+                D3D11_SO_DECLARATION_ENTRY e 
+                {
+                    0,
+                    natus::graphics::d3d11::vertex_output_binding_to_semantic( va ).c_str(),
+                    (UINT)natus::graphics::convert_to_semantic_index( va ),
+                    0,
+                    (BYTE)natus::graphics::num_components_of( ct.ts ),
+                    0
+                } ;
+                decl[ std::min( max_entries, i ) ] = e ;
+            } ) ;
+
+            // @todo which stream should go to the rasterizer?
+            UINT const rasterized_stream = pPSBlob == nullptr ? D3D11_SO_NO_RASTERIZED_STREAM : 0 ;
+
+            auto const hr = _ctx->dev()->CreateGeometryShaderWithStreamOutput( pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), decl, 
+                std::min( UINT(max_entries), UINT(obj.get_num_output_bindings()) ), NULL, 0, rasterized_stream, NULL, shd.gs ) ;
+
+            natus::log::global_t::error( FAILED( hr ), "[d3d11] : CreateGeometryShaderWithStreamOutput" ) ;
+        }
+        
+
         // geometry shader
         if( pGSBlob != nullptr )
         {
@@ -1899,7 +2295,6 @@ public: // functions
         
         auto & o = shaders[ oid ] ;
         o.invalidate() ;
-
     }
 
     //******************************************************************************************************************************
@@ -1914,6 +2309,12 @@ public: // functions
         {
             rd.vertex_layout->Release() ;
             rd.vertex_layout = nullptr ;
+        }
+
+        if( rd.vertex_layout_so != nullptr )
+        {
+            rd.vertex_layout_so->Release() ;
+            rd.vertex_layout_so = nullptr ;
         }
 
         std::memset( rd.layout, 0, ARRAYSIZE( rd.layout ) ) ;
@@ -1932,11 +2333,11 @@ public: // functions
     bool_t update( size_t const id, natus::graphics::render_object_ref_t rc )
     {
         auto& rd = renders[ id ] ;
-        rd.geo_ids.clear() ;
         rd.shd_id = size_t( -1 ) ;
 
         // find geometry
         {
+            rd.geo_ids.clear() ;
             for( size_t i=0; i<rc.get_num_geometry(); ++i )
             {
                 auto const iter = std::find_if( geo_datas.begin(), geo_datas.end(),
@@ -1954,6 +2355,35 @@ public: // functions
 
                 rd.geo_ids.emplace_back( std::distance( geo_datas.begin(), iter ) ) ;
             }
+        }
+
+        // handle stream out links
+        {
+            rd.so_ids.clear() ;
+            for( size_t i=0; i<rc.get_num_streamout(); ++i )
+            {
+                auto const iter = std::find_if( _streamouts.begin(), _streamouts.end(),
+                    [&] ( this_t::so_data const& d )
+                {
+                    return d.name == rc.get_streamout(i) ;
+                } ) ;
+
+                if( iter == _streamouts.end() )
+                {
+                    natus::log::global_t::warning( natus_log_fn(
+                        "no streamout object with name [" + rc.get_streamout() + "] for render_data [" + rc.name() + "]" ) ) ;
+                    return false ;
+                }
+
+                rd.so_ids.emplace_back( std::distance( _streamouts.begin(), iter ) ) ;
+            }
+        }
+
+        if( rd.geo_ids.size() == 0 && rd.so_ids.size() == 0 )
+        {
+            natus::log::global_t::warning( natus_log_fn(
+                "no geometry nor streamout linked to render_object with name [" + rc.name() + "]" ) ) ;
+            return false ;
         }
 
         // find shader
@@ -1980,76 +2410,158 @@ public: // functions
                 "something strange happened to render_config [" + rc.name() + "]" ) ) ;
             return false ;
         }
-
-        // sort shader input attributes based on geometry layout.
-        // in hlsl the order seems to be required to match for the
-        // used geometry layout (next section) and the shader input
-        // attribute order.
+        
+        if( rd.geo_ids.size() != 0 )
         {
             this_t::shader_data_ref_t shd = shaders[ rd.shd_id ] ;
-            this_t::geo_data_ref_t geo = geo_datas[ rd.geo_ids[0] ] ;
+            this_t::shader_data_t::vibs_t vibs = shd.vertex_inputs ;
 
-            for( size_t i = 0; i<shd.vertex_inputs.size(); ++i )
+            // sort shader input attributes based on geometry layout.
+            // in hlsl the order seems to be required to match for the
+            // used geometry layout (next section) and the shader input
+            // attribute order.
             {
-                size_t j = i ;
-                
-                while( j < shd.vertex_inputs.size() && geo.elements[i].va != shd.vertex_inputs[j].va  ) ++j ;
+                this_t::geo_data_ref_t geo = geo_datas[ rd.geo_ids[0] ] ;
 
-                if( j == i ) continue ;
-                // input variable declared in shader not found in geometry, remove ...
-                else if( j == shd.vertex_inputs.size() )
+                for( size_t i = 0; i<vibs.size(); ++i )
                 {
-                    shd.vertex_inputs.erase( shd.vertex_inputs.begin() + i ) ;
-                    natus::log::global_t::warning( natus_log_fn(
-                        "removed shader intput attribute in [" + shd.name + "]. Attribute not found in geometry layout." ) ) ;
+                    size_t j = i ;
+                
+                    while( j < vibs.size() && geo.elements[i].va != vibs[j].va  ) ++j ;
+
+                    if( j == i ) continue ;
+                    // input variable declared in shader not found in geometry, remove ...
+                    else if( j == vibs.size() )
+                    {
+                        vibs.erase( vibs.begin() + i ) ;
+                        natus::log::global_t::warning( natus_log_fn(
+                            "removed shader input attribute in [" + shd.name + "]. Attribute not found in geometry layout." ) ) ;
+                    }
+                    // .. or entries are not at the same spot. exchange.
+                    else if ( j != i )
+                    {
+                        auto const tmp = vibs[i] ;
+                        vibs[i] = vibs[j] ;
+                        vibs[j] = tmp ;
+                    }
                 }
-                // .. or entries are not at the same spot. exchange.
-                else if ( j != i )
+            }
+
+            // for binding attributes, the shader and the geometry is required.
+            {
+                size_t i = 0 ; 
+                UINT offset = 0 ;
+                for( auto const & b : vibs )
                 {
-                    auto const tmp = shd.vertex_inputs[i] ;
-                    shd.vertex_inputs[i] = shd.vertex_inputs[j] ;
-                    shd.vertex_inputs[j] = tmp ;
+                    char_cptr_t name = natus::graphics::d3d11::vertex_binding_to_semantic( b.va ).c_str() ;
+                    UINT const semantic_index = 0 ;
+                    DXGI_FORMAT const fmt = geo_datas[rd.geo_ids[0]].get_format_from_element( b.va ) ;
+                    UINT input_slot = 0 ;
+                    UINT aligned_byte_offset = offset ;
+                    D3D11_INPUT_CLASSIFICATION const iclass = D3D11_INPUT_PER_VERTEX_DATA ;
+                    UINT instance_data_step_rate = 0 ;
+                
+                    rd.layout[ i++ ] = { name, semantic_index, fmt, input_slot, 
+                        aligned_byte_offset, iclass, instance_data_step_rate } ;
+
+                    offset += geo_datas[rd.geo_ids[0]].get_sib( b.va ) ;
+                }
+
+                UINT const num_elements = UINT( i ) ;
+
+                if( rd.vertex_layout != nullptr )
+                {
+                    rd.vertex_layout->Release() ;
+                    rd.vertex_layout = nullptr ;
+                }
+
+                auto const hr = _ctx->dev()->CreateInputLayout( rd.layout, num_elements, shd.vs_blob->GetBufferPointer(),
+                    shd.vs_blob->GetBufferSize(), &rd.vertex_layout ) ;
+
+                if( FAILED( hr ) )
+                {
+                    natus::log::global_t::warning( natus_log_fn(
+                        "CreateInputLayout for shader [" + shd.name + "] and render object[" + rc.name() + "]" ) ) ;
+                    return false ;
                 }
             }
         }
-
-        // for binding attributes, the shader and the geometry is required.
+        
+        if( rd.so_ids.size() != 0 )
         {
-            size_t i = 0 ; 
             this_t::shader_data_ref_t shd = shaders[ rd.shd_id ] ;
-            UINT offset = 0 ;
-            for( auto const & b : shd.vertex_inputs )
+            this_t::shader_data_t::vibs_t vibs = shd.vertex_inputs ;
+
+            // sort shader input attributes based on geometry layout.
+            // in hlsl the order seems to be required to match for the
+            // used geometry layout (next section) and the shader input
+            // attribute order.
             {
-                char_cptr_t name = natus::graphics::d3d11::vertex_binding_to_semantic( b.va ).c_str() ;
-                UINT const semantic_index = 0 ;
-                DXGI_FORMAT const fmt = geo_datas[rd.geo_ids[0]].get_format_from_element( b.va ) ;
-                UINT input_slot = 0 ;
-                UINT aligned_byte_offset = offset ;
-                D3D11_INPUT_CLASSIFICATION const iclass = D3D11_INPUT_PER_VERTEX_DATA ;
-                UINT instance_data_step_rate = 0 ;
+                this_t::so_data_ref_t sod = _streamouts[ rd.so_ids[0] ] ;
+
+                for( size_t i = 0; i<vibs.size(); ++i )
+                {
+                    size_t j = i ;
                 
-                rd.layout[ i++ ] = { name, semantic_index, fmt, input_slot, 
-                    aligned_byte_offset, iclass, instance_data_step_rate } ;
+                    while( j < vibs.size() && sod.elements[i].va != vibs[j].va  ) ++j ;
 
-                offset += geo_datas[rd.geo_ids[0]].get_sib( b.va ) ;
+                    if( j == i ) continue ;
+
+                    // input variable declared in shader not found in geometry, remove ...
+                    else if( j == vibs.size() )
+                    {
+                        shd.vertex_inputs.erase( vibs.begin() + i ) ;
+                        natus::log::global_t::warning( natus_log_fn(
+                            "removed shader input attribute in [" + shd.name + "]. Attribute not found in geometry layout." ) ) ;
+                    }
+                    // .. or entries are not at the same spot. exchange.
+                    else if ( j != i )
+                    {
+                        auto const tmp = vibs[i] ;
+                        vibs[i] = vibs[j] ;
+                        vibs[j] = tmp ;
+                    }
+                }
             }
 
-            UINT const num_elements = UINT( i ) ;
-
-            if( rd.vertex_layout != nullptr )
+            // for binding attributes, the shader and the geometry is required.
+            // in this case it is the streamout buffer.
             {
-                rd.vertex_layout->Release() ;
-                rd.vertex_layout = nullptr ;
-            }
+                size_t i = 0 ; 
+                UINT offset = 0 ;
+                for( auto const & b : vibs )
+                {
+                    char_cptr_t name = natus::graphics::d3d11::vertex_binding_to_semantic( b.va ).c_str() ;
+                    UINT const semantic_index = 0 ;
+                    DXGI_FORMAT const fmt = _streamouts[rd.so_ids[0]].get_format_from_element( b.va ) ;
+                    UINT input_slot = 0 ;
+                    UINT aligned_byte_offset = offset ;
+                    D3D11_INPUT_CLASSIFICATION const iclass = D3D11_INPUT_PER_VERTEX_DATA ;
+                    UINT instance_data_step_rate = 0 ;
+                
+                    rd.layout_so[ i++ ] = { name, semantic_index, fmt, input_slot, 
+                        aligned_byte_offset, iclass, instance_data_step_rate } ;
 
-            auto const hr = _ctx->dev()->CreateInputLayout( rd.layout, num_elements, shd.vs_blob->GetBufferPointer(),
-                shd.vs_blob->GetBufferSize(), &rd.vertex_layout ) ;
+                    offset += _streamouts[rd.so_ids[0]].get_sib( b.va ) ;
+                }
 
-            if( FAILED( hr ) )
-            {
-                natus::log::global_t::warning( natus_log_fn(
-                    "CreateInputLayout for shader [" + shd.name + "] and render object[" + rc.name() + "]" ) ) ;
-                return false ;
+                UINT const num_elements = UINT( i ) ;
+
+                if( rd.vertex_layout_so != nullptr )
+                {
+                    rd.vertex_layout_so->Release() ;
+                    rd.vertex_layout_so = nullptr ;
+                }
+
+                auto const hr = _ctx->dev()->CreateInputLayout( rd.layout_so, num_elements, shd.vs_blob->GetBufferPointer(),
+                    shd.vs_blob->GetBufferSize(), &rd.vertex_layout_so ) ;
+
+                if( FAILED( hr ) )
+                {
+                    natus::log::global_t::warning( natus_log_fn(
+                        "CreateInputLayout for shader [" + shd.name + "] and render object[" + rc.name() + "]" ) ) ;
+                    return false ;
+                }
             }
         }
         
@@ -2150,7 +2662,6 @@ public: // functions
                 }
 
                 // gs cbuffers
-               
                 {
                     this_t::render_data_t::cbuffers_t cbs ;
 
@@ -2539,12 +3050,6 @@ public: // functions
     }
 
     //******************************************************************************************************************************
-    bool_t update( size_t const id, natus::graphics::streamout_object_ref_t obj, bool_t const is_config )
-    {
-        return false ;
-    }
-
-    //******************************************************************************************************************************
     bool_t update( size_t const id, natus::graphics::render_object_ref_t obj, size_t const varset_id )
     {
         this_t::render_data_ref_t rnd = renders[ id ] ;
@@ -2613,7 +3118,7 @@ public: // functions
     }
 
     //******************************************************************************************************************************
-    bool_t render( size_t const id, size_t const geo_idx, size_t const varset_id = size_t( 0 ), UINT const start_element = UINT( 0 ),
+    bool_t render( size_t const id, size_t const geo_idx = 0, bool_t feed_from_so = false, size_t const varset_id = size_t( 0 ), UINT const start_element = UINT( 0 ),
         UINT const num_elements = UINT( -1 ) )
     {
         this_t::render_data_ref_t rnd = renders[ id ] ;
@@ -2624,14 +3129,14 @@ public: // functions
             return false ;
         }
 
-        if( geo_idx >= rnd.geo_ids.size() ) 
+        if( geo_idx >= rnd.geo_ids.size() && !feed_from_so ) 
         {
             natus::log::global_t::error( "[d3d11::render] : used geometry idx invalid because exceeds array size for render object : " + rnd.name ) ;
             return false ;
         }
         
         this_t::shader_data_ref_t shd = shaders[ rnd.shd_id ] ;
-        this_t::geo_data_ref_t geo = geo_datas[ rnd.geo_ids[geo_idx] ] ;
+        
 
         if( shd.vs == nullptr )
         {
@@ -2653,17 +3158,8 @@ public: // functions
             ctx->PSSetConstantBuffers( cb.slot, 1, &cb.ptr ) ;
         }
 
-        ctx->IASetInputLayout( rnd.vertex_layout );
-
-        {
-            UINT const stride = geo.stride ;
-            UINT const offset = 0 ;
-            ctx->IASetVertexBuffers( 0, 1, geo.vb, &stride, &offset );
-        }
-        
-        ctx->IASetPrimitiveTopology( natus::graphics::d3d11::convert( geo.pt ) ) ;
-
         ctx->VSSetShader( shd.vs, nullptr, 0 ) ;
+        ctx->GSSetShader( shd.gs, nullptr, 0 ) ;
         ctx->PSSetShader( shd.ps, nullptr, 0 ) ;
 
         for( auto& img : rnd.var_sets_imgs_ps[ varset_id ].second )
@@ -2682,19 +3178,68 @@ public: // functions
             ctx->PSSetShaderResources( buf.slot, 1, arrays[ buf.id ].view ) ;
         }
 
-        if( geo.ib != nullptr )
+        // feed from streamout path
+        if( feed_from_so && rnd.so_ids.size() != 0 ) // streamout path
         {
-            ctx->IASetIndexBuffer( geo.ib, DXGI_FORMAT_R32_UINT, 0 );
+            this_t::so_data_ref_t so = _streamouts[ rnd.so_ids[0] ] ;
+            size_t const ridx = so.read_index() ;
 
-            UINT const max_elems = num_elements == UINT( -1 ) ? UINT( geo.num_elements_ib ) : num_elements ;
-            ctx->DrawIndexed( max_elems, start_element, 0 ) ;
+            #if 1
+            {
+                D3D11_QUERY_DATA_SO_STATISTICS data = { 0 };
+                HRESULT hr = S_FALSE ;
+                while( hr != S_OK )
+                {
+                    hr = _ctx->ctx()->GetData( so.queries[ridx], &data, sizeof( D3D11_QUERY_DATA_SO_STATISTICS ), 0 ) ;
+                }
+                int bp = 0 ;
+            }
+            #endif
+
+            {
+                UINT const stride = so.stride ;
+                UINT const offset = 0 ;
+                ctx->IASetVertexBuffers( 0, 1, so.buffers[0].buffers[ridx], &stride, &offset );
+                ctx->IASetPrimitiveTopology( natus::graphics::d3d11::convert( so.pt ) ) ;
+            }
+
+            ctx->IASetInputLayout( rnd.vertex_layout_so ) ;
+            ctx->DrawAuto() ;
+
         }
-        else
+        else // geometry path
         {
-            UINT const max_elems = num_elements == UINT( -1 ) ? UINT( geo.num_elements_vb ) : num_elements ;
-            ctx->Draw( max_elems, UINT( start_element ) ) ;
+            this_t::geo_data_ref_t geo = geo_datas[ rnd.geo_ids[geo_idx] ] ;
+
+            if( _cur_streamout_active != size_t( -1 ) )
+            {
+                this_t::so_data_ref_t so = _streamouts[ _cur_streamout_active ] ;
+                so.pt = geo.pt ;
+            }
+            
+            {
+                UINT const stride = geo.stride ;
+                UINT const offset = 0 ;
+                ctx->IASetVertexBuffers( 0, 1, geo.vb, &stride, &offset );
+                ctx->IASetPrimitiveTopology( natus::graphics::d3d11::convert( geo.pt ) ) ;
+            }
+
+            ctx->IASetInputLayout( rnd.vertex_layout ) ;
+
+            if( geo.ib != nullptr )
+            {
+                ctx->IASetIndexBuffer( geo.ib, DXGI_FORMAT_R32_UINT, 0 );
+
+                UINT const max_elems = num_elements == UINT( -1 ) ? UINT( geo.num_elements_ib ) : num_elements ;
+                ctx->DrawIndexed( max_elems, start_element, 0 ) ;
+            }
+            else
+            {
+                UINT const max_elems = num_elements == UINT( -1 ) ? UINT( geo.num_elements_vb ) : num_elements ;
+                ctx->Draw( max_elems, UINT( start_element ) ) ;
+            }
         }
-        
+
         return true ;
     }
 
@@ -3172,7 +3717,6 @@ natus::graphics::result d3d11_backend::configure( natus::graphics::array_object_
 //******************************************************************************************************************************
 natus::graphics::result d3d11_backend::configure( natus::graphics::streamout_object_res_t obj ) noexcept 
 {
-    #if 0
     if( !obj.is_valid() || obj->name().empty() )
     {
         natus::log::global_t::error( natus_log_fn( "Object must be valid and requires a name" ) ) ;
@@ -3182,10 +3726,9 @@ natus::graphics::result d3d11_backend::configure( natus::graphics::streamout_obj
     natus::graphics::id_res_t id = obj->get_id() ;
 
     {
-        id->set_oid( this_t::get_bid(), _pimpl->construct_so_data( 
+        id->set_oid( this_t::get_bid(), _pimpl->construct_streamout( 
             id->get_oid( this_t::get_bid() ), *obj ) ) ;
     }
-
     
     size_t const oid = id->get_oid( this_t::get_bid() ) ;
 
@@ -3193,7 +3736,7 @@ natus::graphics::result d3d11_backend::configure( natus::graphics::streamout_obj
         auto const res = _pimpl->update( oid, *obj, true ) ;
         if( natus::core::is_not( res ) ) return natus::graphics::result::failed ;
     }
-    #endif
+    
 
     return natus::graphics::result::ok ;
 }
@@ -3312,8 +3855,18 @@ natus::graphics::result d3d11_backend::release( natus::graphics::array_object_re
 }
 
 //******************************************************************************************************************************
-natus::graphics::result d3d11_backend::release( natus::graphics::streamout_object_res_t ) noexcept 
+natus::graphics::result d3d11_backend::release( natus::graphics::streamout_object_res_t obj ) noexcept 
 {
+    if( !obj.is_valid() || obj->name().empty() )
+    {
+        natus::log::global_t::error( natus_log_fn( "Object must be valid and requires a name" ) ) ;
+        return natus::graphics::result::invalid_argument ;
+    }
+
+    natus::graphics::id_res_t id = obj->get_id() ;
+    _pimpl->release_streamout( obj->get_id()->get_oid( this_t::get_bid() ) ) ;
+    id->set_oid( this_t::get_bid(), size_t( -1 ) ) ;
+
     return natus::graphics::result::ok ;
 }
 
@@ -3434,15 +3987,38 @@ natus::graphics::result d3d11_backend::use( natus::graphics::framebuffer_object_
 }
 
 //******************************************************************************************************************************
-natus::graphics::result d3d11_backend::use( natus::graphics::streamout_object_res_t ) noexcept 
+natus::graphics::result d3d11_backend::use( natus::graphics::streamout_object_res_t obj ) noexcept 
 {
-    return natus::graphics::result::failed ;
+    if( !obj.is_valid() )
+    {
+        return this_t::unuse( natus::graphics::backend::unuse_type::streamout ) ;
+    }
+
+    natus::graphics::id_res_t id = obj->get_id() ;
+
+    if( id->is_not_valid( this_t::get_bid() ) )
+    {
+        return this_t::unuse( natus::graphics::backend::unuse_type::streamout ) ;
+    }
+
+    size_t const oid = id->get_oid( this_t::get_bid() ) ;
+    auto const res = _pimpl->activate_streamout( oid ) ;
+    if( !res ) return natus::graphics::result::failed ;
+
+    return natus::graphics::result::ok ;
 }
 
 //******************************************************************************************************************************
-natus::graphics::result d3d11_backend::unuse( natus::graphics::backend::unuse_type const ) noexcept 
+natus::graphics::result d3d11_backend::unuse( natus::graphics::backend::unuse_type const t ) noexcept 
 {
-    _pimpl->deactivate_framebuffer() ;
+    switch( t )
+    {
+    case natus::graphics::backend::unuse_type::framebuffer: 
+        _pimpl->deactivate_framebuffer() ; break ;
+    case natus::graphics::backend::unuse_type::streamout: 
+        _pimpl->deactivate_streamout() ;break ;
+    }
+    
     return natus::graphics::result::ok ;
 }
 
@@ -3487,7 +4063,7 @@ natus::graphics::result d3d11_backend::render( natus::graphics::render_object_re
         return natus::graphics::result::failed ;
     }
 
-    _pimpl->render( id->get_oid( this_t::get_bid() ), detail.geo,
+    _pimpl->render( id->get_oid( this_t::get_bid() ), detail.geo, detail.feed_from_streamout,
         detail.varset, (UINT)detail.start, (UINT)detail.num_elems ) ;
     
     return natus::graphics::result::ok ;

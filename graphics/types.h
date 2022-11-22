@@ -35,6 +35,12 @@ namespace natus
             num_type_structures
         } ;
 
+        struct ctype
+        {
+            type t = natus::graphics::type::undefined ;
+            type_struct ts = natus::graphics::type_struct::undefined ;
+        };
+
         namespace detail
         {
             static natus::ntd::string_t const type_string_array[] =
@@ -102,6 +108,11 @@ namespace natus
 
         /// returns the number of columns a type struct has.
         static size_t columns_of( type_struct const ts ) noexcept
+        {
+            return detail::type_struct_columns[ size_t( ts ) ] ;
+        }
+
+        static size_t num_components_of( type_struct const ts ) noexcept
         {
             return detail::type_struct_columns[ size_t( ts ) ] ;
         }
