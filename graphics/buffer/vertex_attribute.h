@@ -70,12 +70,12 @@ namespace natus
             case natus::graphics::vertex_attribute::position: return { natus::graphics::type::tfloat, natus::graphics::type_struct::vec4 } ;
             case natus::graphics::vertex_attribute::normal: return { natus::graphics::type::tfloat, natus::graphics::type_struct::vec3 } ;
             case natus::graphics::vertex_attribute::tangent: return { natus::graphics::type::tfloat, natus::graphics::type_struct::vec3 } ;
-            case natus::graphics::vertex_attribute::color0: return { natus::graphics::type::tfloat, natus::graphics::type_struct::vec3 } ;
-            case natus::graphics::vertex_attribute::color1: return { natus::graphics::type::tfloat, natus::graphics::type_struct::vec3 } ;
-            case natus::graphics::vertex_attribute::color2: return { natus::graphics::type::tfloat, natus::graphics::type_struct::vec3 } ;
-            case natus::graphics::vertex_attribute::color3: return { natus::graphics::type::tfloat, natus::graphics::type_struct::vec3 } ;
-            case natus::graphics::vertex_attribute::color4: return { natus::graphics::type::tfloat, natus::graphics::type_struct::vec3 } ;
-            case natus::graphics::vertex_attribute::color5: return { natus::graphics::type::tfloat, natus::graphics::type_struct::vec3 } ;
+            case natus::graphics::vertex_attribute::color0: return { natus::graphics::type::tfloat, natus::graphics::type_struct::vec4 } ;
+            case natus::graphics::vertex_attribute::color1: return { natus::graphics::type::tfloat, natus::graphics::type_struct::vec4 } ;
+            case natus::graphics::vertex_attribute::color2: return { natus::graphics::type::tfloat, natus::graphics::type_struct::vec4 } ;
+            case natus::graphics::vertex_attribute::color3: return { natus::graphics::type::tfloat, natus::graphics::type_struct::vec4 } ;
+            case natus::graphics::vertex_attribute::color4: return { natus::graphics::type::tfloat, natus::graphics::type_struct::vec4 } ;
+            case natus::graphics::vertex_attribute::color5: return { natus::graphics::type::tfloat, natus::graphics::type_struct::vec4 } ;
             case natus::graphics::vertex_attribute::texcoord0: return { natus::graphics::type::tfloat, natus::graphics::type_struct::vec2 } ;
             case natus::graphics::vertex_attribute::texcoord1: return { natus::graphics::type::tfloat, natus::graphics::type_struct::vec2 } ;
             case natus::graphics::vertex_attribute::texcoord2: return { natus::graphics::type::tfloat, natus::graphics::type_struct::vec2 } ;

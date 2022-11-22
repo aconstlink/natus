@@ -2212,6 +2212,7 @@ public: // functions
             shd.vs_blob = pVSBlob ;
         }
 
+        // Create Streamout shader w/o geometry shader
         if( pGSBlob == nullptr && obj.get_num_output_bindings() > 0 )
         {
             static size_t const max_entries = 10 ;
@@ -2245,7 +2246,6 @@ public: // functions
 
             natus::log::global_t::error( FAILED( hr ), "[d3d11] : CreateGeometryShaderWithStreamOutput" ) ;
         }
-        
 
         // geometry shader
         if( pGSBlob != nullptr )
