@@ -287,7 +287,7 @@ natus::application::result context::create_the_context( gl_info_cref_t /*gli*/ )
         EGLint const  attribList[] = 
         {
             EGL_CONTEXT_MAJOR_VERSION, 3, 
-            EGL_CONTEXT_MINOR_VERSION, 0, 
+            EGL_CONTEXT_MINOR_VERSION, 1, 
             EGL_NONE
         } ;
 
