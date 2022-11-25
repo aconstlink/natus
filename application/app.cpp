@@ -4,7 +4,7 @@
 #if defined( NATUS_GRAPHICS_WGL )
 #include "platform/wgl/wgl_context.h"
 #include "platform/wgl/wgl_window.h"
-#include <natus/graphics/backend/gl/gl3.h>
+#include <natus/graphics/backend/gl/gl4.h>
 #endif
 #if defined( NATUS_GRAPHICS_GLX )
 #include "platform/glx/glx_context.h"
@@ -166,7 +166,7 @@ app::window_async_t app::create_window(
             { 
                 natus::graphics::backend_type::es3,
                 natus::graphics::backend_type::d3d11,
-                natus::graphics::backend_type::gl3
+                natus::graphics::backend_type::gl4
             } ;
         }
 
@@ -180,7 +180,7 @@ app::window_async_t app::create_window(
             case natus::graphics::backend_type::es3:
                 ctx = this_t::create_egl_window( wii, rnd_msg_recv, pwi ) ;
                 break ;
-            case natus::graphics::backend_type::gl3:
+            case natus::graphics::backend_type::gl4:
                 ctx = this_t::create_wgl_window( wii, rnd_msg_recv, pwi ) ;
                 if( !ctx.is_valid() )
                     ctx = this_t::create_glx_window( wii, rnd_msg_recv, pwi ) ;

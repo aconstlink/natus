@@ -138,10 +138,10 @@ natus::graphics::backend_res_t context::create_backend( void_t ) noexcept
 {
     natus::application::gl_version glv ;
     this->get_gl_version( glv ) ;
-    if( glv.major >= 3 || (glv.major >= 3 && glv.minor >= 1) )
+    if( glv.major >= 4 || (glv.major >= 4 && glv.minor >= 0) )
     {
-        return natus::graphics::gl3_backend_res_t(
-            natus::graphics::gl3_backend_t( _bend_ctx ) ) ;
+        return natus::graphics::gl4_backend_res_t(
+            natus::graphics::gl4_backend_t( _bend_ctx ) ) ;
     }
     
     return natus::graphics::null_backend_res_t(

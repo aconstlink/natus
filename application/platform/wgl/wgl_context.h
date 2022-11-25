@@ -5,7 +5,7 @@
 #include "../gfx_context.h"
 
 #include <natus/graphics/backend/gl/gl_context.h>
-#include <natus/graphics/backend/gl/gl3.h>
+#include <natus/graphics/backend/gl/gl4.h>
 
 #include <natus/memory/res.hpp>
 #include <natus/math/vector/vector4.hpp>

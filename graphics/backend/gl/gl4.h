@@ -8,9 +8,9 @@ namespace natus
 {
     namespace graphics
     {
-        class NATUS_GRAPHICS_API gl3_backend : public natus::graphics::backend
+        class NATUS_GRAPHICS_API gl4_backend : public natus::graphics::backend
         {
-            natus_this_typedefs( gl3_backend ) ;
+            natus_this_typedefs( gl4_backend ) ;
 
         private:
 
@@ -21,10 +21,10 @@ namespace natus
 
         public:
 
-            gl3_backend( natus::graphics::gl_context_ptr_t ) noexcept ;
-            gl3_backend( this_cref_t ) = delete ;
-            gl3_backend( this_rref_t ) noexcept ;
-            virtual ~gl3_backend( void_t ) ;
+            gl4_backend( natus::graphics::gl_context_ptr_t ) noexcept ;
+            gl4_backend( this_cref_t ) = delete ;
+            gl4_backend( this_rref_t ) noexcept ;
+            virtual ~gl4_backend( void_t ) ;
 
         public:
 
@@ -70,6 +70,6 @@ namespace natus
 
             //
         };
-        natus_res_typedef( gl3_backend ) ;
+        natus_res_typedef( gl4_backend ) ;
     }
 }

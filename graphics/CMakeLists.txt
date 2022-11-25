@@ -53,9 +53,9 @@ set( sources
 
 if( NATUS_GRAPHICS_OPENGL )
 list( APPEND sources 
-    "backend/gl/gl3.h"
-    "backend/gl/gl3.cpp"
-    "backend/gl/gl3_convert.h"
+    "backend/gl/gl4.h"
+    "backend/gl/gl4.cpp"
+    "backend/gl/gl4_convert.h"
     "backend/gl/gl_context.h"
 )
 endif()

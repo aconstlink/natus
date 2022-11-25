@@ -21,6 +21,7 @@ namespace natus
         {
             unknown,
             glsl_1_4,       // gl 3.1
+            glsl_4_0,       // gl 4.0
             glsles_3_0,     // gles 3.1
             hlsl_5_0,        // dx 11
             nsl_1_0

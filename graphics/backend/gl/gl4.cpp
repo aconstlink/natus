@@ -1,7 +1,7 @@
 
 
-#include "gl3.h"
-#include "gl3_convert.h"
+#include "gl4.h"
+#include "gl4_convert.h"
 
 #include "../../buffer/vertex_buffer.hpp"
 #include "../../buffer/index_buffer.hpp"
@@ -18,7 +18,7 @@
 using namespace natus::graphics ;
 using namespace natus::ogl ;
 
-struct gl3_backend::pimpl
+struct gl4_backend::pimpl
 {
     natus_this_typedefs( pimpl ) ;
 
@@ -398,7 +398,7 @@ struct gl3_backend::pimpl
     GLsizei vp_width = 0 ;
     GLsizei vp_height = 0 ;
 
-    natus::graphics::backend_type const bt = natus::graphics::backend_type::gl3 ;
+    natus::graphics::backend_type const bt = natus::graphics::backend_type::gl4 ;
     natus::graphics::shader_api_type const sapi = natus::graphics::shader_api_type::glsl_1_4 ;
 
     // the current render state set
@@ -414,7 +414,7 @@ struct gl3_backend::pimpl
         _ctx = ctx ;
 
         {
-            natus::graphics::state_object_t obj( "gl3_default_states" ) ;
+            natus::graphics::state_object_t obj( "gl4_default_states" ) ;
 
             auto new_states = *natus::graphics::backend_t::default_render_states() ;
 
@@ -2955,30 +2955,30 @@ struct gl3_backend::pimpl
 //************************************************************************************************
 
 //****
-gl3_backend::gl3_backend( natus::graphics::gl_context_ptr_t ctx ) noexcept : 
-    backend( natus::graphics::backend_type::gl3 )
+gl4_backend::gl4_backend( natus::graphics::gl_context_ptr_t ctx ) noexcept : 
+    backend( natus::graphics::backend_type::gl4 )
 {
     _pimpl = natus::memory::global_t::alloc( pimpl( ctx ), 
-        natus_log_fn("gl3_backend::pimpl") ) ;
+        natus_log_fn("gl4_backend::pimpl") ) ;
 
     _context = ctx ;
 }
 
 //****
-gl3_backend::gl3_backend( this_rref_t rhv ) noexcept : backend( ::std::move( rhv ) )
+gl4_backend::gl4_backend( this_rref_t rhv ) noexcept : backend( ::std::move( rhv ) )
 {
     natus_move_member_ptr( _pimpl, rhv ) ;
     natus_move_member_ptr( _context, rhv ) ;
 }
 
 //****
-gl3_backend::~gl3_backend( void_t ) 
+gl4_backend::~gl4_backend( void_t ) 
 {
     natus::memory::global_t::dealloc( _pimpl ) ;
 }
 
 //****
-void_t gl3_backend::set_window_info( window_info_cref_t wi ) noexcept 
+void_t gl4_backend::set_window_info( window_info_cref_t wi ) noexcept 
 {
     {
         //bool_t change = false ;
@@ -2996,7 +2996,7 @@ void_t gl3_backend::set_window_info( window_info_cref_t wi ) noexcept
 }
 
 //****
-natus::graphics::result gl3_backend::configure( natus::graphics::geometry_object_res_t gconf ) noexcept 
+natus::graphics::result gl4_backend::configure( natus::graphics::geometry_object_res_t gconf ) noexcept 
 {
     natus::graphics::id_res_t id = gconf->get_id() ;
 
@@ -3017,7 +3017,7 @@ natus::graphics::result gl3_backend::configure( natus::graphics::geometry_object
 }
 
 //****
-natus::graphics::result gl3_backend::configure( natus::graphics::render_object_res_t config ) noexcept 
+natus::graphics::result gl4_backend::configure( natus::graphics::render_object_res_t config ) noexcept 
 {
     natus::graphics::id_res_t id = config->get_id() ;
 
@@ -3040,7 +3040,7 @@ natus::graphics::result gl3_backend::configure( natus::graphics::render_object_r
 }
 
 //***
-natus::graphics::result gl3_backend::configure( natus::graphics::shader_object_res_t config ) noexcept
+natus::graphics::result gl4_backend::configure( natus::graphics::shader_object_res_t config ) noexcept
 {
     natus::graphics::id_res_t id = config->get_id() ;
 
@@ -3063,7 +3063,7 @@ natus::graphics::result gl3_backend::configure( natus::graphics::shader_object_r
 }
 
 //***
-natus::graphics::result gl3_backend::configure( natus::graphics::image_object_res_t config ) noexcept 
+natus::graphics::result gl4_backend::configure( natus::graphics::image_object_res_t config ) noexcept 
 {
     natus::graphics::id_res_t id = config->get_id() ;
 
@@ -3086,7 +3086,7 @@ natus::graphics::result gl3_backend::configure( natus::graphics::image_object_re
 }
 
 //***
-natus::graphics::result gl3_backend::configure( natus::graphics::framebuffer_object_res_t obj ) noexcept 
+natus::graphics::result gl4_backend::configure( natus::graphics::framebuffer_object_res_t obj ) noexcept 
 {
     if( !obj.is_valid() || obj->name().empty() )
     {
@@ -3105,7 +3105,7 @@ natus::graphics::result gl3_backend::configure( natus::graphics::framebuffer_obj
 }
 
 //***
-natus::graphics::result gl3_backend::configure( natus::graphics::state_object_res_t obj ) noexcept
+natus::graphics::result gl4_backend::configure( natus::graphics::state_object_res_t obj ) noexcept
 {
     if( !obj.is_valid() || obj->name().empty() )
     {
@@ -3124,7 +3124,7 @@ natus::graphics::result gl3_backend::configure( natus::graphics::state_object_re
 }
 
 //***
-natus::graphics::result gl3_backend::configure( natus::graphics::array_object_res_t obj ) noexcept 
+natus::graphics::result gl4_backend::configure( natus::graphics::array_object_res_t obj ) noexcept 
 {
     natus::graphics::id_res_t id = obj->get_id() ;
 
@@ -3143,7 +3143,7 @@ natus::graphics::result gl3_backend::configure( natus::graphics::array_object_re
     return natus::graphics::result::ok ;
 }
 
-natus::graphics::result gl3_backend::configure( natus::graphics::streamout_object_res_t obj ) noexcept 
+natus::graphics::result gl4_backend::configure( natus::graphics::streamout_object_res_t obj ) noexcept 
 {
     natus::graphics::id_res_t id = obj->get_id() ;
 
@@ -3162,7 +3162,7 @@ natus::graphics::result gl3_backend::configure( natus::graphics::streamout_objec
     return natus::graphics::result::ok ;
 }
 
-natus::graphics::result gl3_backend::release( natus::graphics::geometry_object_res_t obj ) noexcept 
+natus::graphics::result gl4_backend::release( natus::graphics::geometry_object_res_t obj ) noexcept 
 {
     if( !obj.is_valid() || obj->name().empty() )
     {
@@ -3179,7 +3179,7 @@ natus::graphics::result gl3_backend::release( natus::graphics::geometry_object_r
     return natus::graphics::result::ok ;
 }
 
-natus::graphics::result gl3_backend::release( natus::graphics::render_object_res_t obj ) noexcept 
+natus::graphics::result gl4_backend::release( natus::graphics::render_object_res_t obj ) noexcept 
 {
     if( !obj.is_valid() || obj->name().empty() )
     {
@@ -3196,7 +3196,7 @@ natus::graphics::result gl3_backend::release( natus::graphics::render_object_res
     return natus::graphics::result::ok ;
 }
 
-natus::graphics::result gl3_backend::release( natus::graphics::shader_object_res_t obj ) noexcept
+natus::graphics::result gl4_backend::release( natus::graphics::shader_object_res_t obj ) noexcept
 {
     if( !obj.is_valid() || obj->name().empty() )
     {
@@ -3213,7 +3213,7 @@ natus::graphics::result gl3_backend::release( natus::graphics::shader_object_res
     return natus::graphics::result::ok ;
 }
 
-natus::graphics::result gl3_backend::release( natus::graphics::image_object_res_t obj ) noexcept 
+natus::graphics::result gl4_backend::release( natus::graphics::image_object_res_t obj ) noexcept 
 {
     if( !obj.is_valid() || obj->name().empty() )
     {
@@ -3230,7 +3230,7 @@ natus::graphics::result gl3_backend::release( natus::graphics::image_object_res_
     return natus::graphics::result::ok ;
 }
 
-natus::graphics::result gl3_backend::release( natus::graphics::framebuffer_object_res_t obj ) noexcept 
+natus::graphics::result gl4_backend::release( natus::graphics::framebuffer_object_res_t obj ) noexcept 
 {
     if( !obj.is_valid() || obj->name().empty() )
     {
@@ -3247,7 +3247,7 @@ natus::graphics::result gl3_backend::release( natus::graphics::framebuffer_objec
     return natus::graphics::result::ok ;
 }
 
-natus::graphics::result gl3_backend::release( natus::graphics::state_object_res_t obj ) noexcept
+natus::graphics::result gl4_backend::release( natus::graphics::state_object_res_t obj ) noexcept
 {
     if( !obj.is_valid() || obj->name().empty() )
     {
@@ -3264,7 +3264,7 @@ natus::graphics::result gl3_backend::release( natus::graphics::state_object_res_
     return natus::graphics::result::ok ;
 }
 
-natus::graphics::result gl3_backend::release( natus::graphics::array_object_res_t obj ) noexcept
+natus::graphics::result gl4_backend::release( natus::graphics::array_object_res_t obj ) noexcept
 {
     if( !obj.is_valid() || obj->name().empty() )
     {
@@ -3281,7 +3281,7 @@ natus::graphics::result gl3_backend::release( natus::graphics::array_object_res_
     return natus::graphics::result::ok ;
 }
 
-natus::graphics::result gl3_backend::release( natus::graphics::streamout_object_res_t obj ) noexcept 
+natus::graphics::result gl4_backend::release( natus::graphics::streamout_object_res_t obj ) noexcept 
 {
     if( !obj.is_valid() || obj->name().empty() )
     {
@@ -3299,7 +3299,7 @@ natus::graphics::result gl3_backend::release( natus::graphics::streamout_object_
 }
 
 //********************************************************************************************************************
-natus::graphics::result gl3_backend::connect( natus::graphics::render_object_res_t config, natus::graphics::variable_set_res_t vs ) noexcept
+natus::graphics::result gl4_backend::connect( natus::graphics::render_object_res_t config, natus::graphics::variable_set_res_t vs ) noexcept
 {
     natus::graphics::id_res_t id = config->get_id() ;
 
@@ -3319,7 +3319,7 @@ natus::graphics::result gl3_backend::connect( natus::graphics::render_object_res
 }
 
 //********************************************************************************************************************
-natus::graphics::result gl3_backend::update( natus::graphics::geometry_object_res_t config ) noexcept 
+natus::graphics::result gl4_backend::update( natus::graphics::geometry_object_res_t config ) noexcept 
 {
     natus::graphics::id_res_t id = config->get_id() ;
 
@@ -3339,7 +3339,7 @@ natus::graphics::result gl3_backend::update( natus::graphics::geometry_object_re
 }
 
 //********************************************************************************************************************
-natus::graphics::result gl3_backend::update( natus::graphics::streamout_object_res_t obj ) noexcept
+natus::graphics::result gl4_backend::update( natus::graphics::streamout_object_res_t obj ) noexcept
 {
     natus::graphics::id_res_t id = obj->get_id() ;
     size_t const oid = id->get_oid( this_t::get_bid() ) ;
@@ -3353,7 +3353,7 @@ natus::graphics::result gl3_backend::update( natus::graphics::streamout_object_r
 }
 
 //********************************************************************************************************************
-natus::graphics::result gl3_backend::update( natus::graphics::array_object_res_t obj ) noexcept 
+natus::graphics::result gl4_backend::update( natus::graphics::array_object_res_t obj ) noexcept 
 {
     natus::graphics::id_res_t id = obj->get_id() ;
     size_t const oid = id->get_oid( this_t::get_bid() ) ;
@@ -3367,13 +3367,13 @@ natus::graphics::result gl3_backend::update( natus::graphics::array_object_res_t
 }
 
 //********************************************************************************************************************
-natus::graphics::result gl3_backend::update( natus::graphics::image_object_res_t ) noexcept 
+natus::graphics::result gl4_backend::update( natus::graphics::image_object_res_t ) noexcept 
 {
     return natus::graphics::result::ok ;
 }
 
 //********************************************************************************************************************
-natus::graphics::result gl3_backend::update( natus::graphics::render_object_res_t obj, size_t const varset ) noexcept 
+natus::graphics::result gl4_backend::update( natus::graphics::render_object_res_t obj, size_t const varset ) noexcept 
 {
     natus::graphics::id_res_t id = obj->get_id() ;
     size_t const oid = id->get_oid( this_t::get_bid() ) ;
@@ -3387,7 +3387,7 @@ natus::graphics::result gl3_backend::update( natus::graphics::render_object_res_
 }
 
 //********************************************************************************************************************
-natus::graphics::result gl3_backend::use( natus::graphics::framebuffer_object_res_t obj ) noexcept
+natus::graphics::result gl4_backend::use( natus::graphics::framebuffer_object_res_t obj ) noexcept
 {
     if( !obj.is_valid() )
     {
@@ -3409,7 +3409,7 @@ natus::graphics::result gl3_backend::use( natus::graphics::framebuffer_object_re
 }
 
 //********************************************************************************************************************
-natus::graphics::result gl3_backend::use( natus::graphics::streamout_object_res_t obj ) noexcept 
+natus::graphics::result gl4_backend::use( natus::graphics::streamout_object_res_t obj ) noexcept 
 {
     if( !obj.is_valid() )
     {
@@ -3431,7 +3431,7 @@ natus::graphics::result gl3_backend::use( natus::graphics::streamout_object_res_
 }
 
 //********************************************************************************************************************
-natus::graphics::result gl3_backend::unuse( natus::graphics::backend::unuse_type const t ) noexcept 
+natus::graphics::result gl4_backend::unuse( natus::graphics::backend::unuse_type const t ) noexcept 
 {
     switch( t ) 
     {
@@ -3443,7 +3443,7 @@ natus::graphics::result gl3_backend::unuse( natus::graphics::backend::unuse_type
 }
 
 //********************************************************************************************************************
-natus::graphics::result gl3_backend::push( natus::graphics::state_object_res_t obj, size_t const sid, bool_t const ) noexcept 
+natus::graphics::result gl4_backend::push( natus::graphics::state_object_res_t obj, size_t const sid, bool_t const ) noexcept 
 {
     if( !obj.is_valid() )
     {
@@ -3464,14 +3464,14 @@ natus::graphics::result gl3_backend::push( natus::graphics::state_object_res_t o
 }
 
 //********************************************************************************************************************
-natus::graphics::result gl3_backend::pop( natus::graphics::backend::pop_type const ) noexcept 
+natus::graphics::result gl4_backend::pop( natus::graphics::backend::pop_type const ) noexcept 
 {
     _pimpl->handle_render_state( size_t( -1 ), size_t( -1 ) ) ;
     return natus::graphics::result::ok ;
 }
 
 //********************************************************************************************************************
-natus::graphics::result gl3_backend::render( natus::graphics::render_object_res_t config, natus::graphics::backend::render_detail_cref_t detail ) noexcept 
+natus::graphics::result gl4_backend::render( natus::graphics::render_object_res_t config, natus::graphics::backend::render_detail_cref_t detail ) noexcept 
 { 
     natus::graphics::id_res_t id = config->get_id() ;
 
@@ -3493,13 +3493,13 @@ natus::graphics::result gl3_backend::render( natus::graphics::render_object_res_
 }
 
 //********************************************************************************************************************
-void_t gl3_backend::render_begin( void_t ) noexcept 
+void_t gl4_backend::render_begin( void_t ) noexcept 
 {
     _pimpl->begin_frame() ;
 }
 
 //********************************************************************************************************************
-void_t gl3_backend::render_end( void_t ) noexcept 
+void_t gl4_backend::render_end( void_t ) noexcept 
 {
     _pimpl->end_frame() ;
 }
