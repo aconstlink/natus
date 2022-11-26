@@ -9,7 +9,7 @@
 #if defined( NATUS_GRAPHICS_GLX )
 #include "platform/glx/glx_context.h"
 #include "platform/glx/glx_window.h"
-#include <natus/graphics/backend/gl/gl3.h>
+#include <natus/graphics/backend/gl/gl4.h>
 #endif
 #if defined( NATUS_GRAPHICS_EGL )
 #include "platform/egl/egl_context.h"
