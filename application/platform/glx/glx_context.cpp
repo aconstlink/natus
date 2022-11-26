@@ -115,8 +115,8 @@ natus::graphics::backend_res_t context::create_backend( void_t ) noexcept
     this->get_gl_version( glv ) ;
     if( glv.major >= 3 )
     {
-        return natus::graphics::gl3_backend_res_t(
-            natus::graphics::gl3_backend_t( _bend_ctx ) ) ;
+        return natus::graphics::gl4_backend_res_t(
+            natus::graphics::gl4_backend_t( _bend_ctx ) ) ;
     }
 
     return natus::graphics::null_backend_res_t(
