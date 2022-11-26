@@ -2583,6 +2583,31 @@ struct gl4_backend::pimpl
                 return false ;
         }
 
+        for( size_t rw=0; rw<2; ++rw )
+        {
+            auto & buffer = data._buffers[rw] ;
+
+            {
+                glBindTransformFeedback( GL_TRANSFORM_FEEDBACK, buffer.tfid ) ;
+                if( natus::ogl::error::check_and_log( natus_log_fn("glBindTransformFeedback") ) )
+                    return false ;
+            }
+
+            // bind buffers
+            {
+                for( size_t i=0; i<tf_data::max_buffers; ++i )
+                {
+                    auto const bid = buffer.bids[ i ] ;
+                    auto const sib = buffer.sibs[ i ] ;
+
+                    if( bid == GLuint(-1) ) break ;
+
+                    glBindBufferRange( GL_TRANSFORM_FEEDBACK_BUFFER, GLuint(i), bid, 0, sib ) ;
+                    natus::ogl::error::check_and_log( natus_log_fn( "glBindBufferRange" ) ) ;
+                }
+            }
+        }
+
         return false ;
     }
 
@@ -2615,20 +2640,17 @@ struct gl4_backend::pimpl
         // OR use for overwriting the primitive type on render
         //data.pt = gdata.pt ;
 
-        // bind buffers
+        // bind transform feedback object and update primitive type for 
+        // rendering the transform feedback data.
         {
             for( size_t i=0; i<tf_data::max_buffers; ++i )
             {
-                auto const bid = buffer.bids[ i ] ;
-                auto const sib = buffer.sibs[ i ] ;
-
-                if( bid == GLuint(-1) ) break ;
-
+                if( buffer.bids[ i ] == GLuint(-1) ) break ;
                 _geometries[buffer.gids[ i ]].pt = gdata.pt ;
-
-                glBindBufferRange( GL_TRANSFORM_FEEDBACK_BUFFER, GLuint(i), bid, 0, sib ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glBindBufferRange" ) ) ;
             }
+
+            glBindTransformFeedback( GL_TRANSFORM_FEEDBACK, buffer.tfid ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glBindTransformFeedback" ) ) ;
         }
 
         // query written primitives
@@ -2878,19 +2900,19 @@ struct gl4_backend::pimpl
             
             if( tfid != size_t( -1 ) )
             {
-                #if 1 // this is gl 3.x
+                auto & tfd = _feedbacks[ tfid ] ;
+
+                #if 0 // this is gl 3.x
                 GLuint num_prims = 0 ;
                 {
-                    auto & tfd = _feedbacks[ tfid ] ;
                     glGetQueryObjectuiv( tfd.read_buffer().qid, GL_QUERY_RESULT, &num_prims ) ;
                     natus::ogl::error::check_and_log( natus_log_fn( "glGetQueryObjectuiv" ) ) ;
                 }
                 glDrawArrays( pt, start_element, num_prims * natus::graphics::gl3::primitive_type_to_num_vertices( pt ) ) ;
                 natus::ogl::error::check_and_log( natus_log_fn( "glDrawArrays" ) ) ;
                 #else
-                // @todo this requries a gl tf id. glGenTransformFeedbacks
-                glDrawTransformFeedback( pt, )
-                natus::ogl::error::check_and_log( natus_log_fn( "glDrawArrays" ) ) ;
+                glDrawTransformFeedback( pt, tfd.read_buffer().tfid ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glDrawTransformFeedback" ) ) ;
                 #endif
 
             }
