@@ -1,7 +1,7 @@
 #include "glx_context.h"
 #include "glx_window.h"
 
-#include <natus/graphics/backend/gl/gl3.h>
+#include <natus/graphics/backend/gl/gl4.h>
 
 #include <natus/ogl/gl/gl.h>
 #include <natus/ogl/glx/glx.h>
