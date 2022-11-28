@@ -23,7 +23,7 @@ namespace natus
 
         enum class api_type
         {
-            gl3,
+            gl4,
             es3,
             d3d11
         };

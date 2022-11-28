@@ -402,7 +402,7 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::nsl::api_type co
         }
     } ;
 
-    if( t == natus::nsl::api_type::gl3 )
+    if( t == natus::nsl::api_type::gl4 )
     {
         repls.emplace_back( repl_sym ( 
             {
@@ -439,7 +439,7 @@ namespace this_file
 
     static mapping_t map_variable_type( natus::nsl::api_type const apit, natus::nsl::type_cref_t type ) noexcept
     {
-        if( apit == natus::nsl::api_type::gl3 )
+        if( apit == natus::nsl::api_type::gl4 )
         {
             static mapping_t const __mappings[] =
             {
@@ -607,7 +607,7 @@ natus::nsl::generated_code_t::shaders_t generator::generate( natus::nsl::generat
             shd.type = s_type ;
 
             shd.codes.emplace_back( this_t::generate( genable, s, var_map, natus::nsl::api_type::es3 ) ) ;
-            shd.codes.emplace_back( this_t::generate( genable, s, var_map, natus::nsl::api_type::gl3 ) ) ;
+            shd.codes.emplace_back( this_t::generate( genable, s, var_map, natus::nsl::api_type::gl4 ) ) ;
         }
 
         ret.emplace_back( std::move( shd ) ) ;
@@ -627,7 +627,7 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
     {
         switch( type )
         {
-        case natus::nsl::api_type::gl3:
+        case natus::nsl::api_type::gl4:
             text << "#version 140" << " // " << genable.config.name << std::endl << std::endl ;
             break ;
         case natus::nsl::api_type::es3:
@@ -673,7 +673,7 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
         }
 
         // mrt requires extensions for glsl 130
-        if( num_color > 1 && type == natus::nsl::api_type::gl3 )
+        if( num_color > 1 && type == natus::nsl::api_type::gl4 )
         {
             text <<
                 "#extension GL_ARB_separate_shader_objects : enable" << std::endl <<

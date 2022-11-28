@@ -154,7 +154,7 @@ namespace natus
                 {
                     natus::ntd::vector< natus::nsl::api_type > const types = 
                     {
-                        natus::nsl::api_type::es3, natus::nsl::api_type::gl3,
+                        natus::nsl::api_type::es3, natus::nsl::api_type::gl4,
                         natus::nsl::api_type::d3d11 
                     } ;
 
@@ -165,7 +165,7 @@ namespace natus
                         natus::graphics::shader_api_type bt = natus::graphics::shader_api_type::unknown ;
                         switch( t )
                         {
-                        case natus::nsl::api_type::gl3:
+                        case natus::nsl::api_type::gl4:
                             bt = natus::graphics::shader_api_type::glsl_1_4 ;
                             break ;
                         case natus::nsl::api_type::es3:
