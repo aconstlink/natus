@@ -703,6 +703,8 @@ struct d3d11_backend::pimpl
         natus_typedef( cbuffer ) ;
         natus_typedefs( natus::ntd::vector< cbuffer_t >, cbuffers ) ;
 
+        // vertex shader data. The variable requires a renaming.
+        // like: var_sets_data_vs
         natus::ntd::vector< std::pair< natus::graphics::variable_set_res_t,
             cbuffers_t > > var_sets_data ;
 
@@ -1640,7 +1642,7 @@ public: // functions
                 D3D11_BUFFER_DESC bd = {} ;
                 bd.ByteWidth = UINT( byte_width ) ;
                 bd.Usage = D3D11_USAGE_DEFAULT ;
-                bd.BindFlags = D3D11_BIND_STREAM_OUTPUT | D3D11_BIND_VERTEX_BUFFER ;
+                bd.BindFlags = D3D11_BIND_STREAM_OUTPUT | D3D11_BIND_VERTEX_BUFFER | D3D10_BIND_SHADER_RESOURCE ;
 
                 for( size_t j=0; j<2; ++j )
                 {
@@ -3146,45 +3148,61 @@ public: // functions
 
         ID3D11DeviceContext * ctx = _ctx->ctx() ;
 
-        // vertex shader variables
-        for( auto & cb : rnd.var_sets_data[ varset_id ].second )
+        // SECTION: Set all shaders
         {
-            ctx->VSSetConstantBuffers( cb.slot, 1, &cb.ptr ) ;
+            ctx->VSSetShader( shd.vs, nullptr, 0 ) ;
+            ctx->GSSetShader( shd.gs, nullptr, 0 ) ;
+            ctx->PSSetShader( shd.ps, nullptr, 0 ) ;
         }
 
-        // pixel shader variables
-        for( auto& cb : rnd.var_sets_data_ps[ varset_id ].second )
+        // SECTION: vertex shader variables
         {
-            ctx->PSSetConstantBuffers( cb.slot, 1, &cb.ptr ) ;
+            
+            for( auto & cb : rnd.var_sets_data[ varset_id ].second )
+            {
+                ctx->VSSetConstantBuffers( cb.slot, 1, &cb.ptr ) ;
+            }
+
+            for( auto& buf : rnd.var_sets_buffers_vs[ varset_id ].second )
+            {
+                ctx->VSSetShaderResources( buf.slot, 1, arrays[ buf.id ].view ) ;
+            }
         }
 
-        ctx->VSSetShader( shd.vs, nullptr, 0 ) ;
-        ctx->GSSetShader( shd.gs, nullptr, 0 ) ;
-        ctx->PSSetShader( shd.ps, nullptr, 0 ) ;
-
-        for( auto& img : rnd.var_sets_imgs_ps[ varset_id ].second )
+        // SECTION: geometry shader variables
         {
-            ctx->PSSetShaderResources( img.slot, 1, images[ img.id ].view ) ;
-            ctx->PSSetSamplers( img.slot, 1, images[ img.id ].sampler ) ;
         }
 
-        for( auto& buf : rnd.var_sets_buffers_vs[ varset_id ].second )
+        // SECTION: tesselation shader variables
         {
-            ctx->VSSetShaderResources( buf.slot, 1, arrays[ buf.id ].view ) ;
         }
 
-        for( auto& buf : rnd.var_sets_buffers_ps[ varset_id ].second )
+        // SECTION: pixel shader variables
         {
-            ctx->PSSetShaderResources( buf.slot, 1, arrays[ buf.id ].view ) ;
+            for( auto& cb : rnd.var_sets_data_ps[ varset_id ].second )
+            {
+                ctx->PSSetConstantBuffers( cb.slot, 1, &cb.ptr ) ;
+            }
+
+            for( auto& img : rnd.var_sets_imgs_ps[ varset_id ].second )
+            {
+                ctx->PSSetShaderResources( img.slot, 1, images[ img.id ].view ) ;
+                ctx->PSSetSamplers( img.slot, 1, images[ img.id ].sampler ) ;
+            }
+
+            for( auto& buf : rnd.var_sets_buffers_ps[ varset_id ].second )
+            {
+                ctx->PSSetShaderResources( buf.slot, 1, arrays[ buf.id ].view ) ;
+            }
         }
 
         // feed from streamout path
-        if( feed_from_so && rnd.so_ids.size() != 0 ) // streamout path
+        if( feed_from_so && rnd.so_ids.size() != 0 )
         {
             this_t::so_data_ref_t so = _streamouts[ rnd.so_ids[0] ] ;
             size_t const ridx = so.read_index() ;
 
-            #if 1
+            #if 0 // for debugging purposes only - query primitives written by the streamout stage
             {
                 D3D11_QUERY_DATA_SO_STATISTICS data = { 0 };
                 HRESULT hr = S_FALSE ;
@@ -3205,9 +3223,8 @@ public: // functions
 
             ctx->IASetInputLayout( rnd.vertex_layout_so ) ;
             ctx->DrawAuto() ;
-
         }
-        else // geometry path
+        else // feed from geometry path
         {
             this_t::geo_data_ref_t geo = geo_datas[ rnd.geo_ids[geo_idx] ] ;
 
