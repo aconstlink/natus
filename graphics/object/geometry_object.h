@@ -26,13 +26,13 @@ namespace natus
 
         public: 
 
-            geometry_object( void_t ) {}
+            geometry_object( void_t ) noexcept {}
 
-            geometry_object( natus::ntd::string_cref_t name ) : _name(name)
+            geometry_object( natus::ntd::string_cref_t name ) noexcept : _name(name)
             {}
 
             geometry_object( natus::ntd::string_cref_t name, natus::graphics::primitive_type const pt, 
-                natus::graphics::vertex_buffer_cref_t vb, natus::graphics::index_buffer_cref_t ib )
+                natus::graphics::vertex_buffer_cref_t vb, natus::graphics::index_buffer_cref_t ib ) noexcept
             {
                 _name = name ;
                 _pt = pt ;
@@ -41,7 +41,7 @@ namespace natus
             }
 
             geometry_object( natus::ntd::string_cref_t name, natus::graphics::primitive_type const pt,
-                natus::graphics::vertex_buffer_rref_t vb, natus::graphics::index_buffer_rref_t ib )
+                natus::graphics::vertex_buffer_rref_t vb, natus::graphics::index_buffer_rref_t ib ) noexcept
             {
                 _name = name ;
                 _pt = pt ;
@@ -49,7 +49,23 @@ namespace natus
                 _ib = ::std::move( ib ) ;
             }
 
-            geometry_object( this_cref_t rhv ) : object( rhv ) 
+            geometry_object( natus::ntd::string_cref_t name, natus::graphics::primitive_type const pt, 
+                natus::graphics::vertex_buffer_cref_t vb ) noexcept
+            {
+                _name = name ;
+                _pt = pt ;
+                _vb = vb ;
+            }
+
+            geometry_object( natus::ntd::string_cref_t name, natus::graphics::primitive_type const pt,
+                natus::graphics::vertex_buffer_rref_t vb  ) noexcept
+            {
+                _name = name ;
+                _pt = pt ;
+                _vb = std::move( vb ) ;
+            }
+
+            geometry_object( this_cref_t rhv ) noexcept : object( rhv ) 
             {
                 _pt = rhv._pt ;
                 _vb = rhv._vb ;
@@ -57,7 +73,7 @@ namespace natus
                 _name = rhv._name ;
             }
 
-            geometry_object( this_rref_t rhv ) : object( ::std::move( rhv ) )
+            geometry_object( this_rref_t rhv ) noexcept : object( ::std::move( rhv ) )
             {
                 _pt = rhv._pt ;
                 _vb = ::std::move( rhv._vb ) ;
@@ -65,10 +81,10 @@ namespace natus
                 _name = ::std::move( rhv._name ) ;
             }
 
-            ~geometry_object( void_t ) 
+            ~geometry_object( void_t ) noexcept
             {}
 
-            this_ref_t operator = ( this_cref_t rhv )
+            this_ref_t operator = ( this_cref_t rhv ) noexcept
             {
                 object::operator=( rhv ) ;
 
@@ -79,7 +95,7 @@ namespace natus
                 return *this ;
             }
 
-            this_ref_t operator = ( this_rref_t rhv )
+            this_ref_t operator = ( this_rref_t rhv ) noexcept
             {
                 object::operator=( ::std::move( rhv ) ) ;
 

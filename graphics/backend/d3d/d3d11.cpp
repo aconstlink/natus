@@ -139,6 +139,7 @@ struct d3d11_backend::pimpl
         typedef struct 
         {
             guard< ID3D11Buffer > buffers[2] ;
+            guard< ID3D11ShaderResourceView > views[2] ;
         } buffer_t ;
 
         static const size_t max_buffers = 4 ;
@@ -686,6 +687,9 @@ struct d3d11_backend::pimpl
             buffer_variables_t > > var_sets_buffers_vs ;
 
         natus::ntd::vector< std::pair< natus::graphics::variable_set_res_t,
+            buffer_variables_t > > var_sets_buffers_so_vs ;
+
+        natus::ntd::vector< std::pair< natus::graphics::variable_set_res_t,
             buffer_variables_t > > var_sets_buffers_ps ;
 
         // represents the cbuffer data of a shader stage.
@@ -730,6 +734,7 @@ struct d3d11_backend::pimpl
             var_sets_imgs_vs = std::move( rhv.var_sets_imgs_vs ) ;
             var_sets_imgs_ps = std::move( rhv.var_sets_imgs_ps ) ;
             var_sets_buffers_vs = std::move( rhv.var_sets_buffers_vs ) ;
+            var_sets_buffers_so_vs = std::move( rhv.var_sets_buffers_so_vs ) ;
             var_sets_buffers_ps = std::move( rhv.var_sets_buffers_ps ) ;
             var_sets_data = std::move( rhv.var_sets_data ) ;
             var_sets_data_ps = std::move( rhv.var_sets_data_ps ) ;
@@ -777,6 +782,7 @@ struct d3d11_backend::pimpl
             var_sets_imgs_vs.clear() ;
             var_sets_imgs_ps.clear() ;
             var_sets_buffers_vs.clear() ;
+            var_sets_buffers_so_vs.clear() ;
             var_sets_buffers_ps.clear() ;
             var_sets_data.clear() ;
             var_sets_data_ps.clear() ;
@@ -958,6 +964,18 @@ public: // variables
         v[ oid ].name = name ;
 
         return oid ;
+    }
+
+    template< typename T >
+    static size_t find_index_by_resource_name( natus::ntd::string_in_t name, natus::ntd::vector< T > const & resources ) noexcept
+    {
+        size_t i = 0 ; 
+        for( auto const & r : resources ) 
+        {
+            if( r.name == name ) return i ;
+            ++i ;
+        }
+        return size_t( -1 ) ;
     }
 
 public: // functions
@@ -1639,26 +1657,57 @@ public: // functions
 
                 size_t const byte_width = obj.size() * obj.get_buffer(i).get_layout_sib() ;
 
-                D3D11_BUFFER_DESC bd = {} ;
-                bd.ByteWidth = UINT( byte_width ) ;
-                bd.Usage = D3D11_USAGE_DEFAULT ;
-                bd.BindFlags = D3D11_BIND_STREAM_OUTPUT | D3D11_BIND_VERTEX_BUFFER | D3D10_BIND_SHADER_RESOURCE ;
-
-                for( size_t j=0; j<2; ++j )
+                // create buffer
                 {
-                    auto & b = config.buffers[i].buffers[j] ;
-                    b.invalidate() ;
-                
-                    HRESULT const hr = _ctx->dev()->CreateBuffer( &bd, NULL, b ) ;
-                    if( FAILED( hr ) )
+                    D3D11_BUFFER_DESC bd = {} ;
+                    bd.ByteWidth = UINT( byte_width ) ;
+                    bd.Usage = D3D11_USAGE_DEFAULT ;
+                    bd.BindFlags = D3D11_BIND_STREAM_OUTPUT | D3D11_BIND_VERTEX_BUFFER | D3D10_BIND_SHADER_RESOURCE ;
+
+                    for( size_t j=0; j<2; ++j )
                     {
-                        natus::log::global_t::error( natus_log_fn( "CreateBuffer - D3D11_BIND_STREAM_OUTPUT" ) ) ;
+                        auto & b = config.buffers[i].buffers[j] ;
+                        b.invalidate() ;
+                
+                        HRESULT const hr = _ctx->dev()->CreateBuffer( &bd, NULL, b ) ;
+                        if( FAILED( hr ) )
+                        {
+                            natus::log::global_t::error( natus_log_fn( "CreateBuffer - D3D11_BIND_STREAM_OUTPUT" ) ) ;
+                        }
                     }
                 }
+
+                // create the resource view
+                {
+                    D3D11_SHADER_RESOURCE_VIEW_DESC res_desc = { } ;
+                    res_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT ;
+                    res_desc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER ;
+
+                    res_desc.Buffer.FirstElement= 0 ;
+
+                    // somehow, this can not be 0
+                    // otherwise, hr will be in valid.
+                    res_desc.Buffer.NumElements = UINT( obj.size() ) ; 
+
+                    for( size_t j=0; j<2; ++j )
+                    {
+                        auto & b = config.buffers[i].buffers[j] ;
+                        auto & v = config.buffers[i].views[j] ;
+                        auto const hr = _ctx->dev()->CreateShaderResourceView( b, &res_desc, v ) ;
+                        if( FAILED( hr ) )
+                        {
+                            natus::log::global_t::error( natus_log_fn( "CreateShaderResourceView for buffer : [" + config.name + "]" ) ) ;
+                        }
+                    }
+                }
+
+
             } ) ;
 
             config.buffers_used = std::min( obj.num_buffers(), this_t::so_data::max_buffers ) ;
         }
+
+        
 
         // create query objects
         {
@@ -2744,23 +2793,40 @@ public: // functions
             rc.for_each( [&] ( size_t const /*i*/, natus::graphics::variable_set_res_t vs )
             {
                 this_t::render_data_t::buffer_variables_t bvs ;
+                this_t::render_data_t::buffer_variables_t bvs_so ;
                 for( auto& t : shd.vs_buffers )
                 {
-                    auto * dv = vs->array_variable( t.name ) ;
-                    natus::ntd::string_t const name = dv->get() ;
+                    // first try data_buffers...
+                    natus::ntd::string_t const name = vs->array_variable( t.name )->get() ;
+                    size_t const i = this_t::find_index_by_resource_name( name, arrays ) ;
 
-                    size_t i = 0 ;
-                    for( ; i < arrays.size(); ++i ) if( arrays[ i ].name == name ) break ;
-
-                    if( i == arrays.size() ) continue ;
-                    
-                    this_t::render_data_t::buffer_variable_t bv ;
-                    bv.id = i ;
-                    bv.name = t.name ;
-                    bv.slot = t.slot ;
-                    bvs.emplace_back( std::move( bv ) ) ;
+                    // ... if the stored variable name is found in the data_buffers array, it is used ...
+                    if( i < arrays.size() )
+                    {
+                        this_t::render_data_t::buffer_variable_t bv ;
+                        bv.id = i ;
+                        bv.name = t.name ;
+                        bv.slot = t.slot ;
+                        bvs.emplace_back( std::move( bv ) ) ;
+                    }
+                    // ... otherwise we default to the streamout objects
+                    else
+                    {
+                        natus::ntd::string_t const name2 = vs->array_variable_streamout( t.name )->get() ;
+                        size_t const i2 = this_t::find_index_by_resource_name( name2, _streamouts ) ;
+                        
+                        if( i2 < _streamouts.size() )
+                        {
+                            this_t::render_data_t::buffer_variable_t bv ;
+                            bv.id = i2 ;
+                            bv.name = t.name ;
+                            bv.slot = t.slot ;
+                            bvs_so.emplace_back( std::move( bv ) ) ;
+                        }                        
+                    }
                 }
                 rd.var_sets_buffers_vs.emplace_back( std::make_pair( vs, std::move( bvs ) ) ) ;
+                rd.var_sets_buffers_so_vs.emplace_back( std::make_pair( vs, std::move( bvs_so ) ) ) ;
             } ) ;
         }
 
@@ -3166,6 +3232,12 @@ public: // functions
             for( auto& buf : rnd.var_sets_buffers_vs[ varset_id ].second )
             {
                 ctx->VSSetShaderResources( buf.slot, 1, arrays[ buf.id ].view ) ;
+            }
+            
+            for( auto& buf : rnd.var_sets_buffers_so_vs[ varset_id ].second )
+            {
+                size_t const ridx = _streamouts[ buf.id ].read_index() ;
+                ctx->VSSetShaderResources( buf.slot, 1, _streamouts[ buf.id ].buffers[0].views[ridx] ) ;
             }
         }
 
