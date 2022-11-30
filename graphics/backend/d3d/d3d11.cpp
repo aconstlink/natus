@@ -32,10 +32,11 @@ private:
 
 public:
 
-    void_t invalidate( void_t ) noexcept
+    this_ref_t invalidate( void_t ) noexcept
     {
         if( _ptr != nullptr ) _ptr->Release() ;
         _ptr = nullptr ;
+        return *this ;
     }
 
     guard( void_t ) noexcept {}
@@ -112,6 +113,8 @@ struct d3d11_backend::pimpl
     //*******************************************************************************************
     struct so_data
     {
+        natus_this_typedefs( so_data ) ;
+
         bool_t valid = false ;
         // empty names indicate free configs
         natus::ntd::string_t name ;
@@ -136,15 +139,18 @@ struct d3d11_backend::pimpl
         // per vertex sib
         UINT stride = 0 ;
 
-        typedef struct 
-        {
-            guard< ID3D11Buffer > buffers[2] ;
-            guard< ID3D11ShaderResourceView > views[2] ;
-        } buffer_t ;
-
         static const size_t max_buffers = 4 ;
         size_t buffers_used = 0 ;
-        buffer_t buffers[ max_buffers ] ;
+
+        typedef struct 
+        {
+            guard< ID3D11Buffer > buffers[max_buffers] ;
+            guard< ID3D11ShaderResourceView > views[max_buffers] ;
+
+            guard< ID3D11Query > query ;
+        } buffer_t ;
+        
+        buffer_t _ping_pong[ 2 ] ;
 
         // read index of ping-pong
         size_t rd_idx = 0 ;
@@ -153,7 +159,11 @@ struct d3d11_backend::pimpl
         size_t write_index( void_t ) const noexcept { return (rd_idx+1) % 2 ; }
         void_t swap( void_t ) noexcept { rd_idx = ++rd_idx % 2 ;}
 
-        guard< ID3D11Query > queries[2] ;
+        buffer_t & read_buffer( void_t ) noexcept { return _ping_pong[ this_t::read_index() ] ; }
+        buffer_t const & read_buffer( void_t ) const noexcept { return _ping_pong[ this_t::read_index() ] ; }
+
+        buffer_t & write_buffer( void_t ) noexcept { return _ping_pong[ this_t::write_index() ] ; }
+        buffer_t const & write_buffer( void_t ) const noexcept { return _ping_pong[ this_t::write_index() ] ; }
 
         so_data( void_t ) noexcept{}
         so_data( so_data const & ) = delete ;
@@ -164,16 +174,18 @@ struct d3d11_backend::pimpl
             stride = rhv.stride ;
             pt = rhv.pt ;
 
-            queries[0] = std::move( rhv.queries[0] ) ;
-            queries[1] = std::move( rhv.queries[1] ) ;
-
             elements = std::move( rhv.elements ) ;
-            buffers_used = rhv.buffers_used;
-            for( size_t i=0; i<buffers_used; ++i )
+            buffers_used = rhv.buffers_used ;
+
+            for( size_t b=0; b<2; ++b )
             {
-                buffers[i].buffers[0] = std::move( rhv.buffers[i].buffers[0] ) ;
-                buffers[i].buffers[1] = std::move( rhv.buffers[i].buffers[1] ) ;
+                for( size_t i=0; i<buffers_used; ++i )
+                {
+                    _ping_pong[b].buffers[i] = std::move( rhv._ping_pong[b].buffers[i] ) ;
+                    _ping_pong[b].query = std::move( rhv._ping_pong[b].query ) ;
+                }
             }
+
             rd_idx = rhv.rd_idx ;
         }
         ~so_data( void_t ) noexcept
@@ -214,10 +226,13 @@ struct d3d11_backend::pimpl
 
             elements.clear() ;
 
-            for( size_t i=0; i<buffers_used; ++i )
+            for( size_t b=0; b<2; ++b )
             {
-                buffers[i].buffers[0].move_out()->Release() ;
-                buffers[i].buffers[1].move_out()->Release() ;
+                for( size_t i=0; i<buffers_used; ++i )
+                {
+                    _ping_pong[b].buffers[i].invalidate() ;
+                    _ping_pong[b].query.invalidate() ;
+                }
             }
             buffers_used = 0 ;
             rd_idx = size_t( -1 ) ;
@@ -1666,14 +1681,10 @@ public: // functions
 
                     for( size_t j=0; j<2; ++j )
                     {
-                        auto & b = config.buffers[i].buffers[j] ;
-                        b.invalidate() ;
-                
+                        auto & b = config._ping_pong[j].buffers[i].invalidate() ;
+                        
                         HRESULT const hr = _ctx->dev()->CreateBuffer( &bd, NULL, b ) ;
-                        if( FAILED( hr ) )
-                        {
-                            natus::log::global_t::error( natus_log_fn( "CreateBuffer - D3D11_BIND_STREAM_OUTPUT" ) ) ;
-                        }
+                        natus::log::global_t::error( FAILED( hr ), natus_log_fn( "CreateBuffer - D3D11_BIND_STREAM_OUTPUT" ) ) ;
                     }
                 }
 
@@ -1691,23 +1702,16 @@ public: // functions
 
                     for( size_t j=0; j<2; ++j )
                     {
-                        auto & b = config.buffers[i].buffers[j] ;
-                        auto & v = config.buffers[i].views[j] ;
+                        auto & b = config._ping_pong[j].buffers[i] ;
+                        auto & v = config._ping_pong[j].views[i].invalidate() ;
                         auto const hr = _ctx->dev()->CreateShaderResourceView( b, &res_desc, v ) ;
-                        if( FAILED( hr ) )
-                        {
-                            natus::log::global_t::error( natus_log_fn( "CreateShaderResourceView for buffer : [" + config.name + "]" ) ) ;
-                        }
+                        natus::log::global_t::error( FAILED( hr ), natus_log_fn( "CreateShaderResourceView for buffer : [" + config.name + "]" ) ) ;
                     }
                 }
-
-
             } ) ;
 
             config.buffers_used = std::min( obj.num_buffers(), this_t::so_data::max_buffers ) ;
         }
-
-        
 
         // create query objects
         {
@@ -1717,11 +1721,8 @@ public: // functions
 
             for( size_t j=0; j<2; ++j )
             {
-                HRESULT const hr = _ctx->dev()->CreateQuery( &qd, config.queries[j] ) ;
-                if( FAILED( hr ) )
-                {
-                    natus::log::global_t::error( natus_log_fn( "CreateQuery - D3D11_QUERY_SO_STATISTICS" ) ) ;
-                }
+                HRESULT const hr = _ctx->dev()->CreateQuery( &qd, config._ping_pong[j].query ) ;
+                natus::log::global_t::error( FAILED( hr ), natus_log_fn( "CreateQuery - D3D11_QUERY_SO_STATISTICS" ) ) ;
             }
         }
 
@@ -1735,16 +1736,7 @@ public: // functions
         for( size_t i=0; i<renders.size(); ++i )
             renders[i].unlink_streamout( oid ) ;
 
-        for( size_t i=0; i<this_t::so_data::max_buffers; ++i )
-        {
-            d.buffers[i].buffers[0].invalidate() ;
-            d.buffers[i].buffers[1].invalidate() ;
-        }
-
-        {
-            d.queries[0].invalidate() ;
-            d.queries[1].invalidate() ;
-        }
+        d.invalidate() ;
     }
 
     //******************************************************************************************************************************
@@ -1764,21 +1756,17 @@ public: // functions
 
             size_t const byte_width = obj.size() * obj.get_buffer(i).get_layout_sib() ;
 
-            D3D11_BUFFER_DESC bd ;
-            d.buffers[i].buffers[0]->GetDesc( &bd ) ;
-
-            if( byte_width <= bd.ByteWidth ) return ;
-
-            for( size_t j=0; j<2; ++j )
+            for( size_t pp=0; pp<2; ++pp )
             {
-                auto & b = d.buffers[i].buffers[j] ;
-                b.invalidate() ;
-                
+                D3D11_BUFFER_DESC bd ;
+                d._ping_pong[pp].buffers[i]->GetDesc( &bd ) ;
+
+                if( byte_width <= bd.ByteWidth ) continue ;
+                bd.ByteWidth = UINT( byte_width ) ;
+
+                auto & b = d._ping_pong[pp].buffers[i].invalidate() ;
                 HRESULT const hr = _ctx->dev()->CreateBuffer( &bd, NULL, b ) ;
-                if( FAILED( hr ) )
-                {
-                    natus::log::global_t::error( natus_log_fn( "CreateBuffer - D3D11_BIND_STREAM_OUTPUT" ) ) ;
-                }
+                natus::log::global_t::error( FAILED( hr ), natus_log_fn( "CreateBuffer - D3D11_BIND_STREAM_OUTPUT" ) ) ;
             }
         } ) ;
 
@@ -1793,16 +1781,16 @@ public: // functions
         if( _cur_streamout_active == size_t(-1) ) return true ;
 
         auto & d = _streamouts[ _cur_streamout_active] ;
-        size_t const widx = d.write_index() ;
-        _ctx->ctx()->Begin( d.queries[widx] ) ;
+        auto & wrtb = d.write_buffer() ;
+        _ctx->ctx()->Begin( wrtb.query ) ;
         
         {
             UINT offsets[ this_t::so_data::max_buffers] = { 0, 0, 0, 0 } ;
             ID3D11Buffer * buffers[ this_t::so_data::max_buffers ] ;
             for( size_t i=0; i<this_t::so_data::max_buffers; ++i )
             {
-                if( d.buffers[i].buffers[widx] == nullptr ) break ;
-                buffers[i] = d.buffers[i].buffers[widx] ;
+                if( wrtb.buffers[i] == nullptr ) break ;
+                buffers[i] = wrtb.buffers[i] ;
             }
             _ctx->ctx()->SOSetTargets( UINT(d.buffers_used), buffers, offsets ) ;
         }
@@ -1817,10 +1805,8 @@ public: // functions
         
         auto & d = _streamouts[_cur_streamout_active] ;
         d.swap() ;
-
-        size_t const idx = d.read_index() ;
-        _ctx->ctx()->End( d.queries[idx] ) ;
-
+        
+        _ctx->ctx()->End( d.read_buffer().query ) ;
         _ctx->ctx()->SOSetTargets( 0, nullptr, nullptr ) ;
 
         _cur_streamout_active = size_t( -1 ) ;
@@ -2992,7 +2978,7 @@ public: // functions
     }
 
     //******************************************************************************************************************************
-    size_t construct_array_data( size_t oid, natus::graphics::array_object_ref_t obj ) 
+    size_t construct_array_data( size_t oid, natus::graphics::array_object_ref_t obj ) noexcept
     {
         oid = this_t::determine_oid( obj.name(), arrays ) ;
 
@@ -3236,8 +3222,8 @@ public: // functions
             
             for( auto& buf : rnd.var_sets_buffers_so_vs[ varset_id ].second )
             {
-                size_t const ridx = _streamouts[ buf.id ].read_index() ;
-                ctx->VSSetShaderResources( buf.slot, 1, _streamouts[ buf.id ].buffers[0].views[ridx] ) ;
+                auto & ppb = _streamouts[ buf.id ].read_buffer() ;
+                ctx->VSSetShaderResources( buf.slot, 1, ppb.views[0] ) ;
             }
         }
 
@@ -3273,6 +3259,7 @@ public: // functions
         {
             this_t::so_data_ref_t so = _streamouts[ rnd.so_ids[0] ] ;
             size_t const ridx = so.read_index() ;
+            auto & rbuffer = so.read_buffer() ;
 
             #if 0 // for debugging purposes only - query primitives written by the streamout stage
             {
@@ -3289,7 +3276,7 @@ public: // functions
             {
                 UINT const stride = so.stride ;
                 UINT const offset = 0 ;
-                ctx->IASetVertexBuffers( 0, 1, so.buffers[0].buffers[ridx], &stride, &offset );
+                ctx->IASetVertexBuffers( 0, 1, rbuffer.buffers[0], &stride, &offset );
                 ctx->IASetPrimitiveTopology( natus::graphics::d3d11::convert( so.pt ) ) ;
             }
 
