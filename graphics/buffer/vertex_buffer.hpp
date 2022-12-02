@@ -137,6 +137,12 @@ namespace natus
                 }
             }
 
+            data_t get_layout_element_zero( void_t ) const noexcept
+            {
+                if( _vertex_layout.size() == 0 ) return data_t() ;
+                return _vertex_layout[0] ;
+            }
+
             size_t get_layout_element_sib( natus::graphics::vertex_attribute const va ) const noexcept
             {
                 auto iter = ::std::find_if( _vertex_layout.begin(), _vertex_layout.end(), 

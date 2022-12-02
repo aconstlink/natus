@@ -41,6 +41,9 @@ struct gl4_backend::pimpl
             GLuint bids[max_buffers] = { GLuint(-1), GLuint(-1), GLuint(-1), GLuint(-1) }  ;
             GLuint sibs[max_buffers] = { 0, 0, 0, 0 } ;
 
+            // texture ids for TBOs
+            GLuint tids[max_buffers] = { GLuint(-1), GLuint(-1), GLuint(-1), GLuint(-1) }  ;
+
             // query object id
             GLuint qid = GLuint(-1)  ;
 
@@ -52,7 +55,7 @@ struct gl4_backend::pimpl
         // if the tf is read and written at the 
         // same time, this index is used for ping-ponging
         // the id array within a buffer.
-        size_t _widx = 0 ;
+        size_t _ridx = 0 ;
 
         // must be derived from the geometry object
         // that is rendered into the feedback buffer.
@@ -77,17 +80,17 @@ struct gl4_backend::pimpl
 
         void_t swap_index( void_t ) noexcept
         {
-            _widx = ++_widx % 2 ;
-        }
-
-        size_t read_index( void_t ) const noexcept
-        {
-            return (_widx + 1) & 1 ;
+            _ridx = ++_ridx % 2 ;
         }
 
         size_t write_index( void_t ) const noexcept
         {
-            return _widx ;
+            return (_ridx + 1) & 1 ;
+        }
+
+        size_t read_index( void_t ) const noexcept
+        {
+            return _ridx ;
         }
 
         buffer & read_buffer( void_t ) noexcept { return _buffers[ this_t::read_index() ] ; }
@@ -312,6 +315,20 @@ struct gl4_backend::pimpl
         natus::ntd::vector< std::pair<
             natus::graphics::variable_set_res_t,
             natus::ntd::vector< uniform_array_data_link > > > var_sets_array ;
+
+        struct uniform_streamout_link
+        {
+            // the index into the shader_config::uniforms array
+            size_t uniform_id ;
+            GLint tex_id[2] ; // streamout object do double buffer
+            size_t so_id ; // link into _feedbacks
+
+            // pointing into the mem_block
+            void_ptr_t mem = nullptr ;
+        };
+        natus::ntd::vector< std::pair<
+            natus::graphics::variable_set_res_t,
+            natus::ntd::vector< uniform_streamout_link > > > var_sets_streamout ;
         
         // memory block for all variables in all variable sets.
         void_ptr_t mem_block = nullptr ;
@@ -531,6 +548,19 @@ struct gl4_backend::pimpl
         v[ oid ].name = name ;
 
         return oid ;
+    }
+
+    //****************************************************************************************
+    template< typename T >
+    static size_t find_index_by_resource_name( natus::ntd::string_in_t name, natus::ntd::vector< T > const & resources ) noexcept
+    {
+        size_t i = 0 ; 
+        for( auto const & r : resources ) 
+        {
+            if( r.name == name ) return i ;
+            ++i ;
+        }
+        return size_t( -1 ) ;
     }
 
     //****************************************************************************************
@@ -1676,6 +1706,7 @@ struct gl4_backend::pimpl
                 rd.var_sets_data.clear() ;
                 rd.var_sets_texture.clear() ;
                 rd.var_sets_array.clear() ;
+                rd.var_sets_streamout.clear() ;
 
                 auto vs = std::move( rd.var_sets ) ;
                 for( auto& item : vs )
@@ -1702,6 +1733,7 @@ struct gl4_backend::pimpl
             _renders[ oid ].var_sets_data.clear() ;
             _renders[ oid ].var_sets_texture.clear() ;
             _renders[ oid ].var_sets_array.clear() ;
+            _renders[ oid ].var_sets_streamout.clear() ;
             _renders[ oid ].var_sets.clear() ;
             
             _renders[ oid ].geo_ids.clear();
@@ -1730,6 +1762,7 @@ struct gl4_backend::pimpl
         rd.rss.clear() ;
         rd.var_sets.clear() ;
         rd.var_sets_array.clear() ;
+        rd.var_sets_streamout.clear() ;
         rd.var_sets_data.clear() ;
         rd.var_sets_texture.clear() ;
 
@@ -1889,6 +1922,15 @@ struct gl4_backend::pimpl
                 }
             }
 
+            for( auto & vs : config.var_sets_streamout )
+            {
+                for( auto & link : vs.second )
+                {
+                    auto & uv = shader.uniforms[ link.uniform_id ] ;
+                    sib += natus::ogl::uniform_size_of( uv.type ) ;
+                }
+            }
+
             natus::memory::global_t::dealloc( config.mem_block ) ;
             config.mem_block = natus::memory::global_t::alloc( sib, "[gl3] : render config memory block" ) ;
         }
@@ -1919,6 +1961,17 @@ struct gl4_backend::pimpl
             }
 
             for( auto & vs : config.var_sets_array )
+            {
+                for( auto & link : vs.second )
+                {
+                    link.mem = mem ;
+
+                    auto & uv = shader.uniforms[ link.uniform_id ] ;
+                    mem = reinterpret_cast<void_ptr_t>( size_t(mem) + size_t( natus::ogl::uniform_size_of( uv.type ) )) ;
+                }
+            }
+
+            for( auto & vs : config.var_sets_streamout )
             {
                 for( auto & link : vs.second )
                 {
@@ -2050,7 +2103,7 @@ struct gl4_backend::pimpl
     {
         auto& config = _geometries[ id ] ;
 
-        // disable vertex array so the buffer ids do not get overwritten
+        // enable vertex array
         {
             glBindVertexArray( config.va_id ) ;
             natus::ogl::error::check_and_log( natus_log_fn( "glBindVertexArray" ) ) ;
@@ -2090,18 +2143,18 @@ struct gl4_backend::pimpl
             }
         }
 
-        // bind index buffer
-        {
-            GLint const id_ = geo->index_buffer().get_num_elements() == 0 ? 0 : config.ib_id ;
-            glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, id_ ) ;
-            if( natus::ogl::error::check_and_log( natus_log_fn( "glBindBuffer - index buffer" ) ) )
-                return false ;
-        }
-
         // allocate buffer memory
         // what about mapped memory?
         if( geo->index_buffer().get_num_elements() > 0 )
         {
+            // bind index buffer
+            {
+                GLint const id_ = geo->index_buffer().get_num_elements() == 0 ? 0 : config.ib_id ;
+                glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, id_ ) ;
+                if( natus::ogl::error::check_and_log( natus_log_fn( "glBindBuffer - index buffer" ) ) )
+                    return false ;
+            }
+
             config.ib_elem_sib = geo->index_buffer().get_element_sib() ;
 
             GLuint const sib = GLuint( geo->index_buffer().get_sib() ) ;
@@ -2130,6 +2183,12 @@ struct gl4_backend::pimpl
                 // if the vertex layout changes.
                 //this_t::bind_attributes( shaders[ _renders[ rid ].shd_id ], config ) ;
             }
+        }
+
+        // disable vertex array so the buffer ids do not get overwritten
+        {
+            glBindVertexArray( 0 ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glBindVertexArray" ) ) ;
         }
 
         return true ;
@@ -2229,14 +2288,17 @@ struct gl4_backend::pimpl
     //****************************************************************************************
     bool_t connect( this_t::render_data & config, natus::graphics::variable_set_res_t vs )
     {
-        auto item_data = ::std::make_pair( vs,
+        auto item_data = std::make_pair( vs,
             natus::ntd::vector< this_t::render_data::uniform_variable_link >() ) ;
 
-        auto item_tex = ::std::make_pair( vs,
+        auto item_tex = std::make_pair( vs,
             natus::ntd::vector< this_t::render_data::uniform_texture_link >() ) ;
 
-        auto item_buf = ::std::make_pair( vs,
+        auto item_buf = std::make_pair( vs,
             natus::ntd::vector< this_t::render_data::uniform_array_data_link >() ) ;
+
+        auto item_tfb = std::make_pair( vs,
+            natus::ntd::vector< this_t::render_data::uniform_streamout_link >() ) ;
 
         this_t::shader_data_ref_t shd = _shaders[ config.shd_id ] ;
 
@@ -2305,35 +2367,57 @@ struct gl4_backend::pimpl
                     continue ;
                 }
 
-                // looking for data buffer
-                {
-                    size_t i = 0 ;
-                    auto const & tx_name = var->get() ;
-                    for( auto & cfg : _arrays )
-                    {
-                        if( cfg.name == tx_name ) break ;
-                        ++i ;
-                    }
+                if( var->get().empty() )
+                    var = vs->array_variable_streamout( uv.name ) ;
 
-                    if( i >= _arrays.size() )
-                    {
-                        natus::log::global_t::error( natus_log_fn( "Could not find array [" +
-                            tx_name + "]" ) ) ;
-                        continue ;
-                    }
+                auto const & tx_name = var->get() ;
+
+                // looking for data buffer
+                auto handle_buffer_link = [&]( void_t )
+                {
+                    size_t const i = this_t::find_index_by_resource_name( tx_name, _arrays ) ;
+                    if( i >= _arrays.size() ) return false ;
 
                     this_t::render_data::uniform_array_data_link link ;
                     link.uniform_id = id++ ;
                     link.tex_id = _arrays[ i ].tex_id ;
                     link.buf_id = i ;
                     item_buf.second.emplace_back( link ) ;
+                    return true ;
+                } ;
+
+                // looking for streamout/transform feedback
+                auto handle_feedback_link = [&]( void_t )
+                {
+                    size_t const i = this_t::find_index_by_resource_name( tx_name, _feedbacks ) ;
+                    if( i >= _feedbacks.size() ) return false ;
+
+                    this_t::render_data::uniform_streamout_link link ;
+                    link.uniform_id = id++ ;
+                    link.tex_id[0] = _feedbacks[ i ]._buffers[0].tids[0] ;
+                    link.tex_id[1] = _feedbacks[ i ]._buffers[1].tids[0] ;
+                    link.so_id = i ;
+                    item_tfb.second.emplace_back( link ) ;
+                    return true ;
+                } ;
+
+                if( !handle_buffer_link() )
+                {
+                    if( !handle_feedback_link() )
+                    {
+                        natus::log::global_t::error( natus_log_fn( "Could not find array nor streamout object [" +
+                            tx_name + "]" ) ) ;
+                        continue ;
+                    }
                 }
             }
         }
+
         config.var_sets.emplace_back( vs ) ;
         config.var_sets_data.emplace_back( item_data ) ;
         config.var_sets_texture.emplace_back( item_tex ) ;
         config.var_sets_array.emplace_back( item_buf ) ;
+        config.var_sets_streamout.emplace_back( item_tfb ) ;
 
         return true ;
     }
@@ -2426,6 +2510,13 @@ struct gl4_backend::pimpl
                 glBufferSubData( GL_TEXTURE_BUFFER, 0, sib, obj.data_buffer().data() ) ;
                 natus::ogl::error::check_and_log( natus_log_fn( "glBufferSubData" ) ) ;
             }
+
+            // bind buffer
+            {
+                glBindBuffer( GL_TEXTURE_BUFFER, 0 ) ;
+                if( natus::ogl::error::check_and_log( natus_log_fn("glBindBuffer") ) )
+                    return false ;
+            }
         }
 
         // do texture
@@ -2442,6 +2533,8 @@ struct gl4_backend::pimpl
                 return false ;
         }
 
+        
+
         return true ;
     }
 
@@ -2455,6 +2548,7 @@ struct gl4_backend::pimpl
 
         size_t const req_buffers = std::min( obj.num_buffers(), this_t::tf_data::max_buffers ) ;
 
+        // rw : read/write - ping pong buffers
         for( size_t rw=0; rw<2; ++rw )
         {
             auto & buffer = data._buffers[rw] ;
@@ -2468,11 +2562,16 @@ struct gl4_backend::pimpl
 
                 size_t const gid = this_t::construct_geo( size_t(-1), 
                     obj.name() + ".feedback."+is+"."+bs, obj.get_buffer(i) ) ;
-            
+
                 buffer.gids[i] = gid ;
                 buffer.bids[i] = _geometries[ gid ].vb_id ;
-                buffer.sibs[i] = 0 ;
-                
+                buffer.sibs[i] = 0 ; 
+            }
+
+            // we just allways gen max buffers tex ids
+            {
+                glGenTextures( this_t::tf_data::max_buffers, buffer.tids ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glGenTextures" ) ) ;
             }
 
             for( size_t i=req_buffers; i<this_t::tf_data::max_buffers; ++i )
@@ -2533,6 +2632,12 @@ struct gl4_backend::pimpl
                 natus::ogl::error::check_and_log( natus_log_fn( "glDeleteTransformFeedbacks" ) ) ;
                 buffer.tfid = GLuint( -1 ) ; 
             }
+
+            // release textures
+            {
+                glDeleteTextures( tf_data_t::max_buffers, buffer.tids ) ;
+                natus::ogl::error::check_and_log( natus_log_fn( "glDeleteTextures" ) ) ;
+            }
         }
 
         d.valid = false ;
@@ -2569,9 +2674,28 @@ struct gl4_backend::pimpl
                     glBufferData( GL_TRANSFORM_FEEDBACK_BUFFER, sib, nullptr, GL_DYNAMIC_DRAW ) ;
                     if( natus::ogl::error::check_and_log( natus_log_fn( "glBufferData" ) ) )
                         continue ;
+
                     buffer.sibs[i] = sib ;
                 }
-            
+               
+                // do texture
+                // glTexBuffer is required to be called after driver memory is aquired.
+                {
+                    glBindTexture( GL_TEXTURE_BUFFER, buffer.tids[i] ) ;
+                    if( natus::ogl::error::check_and_log( natus_log_fn( "glBindTexture" ) ) )
+                        continue ;
+
+                    auto const le = obj.get_buffer( i ).get_layout_element_zero() ;
+                    glTexBuffer( GL_TEXTURE_BUFFER, natus::graphics::gl3::convert_for_texture_buffer(
+                        le.type, le.type_struct ), buffer.bids[i] ) ;
+                    if( natus::ogl::error::check_and_log( natus_log_fn( "glTexBuffer" ) ) )
+                        continue ;
+
+                    glBindTexture( GL_TEXTURE_BUFFER, 0 ) ;
+                    if( natus::ogl::error::check_and_log( natus_log_fn( "glBindTexture" ) ) )
+                        continue ;
+                }
+
                 ++i ;
             }
         }
@@ -2694,7 +2818,7 @@ struct gl4_backend::pimpl
         {
             auto & tfd = _feedbacks[ _tf_active_id] ;
             auto const ridx = tfd.read_index();
-            glGetQueryObjectuiv( tfd.qids[ridx], GL_QUERY_RESULT, &num_prims ) ;
+            glGetQueryObjectuiv( tfd.read_buffer().qid, GL_QUERY_RESULT, &num_prims ) ;
             natus::ogl::error::check_and_log( natus_log_fn( "glGetQueryObjectuiv" ) ) ;
         }
         #endif
@@ -2749,6 +2873,20 @@ struct gl4_backend::pimpl
                 // array data vars
                 {
                     auto & varset = config.var_sets_array[ varset_id ] ;
+                    for( auto & item : varset.second )
+                    {
+                        auto var = natus::graphics::data_variable< int_t >( tex_unit ) ;
+                        auto & uv = sconfig.uniforms[ item.uniform_id ] ;
+                    
+                        uv.do_copy_funk( item.mem, &var ) ;
+
+                        ++tex_unit ;
+                    }
+                }
+
+                // transform feedback bound vars
+                {
+                    auto & varset = config.var_sets_streamout[ varset_id ] ;
                     for( auto & item : varset.second )
                     {
                         auto var = natus::graphics::data_variable< int_t >( tex_unit ) ;
@@ -2878,6 +3016,28 @@ struct gl4_backend::pimpl
                         ++tex_unit ;
                     }
                 }
+
+                // transform feedback as TBO
+                {
+                    auto & varset = config.var_sets_streamout[ varset_id ] ;
+                    for( auto & item : varset.second )
+                    {
+                        auto const & tfd = _feedbacks[ item.so_id ] ;
+                        GLuint const tid = item.tex_id[tfd.read_index()] ;
+
+                        glActiveTexture( GLenum( GL_TEXTURE0 + tex_unit ) ) ;
+                        natus::ogl::error::check_and_log( natus_log_fn( "glActiveTexture" ) ) ;
+                        glBindTexture( GL_TEXTURE_BUFFER, tid ) ;
+                        natus::ogl::error::check_and_log( natus_log_fn( "glBindTexture" ) ) ;                        
+
+                        {
+                            auto & uv = sconfig.uniforms[ item.uniform_id ] ;
+                            uv.do_uniform_funk( item.mem ) ;
+                        }
+
+                        ++tex_unit ;
+                    }
+                }
             }
         }
 
@@ -2933,7 +3093,7 @@ struct gl4_backend::pimpl
             else
             {
                 GLsizei const max_elems = GLsizei( gconfig.num_elements_vb ) ;
-                GLsizei const ne = std::max( 0, std::min( num_elements, max_elems ) ) ;
+                GLsizei const ne = std::min( num_elements>=0?num_elements:max_elems, max_elems ) ;
 
                 glDrawArrays( pt, start_element, ne ) ;
                 natus::ogl::error::check_and_log( natus_log_fn( "glDrawArrays" ) ) ;

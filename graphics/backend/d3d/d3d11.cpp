@@ -981,6 +981,7 @@ public: // variables
         return oid ;
     }
 
+    //******************************************************************************************************************************
     template< typename T >
     static size_t find_index_by_resource_name( natus::ntd::string_in_t name, natus::ntd::vector< T > const & resources ) noexcept
     {
@@ -1690,8 +1691,9 @@ public: // functions
 
                 // create the resource view
                 {
+                    auto const le = obj.get_buffer(i).get_layout_element_zero() ;
                     D3D11_SHADER_RESOURCE_VIEW_DESC res_desc = { } ;
-                    res_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT ;
+                    res_desc.Format = natus::graphics::d3d11::convert_type_to_vec_format( le.type, le.type_struct ) ;
                     res_desc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER ;
 
                     res_desc.Buffer.FirstElement= 0 ;
@@ -3190,7 +3192,6 @@ public: // functions
         }
         
         this_t::shader_data_ref_t shd = shaders[ rnd.shd_id ] ;
-        
 
         if( shd.vs == nullptr )
         {
