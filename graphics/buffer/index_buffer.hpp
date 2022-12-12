@@ -23,18 +23,18 @@ namespace natus
 
         public:
 
-            index_buffer( void_t ) {}
-            index_buffer( this_cref_t rhv )
+            index_buffer( void_t ) noexcept {}
+            index_buffer( this_cref_t rhv ) noexcept
             {
                 *this = rhv ;
             }
 
-            index_buffer( this_rref_t rhv )
+            index_buffer( this_rref_t rhv ) noexcept
             {
                 *this = ::std::move( rhv ) ;
             }
 
-            ~index_buffer( void_t ) 
+            ~index_buffer( void_t ) noexcept
             {
                 natus::memory::global_t::dealloc( _data ) ;
             }
@@ -57,8 +57,16 @@ namespace natus
 
         public:
 
-            this_ref_t resize( size_t const ne )
+            this_ref_t resize( size_t const ne, double_t const thres = 0.5 )
             {
+                if( ne == _num_elems ) return *this ;
+
+                // check realloc when getting smaller
+                {
+                    auto const c = double_t(ne) / double_t(_num_elems) ;
+                    if( c < 1.0f && c > thres ) return *this ;
+                }
+
                 _num_elems = ne ;
                 size_t const sib = this_t::get_sib() ;
                 natus::memory::global_t::dealloc( _data ) ;

@@ -39,19 +39,19 @@ namespace natus
 
         public:
 
-            vertex_buffer( void_t ) {}
-            vertex_buffer( natus::graphics::usage_type const ut ) : _ut(ut){}
-            vertex_buffer( this_cref_t rhv ) 
+            vertex_buffer( void_t ) noexcept {}
+            vertex_buffer( natus::graphics::usage_type const ut ) noexcept : _ut(ut){}
+            vertex_buffer( this_cref_t rhv ) noexcept 
             {
                 *this = rhv ;
             }
 
-            vertex_buffer( this_rref_t rhv )
+            vertex_buffer( this_rref_t rhv ) noexcept
             {
                 *this = ::std::move( rhv ) ;
             }
 
-            ~vertex_buffer( void_t )
+            ~vertex_buffer( void_t ) noexcept
             {
                 natus::memory::global_t::dealloc( _data ) ;
             }
@@ -74,8 +74,17 @@ namespace natus
 
         public:
 
-            this_ref_t resize( size_t const ne )
+            this_ref_t resize( size_t const ne, double_t const thres = 0.5 ) noexcept
             {
+                if( ne == _num_elems ) return *this ;
+
+                // check realloc when getting smaller
+                // do not realloc if larger than thes
+                {
+                    auto const c = double_t(ne) / double_t(_num_elems) ;
+                    if( c < 1.0f && c > thres ) return *this ;
+                }
+                
                 _num_elems = ne ;
                 size_t const sib = this_t::get_sib() ;
                 natus::memory::global_t::dealloc( _data ) ;
@@ -86,7 +95,7 @@ namespace natus
 
             
             template< typename vertex_t >
-            this_ref_t update( std::function< void_t ( vertex_t * array, size_t const ne ) > funk )
+            this_ref_t update( std::function< void_t ( vertex_t * array, size_t const ne ) > funk ) noexcept
             {
                 funk( static_cast< vertex_t* >( _data ), _num_elems ) ;
                 return *this ;
@@ -95,7 +104,7 @@ namespace natus
             // array starts at start
             template< typename vertex_t >
             this_ref_t update( size_t start, size_t end, 
-                std::function< void_t ( vertex_t * array, size_t const ne ) > funk )
+                std::function< void_t ( vertex_t * array, size_t const ne ) > funk ) noexcept
             {
                 start = std::min( start, end ) ;
                 end = std::max( start, end ) ;
