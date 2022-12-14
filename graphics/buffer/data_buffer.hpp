@@ -70,18 +70,31 @@ namespace natus
 
         public:
 
-            this_ref_t resize( size_t const ne ) noexcept
+            this_ref_t resize( size_t const ne, double_t const thres = 0.5 ) noexcept
             {
-                auto const old_sib = this_t::get_sib() ;
+                if( ne == _num_elems ) return *this ;
+
+                // check realloc when getting smaller
+                // do not realloc if larger than thes
+                {
+                    auto const c = double_t(ne) / double_t(_num_elems) ;
+                    if( c < 1.0f && c > thres ) return *this ;
+                }
+
+                size_t const old_sib = this_t::get_sib() ;
 
                 _num_elems = ne ;
                 size_t const sib = this_t::get_sib() ;
-
-                if( old_sib == sib ) return *this ;
-
+                
                 void_ptr_t tmp = natus::memory::global_t::alloc( sib, "data buffer" ) ;
-                std::memcpy( tmp, _data, std::min( sib, old_sib ) ) ;
-                natus::memory::global_t::dealloc( _data ) ;
+                
+                if( _data != nullptr )
+                {
+                    std::memcpy( tmp, _data, std::min( sib, old_sib ) ) ;
+                    natus::memory::global_t::dealloc( _data ) ;
+                }
+                
+
                 _data = tmp ;
 
                 return *this ;
