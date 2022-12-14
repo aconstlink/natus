@@ -561,7 +561,7 @@ natus::nsl::generated_code_t::shaders_t generator::generate( natus::nsl::generat
                 var.st == natus::nsl::shader_type::vertex_shader &&
                 var.binding == natus::nsl::binding::position )
             {
-                var.new_name = "gl_Position" ;
+                //var.new_name = "gl_Position" ;
             }
             else if( var.binding == natus::nsl::binding::vertex_id )
             {
@@ -744,7 +744,7 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
         for( auto & v : shd_.variables )
         {
             // omit system variables
-            if( v.binding == natus::nsl::binding::position && v.fq == natus::nsl::flow_qualifier::out ) continue ;
+            //if( v.binding == natus::nsl::binding::position && v.fq == natus::nsl::flow_qualifier::out ) continue ;
             if( v.binding == natus::nsl::binding::vertex_id ) continue ;
             if( v.binding == natus::nsl::binding::instance_id ) continue ;
             if( v.binding == natus::nsl::binding::primitive_id ) continue ;
@@ -798,6 +798,36 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
     // 6. post over the code and replace all dependencies and in/out
     {
         auto shd = text.str() ;
+
+        // xx. Insert gl_Position
+        {
+            auto iter = std::find_if( shd_.variables.begin(), shd_.variables.end(), 
+                [&]( post_parse::config_t::shader_t::variable_cref_t var )
+            {
+                return var.binding == natus::nsl::binding::position && var.fq == natus::nsl::flow_qualifier::out ;
+            } )  ;
+
+            if( shd_.type != natus::nsl::shader_type::pixel_shader && iter != shd_.variables.end() )
+            {
+                natus::ntd::string_t ins_code = "gl_Position = " ;
+                if( iter->type == natus::nsl::type_t::as_vec1() )
+                {
+                    ins_code += "vec4( out." + iter->name + ", 0.0, 0.0, 1.0 ) ; ";
+                }else if( iter->type == natus::nsl::type_t::as_vec2() )
+                {
+                    ins_code += "vec4( out." + iter->name + ", 0.0, 1.0 ) ; ";
+                }else if( iter->type == natus::nsl::type_t::as_vec3() )
+                {
+                    ins_code += "vec4( out." + iter->name + ", 1.0 ) ; ";
+                }else if( iter->type == natus::nsl::type_t::as_vec4() )
+                {
+                    ins_code += "out." + iter->name + " ; ";
+                }
+                ins_code += '\n' ;
+
+                shd.insert( shd.size() - 2, ins_code ) ;
+            }
+        }
 
         // variable dependencies
         {
