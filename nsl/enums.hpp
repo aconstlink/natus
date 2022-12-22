@@ -32,11 +32,14 @@ namespace natus
         {
             unknown,
             vertex_shader,
+            geometry_shader,
             pixel_shader
         };
+
         static shader_type to_shader_type( natus::ntd::string_cref_t s ) noexcept
         {
             if( s == "vertex_shader" ) return shader_type::vertex_shader ;
+            else if( s == "geometry_shader" ) return shader_type::geometry_shader ;
             else if( s == "pixel_shader" ) return shader_type::pixel_shader ;
             return shader_type::unknown ;
         }
@@ -49,6 +52,7 @@ namespace natus
             global,
             local
         };
+
         static flow_qualifier to_flow_qualifier( natus::ntd::string_cref_t s ) noexcept
         {
             if( s == "in" ) return flow_qualifier::in ;
@@ -60,9 +64,28 @@ namespace natus
 
         static natus::ntd::string_cref_t to_string( natus::nsl::flow_qualifier const fq ) noexcept
         {
-            static natus::ntd::string_t const __strings[] = { 
-                "unknown", "in", "out", "global", "local" } ;
+            static natus::ntd::string_t const __strings[] = { "unknown", "in", "out", "global", "local" } ;
             return __strings[ size_t( fq ) ] ;
+        }
+
+        enum class streamout_type
+        {
+            none,
+            interleaved,
+            separate
+        };
+
+        static streamout_type to_streamout_type( natus::ntd::string_cref_t s ) noexcept
+        {
+            if( s == "interleaved" ) return streamout_type::interleaved ;
+            else if( s == "separate" ) return streamout_type::separate ;
+            return streamout_type::none ;
+        }
+
+        static natus::ntd::string_cref_t to_string( natus::nsl::streamout_type const st ) noexcept
+        {
+            static natus::ntd::string_t const __strings[] = { "none", "interleaved", "separate" } ;
+            return __strings[ size_t( st ) ] ;
         }
     }
 

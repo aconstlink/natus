@@ -557,13 +557,7 @@ natus::nsl::generated_code_t::shaders_t generator::generate( natus::nsl::generat
     {
         for( auto& var : var_map )
         {
-            if( var.fq == natus::nsl::flow_qualifier::out &&
-                var.st == natus::nsl::shader_type::vertex_shader &&
-                var.binding == natus::nsl::binding::position )
-            {
-                //var.new_name = "gl_Position" ;
-            }
-            else if( var.binding == natus::nsl::binding::vertex_id )
+            if( var.binding == natus::nsl::binding::vertex_id )
             {
                 var.new_name = "gl_VertexID" ;
             }

@@ -20,95 +20,185 @@ namespace natus
             {
                 natus::graphics::shader_object_t ret ;
 
-                // variable bindings
+                // vertex input bindings
                 {
-                    for( auto const& s : code.shaders )
+                    for( auto const & v : code.geometry_ins )
                     {
-                        // vertex attributes
+                        // check texcoord
                         {
-                            for( auto const& v : s.variables )
+                            if( natus::nsl::is_texcoord( v.binding ) )
                             {
-                                if( s.type != natus::nsl::shader_type::vertex_shader ) continue ;
-                                if( v.fq != natus::nsl::flow_qualifier::in ) continue ;
+                                natus::graphics::vertex_attribute va
+                                    = natus::graphics::vertex_attribute::undefined ;
 
-                                // check texcoord
+                                switch( v.binding )
                                 {
-                                    if( natus::nsl::is_texcoord( v.binding ) )
-                                    {
-                                        
-                                        natus::graphics::vertex_attribute va
-                                            = natus::graphics::vertex_attribute::undefined ;
-
-                                        switch( v.binding )
-                                        {
-                                        case natus::nsl::binding::texcoord0: 
-                                            va = natus::graphics::vertex_attribute::texcoord0 ; break ;
-                                        case natus::nsl::binding::texcoord1: 
-                                            va = natus::graphics::vertex_attribute::texcoord1 ; break ;
-                                        case natus::nsl::binding::texcoord2: 
-                                            va = natus::graphics::vertex_attribute::texcoord2 ; break ;
-                                        case natus::nsl::binding::texcoord3: 
-                                            va = natus::graphics::vertex_attribute::texcoord3 ; break ;
-                                        case natus::nsl::binding::texcoord4: 
-                                            va = natus::graphics::vertex_attribute::texcoord4 ; break ;
-                                        case natus::nsl::binding::texcoord5: 
-                                            va = natus::graphics::vertex_attribute::texcoord5 ; break ;
-                                        case natus::nsl::binding::texcoord6: 
-                                            va = natus::graphics::vertex_attribute::texcoord6 ; break ;
-                                        case natus::nsl::binding::texcoord7: 
-                                            va = natus::graphics::vertex_attribute::texcoord7 ; break ;
-                                        default: break;
-                                        }
-                                        ret.add_vertex_input_binding( va, v.name ) ;
-
-                                        continue ;
-                                    }
+                                case natus::nsl::binding::texcoord0: 
+                                    va = natus::graphics::vertex_attribute::texcoord0 ; break ;
+                                case natus::nsl::binding::texcoord1: 
+                                    va = natus::graphics::vertex_attribute::texcoord1 ; break ;
+                                case natus::nsl::binding::texcoord2: 
+                                    va = natus::graphics::vertex_attribute::texcoord2 ; break ;
+                                case natus::nsl::binding::texcoord3: 
+                                    va = natus::graphics::vertex_attribute::texcoord3 ; break ;
+                                case natus::nsl::binding::texcoord4: 
+                                    va = natus::graphics::vertex_attribute::texcoord4 ; break ;
+                                case natus::nsl::binding::texcoord5: 
+                                    va = natus::graphics::vertex_attribute::texcoord5 ; break ;
+                                case natus::nsl::binding::texcoord6: 
+                                    va = natus::graphics::vertex_attribute::texcoord6 ; break ;
+                                case natus::nsl::binding::texcoord7: 
+                                    va = natus::graphics::vertex_attribute::texcoord7 ; break ;
+                                default: break;
                                 }
+                                ret.add_vertex_input_binding( va, v.name ) ;
 
-                                // check color
-                                {
-                                    if( natus::nsl::is_color( v.binding ) )
-                                    {
-                                        natus::graphics::vertex_attribute va
-                                            = natus::graphics::vertex_attribute::undefined ;
-
-                                        switch( v.binding )
-                                        {
-                                        case natus::nsl::binding::color0: 
-                                            va = natus::graphics::vertex_attribute::color0 ; break ;
-                                        case natus::nsl::binding::color1: 
-                                            va = natus::graphics::vertex_attribute::color1 ; break ;
-                                        case natus::nsl::binding::color2: 
-                                            va = natus::graphics::vertex_attribute::color2 ; break ;
-                                        case natus::nsl::binding::color3: 
-                                            va = natus::graphics::vertex_attribute::color3 ; break ;
-                                        case natus::nsl::binding::color4: 
-                                            va = natus::graphics::vertex_attribute::color4 ; break ;
-                                        case natus::nsl::binding::color5: 
-                                            va = natus::graphics::vertex_attribute::color5 ; break ;
-                                        default: break;
-                                        }
-                                        ret.add_vertex_input_binding( va, v.name ) ;
-                                        continue ;
-                                    }
-                                }
-
-                                if( v.binding == natus::nsl::binding::position )
-                                {
-                                    ret.add_vertex_input_binding( natus::graphics::vertex_attribute::position, v.name ) ;
-                                }
-                                else if( v.binding == natus::nsl::binding::normal )
-                                {
-                                    ret.add_vertex_input_binding( natus::graphics::vertex_attribute::normal, v.name ) ;
-                                }
-                                else if( v.binding == natus::nsl::binding::tangent )
-                                {
-                                    ret.add_vertex_input_binding( natus::graphics::vertex_attribute::tangent, v.name ) ;
-                                }
+                                continue ;
                             }
                         }
 
+                        // check color
+                        {
+                            if( natus::nsl::is_color( v.binding ) )
+                            {
+                                natus::graphics::vertex_attribute va
+                                    = natus::graphics::vertex_attribute::undefined ;
 
+                                switch( v.binding )
+                                {
+                                case natus::nsl::binding::color0: 
+                                    va = natus::graphics::vertex_attribute::color0 ; break ;
+                                case natus::nsl::binding::color1: 
+                                    va = natus::graphics::vertex_attribute::color1 ; break ;
+                                case natus::nsl::binding::color2: 
+                                    va = natus::graphics::vertex_attribute::color2 ; break ;
+                                case natus::nsl::binding::color3: 
+                                    va = natus::graphics::vertex_attribute::color3 ; break ;
+                                case natus::nsl::binding::color4: 
+                                    va = natus::graphics::vertex_attribute::color4 ; break ;
+                                case natus::nsl::binding::color5: 
+                                    va = natus::graphics::vertex_attribute::color5 ; break ;
+                                default: break;
+                                }
+                                ret.add_vertex_input_binding( va, v.name ) ;
+                                continue ;
+                            }
+                        }
+
+                        if( v.binding == natus::nsl::binding::position )
+                        {
+                            ret.add_vertex_input_binding( natus::graphics::vertex_attribute::position, v.name ) ;
+                        }
+                        else if( v.binding == natus::nsl::binding::normal )
+                        {
+                            ret.add_vertex_input_binding( natus::graphics::vertex_attribute::normal, v.name ) ;
+                        }
+                        else if( v.binding == natus::nsl::binding::tangent )
+                        {
+                            ret.add_vertex_input_binding( natus::graphics::vertex_attribute::tangent, v.name ) ;
+                        }
+                    }
+                }
+
+                // vertex output bindings
+                {
+                    for( auto const & v : code.geometry_outs )
+                    {
+                        // check texcoord
+                        {
+                            if( natus::nsl::is_texcoord( v.binding ) )
+                            {
+                                natus::graphics::vertex_attribute va
+                                    = natus::graphics::vertex_attribute::undefined ;
+
+                                switch( v.binding )
+                                {
+                                case natus::nsl::binding::texcoord0: 
+                                    va = natus::graphics::vertex_attribute::texcoord0 ; break ;
+                                case natus::nsl::binding::texcoord1: 
+                                    va = natus::graphics::vertex_attribute::texcoord1 ; break ;
+                                case natus::nsl::binding::texcoord2: 
+                                    va = natus::graphics::vertex_attribute::texcoord2 ; break ;
+                                case natus::nsl::binding::texcoord3: 
+                                    va = natus::graphics::vertex_attribute::texcoord3 ; break ;
+                                case natus::nsl::binding::texcoord4: 
+                                    va = natus::graphics::vertex_attribute::texcoord4 ; break ;
+                                case natus::nsl::binding::texcoord5: 
+                                    va = natus::graphics::vertex_attribute::texcoord5 ; break ;
+                                case natus::nsl::binding::texcoord6: 
+                                    va = natus::graphics::vertex_attribute::texcoord6 ; break ;
+                                case natus::nsl::binding::texcoord7: 
+                                    va = natus::graphics::vertex_attribute::texcoord7 ; break ;
+                                default: break;
+                                }
+                                ret.add_vertex_output_binding( va, v.name ) ;
+
+                                continue ;
+                            }
+                        }
+
+                        // check color
+                        {
+                            if( natus::nsl::is_color( v.binding ) )
+                            {
+                                natus::graphics::vertex_attribute va
+                                    = natus::graphics::vertex_attribute::undefined ;
+
+                                switch( v.binding )
+                                {
+                                case natus::nsl::binding::color0: 
+                                    va = natus::graphics::vertex_attribute::color0 ; break ;
+                                case natus::nsl::binding::color1: 
+                                    va = natus::graphics::vertex_attribute::color1 ; break ;
+                                case natus::nsl::binding::color2: 
+                                    va = natus::graphics::vertex_attribute::color2 ; break ;
+                                case natus::nsl::binding::color3: 
+                                    va = natus::graphics::vertex_attribute::color3 ; break ;
+                                case natus::nsl::binding::color4: 
+                                    va = natus::graphics::vertex_attribute::color4 ; break ;
+                                case natus::nsl::binding::color5: 
+                                    va = natus::graphics::vertex_attribute::color5 ; break ;
+                                default: break;
+                                }
+                                ret.add_vertex_output_binding( va, v.name ) ;
+                                continue ;
+                            }
+                        }
+
+                        if( v.binding == natus::nsl::binding::position )
+                        {
+                            ret.add_vertex_output_binding( natus::graphics::vertex_attribute::position, v.name ) ;
+                        }
+                        else if( v.binding == natus::nsl::binding::normal )
+                        {
+                            ret.add_vertex_output_binding( natus::graphics::vertex_attribute::normal, v.name ) ;
+                        }
+                        else if( v.binding == natus::nsl::binding::tangent )
+                        {
+                            ret.add_vertex_output_binding( natus::graphics::vertex_attribute::tangent, v.name ) ;
+                        }
+                    }
+                }
+
+                // streamout type
+                if( code.streamout != natus::nsl::streamout_type::none )
+                {
+                    natus::graphics::streamout_mode sm = natus::graphics::streamout_mode::unknown ;
+                    switch( code.streamout )
+                    {
+                    case natus::nsl::streamout_type::interleaved: sm = natus::graphics::streamout_mode::interleaved ; break ;
+                    case natus::nsl::streamout_type::separate: sm = natus::graphics::streamout_mode::separate ; break ;
+                    default: break ;
+                    }
+
+                    ret.set_streamout_mode( sm ) ;
+                }
+
+                // variable bindings
+                {
+                    // global and general purpose variables 
+                    for( auto const& s : code.shaders )
+                    {
                         {
                             for( auto const& v : s.variables )
                             {

@@ -50,6 +50,62 @@ natus::nsl::generated_code_t generator::generate( void_t ) noexcept
         }
     }
 
+    // determine geometry stage vertex inputs/outputs
+    {
+        // last shader in geometry stage
+        natus::nsl::shader_type last_shader = natus::nsl::shader_type::vertex_shader ; 
+
+        for( auto const & var : mappings )
+        {
+            if( var.fq != natus::nsl::flow_qualifier::out ) continue ;
+            
+            if( var.st == natus::nsl::shader_type::geometry_shader ) 
+                last_shader = natus::nsl::shader_type::geometry_shader ;
+        }
+
+        // vertex attributes are vertex shader inputs
+        for( auto const & vm : mappings )
+        {
+            natus::nsl::generated_code_t::variable_t var =
+            {
+                vm.new_name,
+                vm.binding, 
+                vm.fq
+            } ;
+
+            // determine inputs
+            if( vm.fq == natus::nsl::flow_qualifier::in &&
+                vm.st == natus::nsl::shader_type::vertex_shader )
+            {
+                ret.geometry_ins.emplace_back( var ) ;
+            }
+
+            // determine outputs
+            else if( vm.fq == natus::nsl::flow_qualifier::out &&
+                    vm.st == last_shader )
+            {
+                ret.geometry_outs.emplace_back( var ) ;
+            }
+        }
+    }
+
+    // streamout type
+    {
+        bool_t has_pixel_shader = false ;
+
+        for( auto const& s : _genable.config.shaders )
+        {
+            if( s.type == natus::nsl::shader_type::pixel_shader )
+            {
+                has_pixel_shader = true ;
+                break ;
+            }
+            
+        }
+
+        if( !has_pixel_shader ) ret.streamout = natus::nsl::streamout_type::interleaved ; 
+    }
+
     natus::nsl::generated_code_t::shaders_t shaders ;
     // glsl 
     {

@@ -68,6 +68,15 @@ namespace natus
             natus_typedefs( natus::ntd::vector< shader_t >, shaders ) ;
             shaders_t shaders ;
 
+            // the input/output variables of the geometry stage
+            // makes it easy to figure out the vertex in/output attributes.
+            // geometry stage is every shader type between the vertex shader
+            // and the geometry shader.
+            natus::ntd::vector< variable > geometry_ins ;
+            natus::ntd::vector< variable > geometry_outs ;
+
+            natus::nsl::streamout_type streamout = natus::nsl::streamout_type::none ;
+
             typedef std::function< void_t ( natus::nsl::shader_type, code_cref_t ) > for_each_code_t ;
             void_t sorted_by_api_type( natus::nsl::api_type const t, for_each_code_t funk ) const noexcept
             {
