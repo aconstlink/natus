@@ -1665,6 +1665,9 @@ struct gl4_backend::pimpl
             glTransformFeedbackVaryings( sconfig.pg_id, GLsizei( sc.get_num_output_bindings() ), sconfig.output_names, mode ) ;
             natus::ogl::error::check_and_log( natus_log_fn( "glTransformFeedbackVaryings" ) ) ;
             natus::log::global_t::status( mode == GL_NONE, "Did you miss to set the streamout mode in the shader object?" ) ;
+
+            natus::memory::global_t::dealloc( sconfig.output_names ) ;
+            sconfig.output_names = nullptr ;
         }
 
         // compile
