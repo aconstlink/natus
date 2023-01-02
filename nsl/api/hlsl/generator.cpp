@@ -308,6 +308,70 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_rref
             }
         },
         {
+            natus::ntd::string_t( ":lt_vec:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 2 ) return "lt_vec ( INVALID_ARGS ) " ;
+                return args[ 0 ] + " < " + args[ 1 ] ;
+            }
+        },
+        {
+            natus::ntd::string_t( ":gt_vec:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 2 ) return "gt_vec ( INVALID_ARGS ) " ;
+                return args[ 0 ] + " > " + args[ 1 ] ;
+            }
+        },
+        {
+            natus::ntd::string_t( ":lte_vec:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 2 ) return "lte_vec ( INVALID_ARGS ) " ;
+                return args[ 0 ] + " <= " + args[ 1 ] ;
+            }
+        },
+        {
+            natus::ntd::string_t( ":gte_vec:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 2 ) return "gte_vec ( INVALID_ARGS ) " ;
+                return args[ 0 ] + " >= " + args[ 1 ] ;
+            }
+        },
+        {
+            natus::ntd::string_t( ":eqeq_vec:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 2 ) return "eqeq_vec ( INVALID_ARGS ) " ;
+                return args[ 0 ] + " == " + args[ 1 ] ;
+            }
+        },
+        {
+            natus::ntd::string_t( ":neq_vec:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 2 ) return "neq_vec ( INVALID_ARGS ) " ;
+                return args[ 0 ] + " != " + args[ 1 ] ;
+            }
+        },
+        {
+            natus::ntd::string_t( ":any:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 1 ) return "any ( INVALID_ARGS ) " ;
+                return "any( " + args[ 0 ] + " ) " ;
+            }
+        },
+        {
+            natus::ntd::string_t( ":all:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 1 ) return "all ( INVALID_ARGS ) " ;
+                return "all( " + args[ 0 ] + " ) " ;
+            }
+        },
+        {
             natus::ntd::string_t( ":ret:" ),
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {

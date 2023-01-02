@@ -427,6 +427,14 @@ namespace natus
             //sub,
             //div,
             //mul,
+            lt_vec,         // < for vector
+            lte_vec,        // <= for vector
+            gt_vec,         // > for vector
+            gte_vec,        // >= for vector
+            eq_vec,         // == for vector
+            neq_vec,        // != for vector
+            any,
+            all,
             abs,
             dot,
             cross,
@@ -466,6 +474,16 @@ namespace natus
         static const build_in_t buildins[] = 
         {
             { buildin_type::unknown, "unknown-buildin", ":unknown-buildin:" },
+            { buildin_type::lt_vec, "less_than", ":lt_vec:" },
+            { buildin_type::lte_vec, "less_than_equal", ":lte_vec:" },
+            { buildin_type::gt_vec, "greater_than", ":gt_vec:" },
+            { buildin_type::gte_vec, "greater_than_equal", ":gte_vec:" },
+            { buildin_type::eq_vec, "equal", ":eqeq_vec:" },
+            { buildin_type::neq_vec, "not_equal", ":neq_vec:" },
+            
+            { buildin_type::any, "any", ":any:" },
+            { buildin_type::all, "all", ":all:" },
+
             { buildin_type::abs, "abs", ":abs:" },
             { buildin_type::dot, "dot", ":dot:" },
             { buildin_type::cross, "cross", ":cross:" },
