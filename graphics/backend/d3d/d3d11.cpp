@@ -2252,7 +2252,8 @@ public: // functions
         }
 
         // Create Streamout shader w/o geometry shader
-        if( pGSBlob == nullptr && obj.get_num_output_bindings() > 0 )
+        if( pGSBlob == nullptr && obj.get_num_output_bindings() > 0 && 
+            obj.get_streamout_mode() != natus::graphics::streamout_mode::unknown )
         {
             static size_t const max_entries = 10 ;
             D3D11_SO_DECLARATION_ENTRY decl[max_entries] ;
@@ -2269,7 +2270,7 @@ public: // functions
                 {
                     0,
                     natus::graphics::d3d11::vertex_output_binding_to_semantic( va ).c_str(),
-                    (UINT)natus::graphics::convert_to_semantic_index( va ),
+                    natus::graphics::d3d11::vertex_output_binding_to_semantic_index( va ),
                     0,
                     (BYTE)natus::graphics::num_components_of( ct.ts ),
                     0
@@ -2493,7 +2494,7 @@ public: // functions
                 for( auto const & b : vibs )
                 {
                     char_cptr_t name = natus::graphics::d3d11::vertex_binding_to_semantic( b.va ).c_str() ;
-                    UINT const semantic_index = 0 ;
+                    UINT const semantic_index = natus::graphics::d3d11::vertex_output_binding_to_semantic_index( b.va ) ;
                     DXGI_FORMAT const fmt = geo_datas[rd.geo_ids[0]].get_format_from_element( b.va ) ;
                     UINT input_slot = 0 ;
                     UINT aligned_byte_offset = offset ;
@@ -2537,8 +2538,13 @@ public: // functions
             // attribute order.
             {
                 this_t::so_data_ref_t sod = _streamouts[ rd.so_ids[0] ] ;
+                size_t const n = std::min( sod.elements.size(), vibs.size() ) ;
 
-                for( size_t i = 0; i<vibs.size(); ++i )
+                natus::log::global_t::error( vibs.size() != sod.elements.size(), 
+                    "[d3d11] : number of shader input attributes("+ std::to_string(vibs.size()) +") do not match the number of streamout "
+                    "vertex attributes(" + std::to_string(sod.elements.size()) +") for render object[" + rd.name + "] " ) ;
+
+                for( size_t i = 0; i<n; ++i )
                 {
                     size_t j = i ;
                 
@@ -2571,7 +2577,7 @@ public: // functions
                 for( auto const & b : vibs )
                 {
                     char_cptr_t name = natus::graphics::d3d11::vertex_binding_to_semantic( b.va ).c_str() ;
-                    UINT const semantic_index = 0 ;
+                    UINT const semantic_index = natus::graphics::d3d11::vertex_output_binding_to_semantic_index( b.va ) ;
                     DXGI_FORMAT const fmt = _streamouts[rd.so_ids[0]].get_format_from_element( b.va ) ;
                     UINT input_slot = 0 ;
                     UINT aligned_byte_offset = offset ;

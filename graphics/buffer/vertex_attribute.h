@@ -56,12 +56,6 @@ namespace natus
                 size_t( vertex_attribute::texcoord0 ) + i ) ;
         }
 
-        static size_t convert_to_semantic_index( natus::graphics::vertex_attribute const va ) noexcept
-        {
-            static size_t const sis[] = {0,0,0,0,0,1,2,3,4,5,0,1,2,3,4,5,6,7} ;
-            return sis[ size_t( va ) >= size_t( natus::graphics::vertex_attribute::num_attributes ) ? 0 : size_t(va) ] ;
-        }
-
         static natus::graphics::ctype deduce_from( natus::graphics::vertex_attribute const va ) noexcept
         {
             switch( va ) 

@@ -63,9 +63,9 @@ namespace natus
             {
                 static natus::ntd::string_t const _semantics[] = {
                     "INVALID", "POSITION", "NORMAL", "TANGENT",
-                    "COLOR", "COLOR1", "COLOR2", "COLOR3", "COLOR4", "COLOR5",
-                    "TEXCOORD", "TEXCOORD1", "TEXCOORD2", "TEXCOORD3",
-                    "TEXCOORD4", "TEXCOORD5", "TEXCOORD6", "TEXCOORD7" } ;
+                    "COLOR", "COLOR", "COLOR", "COLOR", "COLOR", "COLOR",
+                    "TEXCOORD", "TEXCOORD", "TEXCOORD", "TEXCOORD",
+                    "TEXCOORD", "TEXCOORD", "TEXCOORD", "TEXCOORD" } ;
 
                 switch( va )
                 {
@@ -96,9 +96,9 @@ namespace natus
             {
                 static natus::ntd::string_t const _semantics[] = {
                     "INVALID", "SV_POSITION", "NORMAL", "TANGENT",
-                    "COLOR", "COLOR1", "COLOR2", "COLOR3", "COLOR4", "COLOR5",
-                    "TEXCOORD", "TEXCOORD1", "TEXCOORD2", "TEXCOORD3",
-                    "TEXCOORD4", "TEXCOORD5", "TEXCOORD6", "TEXCOORD7" } ;
+                    "COLOR", "COLOR", "COLOR", "COLOR", "COLOR", "COLOR",
+                    "TEXCOORD", "TEXCOORD", "TEXCOORD", "TEXCOORD",
+                    "TEXCOORD", "TEXCOORD", "TEXCOORD", "TEXCOORD" } ;
 
                 switch( va )
                 {
@@ -123,6 +123,33 @@ namespace natus
                 }
 
                 return _semantics[ 0 ] ;
+            }
+
+            static UINT vertex_output_binding_to_semantic_index( natus::graphics::vertex_attribute const va ) noexcept
+            {
+                switch( va )
+                {
+                case natus::graphics::vertex_attribute::position: return 0 ;
+                case natus::graphics::vertex_attribute::normal: return 0 ;
+                case natus::graphics::vertex_attribute::tangent: return 0 ;
+                case natus::graphics::vertex_attribute::color0: return 0 ;
+                case natus::graphics::vertex_attribute::color1: return 1 ;
+                case natus::graphics::vertex_attribute::color2: return 2 ;
+                case natus::graphics::vertex_attribute::color3: return 3 ;
+                case natus::graphics::vertex_attribute::color4: return 4 ;
+                case natus::graphics::vertex_attribute::color5: return 5 ;
+                case natus::graphics::vertex_attribute::texcoord0: return 0 ;
+                case natus::graphics::vertex_attribute::texcoord1: return 1 ;
+                case natus::graphics::vertex_attribute::texcoord2: return 2 ;
+                case natus::graphics::vertex_attribute::texcoord3: return 3 ;
+                case natus::graphics::vertex_attribute::texcoord4: return 4 ;
+                case natus::graphics::vertex_attribute::texcoord5: return 5 ;
+                case natus::graphics::vertex_attribute::texcoord6: return 6 ;
+                case natus::graphics::vertex_attribute::texcoord7: return 7 ;
+                default: break ;
+                }
+
+                return 0 ;
             }
 
             static DXGI_FORMAT convert_type_to_vec_format( natus::graphics::type const t, natus::graphics::type_struct const ts ) noexcept

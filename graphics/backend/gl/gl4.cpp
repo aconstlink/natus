@@ -1647,7 +1647,7 @@ struct gl4_backend::pimpl
 
         // !!! must be done pre-link !!!
         // set transform feedback varyings
-        if( sc.get_num_output_bindings() != 0 )
+        if( sc.get_num_output_bindings() != 0 && sc.get_streamout_mode() != natus::graphics::streamout_mode::unknown )
         {
             sconfig.output_names = (char const **)natus::memory::global_t::alloc_raw<char *>( sc.get_num_output_bindings() ) ;
             sc.for_each_vertex_output_binding( [&]( size_t const i,
