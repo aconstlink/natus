@@ -190,6 +190,8 @@ namespace natus
                     this_t::resize( 0 ) ;
             }
 
+            size_t get_num_layout_elements( void_t ) const noexcept { return _vertex_layout.size() ; }
+
             size_t get_num_elements( void_t ) const noexcept { return _num_elems ; }
         };
         natus_typedef( vertex_buffer ) ;

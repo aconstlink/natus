@@ -1700,7 +1700,7 @@ public: // functions
 
                     // somehow, this can not be 0
                     // otherwise, hr will be in valid.
-                    res_desc.Buffer.NumElements = UINT( obj.size() ) ; 
+                    res_desc.Buffer.NumElements = UINT( obj.size() * obj.get_buffer(i).get_num_layout_elements() ) ; 
 
                     for( size_t j=0; j<2; ++j )
                     {
