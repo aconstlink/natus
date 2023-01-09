@@ -120,7 +120,7 @@ natus::nsl::parse::configs_t parser::filter_config_statements( this_t::statement
                     v.line = *iter ;
                     size_t base = 0 ;
 
-                    if( token[ 0 ] == "in" || token[ 0 ] == "out" )
+                    if( token[ 0 ] == "in" || token[ 0 ] == "out" || token[ 0 ] == "inout" )
                     {
                         v.flow_qualifier = token[ 0 ] ;
                         base = 1 ;
@@ -224,7 +224,18 @@ natus::nsl::post_parse::configs_t parser::analyse_configs( natus::nsl::parse::co
                 v.line = var.line ;
                 v.name = var.name ;
                 v.type = natus::nsl::to_type( var.type ) ;
-                s.variables.emplace_back( std::move( v ) ) ;
+                if( v.fq == natus::nsl::flow_qualifier::inout )
+                {
+                    {
+                        v.fq = natus::nsl::flow_qualifier::in ;
+                        s.variables.emplace_back( v ) ;
+                    }
+                    {
+                        v.fq = natus::nsl::flow_qualifier::out ;
+                        s.variables.emplace_back( v ) ;
+                    }
+                }
+                else s.variables.emplace_back( std::move( v ) ) ;
             }
             c.shaders.emplace_back( std::move( s ) ) ;
         }

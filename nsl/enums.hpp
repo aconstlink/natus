@@ -49,6 +49,7 @@ namespace natus
             unknown,
             in,
             out,
+            inout,
             global,
             local
         };
@@ -57,6 +58,7 @@ namespace natus
         {
             if( s == "in" ) return flow_qualifier::in ;
             else if( s == "out" ) return flow_qualifier::out ;
+            else if( s == "inout" ) return flow_qualifier::inout ;
             else if( s == "" || s == "global" ) return flow_qualifier::global ;
             else if( s == "local" ) return flow_qualifier::local ;
             return flow_qualifier::unknown ;
@@ -64,7 +66,7 @@ namespace natus
 
         static natus::ntd::string_cref_t to_string( natus::nsl::flow_qualifier const fq ) noexcept
         {
-            static natus::ntd::string_t const __strings[] = { "unknown", "in", "out", "global", "local" } ;
+            static natus::ntd::string_t const __strings[] = { "unknown", "in", "out", "inout", "global", "local" } ;
             return __strings[ size_t( fq ) ] ;
         }
 

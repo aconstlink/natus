@@ -636,6 +636,27 @@ natus::nsl::generated_code_t::shaders_t generator::generate( natus::nsl::generat
         }
     }
 
+    // exchange inout with in and out variables
+    {
+        auto iter = var_map.begin() ;
+        while( iter != var_map.end() )
+        {
+            if( iter->fq == natus::nsl::flow_qualifier::inout )
+            {
+                natus::nsl::variable_mappings_t::value_type v = *iter ;
+                {
+                    v.fq = natus::nsl::flow_qualifier::in ;
+                    *iter = v ;
+                }
+                {
+                    v.fq = natus::nsl::flow_qualifier::out ;
+                    iter = var_map.insert( iter, v ) + 1 ;
+                }
+            }
+            ++iter ;
+        }
+    }
+
     natus::nsl::generated_code_t::shaders_t ret ;
 
     for( auto const& s : genable.config.shaders )
