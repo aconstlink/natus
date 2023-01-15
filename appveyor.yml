@@ -1,7 +1,8 @@
 
 image: 
   - Ubuntu
-  - Visual Studio 2019  
+  - Visual Studio 2019
+  - Visual Studio 2022  
 
 install:
   - cmd: cd %APPVEYOR_BUILD_FOLDER%
