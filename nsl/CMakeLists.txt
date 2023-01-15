@@ -19,6 +19,8 @@ set( sources
     "dependency_resolver.hpp"
     "function_declaration_analyser.hpp"
     "function_signature_analyser.hpp"
+    "nodes.h"
+    "nodes.cpp"
 
     "api/glsl/generator.h"
     "api/glsl/generator.cpp"
