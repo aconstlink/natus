@@ -103,7 +103,7 @@ natus::nsl::parse::configs_t parser::filter_config_statements( this_t::statement
             continue ;
         }
 
-        if( token[ 0 ] == "open" && ( token[ 1 ] == "vertex_shader" || token[ 1 ] == "pixel_shader" ) )
+        if( token[ 0 ] == "open" && ( token[ 1 ] == "vertex_shader" || token[ 1 ] == "geometry_shader" || token[ 1 ] == "pixel_shader" ) )
         {
             ++level ;
             natus::nsl::parse::config_t::shader s ;
@@ -725,6 +725,7 @@ parser::statements_t parser::replace_open_close( statements_rref_t ss ) const no
                     inner_token[ 0 ] != "shader" &&
                     inner_token[ 0 ] != "render_states" &&
                     inner_token[ 0 ] != "vertex_shader" &&
+                    inner_token[ 0 ] != "geometry_shader" &&
                     inner_token[ 0 ] != "pixel_shader" )
                 {
                     ++level ;
@@ -1022,10 +1023,10 @@ natus::ntd::string_t parser::insert_spaces( natus::ntd::string_rref_t s ) const 
         }
 
         if( *iter == '(' || *iter == ')' || *iter == ';'  || *iter == ','
-            || *iter == ':' || *iter == '*' || *iter == '/' || *iter == '='  )
+            || *iter == ':' || *iter == '[' || *iter == ']' )
         {
             // in front
-                iter = ++s.insert( iter, ' ' ) ;
+            iter = ++s.insert( iter, ' ' ) ;
             // behind
             iter = s.insert( ++iter, ' ' ) ;
         }

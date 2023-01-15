@@ -462,6 +462,8 @@ namespace natus
             fetch_data,
             texture_offset,
             texture_dims,
+            emit_vertex,        // geometry shader only
+            end_primitive,      // geometry shader only
             num_build_ins
         };
 
@@ -510,7 +512,11 @@ namespace natus
             { buildin_type::as_vec4, "as_vec4", ":as_vec4:" },
             { buildin_type::fetch_data, "fetch_data", ":fetch_data:" },
             { buildin_type::texture_offset, "texture_offset", ":texture_offset:" },
-            { buildin_type::texture_dims, "texture_dims", ":texture_dims:" }
+            { buildin_type::texture_dims, "texture_dims", ":texture_dims:" },
+
+            { buildin_type::emit_vertex, "emit_vertex", ":emit_vertex:" },
+            { buildin_type::end_primitive, "end_primitive", ":end_primitive:" }
+
         } ;
 
         static build_in get_build_in( buildin_type t ) noexcept

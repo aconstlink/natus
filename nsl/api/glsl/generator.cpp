@@ -463,6 +463,26 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::nsl::api_type co
 
                 return "texture_dims ( INVALID_ARGS ) " ;
             }
+        },
+        {
+            natus::ntd::string_t( ":emit_vertex:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 0 ) return "emit_vertex( INVALID_ARGS ) " ;
+                
+
+                return "EmitVertex ( ) " ;
+            }
+        },
+        {
+            natus::ntd::string_t( ":end_primitive:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 0 ) return "end_primitive( INVALID_ARGS ) " ;
+                
+
+                return "EndPrimitive ( ) " ;
+            }
         }
     } ;
 
