@@ -29,6 +29,14 @@ namespace natus
                     natus::ntd::vector< natus::ntd::string_t > lines ;
                 };
 
+                // geometry shader in/out primitive types
+                struct primitive_decl
+                {
+                    natus::ntd::string_t flow_qualifier ;
+                    natus::ntd::string_t primitive_type ;
+                    natus::ntd::string_t attributes ;
+                };
+
                 struct variable
                 {
                     natus::ntd::string_t flow_qualifier ;
@@ -41,6 +49,7 @@ namespace natus
                 struct shader
                 {
                     natus::ntd::string_t type ;
+                    natus::ntd::vector< primitive_decl > prim_decls ;
                     natus::ntd::vector< variable > variables ;
                     natus::ntd::vector< code > codes ;
                 };
@@ -92,6 +101,15 @@ namespace natus
             {
                 struct shader
                 {
+                    struct primitive_decl
+                    {
+                        natus::nsl::flow_qualifier fq ;
+                        natus::nsl::primitive_decl_type pdt ;
+                        size_t max_vertices ; // output
+                    };
+                    natus_typedef( primitive_decl ) ;
+                    natus::ntd::vector< primitive_decl > primitive_decls ;
+
                     struct variable
                     {
                         natus::nsl::flow_qualifier fq ;

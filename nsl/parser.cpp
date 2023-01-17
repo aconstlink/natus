@@ -116,22 +116,53 @@ natus::nsl::parse::configs_t parser::filter_config_statements( this_t::statement
 
                 if( token.back() == ";" )
                 {
-                    natus::nsl::parse::config_t::variable v ;
-                    v.line = *iter ;
+                    natus::ntd::string_t fq ;
                     size_t base = 0 ;
 
-                    if( token[ 0 ] == "in" || token[ 0 ] == "out" || token[ 0 ] == "inout" )
+                    if( token[0] == "in" || token[0] == "out" || token[0] == "inout" ) 
                     {
-                        v.flow_qualifier = token[ 0 ] ;
+                        fq = token[0] ;
                         base = 1 ;
                     }
-                    v.type = token[ base + 0 ] ;
-                    v.name = token[ base + 1 ] ;
-                    if( ( token.size() >= 4 + base ) && token[ base + 2 ] == ":" )
+
+                    // input prim decl
+                    if( fq == "in" && token.size() == 3 )
                     {
-                        v.binding = token[ base + 3 ] ;
+                        natus::nsl::parse::config_t::primitive_decl pd ;
+                        pd.flow_qualifier = fq ;
+                        pd.primitive_type = token[1] ;
+                        s.prim_decls.emplace_back( pd ) ;
                     }
-                    s.variables.emplace_back( std::move( v ) ) ;
+                    // output prim decl
+                    else if( token[ 2 ] == "[" )
+                    {
+                        natus::nsl::parse::config_t::primitive_decl pd ;
+                        for( size_t i=3; i<token.size(); ++i )
+                        {
+                            if( token[i] == "]" ) break ;
+                            pd.attributes += token[i] + " " ;
+                        }
+                        pd.flow_qualifier = fq ;
+                        pd.primitive_type = token[1] ;
+                        s.prim_decls.emplace_back( pd ) ;
+                    }
+                    // must be a in/out variable
+                    else
+                    {
+                        natus::nsl::parse::config_t::variable v ;
+                        v.line = *iter ;
+
+                        v.flow_qualifier = fq ;
+                        v.type = token[ base + 0 ] ;
+                        v.name = token[ base + 1 ] ;
+
+                        if( ( token.size() >= 4 + base ) && token[ base + 2 ] == ":" )
+                        {
+                            v.binding = token[ base + 3 ] ;
+                        }
+
+                        s.variables.emplace_back( std::move( v ) ) ;
+                    }
 
                     continue ;
                 }
@@ -179,6 +210,7 @@ natus::nsl::post_parse::configs_t parser::analyse_configs( natus::nsl::parse::co
 
     using config = natus::nsl::post_parse::config_t ;
     using shader = natus::nsl::post_parse::config_t::shader_t ;
+    using prim_decl = natus::nsl::post_parse::config_t::shader_t::primitive_decl_t ;
     using variable = natus::nsl::post_parse::config_t::shader_t::variable_t ;
     using code = shader::code_t ;
 
@@ -214,6 +246,42 @@ natus::nsl::post_parse::configs_t parser::analyse_configs( natus::nsl::parse::co
                     }
                     s.codes.emplace_back( std::move( c_ ) ) ;
                 }
+            }
+
+            for( auto const & pd : shd.prim_decls )
+            {
+                prim_decl pd_ ;
+                pd_.fq = natus::nsl::to_flow_qualifier( pd.flow_qualifier ) ;
+                pd_.pdt = natus::nsl::to_primitive_decl_type( pd.primitive_type ) ;
+                pd_.max_vertices = 0 ;
+                if( !pd.attributes.empty() )
+                {
+                    auto const i = pd.attributes.find( "max_verts" ) ;
+                    if( i != std::string::npos )
+                    {
+                        auto const i2 = pd.attributes.find_first_of( '=', i + natus::ntd::string_t( "max_verts" ).size() ) ;
+                        auto const i3 = pd.attributes.find_first_of( ',', i2 ) ;
+                        auto const i4 = pd.attributes.size() ;
+
+                        auto const end = std::min( i3, i4 ) ;
+
+                        if( i2 != std::string::npos && i2 < end )
+                        {
+                            auto subs = pd.attributes.substr( i2+1, end - (i2+1) ) ;
+                            subs = std::regex_replace( subs, std::regex( " __int__ \\( ([0-9]+) \\) " ), " $1 " ) ;
+                            try
+                            {
+                                pd_.max_vertices = std::stoi( subs ) ;
+                            }
+                            catch( std::exception const& ex )
+                            {
+                                natus::log::global_t::error( "can not read max_verts in " + cnf.name + " config with "
+                                "error : " + ex.what() ) ;
+                            }
+                        }
+                    }
+                }
+                s.primitive_decls.emplace_back( pd_ ) ;
             }
 
             for( auto const& var : shd.variables )

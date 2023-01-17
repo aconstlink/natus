@@ -93,6 +93,32 @@ namespace natus
 
     namespace nsl
     {
+        enum class primitive_decl_type
+        {
+            unknown,
+            points,
+            lines,
+            triangles,
+            num_primitive_decl_types
+        };
+
+        static primitive_decl_type to_primitive_decl_type( natus::ntd::string_cref_t s ) noexcept
+        {
+            if( s == "points" ) return primitive_decl_type::points ;
+            else if( s == "lines" ) return primitive_decl_type::lines ;
+            else if( s == "triangles" ) return primitive_decl_type::triangles ;
+            return primitive_decl_type::unknown ;
+        }
+
+        static natus::ntd::string_cref_t to_string( natus::nsl::primitive_decl_type const arg_in ) noexcept
+        {
+            static natus::ntd::string_t const __strings[] = { "unknown", "points", "lines", "triangles" } ;
+            return __strings[ size_t( arg_in ) ] ;
+        }
+    }
+
+    namespace nsl
+    {
         enum class binding
         {
             unknown, position, normal, tangent,
