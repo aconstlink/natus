@@ -997,8 +997,9 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
                     size_t p0 = shd.find( repl, off ) ;
                     while( p0 != std::string::npos )
                     {
+                        size_t const p1 = shd.find_first_of( " ", p0 ) ;
                         shd.replace( p0, repl.size(), v.new_name ) ;
-                        p0 = shd.find( repl, p0 + 3 ) ;
+                        p0 = shd.find( repl, p1 ) ;
                     }
                 }
             }
