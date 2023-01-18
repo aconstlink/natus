@@ -84,6 +84,7 @@ natus::nsl::generated_code_t generator::generate( void_t ) noexcept
             else if( vm.fq == natus::nsl::flow_qualifier::out &&
                     vm.st == last_shader )
             {
+                var.name = "streamout." + var.name ; // must be streamout
                 ret.geometry_outs.emplace_back( var ) ;
             }
         }

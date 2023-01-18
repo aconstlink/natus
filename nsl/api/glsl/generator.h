@@ -23,6 +23,8 @@ namespace natus
                 static natus::ntd::string_t replace_buildin_symbols( natus::nsl::api_type const t, natus::ntd::string_t code ) noexcept ;                
                 static natus::ntd::string_cref_t to_texture_type( natus::nsl::type_cref_t t ) noexcept ;
                 static natus::ntd::string_t replace_types( natus::nsl::api_type const apit, natus::ntd::string_t code ) noexcept ;
+                static natus::ntd::string_t determine_input_interface_block_name( natus::nsl::shader_type const cur, natus::nsl::shader_type const before ) noexcept ;
+                static natus::ntd::string_t determine_output_interface_block_name( natus::nsl::shader_type const cur, natus::nsl::shader_type const after ) noexcept ;
 
             public:
 

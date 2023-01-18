@@ -1,5 +1,7 @@
 #pragma once
 
+#include <natus/ntd/insertion_sort.hpp>
+
 namespace natus
 {
     namespace nsl
@@ -28,13 +30,20 @@ namespace natus
             d3d11
         };
 
+        // the order is important. The order resembles the
+        // same order as it is used in the rendering pipe.
         enum class shader_type
         {
             unknown,
             vertex_shader,
+            // control/hull shader
+            // evaluation/domain shader
             geometry_shader,
-            pixel_shader
+            pixel_shader,
+            num_shader_types
         };
+
+        typedef std::array< natus::nsl::shader_type, size_t(natus::nsl::shader_type::num_shader_types) > shader_type_array_t ;
 
         static shader_type to_shader_type( natus::ntd::string_cref_t s ) noexcept
         {
@@ -42,6 +51,43 @@ namespace natus
             else if( s == "geometry_shader" ) return shader_type::geometry_shader ;
             else if( s == "pixel_shader" ) return shader_type::pixel_shader ;
             return shader_type::unknown ;
+        }
+
+        static size_t to_index( shader_type const st ) noexcept
+        {
+            return size_t( st ) < size_t(shader_type::num_shader_types) ? size_t(st) : 0 ;
+        }
+
+        static shader_type shader_type_from_index( size_t const idx ) noexcept
+        {
+            return idx < size_t(shader_type::num_shader_types) ? shader_type( idx ) : shader_type::unknown ;
+        }
+
+        static natus::ntd::string_t short_name( shader_type const st ) noexcept
+        {
+            static natus::ntd::string_t __[] = {"UNKNOWN","vs","gs","ps"} ;
+            return __[ natus::nsl::to_index(st) ] ;
+        }
+
+        static void_t sort_shader_type_array( shader_type_array_t & types ) noexcept
+        {
+            natus::ntd::insertion_sort< shader_type >::for_all< size_t(shader_type::num_shader_types) >( types ) ;
+        }
+
+        static shader_type shader_type_before( shader_type const cur, shader_type_array_t const & types ) noexcept
+        {
+            size_t i=0; 
+            for( ; i<types.size() ; ++i ) if( types[i] == cur ) break ;
+            
+            return types[ --i >= types.size() ? 0 : i ] ;
+        }
+
+        static shader_type shader_type_after( shader_type const cur, shader_type_array_t const & types ) noexcept
+        {
+            size_t i=0; 
+            for( ; i<types.size() ; ++i ) if( types[i] == cur ) break ;
+            
+            return types[ ++i >= types.size() ? 0 : i ] ;
         }
 
         enum class flow_qualifier
@@ -102,6 +148,11 @@ namespace natus
             num_primitive_decl_types
         };
 
+        static size_t to_index( primitive_decl_type const pd ) noexcept
+        {
+            return size_t(pd) < size_t(primitive_decl_type::num_primitive_decl_types) ? size_t(pd) : 0 ;
+        }
+
         static primitive_decl_type to_primitive_decl_type( natus::ntd::string_cref_t s ) noexcept
         {
             if( s == "points" ) return primitive_decl_type::points ;
@@ -112,8 +163,14 @@ namespace natus
 
         static natus::ntd::string_cref_t to_string( natus::nsl::primitive_decl_type const arg_in ) noexcept
         {
-            static natus::ntd::string_t const __strings[] = { "unknown", "points", "lines", "triangles" } ;
-            return __strings[ size_t( arg_in ) ] ;
+            static natus::ntd::string_t const __[] = { "unknown", "points", "lines", "triangles" } ;
+            return __[ natus::nsl::to_index( arg_in ) ] ;
+        }
+
+        static size_t primitive_decl_to_num_vertices( primitive_decl_type const pd ) noexcept
+        {
+            static size_t __[] = { 0, 1, 2, 3 } ;
+            return __[ natus::nsl::to_index( pd ) ] ;
         }
     }
 

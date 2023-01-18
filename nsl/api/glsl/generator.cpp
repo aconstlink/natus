@@ -5,6 +5,8 @@
 
 using namespace natus::nsl::glsl ;
 
+
+//******************************************************************************************************************************************
 natus::ntd::string_t generator::replace_buildin_symbols( natus::nsl::api_type const t, natus::ntd::string_t code ) noexcept
 {
     natus::nsl::repl_syms_t repls =
@@ -521,6 +523,7 @@ namespace this_file
 {
     typedef std::pair< natus::nsl::type_t, natus::ntd::string_t > mapping_t ;
 
+    //******************************************************************************************************************************************
     static mapping_t map_variable_type( natus::nsl::api_type const apit, natus::nsl::type_cref_t type ) noexcept
     {
         if( apit == natus::nsl::api_type::gl4 )
@@ -597,7 +600,7 @@ namespace this_file
     }
 }
 
-
+//******************************************************************************************************************************************
 natus::ntd::string_cref_t generator::to_texture_type( natus::nsl::type_cref_t t ) noexcept
 {
     typedef std::pair< natus::nsl::type_ext, natus::ntd::string_t > __mapping_t ;
@@ -612,6 +615,7 @@ natus::ntd::string_cref_t generator::to_texture_type( natus::nsl::type_cref_t t 
     return __mappings[ 0 ].second ;
 }
 
+//******************************************************************************************************************************************
 natus::ntd::string_t generator::replace_types( natus::nsl::api_type const apit, natus::ntd::string_t code ) noexcept
 {
     size_t p0 = 0 ;
@@ -633,6 +637,31 @@ natus::ntd::string_t generator::replace_types( natus::nsl::api_type const apit, 
     return std::move( code ) ;
 }
 
+//******************************************************************************************************************************************
+natus::ntd::string_t generator::determine_input_interface_block_name( natus::nsl::shader_type const cur, natus::nsl::shader_type const before ) noexcept 
+{
+    // input assembler to vertex shader -> not possible in glsl
+    if( cur == natus::nsl::shader_type::vertex_shader )
+        return "ia_to_" + natus::nsl::short_name( cur ) ;
+
+    return natus::nsl::short_name( before ) + "_to_" + natus::nsl::short_name( cur ) ;
+}
+
+//******************************************************************************************************************************************
+natus::ntd::string_t generator::determine_output_interface_block_name( natus::nsl::shader_type const cur, natus::nsl::shader_type const after ) noexcept 
+{
+    // -> not possible in glsl
+    if( cur == natus::nsl::shader_type::pixel_shader )
+        return "into_the_pixel_pot" ;
+    
+    if( cur != natus::nsl::shader_type::pixel_shader && 
+        after == natus::nsl::shader_type::unknown )
+        return "streamout" ; // must be streamout!!
+
+    return natus::nsl::short_name( cur ) + "_to_" + natus::nsl::short_name( after ) ;
+}
+
+//******************************************************************************************************************************************
 natus::nsl::generated_code_t::shaders_t generator::generate( natus::nsl::generatable_cref_t genable, natus::nsl::variable_mappings_cref_t var_map_ ) noexcept
 {
     natus::nsl::variable_mappings_t var_map = var_map_ ;
@@ -715,6 +744,7 @@ natus::nsl::generated_code_t::shaders_t generator::generate( natus::nsl::generat
     return std::move( ret ) ;
 }
 
+//******************************************************************************************************************************************
 natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatable_cref_t genable, natus::nsl::post_parse::config_t::shader_cref_t shd_, 
     natus::nsl::variable_mappings_cref_t var_mappings, natus::nsl::api_type const type ) noexcept
 {
@@ -722,12 +752,35 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
 
     std::stringstream text ;
 
+    natus::nsl::shader_type_array_t shader_types ;
+
+    // getting all involved shader types so interface 
+    // blocks can be formed later on.
+    {
+        for( auto & i : shader_types ) i = natus::nsl::shader_type::unknown ;
+
+        size_t i=0; 
+        for( auto const & shd : genable.config.shaders ) shader_types[i++] = shd.type ;
+        natus::nsl::sort_shader_type_array( shader_types ) ;
+    }
+
+    natus::nsl::shader_type const sht_cur = shd_.type ;
+    natus::nsl::shader_type const sht_before = natus::nsl::shader_type_before( shd_.type, shader_types ) ;
+    natus::nsl::shader_type const sht_after = natus::nsl::shader_type_after( shd_.type, shader_types ) ;
+
+    // if in the last geometry pipeline state, the position does not need to be carried over
+    // the the pixel shader. This is done by gl_Position. This also means that the variable
+    // used by the position binding is not interpolated by the rasterizer which also saves some
+    // additional cycles.
+    bool_t const replace_out_position = sht_after == natus::nsl::shader_type::pixel_shader ;
+    natus::ntd::string_t const replace_output_position_name = "INJECTED_lpos_" ;
+
     // 1. glsl stuff at the front
     {
         switch( type )
         {
         case natus::nsl::api_type::gl4:
-            text << "#version 140" << " // " << genable.config.name << std::endl << std::endl ;
+            text << "#version 400" << " // " << genable.config.name << std::endl << std::endl ;
             break ;
         case natus::nsl::api_type::es3:
             text << "#version 300 es" << std::endl ;
@@ -840,45 +893,157 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
 
         size_t layloc_id = 0 ;
         text << "// Uniforms and in/out // " << std::endl ;
-        for( auto & v : shd_.variables )
+
+        // in/out interface block
         {
-            // omit system variables
-            //if( v.binding == natus::nsl::binding::position && v.fq == natus::nsl::flow_qualifier::out ) continue ;
-            if( v.binding == natus::nsl::binding::vertex_id ) continue ;
-            if( v.binding == natus::nsl::binding::instance_id ) continue ;
-            if( v.binding == natus::nsl::binding::primitive_id ) continue ;
-
-            natus::ntd::string_t name = v.name ;
-            natus::ntd::string_t const type_ = this_file::map_variable_type_to_string( type, v.type ) ;
-
+            // all ins
             {
-                size_t const idx = natus::nsl::find_by( var_mappings, v.name, v.binding, v.fq, shd_.type ) ;
-                if( idx < var_mappings.size() )
+                // no intput interface block in the vertex shader
+                if( sht_cur != natus::nsl::shader_type::vertex_shader )
                 {
-                    name = var_mappings[ idx ].new_name ;
+                    text << "in " << this_t::determine_input_interface_block_name( sht_cur, sht_before ) << std::endl ;
+                    text << "{" << std::endl ;
+                }
+
+                for( auto & v : shd_.variables )
+                {
+                    if( v.fq != natus::nsl::flow_qualifier::in ) continue ;
+
+                    // omit system variables
+                    //if( v.binding == natus::nsl::binding::position && v.fq == natus::nsl::flow_qualifier::out ) continue ;
+                    if( v.binding == natus::nsl::binding::vertex_id ) continue ;
+                    if( v.binding == natus::nsl::binding::instance_id ) continue ;
+                    if( v.binding == natus::nsl::binding::primitive_id ) continue ;
+
+                    natus::ntd::string_t name = v.name ;
+                    natus::ntd::string_t const type_ = this_file::map_variable_type_to_string( type, v.type ) ;
+
+                    {
+                        size_t const idx = natus::nsl::find_by( var_mappings, v.name, v.binding, v.fq, shd_.type ) ;
+                        if( idx < var_mappings.size() )
+                        {
+                            name = var_mappings[ idx ].new_name ;
+                        }
+                    }
+
+                    // no intput interface block in the vertex shader
+                    if( sht_cur == natus::nsl::shader_type::vertex_shader ) text << "in" ;
+
+                    text << " " << type_ << " " << name << " ; " << std::endl ;
+                }
+
+                // no intput interface block in the vertex shader
+                if( sht_cur != natus::nsl::shader_type::vertex_shader )
+                {
+                    text << "} input" << (sht_cur == natus::nsl::shader_type::geometry_shader ? "[] " : " ") << ";" << std::endl << std::endl ;
+                }
+                else text << std::endl ;
+            }
+
+            // all outs
+            {
+                // no output interface block in the fragment shader
+                if( sht_cur != natus::nsl::shader_type::pixel_shader )
+                {
+                    text << "out " << this_t::determine_output_interface_block_name( sht_cur, sht_after ) << std::endl ;
+                    text << "{" << std::endl ;
+                }
+
+                for( auto & v : shd_.variables )
+                {
+                    if( v.fq != natus::nsl::flow_qualifier::out ) continue ;
+
+                    // omit system variables
+                    //if( v.binding == natus::nsl::binding::position && v.fq == natus::nsl::flow_qualifier::out ) continue ;
+                    if( v.binding == natus::nsl::binding::vertex_id ) continue ;
+                    if( v.binding == natus::nsl::binding::instance_id ) continue ;
+                    if( v.binding == natus::nsl::binding::primitive_id ) continue ;
+
+                    // do not place that position variable in the interface block.
+                    if( replace_out_position && v.binding == natus::nsl::binding::position ) continue ;
+
+                    natus::ntd::string_t name = v.name ;
+                    natus::ntd::string_t const type_ = this_file::map_variable_type_to_string( type, v.type ) ;
+
+                    {
+                        size_t const idx = natus::nsl::find_by( var_mappings, v.name, v.binding, v.fq, shd_.type ) ;
+                        if( idx < var_mappings.size() )
+                        {
+                            name = var_mappings[ idx ].new_name ;
+                        }
+                    }
+
+                    natus::ntd::string_t layloc ;
+
+                    if( shd_.type == natus::nsl::shader_type::pixel_shader && num_color > 1 )
+                    {
+                        layloc = "layout( location = " + std::to_string( layloc_id++ ) + " ) " ;
+                    }
+
+                    // no output interface block in the fragment shader
+                    if( sht_cur == natus::nsl::shader_type::pixel_shader) text << "out " ;
+
+                    text << layloc << " " << type_ << " " << name << " ; " << std::endl ;
+                }
+
+                // no output interface block in the fragment shader
+                if( sht_cur != natus::nsl::shader_type::pixel_shader )
+                {
+                    text << "} output ;" << std::endl << std::endl ;
+                }
+                else text << std::endl ;
+            }
+        }
+
+        // uniform interface block but just rollin with ordinary uniform definitions
+        {
+            for( auto & v : shd_.variables )
+            {
+                // omit system variables
+                //if( v.binding == natus::nsl::binding::position && v.fq == natus::nsl::flow_qualifier::out ) continue ;
+                if( v.binding == natus::nsl::binding::vertex_id ) continue ;
+                if( v.binding == natus::nsl::binding::instance_id ) continue ;
+                if( v.binding == natus::nsl::binding::primitive_id ) continue ;
+                if( v.fq != natus::nsl::flow_qualifier::global ) continue ;
+
+                natus::ntd::string_t name = v.name ;
+                natus::ntd::string_t const type_ = this_file::map_variable_type_to_string( type, v.type ) ;
+
+                {
+                    size_t const idx = natus::nsl::find_by( var_mappings, v.name, v.binding, v.fq, shd_.type ) ;
+                    if( idx < var_mappings.size() )
+                    {
+                        name = var_mappings[ idx ].new_name ;
+                    }
+                }
+
+                text << "uniform " << type_ << " " << name << " ; " << std::endl ;
+            }
+            text << std::endl ;
+        }
+
+        // all required locals
+        {
+            // we have to replace the out position binding variable with
+            // a "out of main" declared replaced variable.
+            if( replace_out_position )
+            {
+                auto iter = std::find_if( shd_.variables.begin(), shd_.variables.end(), 
+                [&]( post_parse::config_t::shader_t::variable_cref_t var )
+                {
+                    return var.binding == natus::nsl::binding::position && var.fq == natus::nsl::flow_qualifier::out ;
+                } )  ;
+
+                if( iter != shd_.variables.end() )
+                {
+                    text 
+                        << this_file::map_variable_type_to_string( type, iter->type ) << " " 
+                        << replace_output_position_name << " ; "  << std::endl;
                 }
             }
 
-            // do some regex replacements
-            {
-                //type_ = std::regex_replace( type_, std::regex( "tex([1-3]+)d" ), "sampler$1D" ) ;
-            }
-
-            natus::ntd::string_t layloc ;
-
-            if( v.fq == natus::nsl::flow_qualifier::out &&
-                shd_.type == natus::nsl::shader_type::pixel_shader &&
-                num_color > 1 )
-            {
-                layloc = "layout( location = " + std::to_string( layloc_id++ ) + " ) " ;
-            }
-
-            natus::ntd::string_t const flow = v.fq == natus::nsl::flow_qualifier::global ?
-                "uniform" : natus::nsl::to_string( v.fq ) ;
-
-            text << layloc << flow << " " << type_ << " " << name << " ; " << std::endl ;
+            text << std::endl ;
         }
-        text << std::endl ;
     }
 
     // 5. insert main/shader from config
@@ -908,19 +1073,21 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
 
             if( shd_.type != natus::nsl::shader_type::pixel_shader && iter != shd_.variables.end() )
             {
+                auto const var_name = replace_out_position ? replace_output_position_name : "out." + iter->name ;
+                
                 natus::ntd::string_t ins_code = "gl_Position = " ;
                 if( iter->type == natus::nsl::type_t::as_vec1() )
                 {
-                    ins_code += "vec4( out." + iter->name + ", 0.0, 0.0, 1.0 ) ; ";
+                    ins_code += "vec4( " + var_name + ", 0.0, 0.0, 1.0 ) ; ";
                 }else if( iter->type == natus::nsl::type_t::as_vec2() )
                 {
-                    ins_code += "vec4( out." + iter->name + ", 0.0, 1.0 ) ; ";
+                    ins_code += "vec4( " + var_name + ", 0.0, 1.0 ) ; ";
                 }else if( iter->type == natus::nsl::type_t::as_vec3() )
                 {
-                    ins_code += "vec4( out." + iter->name + ", 1.0 ) ; ";
+                    ins_code += "vec4( " + var_name + ", 1.0 ) ; ";
                 }else if( iter->type == natus::nsl::type_t::as_vec4() )
                 {
-                    ins_code += "out." + iter->name + " ; ";
+                    ins_code += var_name + " ; ";
                 }
                 ins_code += '\n' ;
 
@@ -985,24 +1152,40 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
             {
                 if( v.st != shd_.type ) continue ;
 
-                natus::ntd::string_t flow ;
-
                 if( v.fq == natus::nsl::flow_qualifier::in )
-                    flow = "in." ;
-                else if( v.fq == natus::nsl::flow_qualifier::out )
-                    flow = "out." ;
-
                 {
-                    natus::ntd::string_t const repl = flow + v.old_name ;
-                    size_t p0 = shd.find( repl, off ) ;
-                    while( p0 != std::string::npos )
+                    natus::ntd::string_t const iblock_name = sht_cur!=natus::nsl::shader_type::vertex_shader ? "input$1." : "" ;
+
+                    std::regex rex( "in *(\\[ *[0-9]*[a-z]* *\\])? *\\." + v.old_name ) ;
+                    shd = std::regex_replace( shd, rex, iblock_name + v.new_name ) ; 
+                }
+                else if( v.fq == natus::nsl::flow_qualifier::out )
+                {
+                    if( replace_out_position && v.binding == natus::nsl::binding::position )
                     {
-                        size_t const p1 = shd.find_first_of( " ", p0 ) ;
-                        shd.replace( p0, repl.size(), v.new_name ) ;
-                        p0 = shd.find( repl, p1 ) ;
+                        std::regex rex( "out\\." + v.old_name ) ;
+                        shd = std::regex_replace( shd, rex, replace_output_position_name ) ; 
+                    }
+                    else
+                    {
+                        natus::ntd::string_t const iblock_name = sht_cur!=natus::nsl::shader_type::pixel_shader ? "output." : "" ;
+
+                        std::regex rex( "out\\." + v.old_name ) ;
+                        shd = std::regex_replace( shd, rex, iblock_name + v.new_name ) ; 
                     }
                 }
+                else
+                {
+                    std::regex rex( v.old_name ) ;
+                    shd = std::regex_replace( shd, rex, v.new_name ) ; 
+                }
             }
+        }
+
+        if( sht_cur == natus::nsl::shader_type::geometry_shader )
+        {
+            std::regex rex( "in.length()") ;
+            shd = std::regex_replace( shd, rex, "gl_in.length()" ) ; 
         }
 
         // replace numbers
