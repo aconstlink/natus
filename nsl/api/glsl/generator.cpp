@@ -598,6 +598,31 @@ namespace this_file
     {
         return this_file::map_variable_type( apit, type ).second ;
     }
+
+
+    static natus::ntd::string_t input_decl_type_to_string( natus::nsl::primitive_decl_type const pd ) noexcept
+    {
+        switch( pd )
+        {
+        case natus::nsl::primitive_decl_type::points: return "points" ; 
+        case natus::nsl::primitive_decl_type::lines: return "lines" ; 
+        case natus::nsl::primitive_decl_type::triangles: return "triangles" ; 
+        default: break ;
+        }
+        return "UNKNOWN" ;
+    }
+
+    static natus::ntd::string_t output_decl_type_to_string( natus::nsl::primitive_decl_type const pd ) noexcept
+    {
+        switch( pd )
+        {
+        case natus::nsl::primitive_decl_type::points: return "points" ; 
+        case natus::nsl::primitive_decl_type::lines: return "line_strip" ; 
+        case natus::nsl::primitive_decl_type::triangles: return "triangle_strip" ; 
+        default: break ;
+        }
+        return "UNKNOWN" ;
+    }
 }
 
 //******************************************************************************************************************************************
@@ -768,13 +793,6 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
     natus::nsl::shader_type const sht_before = natus::nsl::shader_type_before( shd_.type, shader_types ) ;
     natus::nsl::shader_type const sht_after = natus::nsl::shader_type_after( shd_.type, shader_types ) ;
 
-    // if in the last geometry pipeline state, the position does not need to be carried over
-    // the the pixel shader. This is done by gl_Position. This also means that the variable
-    // used by the position binding is not interpolated by the rasterizer which also saves some
-    // additional cycles.
-    //bool_t const replace_out_position = sht_after == natus::nsl::shader_type::pixel_shader ;
-    //natus::ntd::string_t const replace_output_position_name = "INJECTED_lpos_" ;
-
     // mainly used if the input position binding should be omitted in the interface block and
     // being replaced by reading from the gl_Position and 
     // writing to the output position binding should be replaced by gl_Position
@@ -786,7 +804,7 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
         switch( type )
         {
         case natus::nsl::api_type::gl4:
-            text << "#version 400" << " // " << genable.config.name << std::endl << std::endl ;
+            text << "#version 400 core" << " // " << genable.config.name << std::endl << std::endl ;
             break ;
         case natus::nsl::api_type::es3:
             text << "#version 300 es" << std::endl ;
@@ -837,6 +855,25 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
                 "#extension GL_ARB_separate_shader_objects : enable" << std::endl <<
                 "#extension GL_ARB_explicit_attrib_location : enable" << std::endl << std::endl ;
         }
+    }
+
+    // geometry shader primitive decls
+    if( sht_cur == natus::nsl::shader_type::geometry_shader )
+    {
+        for( auto const & pd : shd_.primitive_decls )
+        {
+            if( pd.fq == natus::nsl::flow_qualifier::in )
+            {
+                text << "layout ( " << this_file::input_decl_type_to_string(pd.pdt) << " ) in ;" << std::endl ;
+            }
+            else if( pd.fq == natus::nsl::flow_qualifier::out )
+            {
+                text << "layout ( " << this_file::output_decl_type_to_string(pd.pdt) << ", max_vertices = " << 
+                    std::to_string(pd.max_vertices) << ")  out ;" << std::endl;
+            }
+        }
+
+        text << std::endl ;
     }
 
     // 2. make prototypes declarations from function signatures
@@ -1032,30 +1069,6 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
             }
             text << std::endl ;
         }
-
-        // all required locals
-        #if 0
-        {
-            // we have to replace the out position binding variable with
-            // a "out of main" declared replaced variable.
-            if( replace_out_position )
-            {
-                auto iter = std::find_if( shd_.variables.begin(), shd_.variables.end(), 
-                [&]( post_parse::config_t::shader_t::variable_cref_t var )
-                {
-                    return var.binding == natus::nsl::binding::position && var.fq == natus::nsl::flow_qualifier::out ;
-                } )  ;
-
-                if( iter != shd_.variables.end() )
-                {
-                    text 
-                        << this_file::map_variable_type_to_string( type, iter->type ) << " " 
-                        << replace_output_position_name << " ; "  << std::endl;
-                }
-            }
-            text << std::endl ;
-        }
-        #endif
     }
 
     // 5. insert main/shader from config
@@ -1074,42 +1087,6 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
     // 6. post over the code and replace all dependencies and in/out
     {
         auto shd = text.str() ;
-
-        // xx. Insert gl_Position
-        #if 0
-        {
-            auto iter = std::find_if( shd_.variables.begin(), shd_.variables.end(), 
-                [&]( post_parse::config_t::shader_t::variable_cref_t var )
-            {
-                return var.binding == natus::nsl::binding::position && var.fq == natus::nsl::flow_qualifier::out ;
-            } )  ;
-
-            if( shd_.type != natus::nsl::shader_type::geometry_shader && 
-                shd_.type != natus::nsl::shader_type::pixel_shader && 
-                iter != shd_.variables.end() )
-            {
-                auto const var_name = replace_out_position ? replace_output_position_name : "out." + iter->name ;
-                
-                natus::ntd::string_t ins_code = "gl_Position = " ;
-                if( iter->type == natus::nsl::type_t::as_vec1() )
-                {
-                    ins_code += "vec4( " + var_name + ", 0.0, 0.0, 1.0 ) ; ";
-                }else if( iter->type == natus::nsl::type_t::as_vec2() )
-                {
-                    ins_code += "vec4( " + var_name + ", 0.0, 1.0 ) ; ";
-                }else if( iter->type == natus::nsl::type_t::as_vec3() )
-                {
-                    ins_code += "vec4( " + var_name + ", 1.0 ) ; ";
-                }else if( iter->type == natus::nsl::type_t::as_vec4() )
-                {
-                    ins_code += var_name + " ; ";
-                }
-                ins_code += '\n' ;
-
-                shd.insert( shd.size() - 2, ins_code ) ;
-            }
-        }
-        #endif
 
         // variable dependencies
         {

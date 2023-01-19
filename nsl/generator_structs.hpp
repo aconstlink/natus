@@ -128,7 +128,7 @@ namespace natus
                         if( level == 0 && s[ i ] == ',' ||
                             level == 0 && s[ i ] == ')' )
                         {
-                            args.emplace_back( s.substr( beg, ( i - 1 ) - beg ) ) ;
+                            if( i > beg ) args.emplace_back( s.substr( beg, ( i - 1 ) - beg ) ) ;
                             beg = i + 2 ;
                         }
 

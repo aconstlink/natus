@@ -278,6 +278,8 @@ namespace natus
                         {
                             if( st == natus::nsl::shader_type::vertex_shader )
                                 ss.set_vertex_shader( c.shader ) ;
+                            else if( st == natus::nsl::shader_type::geometry_shader )
+                                ss.set_geometry_shader( c.shader ) ;
                             else if( st == natus::nsl::shader_type::pixel_shader )
                                 ss.set_pixel_shader( c.shader ) ;
                         } ) ;
