@@ -772,8 +772,14 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
     // the the pixel shader. This is done by gl_Position. This also means that the variable
     // used by the position binding is not interpolated by the rasterizer which also saves some
     // additional cycles.
-    bool_t const replace_out_position = sht_after == natus::nsl::shader_type::pixel_shader ;
-    natus::ntd::string_t const replace_output_position_name = "INJECTED_lpos_" ;
+    //bool_t const replace_out_position = sht_after == natus::nsl::shader_type::pixel_shader ;
+    //natus::ntd::string_t const replace_output_position_name = "INJECTED_lpos_" ;
+
+    // mainly used if the input position binding should be omitted in the interface block and
+    // being replaced by reading from the gl_Position and 
+    // writing to the output position binding should be replaced by gl_Position
+    bool_t const using_transform_feedback = sht_cur != natus::nsl::shader_type::pixel_shader &&
+        sht_after == natus::nsl::shader_type::unknown ;
 
     // 1. glsl stuff at the front
     {
@@ -915,6 +921,11 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
                     if( v.binding == natus::nsl::binding::instance_id ) continue ;
                     if( v.binding == natus::nsl::binding::primitive_id ) continue ;
 
+                    // don not generate input position except if coming into the vertex shader
+                    if( sht_cur != natus::nsl::shader_type::vertex_shader && 
+                        v.binding == natus::nsl::binding::position && 
+                        !using_transform_feedback ) continue ;
+
                     natus::ntd::string_t name = v.name ;
                     natus::ntd::string_t const type_ = this_file::map_variable_type_to_string( type, v.type ) ;
 
@@ -960,7 +971,7 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
                     if( v.binding == natus::nsl::binding::primitive_id ) continue ;
 
                     // do not place that position variable in the interface block.
-                    if( replace_out_position && v.binding == natus::nsl::binding::position ) continue ;
+                    if( !using_transform_feedback && v.binding == natus::nsl::binding::position ) continue ;
 
                     natus::ntd::string_t name = v.name ;
                     natus::ntd::string_t const type_ = this_file::map_variable_type_to_string( type, v.type ) ;
@@ -995,7 +1006,7 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
             }
         }
 
-        // uniform interface block but just rollin with ordinary uniform definitions
+        // uniform interface block but just rollin with ordinary uniform definitions for now
         {
             for( auto & v : shd_.variables )
             {
@@ -1023,6 +1034,7 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
         }
 
         // all required locals
+        #if 0
         {
             // we have to replace the out position binding variable with
             // a "out of main" declared replaced variable.
@@ -1041,9 +1053,9 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
                         << replace_output_position_name << " ; "  << std::endl;
                 }
             }
-
             text << std::endl ;
         }
+        #endif
     }
 
     // 5. insert main/shader from config
@@ -1064,6 +1076,7 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
         auto shd = text.str() ;
 
         // xx. Insert gl_Position
+        #if 0
         {
             auto iter = std::find_if( shd_.variables.begin(), shd_.variables.end(), 
                 [&]( post_parse::config_t::shader_t::variable_cref_t var )
@@ -1071,7 +1084,9 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
                 return var.binding == natus::nsl::binding::position && var.fq == natus::nsl::flow_qualifier::out ;
             } )  ;
 
-            if( shd_.type != natus::nsl::shader_type::pixel_shader && iter != shd_.variables.end() )
+            if( shd_.type != natus::nsl::shader_type::geometry_shader && 
+                shd_.type != natus::nsl::shader_type::pixel_shader && 
+                iter != shd_.variables.end() )
             {
                 auto const var_name = replace_out_position ? replace_output_position_name : "out." + iter->name ;
                 
@@ -1094,6 +1109,7 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
                 shd.insert( shd.size() - 2, ins_code ) ;
             }
         }
+        #endif
 
         // variable dependencies
         {
@@ -1144,6 +1160,54 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
             }
         }
 
+        // replace all "in" positions by gl_Position
+        if( !using_transform_feedback && sht_cur != natus::nsl::shader_type::vertex_shader )
+        {
+            for( auto const& v : shd_.variables )
+            {                
+                if( v.binding != natus::nsl::binding::position ) continue ;
+                if( v.fq != natus::nsl::flow_qualifier::in ) continue ;
+
+                natus::ntd::string_t swizzle ;
+                switch( v.type.struc )
+                {
+                case natus::nsl::type_struct::vec1: swizzle = ".x"; break ;
+                case natus::nsl::type_struct::vec2: swizzle = ".xy"; break ;
+                case natus::nsl::type_struct::vec3: swizzle = ".xyz"; break ;
+                default: break ;
+                }
+
+                std::regex rex( "in *(\\[ *[0-9]*[a-z]* *\\])? *\\." + v.name ) ;
+                shd = std::regex_replace( shd, rex, "(gl_in$1.gl_Position"+swizzle+")" ) ; 
+
+                break ;
+            }
+        }
+
+        // replace all "out" positions by gl_Position
+        if( !using_transform_feedback )
+        {
+            for( auto const& v : shd_.variables )
+            {                
+                if( v.binding != natus::nsl::binding::position ) continue ;
+                if( v.fq != natus::nsl::flow_qualifier::out ) continue ;
+
+                natus::ntd::string_t swizzle ;
+                switch( v.type.struc )
+                {
+                case natus::nsl::type_struct::vec1: swizzle = ".x"; break ;
+                case natus::nsl::type_struct::vec2: swizzle = ".xy"; break ;
+                case natus::nsl::type_struct::vec3: swizzle = ".xyz"; break ;
+                default: break ;
+                }
+
+                std::regex rex( "out." + v.name ) ;
+                shd = std::regex_replace( shd, rex, "(gl_Position"+swizzle+")" ) ; 
+
+                break ;
+            }
+        }
+        
         // replace in code in/out/globals
         {
             size_t const off = shd.find( "// The shader" ) ;
@@ -1161,18 +1225,10 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
                 }
                 else if( v.fq == natus::nsl::flow_qualifier::out )
                 {
-                    if( replace_out_position && v.binding == natus::nsl::binding::position )
-                    {
-                        std::regex rex( "out\\." + v.old_name ) ;
-                        shd = std::regex_replace( shd, rex, replace_output_position_name ) ; 
-                    }
-                    else
-                    {
-                        natus::ntd::string_t const iblock_name = sht_cur!=natus::nsl::shader_type::pixel_shader ? "output." : "" ;
+                    natus::ntd::string_t const iblock_name = sht_cur!=natus::nsl::shader_type::pixel_shader ? "output." : "" ;
 
-                        std::regex rex( "out\\." + v.old_name ) ;
-                        shd = std::regex_replace( shd, rex, iblock_name + v.new_name ) ; 
-                    }
+                    std::regex rex( "out\\." + v.old_name ) ;
+                    shd = std::regex_replace( shd, rex, iblock_name + v.new_name ) ; 
                 }
                 else
                 {
@@ -1184,7 +1240,7 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
 
         if( sht_cur == natus::nsl::shader_type::geometry_shader )
         {
-            std::regex rex( "in.length()") ;
+            std::regex rex( "in.length *\\( *\\) *") ;
             shd = std::regex_replace( shd, rex, "gl_in.length()" ) ; 
         }
 
