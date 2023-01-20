@@ -1231,6 +1231,7 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
         for( auto const& v : var_mappings )
         {
             if( v.st != s.type ) continue ;
+            if( v.fq == natus::nsl::flow_qualifier::local ) continue ;
 
             natus::ntd::string_t flow ;
             natus::ntd::string_t struct_name ;
@@ -1243,14 +1244,19 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
             {
                 flow = "out" ;
                 struct_name = "__output__" ;
-            } else if( v.fq == natus::nsl::flow_qualifier::local )
-            {
-                flow = "" ;
-                struct_name = " " ;
             } 
 
-            std::regex rex( flow + " *(\\[ *[0-9]*[a-z]* *\\])? *(\\.*)" + v.old_name ) ;
-            sub = std::regex_replace( sub, rex, struct_name + "$1$2" + v.new_name ) ; 
+            std::regex rex( flow + " *(\\[ *[0-9]*[a-z]* *\\])? *\\." + v.old_name ) ;
+            sub = std::regex_replace( sub, rex, " " + struct_name + "$1." + v.new_name  ) ; 
+        }
+
+        for( auto const& v : var_mappings )
+        {
+            if( v.st != s.type ) continue ;
+            if( v.fq != natus::nsl::flow_qualifier::local ) continue ;
+
+            std::regex rex(  v.old_name + "(.*)" ) ;
+            sub = std::regex_replace( sub, rex, " " + v.new_name + "$1" ) ; 
         }
 
         shd = shd.substr( 0, off ) + sub ;
