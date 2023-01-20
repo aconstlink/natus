@@ -25,6 +25,7 @@ natus::nsl::generated_code_t generator::generate( void_t ) noexcept
             {
                 natus::nsl::variable_mapping_t vm ;
                 vm.st = s_type ;
+                vm.t = v.type ;
 
                 // everything is var first
                 natus::ntd::string_t flow = "var_" ;

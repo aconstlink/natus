@@ -3274,7 +3274,7 @@ public: // functions
                 HRESULT hr = S_FALSE ;
                 while( hr != S_OK )
                 {
-                    hr = _ctx->ctx()->GetData( so.queries[ridx], &data, sizeof( D3D11_QUERY_DATA_SO_STATISTICS ), 0 ) ;
+                    hr = _ctx->ctx()->GetData( so.read_buffer().query, &data, sizeof( D3D11_QUERY_DATA_SO_STATISTICS ), 0 ) ;
                 }
                 int bp = 0 ;
             }

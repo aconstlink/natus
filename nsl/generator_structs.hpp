@@ -16,6 +16,7 @@ namespace natus
             natus::nsl::binding binding ;
             natus::nsl::flow_qualifier fq ;
             natus::nsl::shader_type st ;
+            natus::nsl::type_t t ;
         };
         natus_typedef( variable_mapping ) ;
         natus_typedefs( natus::ntd::vector< variable_mapping_t >, variable_mappings ) ;

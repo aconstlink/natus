@@ -72,6 +72,29 @@ namespace this_file
 
         return false ;
     }
+
+    //******************************************************************************************************************************************
+    static natus::ntd::string_t determine_input_structure_name( natus::nsl::shader_type const cur, natus::nsl::shader_type const before ) noexcept 
+    {
+        // input assembler to vertex shader
+        if( cur == natus::nsl::shader_type::vertex_shader )
+            return "ia_to_" + natus::nsl::short_name( cur ) ;
+
+        return natus::nsl::short_name( before ) + "_to_" + natus::nsl::short_name( cur ) ;
+    }
+
+    //******************************************************************************************************************************************
+    static natus::ntd::string_t determine_output_structure_name( natus::nsl::shader_type const cur, natus::nsl::shader_type const after ) noexcept 
+    {
+        if( cur == natus::nsl::shader_type::pixel_shader )
+            return "into_the_pixel_pot" ;
+    
+        if( cur != natus::nsl::shader_type::pixel_shader && 
+            after == natus::nsl::shader_type::unknown )
+            return "streamout" ; // must be streamout!!
+
+        return natus::nsl::short_name( cur ) + "_to_" + natus::nsl::short_name( after ) ;
+    }
 }
 
 
@@ -543,6 +566,22 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::ntd::string_rref
 
                 return "texture_dims ( INVALID_ARGS ) " ;
             }
+        },
+        {
+            natus::ntd::string_t( ":emit_vertex:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 0 ) return "emit_vertex( INVALID_ARGS ) " ;
+                return "prim_stream.Append( __output__ )"  ;
+            }
+        },
+        {
+            natus::ntd::string_t( ":end_primitive:" ),
+            [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
+            {
+                if( args.size() != 0 ) return "end_primitive( INVALID_ARGS ) " ;
+                return "prim_stream.RestartStrip() ; " ;
+            }
         }
     } ;
 
@@ -672,7 +711,8 @@ natus::ntd::string_t generator::map_variable_binding( natus::nsl::shader_type co
     return "NO_BINDING_SPECIFIED" ;
 }
 
-natus::nsl::generated_code_t::shaders_t generator::generate( natus::nsl::generatable_cref_t genable_, natus::nsl::variable_mappings_cref_t var_map_ ) noexcept
+natus::nsl::generated_code_t::shaders_t generator::generate( natus::nsl::generatable_cref_t genable_, 
+    natus::nsl::variable_mappings_cref_t var_map_ ) noexcept
 {
     natus::nsl::variable_mappings_t var_map = var_map_ ;
     natus::nsl::generatable_t genable = genable_ ;
@@ -781,8 +821,6 @@ natus::nsl::generated_code_t::shaders_t generator::generate( natus::nsl::generat
 
     natus::nsl::generated_code_t::shaders_t ret ;
 
-    varying_t varying ;
-
     for( auto const& s : genable.config.shaders )
     {
         natus::nsl::shader_type const s_type = s.type ;
@@ -809,7 +847,7 @@ natus::nsl::generated_code_t::shaders_t generator::generate( natus::nsl::generat
             }
             shd.type = s_type ;
 
-            shd.codes.emplace_back( this_t::generate( genable, s, var_map, natus::nsl::api_type::d3d11, varying ) ) ;
+            shd.codes.emplace_back( this_t::generate( genable, s, var_map, natus::nsl::api_type::d3d11 ) ) ;
         }
 
         ret.emplace_back( std::move( shd ) ) ;
@@ -819,11 +857,33 @@ natus::nsl::generated_code_t::shaders_t generator::generate( natus::nsl::generat
 
 }
 
-natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatable_cref_t genable, natus::nsl::post_parse::config_t::shader_cref_t s, natus::nsl::variable_mappings_cref_t var_mappings, natus::nsl::api_type const type, varying_inout_t varying_inout ) noexcept
+natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatable_cref_t genable, natus::nsl::post_parse::config_t::shader_cref_t s, 
+    natus::nsl::variable_mappings_cref_t var_mappings, natus::nsl::api_type const type ) noexcept
 {
     natus::nsl::generated_code_t::code code ;
 
     std::stringstream text ;
+
+    natus::nsl::shader_type_array_t shader_types ;
+
+    // getting all involved shader types so interface 
+    // blocks can be formed later on.
+    {
+        for( auto & i : shader_types ) i = natus::nsl::shader_type::unknown ;
+
+        size_t i=0; 
+        for( auto const & shd : genable.config.shaders ) shader_types[i++] = shd.type ;
+        natus::nsl::sort_shader_type_array( shader_types ) ;
+    }
+
+    natus::nsl::shader_type const sht_cur = s.type ;
+    natus::nsl::shader_type const sht_before = natus::nsl::shader_type_before( s.type, shader_types ) ;
+    natus::nsl::shader_type const sht_after = natus::nsl::shader_type_after( s.type, shader_types ) ;
+
+    natus::ntd::string_t const input_struct_name = this_file::determine_input_structure_name( sht_cur, sht_before ) ;
+    natus::ntd::string_t const output_struct_name = this_file::determine_output_structure_name( sht_cur, sht_after ) ;
+
+    text << "// config name: " << genable.config.name << std::endl << std::endl ;
 
     // make prototypes declarations from function signatures
     // the prototype help with not having to sort funk definitions
@@ -918,14 +978,51 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
     text << "// Inputs/Outputs //" << std::endl ;
 
     // inputs
-    if( s.type == natus::nsl::shader_type::vertex_shader )
+    if( sht_cur == natus::nsl::shader_type::vertex_shader )
     {
-        text << "struct VS_INPUT" << std::endl ;
+        text << "struct " << input_struct_name << std::endl ;
+        text << "{" << std::endl ;
+        for( auto const& v : var_mappings )
+        {
+            if( v.st != natus::nsl::shader_type::vertex_shader ) continue ;
+            if( v.fq != natus::nsl::flow_qualifier::in ) continue ;
+            if( v.fq == natus::nsl::flow_qualifier::local ) continue ;
+            
+            natus::ntd::string_t name = v.new_name ;
+            natus::ntd::string_t const type_ = this_t::map_variable_type( v.t ) ;
+            natus::ntd::string_t const binding_ = this_t::map_variable_binding( s.type, v.fq, v.binding ) ;
+
+            text << type_ << " " << name << " : " << binding_ << " ;" << std::endl ;
+        }
+        text << "} ;" << std::endl << std::endl ;
+    }
+    // inputs from previous outputs
+    else 
+    {
+        text << "struct " << input_struct_name << std::endl ;
+        text << "{" << std::endl ;
+        for( auto const& v : var_mappings )
+        {
+            if( v.st != sht_before ) continue ;
+            if( v.fq != natus::nsl::flow_qualifier::out ) continue ;
+            if( v.fq == natus::nsl::flow_qualifier::local ) continue ;
+            
+            natus::ntd::string_t name = v.new_name ;
+            natus::ntd::string_t const type_ = this_t::map_variable_type( v.t ) ;
+            natus::ntd::string_t const binding_ = this_t::map_variable_binding( s.type, natus::nsl::flow_qualifier::in, v.binding ) ;
+
+            text << type_ << " " << name << " : " << binding_ << " ;" << std::endl ;
+        }
+        text << "} ;" << std::endl << std::endl ;
+    }
+
+    // outputs
+    {
+        text << "struct " << output_struct_name << std::endl ;
         text << "{" << std::endl ;
         for( auto const& v : s.variables )
         {
-            if( v.fq != natus::nsl::flow_qualifier::in &&
-                v.fq != natus::nsl::flow_qualifier::local ) continue ;
+            if( v.fq != natus::nsl::flow_qualifier::out ) continue ;
 
             natus::ntd::string_t name = v.name ;
             natus::ntd::string_t const type_ = this_t::map_variable_type( v.type ) ;
@@ -942,54 +1039,58 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
         text << "} ;" << std::endl << std::endl ;
     }
 
-    if( !varying_inout.name.empty() )
-    {
-        text << varying_inout.code << std::endl ;
-    }
-
-    varying_t last_varying = varying_inout ;
-
-    natus::ntd::string_t output_name = "UNKNOWN_OUTPUT" ;
-    if( s.type == natus::nsl::shader_type::vertex_shader ) output_name = "VS_OUTPUT" ;
-    //else if( s.type == natus::nsl::shader_type::geometry_shader ) varying_pre = "GS_OUTPUT" ;
-    else if( s.type == natus::nsl::shader_type::pixel_shader ) output_name = "PS_OUTPUT" ;
-
-    // outputs
-    {
-        std::stringstream text2 ;
-
-        text2 << "struct " << output_name << std::endl ;
-        text2 << "{" << std::endl ;
-        for( auto const& v : s.variables )
-        {
-            if( v.fq != natus::nsl::flow_qualifier::out ) continue ;
-
-            natus::ntd::string_t name = v.name ;
-            natus::ntd::string_t const type_ = this_t::map_variable_type( v.type ) ;
-            natus::ntd::string_t const binding_ = this_t::map_variable_binding( s.type, v.fq, v.binding ) ;
-
-            size_t const idx = natus::nsl::find_by( var_mappings, v.name, v.binding, v.fq, s.type ) ;
-            if( idx != size_t( -1 ) )
-            {
-                name = var_mappings[ idx ].new_name ;
-            }
-
-            text2 << type_ << " " << name << " : " << binding_ << " ;" << std::endl ;
-        }
-        text2 << "} ;" << std::endl << std::endl ;
-
-        varying_inout.name = output_name ;
-        varying_inout.code = text2.str() ;
-        text << varying_inout.code << std::endl ;
-    }
-
 
     text << "// The shader // " << std::endl ;
     {
         natus::ntd::string_t funk_name = "UNKNOWN" ;
         if( s.type == natus::nsl::shader_type::vertex_shader ) funk_name = "VS" ;
-        //else if( s.type == natus::nsl::shader_type::geometry_shader ) varying_pre = "GS" ;
+        else if( s.type == natus::nsl::shader_type::geometry_shader ) funk_name = "GS" ;
         else if( s.type == natus::nsl::shader_type::pixel_shader ) funk_name = "PS" ;
+
+        size_t num_in_verts = 0 ;
+        size_t max_vertex_count = 0 ;
+        natus::ntd::string_t input_prim_name ;
+        natus::ntd::string_t output_stream_name ;
+
+        for( auto const & pd : s.primitive_decls ) 
+        {
+            if( pd.fq == natus::nsl::flow_qualifier::out )
+            {
+                max_vertex_count = pd.max_vertices ;
+                break ;
+            }
+
+            if( pd.fq == natus::nsl::flow_qualifier::in )
+            {
+                switch( pd.pdt )
+                {
+                case natus::nsl::primitive_decl_type::points: 
+                    num_in_verts = 1 ; input_prim_name = "point" ; output_stream_name = "PointStream" ; break ;
+                case natus::nsl::primitive_decl_type::lines: 
+                    num_in_verts = 2 ; input_prim_name = "line" ; output_stream_name = "LineStream" ; break ;
+                case natus::nsl::primitive_decl_type::triangles: 
+                    num_in_verts = 3 ; input_prim_name = "triangle " ; output_stream_name = "TriangleStream" ; break ;
+                default: break ;
+                }
+            }
+        }
+
+        natus::ntd::string_t locals ;
+
+        // locals
+        {
+            for( auto const& v : s.variables )
+            {
+                if( v.fq != natus::nsl::flow_qualifier::local ) continue ;
+
+                natus::ntd::string_t name = v.name ;
+                natus::ntd::string_t const type_ = this_t::map_variable_type( v.type ) ;
+                natus::ntd::string_t const binding_ = this_t::map_variable_binding( s.type, v.fq, v.binding ) ;
+
+                // the new name will be replaced further down the road
+                locals += ", " + type_ + " " + name + " : " + binding_ ;
+            }
+        }
 
         auto cpy_codes = s.codes ;
         for( auto& c : cpy_codes )
@@ -1002,14 +1103,22 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
                 {
                     if( s.type == natus::nsl::shader_type::vertex_shader )
                     {
-                        text << output_name << " " << funk_name << " ( VS_INPUT __input__ )" << std::endl ;
+                        text << output_struct_name << " " << funk_name << " ( " << input_struct_name << " __input__" << locals << " )" << std::endl ;
                         text << "{" << std::endl ; ++iter ;
-                        text << output_name << " __output__ = (" << output_name << ")0 ; " << std::endl ;
-                    } else if( s.type == natus::nsl::shader_type::pixel_shader )
+                        text << output_struct_name << " __output__ = (" << output_struct_name << ")0 ; " << std::endl ;
+                    } 
+                    else if( s.type == natus::nsl::shader_type::geometry_shader )
                     {
-                        text << output_name << " PS( " << last_varying.name << " __input__ )" << std::endl ;
+                        text << "[ maxvertexcount( " << std::to_string( max_vertex_count ) << " ) ]" << std::endl ;
+                        text << "void " << funk_name << " ( " 
+                            << input_prim_name << input_struct_name << " __input__["<< std::to_string( num_in_verts ) <<"], " 
+                            << "inout " << output_stream_name << "<" << output_struct_name << ">" << " prim_stream" << locals << " )" << std::endl ;
+                    }
+                    else if( s.type == natus::nsl::shader_type::pixel_shader )
+                    {
+                        text << output_struct_name << " PS( " << input_struct_name << " __input__ )" << std::endl ;
                         text << "{" << std::endl ; ++iter ;
-                        text << output_name << " __output__ = (" << output_name << ")0 ; " << std::endl ;
+                        text << output_struct_name << " __output__ = (" << output_struct_name << ")0 ; " << std::endl ;
                     }
                     curlies++ ;
                     in_main = true ;
@@ -1038,6 +1147,29 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
     }
 
     auto shd = text.str() ;
+
+    if( s.type == natus::nsl::shader_type::geometry_shader )
+    {
+        size_t num_in_verts = 0 ;
+        for( auto const & pd : s.primitive_decls ) 
+        {
+            if( pd.fq == natus::nsl::flow_qualifier::in )
+            {
+                switch( pd.pdt )
+                {
+                case natus::nsl::primitive_decl_type::points: 
+                    num_in_verts = 1 ;  break ;
+                case natus::nsl::primitive_decl_type::lines: 
+                    num_in_verts = 2 ; break ;
+                case natus::nsl::primitive_decl_type::triangles: 
+                    num_in_verts = 3 ; break ;
+                default: break ;
+                }
+            }
+        }
+        std::regex rex( "in.length *\\( *\\) *") ;
+        shd = std::regex_replace( shd, rex, std::to_string(num_in_verts) ) ; 
+    }
 
     // variable dependencies
     {
@@ -1092,6 +1224,10 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
     {
         size_t const off = shd.find( "// The shader" ) ;
 
+        // sub-optimal, but since the usage of regexp, the sub string
+        // need to be processed so not the whole file is processed.
+        natus::ntd::string_t sub = shd.substr( off ) ;
+
         for( auto const& v : var_mappings )
         {
             if( v.st != s.type ) continue ;
@@ -1101,30 +1237,23 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
 
             if( v.fq == natus::nsl::flow_qualifier::in )
             {
-                flow = "in." ;
-                struct_name = "__input__." ;
+                flow = "in" ;
+                struct_name = "__input__" ;
             } else if( v.fq == natus::nsl::flow_qualifier::out )
             {
-                flow = "out." ;
-                struct_name = "__output__." ;
+                flow = "out" ;
+                struct_name = "__output__" ;
             } else if( v.fq == natus::nsl::flow_qualifier::local )
             {
                 flow = "" ;
-                struct_name = "__input__." ;
+                struct_name = " " ;
             } 
 
-            // replace in./out. with 
-            {
-                natus::ntd::string_t const what = flow + v.old_name ;
-                size_t p0 = shd.find( what, off ) ;
-                while( p0 != std::string::npos )
-                {
-                    auto const with = struct_name + v.new_name ;
-                    shd.replace( p0, what.size(), with ) ;
-                    p0 = shd.find( what, p0 + with.size() ) ;
-                }
-            }
+            std::regex rex( flow + " *(\\[ *[0-9]*[a-z]* *\\])? *(\\.*)" + v.old_name ) ;
+            sub = std::regex_replace( sub, rex, struct_name + "$1$2" + v.new_name ) ; 
         }
+
+        shd = shd.substr( 0, off ) + sub ;
     }
 
     {
