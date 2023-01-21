@@ -685,9 +685,11 @@ natus::ntd::string_t generator::map_variable_binding( natus::nsl::shader_type co
         mapping_t( natus::nsl::binding::color4, "SV_TARGET4" )
     } ;
 
-    if( fq == natus::nsl::flow_qualifier::in && binding == natus::nsl::binding::position )
+    if( st == natus::nsl::shader_type::vertex_shader && 
+        fq == natus::nsl::flow_qualifier::in && 
+        binding == natus::nsl::binding::position )
         return "POSITION" ;
-    if( fq == natus::nsl::flow_qualifier::out && binding == natus::nsl::binding::position )
+    else if( binding == natus::nsl::binding::position )
         return "SV_POSITION" ;
 
     // check render targets first
@@ -1113,6 +1115,8 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
                         text << "void " << funk_name << " ( " 
                             << input_prim_name << input_struct_name << " __input__["<< std::to_string( num_in_verts ) <<"], " 
                             << "inout " << output_stream_name << "<" << output_struct_name << ">" << " prim_stream" << locals << " )" << std::endl ;
+                        text << "{" << std::endl ; ++iter ;
+                        text << output_struct_name << " __output__ = (" << output_struct_name << ")0 ; " << std::endl ;
                     }
                     else if( s.type == natus::nsl::shader_type::pixel_shader )
                     {
@@ -1126,14 +1130,17 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
                 // early exit
                 else if( in_main && iter->find( "return ;" ) != std::string::npos )
                 {
-                    text << "return __output__ ;" << std::endl ;
+                    if( sht_cur != natus::nsl::shader_type::geometry_shader )
+                        text << "return __output__ ;" << std::endl ;
+                    else
+                        text << "return ;" << std::endl ;
                 }
                 else
                 {
                     if( in_main && *iter == "{" ) curlies++ ;
                     else if( in_main && *iter == "}" ) curlies--  ;
 
-                    if( in_main && curlies == 0 )
+                    if( in_main && curlies == 0 && sht_cur != natus::nsl::shader_type::geometry_shader )
                     {
                         text << "return __output__ ;" << std::endl ;
                         in_main = false ;
