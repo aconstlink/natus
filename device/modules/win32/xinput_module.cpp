@@ -414,10 +414,7 @@ xinput_module::~xinput_module( void_t )
     //XInputEnable( false ) ;
     #endif
 
-    for( auto item : _devices )
-    {
-        natus::memory::global_t::dealloc( item.xinput_ptr ) ;
-    }
+    this_t::release() ;
 }
 
 //***
@@ -568,7 +565,18 @@ void_t xinput_module::update( void_t )
     }
 }
 
-//***
+//********************************************************************************
+void_t xinput_module::release( void_t ) noexcept 
+{
+    for( auto & item : _devices )
+    {
+        natus::memory::global_t::dealloc( item.xinput_ptr ) ;
+        item.xinput_ptr = nullptr ;
+    }
+    _devices.clear() ;
+}
+
+//********************************************************************************
 void_t xinput_module::check_gamepads( void_t ) 
 {    
     DWORD i = 0 ; 

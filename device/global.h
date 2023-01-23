@@ -11,10 +11,14 @@ namespace natus
             natus_this_typedefs( global ) ;
 
 
+        private:
+
+            static natus::device::system_ptr_t _sys ;
 
         public:
 
-            static natus::device::system_res_t system( void_t ) ;
+            static natus::device::system_ptr_t system( void_t ) ;
+            static void_t deinit( void_t ) noexcept ;
 
         };
         natus_typedef( global ) ;

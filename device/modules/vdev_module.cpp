@@ -59,6 +59,11 @@ void_t vdev_module::update( void_t )
     }
 }
 
+void_t vdev_module::release( void_t ) noexcept 
+{
+    _games.clear() ;
+}
+
 //***
 void_t vdev_module::search( this_t::mapping_searach_ft )
 {

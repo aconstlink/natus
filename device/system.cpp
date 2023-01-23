@@ -6,7 +6,7 @@ using namespace natus::device ;
 //***
 system::system( void_t ) 
 {
-    _vdev = natus::device::vdev_module_t() ;
+    //_vdev = natus::device::vdev_module_t() ;
 }
 
 //***
@@ -19,6 +19,7 @@ system::system( this_rref_t rhv )
 //***
 system::~system( void_t )
 {
+    this_t::release() ;
 }
 
 //***
@@ -28,7 +29,7 @@ void_t system::add_module( natus::device::imodule_res_t res )
 
     // every time a new module is added, 
     // all the vdev should check  all mappings
-    _vdev->check_devices( res ) ;
+    //_vdev->check_devices( res ) ;
 }
 
 //***
@@ -38,7 +39,7 @@ void_t system::search( natus::device::imodule::search_funk_t funk )
     {
         mod->search( funk ) ;
     }
-    _vdev->search( funk ) ;
+    //_vdev->search( funk ) ;
 }
 
 //***
@@ -52,7 +53,18 @@ void_t system::update( void_t )
 
     // the virtual device module must update 
     // after all physical devices
-    _vdev->update() ;
+    //_vdev->update() ;
 }
 
 //***
+void_t system::release( void_t ) noexcept 
+{
+    //_vdev->release() ;
+
+    for( auto & res : _modules )
+    {
+        res->release() ;
+    }
+    //_vdev.reset() ;
+    _modules.clear() ;
+}

@@ -72,6 +72,7 @@ natus::application::result platform_application::start_update_thread( void_t )
         
         _app->on_shutdown() ;
 
+        
     } ) ;
 
     return natus::application::result::ok ;

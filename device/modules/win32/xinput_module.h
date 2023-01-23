@@ -49,6 +49,7 @@ namespace natus
 
                 virtual void_t search( natus::device::imodule::search_funk_t ) ;
                 virtual void_t update( void_t ) ;
+                virtual void_t release( void_t ) noexcept ;
 
             private:
 

@@ -587,4 +587,16 @@ bool_t app_essentials::on_tool( natus::application::app::tool_data_ref_t, bool_t
 //****************************************************************
 void_t app_essentials::on_shutdown( void_t ) noexcept 
 {
+    _pr3->release() ;
+    _lr3->release() ;
+    _pr->release() ;
+    _tr->release() ;
+    _tr = natus::gfx::text_render_2d_res_t() ;
+
+    _db = natus::io::database_res_t() ;
+    _ndb = natus::nsl::database_res_t() ;
+    _shader_mon = natus::io::monitor_res_t() ; 
+
+    _dev_mouse = natus::device::three_device_res_t() ;
+    _dev_ascii = natus::device::ascii_device_res_t() ;
 }

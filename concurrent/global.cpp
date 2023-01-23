@@ -42,6 +42,10 @@ global::singleton_data * global::init( void_t ) noexcept
 
 void_t global::deinit( void_t )
 {
+    natus::concurrent::lock_guard_t lk( this_t::_mtx ) ;
+    if( this_t::_dptr == nullptr ) return ;
+
+    natus::memory::global_t::dealloc( _dptr ) ;
 }
 
 void_t global::update( void_t )

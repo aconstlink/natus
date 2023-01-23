@@ -119,6 +119,8 @@ natus::audio::async_access_t app::create_audio_engine( natus::audio::backend_typ
         }
         async_->leave_thread() ;
         natus::log::global_t::status( "[natus::app] : audio thread end" ) ;
+
+        natus::memory::global_t::dealloc( run_ ) ;
     } ) ;
     pai.async = async ;
     
@@ -286,7 +288,7 @@ void_t app::destroy_audio( this_t::per_audio_info_ref_t nfo )
     *( nfo.run ) = false ;
     nfo.async->enter_frame() ;
     nfo.async->leave_frame() ;
-    if( nfo.rnd_thread.joinable() )nfo.rnd_thread.join() ;
+    if( nfo.rnd_thread.joinable() ) nfo.rnd_thread.join() ;
     natus::memory::global_t::dealloc( nfo.run ) ;
 }
 

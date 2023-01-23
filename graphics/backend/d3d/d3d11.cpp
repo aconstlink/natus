@@ -1062,7 +1062,9 @@ public: // functions
         for( auto & f : framebuffers ) f.invalidate() ;
         framebuffers.clear() ;
 
-        //for( auto & s : state_sets ) s.invalidate() ;
+        for( auto & so : _streamouts ) so.invalidate() ;
+        _streamouts.clear() ;
+
         state_sets.clear() ;
 
         _cur_fb_active = size_t( -1 ) ;

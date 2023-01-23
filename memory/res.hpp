@@ -67,7 +67,7 @@ namespace natus
             
             res( value_cref_t v )
             {
-                _data = sptr_t( natus::memory::global_t::alloc<T>( v ),
+                _data = sptr_t( natus::memory::global_t::alloc<T>( v, "[res] : value_cref" ),
                     [=] ( T* ptr )
                 {
                     natus::memory::global_t::dealloc( ptr ) ;
@@ -76,7 +76,7 @@ namespace natus
 
             res( value_rref_t v )
             {
-                _data = sptr_t( natus::memory::global_t::alloc<T>( ::std::move(v) ),
+                _data = sptr_t( natus::memory::global_t::alloc<T>( ::std::move(v), "[res] : move" ),
                     [=] ( T* ptr )
                 {
                     natus::memory::global_t::dealloc( ptr ) ;
@@ -92,6 +92,8 @@ namespace natus
             ~res( void_t ) 
             {
             }
+
+            void_t reset( void_t ) noexcept { _data.reset() ; }
 
         public:
 
@@ -131,7 +133,7 @@ namespace natus
             {
                 if( _data == nullptr ) 
                 {
-                    _data = sptr_t( natus::memory::global_t::alloc<T>( ::std::move( v ) ),
+                    _data = sptr_t( natus::memory::global_t::alloc<T>( ::std::move( v ), "[res] : move" ),
                         [=] ( T* ptr )
                     {
                         natus::memory::global_t::dealloc( ptr ) ;

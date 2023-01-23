@@ -32,6 +32,7 @@ namespace natus
 
             void_t search( natus::device::imodule::search_funk_t ) ;
             void_t update( void_t ) ;
+            void_t release( void_t ) noexcept ;
         };
         natus_res_typedef( system ) ;
     }

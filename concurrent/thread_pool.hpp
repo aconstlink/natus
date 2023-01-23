@@ -143,6 +143,7 @@ namespace natus
 
             ~thread_pool( void_t ) noexcept
             {
+                this_t::shutdown() ;
             }
 
             this_ref_t operator = ( this_rref_t rhv ) noexcept
@@ -250,22 +251,17 @@ namespace natus
 
             void_t shutdown( void_t ) noexcept 
             {
-                #if 0
-                for( auto & ptr : _thread_pool )
+                if( _sd == nullptr ) return ;
+                _sd->threads_max = 0 ;
+                _sd->tasks_cv.notify_all() ;
+                _sd->pool_cv.notify_all() ;
+                
+                for( auto & item : _sd->pool )
                 {
-                    if( ptr->run )
-                    {
-                        natus::concurrent::lock_guard_t lk( ptr->mtx ) ;
-                        ptr->run = false ;
-                        ptr->cv.notify_all() ;
-                    }
+                    if( item->thread.joinable() ) item->thread.join() ;
                 }
-
-                for( auto & ptr : _thread_pool )
-                {
-                    if( ptr->thread.joinable() ) ptr->thread.join() ;
-                }
-                #endif
+                natus::memory::global_t::dealloc( _sd ) ;
+                _sd = nullptr ;
             }
         };
         natus_typedef( thread_pool ) ;

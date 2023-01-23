@@ -280,6 +280,14 @@ void_t line_render_3d::init( natus::ntd::string_cref_t name, natus::graphics::as
 //**********************************************************
 void_t line_render_3d::release( void_t ) noexcept 
 {
+    _asyncs.for_each( [&]( natus::graphics::async_view_t a ) 
+    {
+        a.release( _go ) ;
+        a.release( _rs ) ;
+        a.release( _ao ) ;
+        a.release( _so ) ;
+        a.release( _ro ) ;
+    }) ;
 }
 
 //**********************************************************

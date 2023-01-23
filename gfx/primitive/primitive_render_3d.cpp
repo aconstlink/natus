@@ -32,6 +32,8 @@ void_t primitive_render_3d::init( natus::ntd::string_cref_t name, natus::graphic
 
 void_t primitive_render_3d::release( void_t ) noexcept 
 {
+    _lr->release() ;
+    _tr->release() ;
 }
 
 void_t primitive_render_3d::draw_line( natus::math::vec3f_cref_t p0, natus::math::vec3f_cref_t p1, natus::math::vec4f_cref_t color ) noexcept

@@ -194,6 +194,7 @@ rawinput_module::this_ref_t rawinput_module::operator = ( this_rref_t rhv )
 //***
 rawinput_module::~rawinput_module( void_t )
 {
+    this_t::release() ;
 }
 
 //***
@@ -287,7 +288,17 @@ void_t rawinput_module::update( void_t )
     }
 }
 
-//***
+//*********************************************************************************************************
+void_t rawinput_module::release( void_t ) noexcept 
+{
+    _three_device = natus::device::three_device_res_t () ;
+    _ascii_device = natus::device::ascii_device_res_t() ;
+
+    natus::memory::global_t::dealloc( _raw_input_buffer ) ;
+    _raw_input_data_size = 0 ;
+}
+
+//*********************************************************************************************************
 bool_t rawinput_module::handle_input_event( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     if( msg != WM_INPUT )
@@ -301,7 +312,7 @@ bool_t rawinput_module::handle_input_event( HWND hwnd, UINT msg, WPARAM wParam, 
     if( sib > _raw_input_data_size )
     {
         natus::memory::global_t::dealloc( _raw_input_buffer ) ;
-        _raw_input_buffer = natus::memory::global_t::alloc<BYTE>( sib ) ;
+        _raw_input_buffer = natus::memory::global_t::alloc<BYTE>( sib, "[rawinput_module] : raw_input_buffer" ) ;
         _raw_input_data_size = sib ;
     }
 
