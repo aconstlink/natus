@@ -13,7 +13,7 @@ global * global::_ptr = nullptr ;
 global::global( void_t )
 {
     _ios = natus::io::system_t::create( natus::io::system_t(),
-        "[global::global] : job_scheduler" ) ;
+        "[io::global] : job_scheduler" ) ;
 }
 
 //***********************************************************************

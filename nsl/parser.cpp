@@ -85,11 +85,11 @@ natus::nsl::parse::configs_t parser::filter_config_statements( this_t::statement
         if( level == 0 ) continue ;
 
         bool_t const is_open = token[ 0 ] == "open" ;
-        bool_t const is_render_state = token[ 1 ] == "render_states" ;
-        bool_t const is_any_shader =
-            token[ 1 ] == "vertex_shader" || 
+        bool_t const is_render_state = token.size() > 1 && token[ 1 ] == "render_states" ;
+        bool_t const is_any_shader = token.size() > 1 &&
+            (token[ 1 ] == "vertex_shader" || 
             token[ 1 ] == "geometry_shader" || 
-            token[ 1 ] == "pixel_shader" ;
+            token[ 1 ] == "pixel_shader") ;
 
         if( is_open && is_render_state )
         {

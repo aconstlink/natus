@@ -5,6 +5,7 @@
 #include <natus/concurrent/global.h>
 #include <natus/format/global.h>
 #include <natus/audio/global.h>
+#include <natus/io/global.h>
 
 #if defined( NATUS_GRAPHICS_WGL )
 
@@ -77,6 +78,7 @@ int_t global::create_and_exec_application( natus::application::app_res_t app ) n
     natus::device::global_t::deinit() ;
     natus::concurrent::global_t::deinit() ;
     natus::audio::global_t::deinit() ;
+    natus::io::global_t::deinit() ;
 
     natus::memory::global_t::dump_to_std() ;
 

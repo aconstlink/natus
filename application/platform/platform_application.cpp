@@ -27,7 +27,7 @@ platform_application::platform_application( this_rref_t rhv )
 platform_application::platform_application( natus::application::app_res_t app ) 
 {
     this_t::set( app ) ;
-    _sd = natus::memory::global::alloc< this_t::shared_data >() ;
+    _sd = natus::memory::global::alloc< this_t::shared_data >( natus::memory::purpose_t("[platform_application] : shader_data") ) ;
 }
 
 //******************************************************

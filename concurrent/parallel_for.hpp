@@ -45,7 +45,7 @@ namespace natus
                 T end = start + per_task ;
                 range_t const lr( start, end ) ;
 
-                natus::concurrent::global_t::schedule( natus::concurrent::make_task( [&, lr]( natus::concurrent::task_res_t )
+                natus::concurrent::global_t::schedule( natus::concurrent::global_t::make_task( [&, lr]( natus::concurrent::task_res_t )
                 {
                     f( lr ) ;
                     --sem_counter ;
@@ -59,7 +59,7 @@ namespace natus
                 T end = start + rest_task ;
                 range_t lr( start, end ) ;
 
-                natus::concurrent::global_t::schedule( natus::concurrent::make_task( [&]( natus::concurrent::task_res_t )
+                natus::concurrent::global_t::schedule( natus::concurrent::global_t::make_task( [&]( natus::concurrent::task_res_t )
                 {
                     f( lr ) ;
                     --sem_counter ;

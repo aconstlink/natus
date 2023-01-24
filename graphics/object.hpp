@@ -17,7 +17,7 @@ namespace natus
 
         private:
 
-            natus::graphics::id_res_t _id = natus::graphics::id_res_t( natus::graphics::id_t() ) ;
+            natus::graphics::id_res_t _id = natus::graphics::id_t() ;
 
         public:
 
@@ -26,10 +26,10 @@ namespace natus
             }
 
             object( id_res_t const & id ) : _id( id ){}
-            object( id_res_t && id ) : _id( ::std::move(id) ){}
-            object( this_cref_t rhv ) : _id( rhv._id ) {}
-            object( this_rref_t rhv ) : _id( ::std::move( rhv._id ) ){}
-            ~object( void_t ) {}
+            object( id_res_t && id ) noexcept : _id( std::move(id) ){}
+            object( this_cref_t rhv ) noexcept : _id( rhv._id ) {}
+            object( this_rref_t rhv ) noexcept : _id( std::move( rhv._id ) ){}
+            ~object( void_t ) noexcept {}
 
             this_ref_t operator = ( this_cref_t rhv ) noexcept
             {
@@ -39,7 +39,7 @@ namespace natus
 
             this_ref_t operator = ( this_rref_t rhv ) noexcept
             {
-                _id = ::std::move( rhv._id ) ;
+                _id = std::move( rhv._id ) ;
                 return *this ;
             }
 

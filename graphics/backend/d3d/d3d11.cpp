@@ -799,7 +799,23 @@ struct d3d11_backend::pimpl
             var_sets_buffers_vs.clear() ;
             var_sets_buffers_so_vs.clear() ;
             var_sets_buffers_ps.clear() ;
+
+            for( auto & d : var_sets_data )
+            {
+                for( auto & d2 : d.second )
+                {
+                    natus::memory::global_t::dealloc_raw( d2.mem ) ;
+                }
+            }
             var_sets_data.clear() ;
+
+            for( auto & d : var_sets_data_ps )
+            {
+                for( auto & d2 : d.second )
+                {
+                    natus::memory::global_t::dealloc_raw( d2.mem ) ;
+                }
+            }
             var_sets_data_ps.clear() ;
         }
 
@@ -2675,7 +2691,7 @@ public: // functions
                     for( auto& c : shd.vs_cbuffers )
                     {
                         this_t::render_data_t::cbuffer_t cb ;
-                        cb.mem = natus::memory::global_t::alloc_raw< uint8_t >( c.sib ) ;
+                        cb.mem = natus::memory::global_t::alloc_raw< uint8_t >( c.sib, "[d3d11] : vertex shader cbuffer variable" ) ;
                         cb.slot = c.slot ;
 
                         D3D11_BUFFER_DESC bd = { } ;
@@ -2715,7 +2731,7 @@ public: // functions
                     for( auto& c : shd.ps_cbuffers )
                     {
                         this_t::render_data_t::cbuffer_t cb ;
-                        cb.mem = natus::memory::global_t::alloc_raw< uint8_t >( c.sib ) ;
+                        cb.mem = natus::memory::global_t::alloc_raw< uint8_t >( c.sib, "[d3d11] : pixel shader cbuffer variable" ) ;
                         cb.slot = c.slot ;
 
                         D3D11_BUFFER_DESC bd = { } ;

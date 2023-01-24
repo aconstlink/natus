@@ -41,7 +41,7 @@ using namespace natus::application ;
 //***
 app::app( void_t ) 
 {
-    _access = natus::memory::global_t::alloc< bool_t >() ;
+    _access = natus::memory::global_t::alloc< bool_t >( natus::memory::purpose_t("[app] : a bool") ) ;
     *_access = false ;
 }
 

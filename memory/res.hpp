@@ -11,6 +11,7 @@
 #include <atomic>
 #include <memory>
 #include <type_traits>
+#include <typeinfo>
 
 namespace natus
 {
@@ -67,7 +68,7 @@ namespace natus
             
             res( value_cref_t v )
             {
-                _data = sptr_t( natus::memory::global_t::alloc<T>( v, "[res] : value_cref" ),
+                _data = sptr_t( natus::memory::global_t::alloc<T>( v, "[res] : value_cref of " + natus::ntd::string_t( typeid(T).name() ) ),
                     [=] ( T* ptr )
                 {
                     natus::memory::global_t::dealloc( ptr ) ;
@@ -76,7 +77,7 @@ namespace natus
 
             res( value_rref_t v )
             {
-                _data = sptr_t( natus::memory::global_t::alloc<T>( ::std::move(v), "[res] : move" ),
+                _data = sptr_t( natus::memory::global_t::alloc<T>( ::std::move(v), "[res] : move of " + natus::ntd::string_t( typeid(T).name() ) ),
                     [=] ( T* ptr )
                 {
                     natus::memory::global_t::dealloc( ptr ) ;
@@ -133,7 +134,7 @@ namespace natus
             {
                 if( _data == nullptr ) 
                 {
-                    _data = sptr_t( natus::memory::global_t::alloc<T>( ::std::move( v ), "[res] : move" ),
+                    _data = sptr_t( natus::memory::global_t::alloc<T>( ::std::move( v ), "[res] : move of " + natus::ntd::string_t( typeid(T).name() ) ),
                         [=] ( T* ptr )
                     {
                         natus::memory::global_t::dealloc( ptr ) ;

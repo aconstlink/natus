@@ -50,6 +50,7 @@ namespace natus
 
             ~data_buffer( void_t ) noexcept
             {
+                natus::memory::global_t::dealloc( _data ) ;
             }
 
             this_ref_t operator = ( this_cref_t rhv ) noexcept 
@@ -86,7 +87,7 @@ namespace natus
                 _num_elems = ne ;
                 size_t const sib = this_t::get_sib() ;
                 
-                void_ptr_t tmp = natus::memory::global_t::alloc( sib, "data buffer" ) ;
+                void_ptr_t tmp = natus::memory::global_t::alloc( sib, "[data_buffer::resize] : data buffer" ) ;
                 
                 if( _data != nullptr )
                 {

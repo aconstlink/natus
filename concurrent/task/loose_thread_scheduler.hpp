@@ -91,6 +91,7 @@ namespace natus
             void_t deinit( void_t ) noexcept
             {
                 natus::memory::global_t::dealloc( _sd ) ;
+                _sd = nullptr ;
             }
 
         private:

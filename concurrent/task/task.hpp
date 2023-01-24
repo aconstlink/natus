@@ -5,7 +5,6 @@
 #include "../typedefs.h"
 #include "../sync_object.hpp"
 
-#include <natus/memory/arena.hpp>
 #include <natus/ntd/vector.hpp>
 
 #include <atomic>
@@ -172,14 +171,5 @@ namespace natus
             }
         };
         natus_res_typedef( task ) ;
-
-        // uses task memory arena for task creation
-        // instead of the default one.
-        static task_res_t make_task( natus::concurrent::task_t::task_funk_t f ) noexcept
-        {
-            static natus::memory::arena< natus::concurrent::task_t > arena(500000) ;
-            return task_res_t( arena.alloc( natus::concurrent::task_t(f) ),
-                [&]( natus::concurrent::task_ptr_t ptr ){ arena.dealloc(ptr) ; } ) ;
-        }
     }
 }

@@ -39,6 +39,11 @@ namespace natus
             static void_t yield( std::function< bool_t ( void_t ) > funk ) noexcept ;
 
             static void_t schedule( natus::concurrent::task_res_t, natus::concurrent::schedule_type const ) noexcept ;
+
+
+            // uses task memory arena for task creation
+            // instead of the default one.
+            static task_res_t make_task( natus::concurrent::task_t::task_funk_t f ) noexcept ;
         };
         natus_typedef( global ) ;
     }

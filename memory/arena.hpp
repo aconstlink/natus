@@ -75,18 +75,31 @@ namespace natus
             arena( this_cref_t ) = delete ;
             arena( this_rref_t rhv ) noexcept
             {
-                _prealloc = rhv._prealloc ;
-                _pages = std::move( rhv._pages ) ;
+                *this = std::move( rhv ) ;
             }
 
             ~arena( void_t ) noexcept
             {
+                deinit() ;
+            }
+
+            this_ref_t operator = ( this_rref_t rhv ) noexcept
+            {
+                deinit() ;
+                _prealloc = rhv._prealloc ;
+                _pages = std::move( rhv._pages ) ;
+                return *this ;
+            }
+
+            void_t deinit( void_t ) noexcept
+            {
                 for( auto * p : _pages )
                 {
-                    natus::memory::global::dealloc( p->mem_ptr ) ;
-                    natus::memory::global::dealloc( p->free_ptr ) ;
-                    natus::memory::global::dealloc( p ) ;
+                    natus::memory::global::dealloc_raw( p->mem_ptr ) ;
+                    natus::memory::global::dealloc_raw( p->free_ptr ) ;
+                    natus::memory::global::dealloc_raw( p ) ;
                 }
+                _pages.clear() ;
             }
 
         public:
