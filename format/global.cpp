@@ -42,6 +42,13 @@ natus::format::module_registry_res_t global::registry( void_t ) noexcept
 }
 
 //***
+void_t global::deinit( void_t ) noexcept 
+{
+    if( _singleton != nullptr ) 
+        natus::memory::global_t::dealloc( _singleton ) ;
+}
+
+//***
 void_t global::register_default_registries( void_t ) 
 {
     natus::format::stb_module_register::register_module( _mr ) ;

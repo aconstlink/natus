@@ -27,6 +27,8 @@ namespace natus
             global( this_rref_t ) ;
             ~global( void_t ) ;
 
+            static void_t deinit( void_t ) noexcept ;
+
         private:
 
         };

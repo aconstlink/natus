@@ -24,6 +24,9 @@ struct global::singleton_data
         tp = std::move( rhv.tp ) ;
         lts = std::move( rhv.lts ) ;
     }
+
+    ~singleton_data( void_t ) noexcept
+    {}
 };
 
 global::singleton_data * global::init( void_t ) noexcept
@@ -34,6 +37,7 @@ global::singleton_data * global::init( void_t ) noexcept
     _dptr = natus::memory::global_t::alloc( this_t::singleton_data(),
         "[natus::concurrent::global::init] : global singleton lazy initialization" ) ;
     _dptr->tp.init() ;
+    _dptr->lts.init() ;
 
     natus::log::global_t::status( "[online] : natus concurrent" ) ;
 

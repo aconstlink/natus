@@ -443,7 +443,7 @@ struct gl4_backend::pimpl
         {
             natus::graphics::state_object_t obj( "gl4_default_states" ) ;
 
-            auto new_states = *natus::graphics::backend_t::default_render_states() ;
+            auto new_states = natus::graphics::backend_t::default_render_states() ;
 
             new_states.view_s.do_change = true ;
             new_states.view_s.ss.do_activate = true ;

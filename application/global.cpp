@@ -1,6 +1,11 @@
 
 #include "global.h"
 
+#include <natus/device/global.h>
+#include <natus/concurrent/global.h>
+#include <natus/format/global.h>
+#include <natus/audio/global.h>
+
 #if defined( NATUS_GRAPHICS_WGL )
 
 #include <natus/application/platform/wgl/wgl_window.h>
@@ -19,7 +24,7 @@ using namespace natus ;
 using namespace natus::application ;
 
 //*********************************************************
-platform_application_res_t global::create_application( void_t ) 
+platform_application_res_t global::create_application( void_t )  noexcept
 {
     #if defined( NATUS_GRAPHICS_WGL )
 
@@ -42,7 +47,7 @@ platform_application_res_t global::create_application( void_t )
 }
 
 //*********************************************************
-platform_application_res_t global::create_application( natus::application::app_res_t app ) 
+platform_application_res_t global::create_application( natus::application::app_res_t app )  noexcept
 {
     #if defined( NATUS_GRAPHICS_WGL )
 
@@ -58,8 +63,22 @@ platform_application_res_t global::create_application( natus::application::app_r
 
     return natus::application::xlib::application_res_t(
         natus::application::xlib::xlib_application_t( app ) ) ;
-
     #endif
 
     return platform_application_res_t() ;
+}
+
+//*********************************************************
+int_t global::create_and_exec_application( natus::application::app_res_t app ) noexcept
+{
+    auto r = this_t::create_application( std::move( app ) )->exec() ;
+
+    natus::format::global_t::deinit() ;
+    natus::device::global_t::deinit() ;
+    natus::concurrent::global_t::deinit() ;
+    natus::audio::global_t::deinit() ;
+
+    natus::memory::global_t::dump_to_std() ;
+
+    return r ;
 }

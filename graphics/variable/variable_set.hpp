@@ -69,6 +69,18 @@ namespace natus
                 {
                     natus::memory::global_t::dealloc( d.var ) ;
                 }
+                for( auto & d : _textures ) 
+                {
+                    natus::memory::global_t::dealloc( d.var ) ;
+                }
+                for( auto & d : _arrays ) 
+                {
+                    natus::memory::global_t::dealloc( d.var ) ;
+                }
+                for( auto & d : _streamouts ) 
+                {
+                    natus::memory::global_t::dealloc( d.var ) ;
+                }
             }
 
             this_ref_t operator = ( this_rref_t rhv ) noexcept

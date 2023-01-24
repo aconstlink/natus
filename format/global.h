@@ -29,7 +29,9 @@ namespace natus
             global( this_cref_t ) = delete ;
             global( this_rref_t ) ;
             ~global( void_t ) ;
+            
             static natus::format::module_registry_res_t registry( void_t ) noexcept ;
+            static void_t deinit( void_t ) noexcept ;
 
         private:
 

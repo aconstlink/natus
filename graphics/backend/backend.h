@@ -46,8 +46,6 @@ namespace natus
                 size_t geo = size_t( 0 ) ;
                 size_t state_set = size_t( -1 ) ;
                 bool_t feed_from_streamout = false ;
-                natus::graphics::render_state_sets_res_t render_states = 
-                    this_t::default_render_states() ;
             };
             natus_typedef( render_detail ) ;
 
@@ -113,10 +111,9 @@ namespace natus
 
             natus::graphics::backend_type get_type( void_t ) const noexcept { return _bt ; }
 
-            static natus::graphics::render_state_sets_res_t default_render_states( void_t )
+            static natus::graphics::render_state_sets_t default_render_states( void_t )
             {
-                static natus::graphics::render_state_sets_res_t __default_rs = natus::graphics::render_state_sets_t() ;
-                return __default_rs ;
+                return natus::graphics::render_state_sets_t() ;
             }
 
         protected:

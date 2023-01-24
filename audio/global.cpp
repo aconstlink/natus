@@ -28,3 +28,10 @@ global::this_ptr_t global::get( void_t )
 {
     return _singleton ;
 }
+
+//***
+void_t global::deinit( void_t ) noexcept 
+{
+    if( _singleton != nullptr ) 
+        natus::memory::global_t::dealloc( _singleton ) ;
+}

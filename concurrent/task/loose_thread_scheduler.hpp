@@ -44,13 +44,7 @@ namespace natus
         public:
 
             loose_thread_scheduler( void_t ) noexcept
-            {
-                shared_data sd ;
-                sd.owner = this ;
-                
-                _sd = natus::memory::global_t::alloc( std::move( sd ), 
-                    "[loose_thread_scheduler] : shared data" ) ;
-            }
+            {}
 
             loose_thread_scheduler( this_cref_t ) = delete ;
             loose_thread_scheduler( this_rref_t rhv ) noexcept
@@ -65,11 +59,14 @@ namespace natus
 
             ~loose_thread_scheduler( void_t ) noexcept
             {
-                natus::memory::global_t::dealloc( _sd ) ;
+                this_t::deinit() ;
             }
 
             this_ref_t operator = ( this_rref_t rhv ) noexcept
             {
+                this_t::deinit() ;
+
+                if( rhv._sd != nullptr )
                 {
                     natus::concurrent::lock_t lk(rhv._sd->mtx) ;
                     rhv._sd->owner = this ;
@@ -77,6 +74,23 @@ namespace natus
                 natus_move_member_ptr( _sd, rhv ) ;
                 _tasks = std::move( rhv._tasks ) ;
                 return *this ;
+            }
+
+
+            void_t init( void_t ) noexcept
+            {
+                if( _sd != nullptr ) return ;
+
+                shared_data sd ;
+                sd.owner = this ;
+                
+                _sd = natus::memory::global_t::alloc( std::move( sd ), 
+                    "[loose_thread_scheduler] : shared data" ) ;
+            }
+
+            void_t deinit( void_t ) noexcept
+            {
+                natus::memory::global_t::dealloc( _sd ) ;
             }
 
         private:
