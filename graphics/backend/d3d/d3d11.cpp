@@ -605,9 +605,9 @@ struct d3d11_backend::pimpl
         void_t invalidate( void_t ) noexcept
         {
             rss = natus::graphics::render_state_sets_t() ;
-            guard< ID3D11DepthStencilState >() = depth_stencil_state ;
-            guard< ID3D11RasterizerState >() = raster_state ;
-            guard< ID3D11BlendState >() = blend_state ;
+            depth_stencil_state = guard< ID3D11DepthStencilState >() ;
+            raster_state = guard< ID3D11RasterizerState >() ;
+            blend_state = guard< ID3D11BlendState >() ;
         }
 
         render_state_sets & operator = ( render_state_sets const & rhv ) noexcept
@@ -950,8 +950,6 @@ public: // variables
     framebuffer_datas_t framebuffers ;
     size_t _cur_fb_active = size_t( -1 ) ;
 
-    natus::graphics::render_state_sets_t render_states ;
-
     typedef natus::ntd::vector< this_t::state_data_t > states_t ;
     states_t state_sets ;
 
@@ -1053,7 +1051,6 @@ public: // functions
         images = std::move( rhv.images ) ;
         shaders = std::move( rhv.shaders ) ;
         arrays = std::move( rhv.arrays ) ;
-        render_states = std::move( rhv.render_states ) ;
         renders = std::move( renders ) ;
 
         _state_stack = std::move( rhv._state_stack ) ;
