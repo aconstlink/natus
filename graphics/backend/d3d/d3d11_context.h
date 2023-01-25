@@ -23,6 +23,7 @@ namespace natus
 
             virtual ID3D11DeviceContext * ctx( void_t ) noexcept = 0 ;
             virtual ID3D11Device * dev( void_t ) noexcept = 0 ;
+            virtual ID3D11Debug * debug( void_t ) noexcept = 0 ;
 
             virtual void_t activate_framebuffer( void_t ) noexcept = 0 ;
             virtual void_t clear_render_target_view( natus::math::vec4f_cref_t ) noexcept = 0 ;

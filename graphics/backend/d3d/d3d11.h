@@ -69,6 +69,7 @@ namespace natus
         private:
 
             //
+            void_t report_live_device_objects( D3D11_RLDO_FLAGS const ) noexcept ;
         };
         natus_res_typedef( d3d11_backend ) ;
     }

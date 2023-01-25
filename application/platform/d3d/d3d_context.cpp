@@ -57,6 +57,7 @@ context::~context( void_t ) noexcept
     if( _pImmediateContext ) _pImmediateContext->Release();
     if( _pd3dDevice1 ) _pd3dDevice1->Release();
     if( _pd3dDevice ) _pd3dDevice->Release();
+    if( _pDebug ) _pDebug->Release() ;
 
     natus::memory::global_t::dealloc( _bend_ctx ) ;
 }
@@ -80,6 +81,7 @@ context::this_ref_t context::operator = ( this_rref_t rhv ) noexcept
     natus_move_member_ptr( _pRenderTargetView, rhv ) ;
     natus_move_member_ptr( _pDepthStencil, rhv ) ;
     natus_move_member_ptr( _pDepthStencilView, rhv ) ;
+    natus_move_member_ptr( _pDebug, rhv ) ;
 
     return *this ;
 }
@@ -296,8 +298,21 @@ natus::application::result context::create_the_context( d3d_info_cref_t gli )
             if( SUCCEEDED( hr ) )
                 break;
         }
-        if( FAILED( hr ) )
-            return natus::application::result::failed_d3d ;
+        if( FAILED( hr ) ) return natus::application::result::failed_d3d ;
+
+        
+        #if _DEBUG
+        // Obtain a debug interface
+        {
+            ID3D11Debug * debug = nullptr ;
+            hr = _pd3dDevice->QueryInterface( __uuidof( ID3D11Debug ), reinterpret_cast< void** >( &debug ) );
+            if( FAILED( hr ) ) 
+            {
+                natus::log::global_t::error("[D3D11] : Can not query debug interface.") ;
+            }
+            _pDebug = debug ;
+        }
+        #endif
 
         // Obtain DXGI factory from device (since we used nullptr for pAdapter above)
         IDXGIFactory1* dxgiFactory = nullptr;

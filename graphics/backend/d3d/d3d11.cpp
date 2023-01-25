@@ -19,6 +19,10 @@
 #include <d3d11shader.h>
 #include <directxcolors.h>
 
+#if _DEBUG
+#define D3D_DEBUG
+#endif
+
 using namespace natus::graphics ;
 
 template< typename T >
@@ -1191,6 +1195,11 @@ public: // functions
             desc.DepthFunc = D3D11_COMPARISON_LESS ;
             desc.DepthWriteMask = new_states.rss.depth_s.ss.do_depth_write ? D3D11_DEPTH_WRITE_MASK_ALL : D3D11_DEPTH_WRITE_MASK_ZERO ;
 
+            if( new_states.depth_stencil_state != nullptr ) 
+            {
+                new_states.depth_stencil_state->Release() ;
+                new_states.depth_stencil_state = nullptr ;
+            }
             auto const res = _ctx->dev()->CreateDepthStencilState( &desc, &new_states.depth_stencil_state ) ;
             if( FAILED( res ) )
             {
@@ -1226,6 +1235,12 @@ public: // functions
                 desc.RenderTarget[ 0 ].SrcBlendAlpha = D3D11_BLEND_ONE ;
                 desc.RenderTarget[ 0 ].DestBlendAlpha = D3D11_BLEND_ZERO ;
                 desc.RenderTarget[ 0 ].BlendOpAlpha = D3D11_BLEND_OP_ADD ;
+
+                if( new_states.blend_state != nullptr ) 
+                {
+                    new_states.blend_state->Release() ;
+                    new_states.blend_state = nullptr ;
+                }
 
                 auto const res = _ctx->dev()->CreateBlendState( &desc, &new_states.blend_state ) ;
                 if( SUCCEEDED( res ) )
@@ -1266,6 +1281,12 @@ public: // functions
                     _ctx->ctx()->RSSetScissorRects( 1, &rect ) ;
                 }
             }
+            if( new_states.raster_state != nullptr ) 
+            {
+                new_states.raster_state->Release() ;
+                new_states.raster_state = nullptr ;
+            }
+
             auto const res = _ctx->dev()->CreateRasterizerState( &raster_desc, &new_states.raster_state ) ;
             if( FAILED( res ) )
             {
@@ -3614,6 +3635,7 @@ d3d11_backend::d3d11_backend( this_rref_t rhv ) noexcept : backend( ::std::move(
 //******************************************************************************************************************************
 d3d11_backend::~d3d11_backend( void_t ) 
 {
+    this_t::report_live_device_objects( D3D11_RLDO_SUMMARY ) ;
     natus::memory::global_t::dealloc( _pimpl ) ;
 }
 
@@ -4180,4 +4202,12 @@ void_t d3d11_backend::render_begin( void_t ) noexcept
 void_t d3d11_backend::render_end( void_t ) noexcept 
 {
     _pimpl->end_frame() ;
+}
+
+//******************************************************************************************************************************
+void_t d3d11_backend::report_live_device_objects( D3D11_RLDO_FLAGS const flags ) noexcept 
+{
+    #ifdef D3D_DEBUG
+    if( _context != nullptr ) _context->debug()->ReportLiveDeviceObjects( flags ) ;
+    #endif
 }

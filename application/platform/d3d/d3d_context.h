@@ -45,6 +45,7 @@ namespace natus
                 ID3D11RenderTargetView* _pRenderTargetView = nullptr;
                 ID3D11Texture2D* _pDepthStencil = nullptr;
                 ID3D11DepthStencilView* _pDepthStencilView = nullptr;
+                ID3D11Debug * _pDebug = nullptr ;
 
                 d3d11_context_ptr_t _bend_ctx = nullptr ;
 
@@ -131,6 +132,11 @@ namespace natus
                 virtual ID3D11Device * dev( void_t ) noexcept 
                 {
                     return _app_context->_pd3dDevice ;
+                }
+
+                virtual ID3D11Debug * debug( void_t ) noexcept 
+                {
+                    return _app_context->_pDebug ;
                 }
 
                 virtual void_t activate_framebuffer( void_t ) noexcept 
