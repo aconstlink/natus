@@ -1059,7 +1059,17 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
             if( pd.fq == natus::nsl::flow_qualifier::out )
             {
                 max_vertex_count = pd.max_vertices ;
-                break ;
+
+                switch( pd.pdt )
+                {
+                case natus::nsl::primitive_decl_type::points: 
+                    output_stream_name = "PointStream" ; break ;
+                case natus::nsl::primitive_decl_type::lines: 
+                    output_stream_name = "LineStream" ; break ;
+                case natus::nsl::primitive_decl_type::triangles: 
+                    output_stream_name = "TriangleStream" ; break ;
+                default: break ;
+                }
             }
 
             if( pd.fq == natus::nsl::flow_qualifier::in )
@@ -1067,11 +1077,11 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
                 switch( pd.pdt )
                 {
                 case natus::nsl::primitive_decl_type::points: 
-                    num_in_verts = 1 ; input_prim_name = "point" ; output_stream_name = "PointStream" ; break ;
+                    num_in_verts = 1 ; input_prim_name = "point " ; break ;
                 case natus::nsl::primitive_decl_type::lines: 
-                    num_in_verts = 2 ; input_prim_name = "line" ; output_stream_name = "LineStream" ; break ;
+                    num_in_verts = 2 ; input_prim_name = "line " ; break ;
                 case natus::nsl::primitive_decl_type::triangles: 
-                    num_in_verts = 3 ; input_prim_name = "triangle " ; output_stream_name = "TriangleStream" ; break ;
+                    num_in_verts = 3 ; input_prim_name = "triangle " ; break ;
                 default: break ;
                 }
             }
