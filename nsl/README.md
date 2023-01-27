@@ -78,6 +78,10 @@ Input variables can be bound to some predefined name which is called a binding. 
 ```
 position normal tangent texcoord texcoord(0-7) color color(0-7) projection view world object camera camera_position viewport
 ```
+Local System Variables:
+```
+vertex_id, primitive_id, instance_id
+```
 
 ### Ins and Outs
 Ins and outs are used to define the data stream through the pipeline stages(i.e. shaders). An ```in``` is used to specify an incoming data stream. An ```out``` is used to specify data that is streaming out of a shader. If a shader is followed by another shader, the ```in```s in the shader that follows must match the ```out```s of the shader that came first.
@@ -88,10 +92,13 @@ vertex_shader NAME
   mat4_t proj : projection ;
   mat4_t view : view ;
 
+  // in only
   in vec3_t pos : position ;
-  in vec2_t tx : texcoord0 ;
   
-  out vec2_t tx : texcoord0 ;
+  // in and out -> only works if types match.
+  inout vec2_t tx : texcoord0 ;
+  
+  // out only
   out vec4_t pos : position ;
   
   void main()
