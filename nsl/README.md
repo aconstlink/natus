@@ -34,7 +34,7 @@ Shaders are defined like so:
 ```
 config NAME
 {
-  vertex_shader NAME
+  vertex_shader
   {
     // variables here
     
@@ -44,7 +44,25 @@ config NAME
     }
   }
   
-  pixel_shader NAME
+  geometry_shader
+  {
+    in [points|lines|triangles] ,
+    out [points|lines|triangles][ max_vertices=number ] ;
+    
+    // variables here
+    
+    void main()
+    {
+      // code here
+      for( int i=0; i<in.length(); ++i )
+      {
+        // use in put attributes
+        in[i].xyz_variable ...
+      }
+    }
+  }
+  
+  pixel_shader
   {
     // variables here
     
