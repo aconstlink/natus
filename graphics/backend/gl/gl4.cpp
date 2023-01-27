@@ -1459,6 +1459,7 @@ struct gl4_backend::pimpl
         GLuint uiBegin = 0 ;
         GLuint uiOffset = 0 ;
 
+        GLuint dummy_loc = 0 ;
         for( auto & e : gconfig.elements )
         {
             uiBegin += uiOffset ;
@@ -1470,19 +1471,29 @@ struct gl4_backend::pimpl
                 return av.va == e.va ;
             } ) ;
 
+            GLuint loc = 0 ;
+            GLenum type = GL_NONE ;
+
             if( iter == sconfig.attributes.end() ) 
             {
-                natus::log::global_t::warning( natus_log_fn("invalid vertex attribute") ) ;
-                continue ;
+                natus::log::global_t::warning( natus_log_fn("Invalid vertex attribute. Will bind to dummy location.") ) ;
+                loc = dummy_loc++ ;
+                type = GL_FLOAT ;
             }
-            glEnableVertexAttribArray( iter->loc ) ;
+            else
+            {
+                loc = iter->loc ;
+                type = iter->type ;
+            }
+
+            glEnableVertexAttribArray( loc ) ;
             natus::ogl::error::check_and_log(
                 natus_log_fn( "glEnableVertexAttribArray" ) ) ;
 
             glVertexAttribPointer(
-                iter->loc,
+                loc,
                 GLint( natus::graphics::size_of(e.type_struct) ),
-                natus::ogl::complex_to_simple_type( iter->type ),
+                natus::ogl::complex_to_simple_type( type ),
                 GL_FALSE,
                 ( GLsizei ) uiStride,
                 (const GLvoid*)(size_t)uiBegin 
