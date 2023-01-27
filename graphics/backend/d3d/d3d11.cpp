@@ -2287,8 +2287,8 @@ public: // functions
             shd.vs_blob = pVSBlob ;
         }
 
-        // Create Streamout shader w/o geometry shader
-        if( pGSBlob == nullptr && obj.get_num_output_bindings() > 0 && 
+        // Create Streamout shader w or w/o geometry shader
+        if( obj.get_num_output_bindings() > 0 && 
             obj.get_streamout_mode() != natus::graphics::streamout_mode::unknown )
         {
             static size_t const max_entries = 10 ;
@@ -2317,14 +2317,23 @@ public: // functions
             // @todo which stream should go to the rasterizer?
             UINT const rasterized_stream = pPSBlob == nullptr ? D3D11_SO_NO_RASTERIZED_STREAM : 0 ;
 
-            auto const hr = _ctx->dev()->CreateGeometryShaderWithStreamOutput( pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), decl, 
-                std::min( UINT(max_entries), UINT(obj.get_num_output_bindings()) ), NULL, 0, rasterized_stream, NULL, shd.gs ) ;
-
-            natus::log::global_t::error( FAILED( hr ), "[d3d11] : CreateGeometryShaderWithStreamOutput" ) ;
+            // if no geometry shader, use vertex shader
+            if( pGSBlob == nullptr )
+            {
+                auto const hr = _ctx->dev()->CreateGeometryShaderWithStreamOutput( pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), decl, 
+                    std::min( UINT(max_entries), UINT(obj.get_num_output_bindings()) ), NULL, 0, rasterized_stream, NULL, shd.gs ) ;
+                natus::log::global_t::error( FAILED( hr ), "[d3d11] : CreateGeometryShaderWithStreamOutput" ) ;
+            }
+            else
+            {
+                auto const hr = _ctx->dev()->CreateGeometryShaderWithStreamOutput( pGSBlob->GetBufferPointer(), pGSBlob->GetBufferSize(), decl, 
+                    std::min( UINT(max_entries), UINT(obj.get_num_output_bindings()) ), NULL, 0, rasterized_stream, NULL, shd.gs ) ;
+                natus::log::global_t::error( FAILED( hr ), "[d3d11] : CreateGeometryShaderWithStreamOutput" ) ;
+            }
         }
 
-        // geometry shader
-        if( pGSBlob != nullptr )
+        // geometry shader w/o streamout
+        else if( pGSBlob != nullptr )
         {
             auto const hr = _ctx->dev()->CreateGeometryShader(
                 pGSBlob->GetBufferPointer(), pGSBlob->GetBufferSize(), nullptr, shd.gs ) ;

@@ -960,8 +960,7 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
 
                     // don not generate input position except if coming into the vertex shader
                     if( sht_cur != natus::nsl::shader_type::vertex_shader && 
-                        v.binding == natus::nsl::binding::position && 
-                        !using_transform_feedback ) continue ;
+                        v.binding == natus::nsl::binding::position  ) continue ;
 
                     natus::ntd::string_t name = v.name ;
                     natus::ntd::string_t const type_ = this_file::map_variable_type_to_string( type, v.type ) ;
@@ -1138,7 +1137,7 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
         }
 
         // replace all "in" positions by gl_Position
-        if( !using_transform_feedback && sht_cur != natus::nsl::shader_type::vertex_shader )
+        if( sht_cur != natus::nsl::shader_type::vertex_shader )
         {
             for( auto const& v : shd_.variables )
             {                
