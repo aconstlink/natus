@@ -746,9 +746,7 @@ struct d3d11_backend::pimpl
         typedef natus::ntd::vector< std::pair< natus::graphics::variable_set_res_t,
             cbuffers_t > > variable_sets_to_cbuffers_t ;
 
-        // vertex shader data. The variable requires a renaming.
-        // like: var_sets_data_vs
-        variable_sets_to_cbuffers_t var_sets_data ;
+        variable_sets_to_cbuffers_t var_sets_data_vs ;
         variable_sets_to_cbuffers_t var_sets_data_gs ;
         variable_sets_to_cbuffers_t var_sets_data_ps ;
 
@@ -779,7 +777,7 @@ struct d3d11_backend::pimpl
             var_sets_buffers_so_gs = std::move( rhv.var_sets_buffers_so_gs ) ;
             var_sets_buffers_ps = std::move( rhv.var_sets_buffers_ps ) ;
             var_sets_buffers_so_ps = std::move( rhv.var_sets_buffers_so_ps ) ;
-            var_sets_data = std::move( rhv.var_sets_data ) ;
+            var_sets_data_vs = std::move( rhv.var_sets_data_vs ) ;
             var_sets_data_ps = std::move( rhv.var_sets_data_ps ) ;
         }
         ~render_data( void_t ) noexcept
@@ -831,14 +829,14 @@ struct d3d11_backend::pimpl
             var_sets_buffers_ps.clear() ;
             var_sets_buffers_so_ps.clear() ;
 
-            for( auto & d : var_sets_data )
+            for( auto & d : var_sets_data_vs )
             {
                 for( auto & d2 : d.second )
                 {
                     natus::memory::global_t::dealloc_raw( d2.mem ) ;
                 }
             }
-            var_sets_data.clear() ;
+            var_sets_data_vs.clear() ;
 
             for( auto & d : var_sets_data_ps )
             {
@@ -2687,7 +2685,7 @@ public: // functions
         
         // release all cbuffers
         {
-            for( auto& vsd : rd.var_sets_data )
+            for( auto& vsd : rd.var_sets_data_vs )
             {
                 for( auto& b : vsd.second )
                 {
@@ -2705,7 +2703,7 @@ public: // functions
                 }
                 vsd.second.clear() ;
             }
-            rd.var_sets_data.clear() ;
+            rd.var_sets_data_vs.clear() ;
         }
 
         // release all cbuffers
@@ -2784,7 +2782,7 @@ public: // functions
 
                         cbs.emplace_back( std::move( cb ) ) ;
                     }
-                    rd.var_sets_data.emplace_back( std::make_pair( vs, std::move( cbs ) ) ) ;
+                    rd.var_sets_data_vs.emplace_back( std::make_pair( vs, std::move( cbs ) ) ) ;
                 }
 
                 // gs cbuffers
@@ -3186,7 +3184,7 @@ public: // functions
         ID3D11DeviceContext * ctx = _ctx->ctx() ;
 
         // vertex shader variables
-        for( auto & cb : rnd.var_sets_data[ varset_id ].second )
+        for( auto & cb : rnd.var_sets_data_vs[ varset_id ].second )
         {
             size_t offset = 0 ;
 
@@ -3197,7 +3195,7 @@ public: // functions
                 while( iter->ivar == nullptr )
                 {
                     auto & var = *iter ;
-                    auto * ptr = rnd.var_sets_data[ varset_id ].first->data_variable( var.name, var.t, var.ts ) ;
+                    auto * ptr = rnd.var_sets_data_vs[ varset_id ].first->data_variable( var.name, var.t, var.ts ) ;
                     if( ptr == nullptr )
                     {
                         iter = cb.data_variables.erase( iter ) ;
@@ -3282,7 +3280,7 @@ public: // functions
         // SECTION: vertex shader variables
         {
             
-            for( auto & cb : rnd.var_sets_data[ varset_id ].second )
+            for( auto & cb : rnd.var_sets_data_vs[ varset_id ].second )
             {
                 ctx->VSSetConstantBuffers( cb.slot, 1, &cb.ptr ) ;
             }
