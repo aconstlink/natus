@@ -434,14 +434,17 @@ struct d3d11_backend::pimpl
         } ;
         natus_typedef( cbuffer ) ;
         natus_typedefs( natus::ntd::vector< cbuffer_t >, cbuffers ) ;
+        
         cbuffers_t vs_cbuffers ;
         cbuffers_t gs_cbuffers ;
         cbuffers_t ps_cbuffers ;
 
         image_variables_t vs_textures ;
+        image_variables_t gs_textures ;
         image_variables_t ps_textures ;
 
         buffer_variables_t vs_buffers ;
+        buffer_variables_t gs_buffers ;
         buffer_variables_t ps_buffers ;
 
         shader_data( void_t ) noexcept {}
@@ -463,9 +466,11 @@ struct d3d11_backend::pimpl
             ps_cbuffers = std::move( rhv.ps_cbuffers ) ;
 
             vs_textures = std::move( rhv.vs_textures ) ;
+            gs_textures = std::move( rhv.gs_textures ) ;
             ps_textures = std::move( rhv.ps_textures ) ;
 
             vs_buffers = std::move( rhv.vs_buffers ) ;
+            gs_buffers = std::move( rhv.gs_buffers ) ;
             ps_buffers = std::move( rhv.ps_buffers ) ;
         }
 
@@ -484,8 +489,10 @@ struct d3d11_backend::pimpl
             gs_cbuffers.clear() ;
             ps_cbuffers.clear() ;
             vs_textures.clear() ;
+            gs_textures.clear() ;
             ps_textures.clear() ;
             vs_buffers.clear() ;
+            gs_buffers.clear() ;
             ps_buffers.clear() ;
         }
     } ;
@@ -691,6 +698,9 @@ struct d3d11_backend::pimpl
         natus::ntd::vector< std::pair< natus::graphics::variable_set_res_t,
             image_variables_t > > var_sets_imgs_ps ;
 
+        ///////////////////// BEGIN: Buffer variables <-> array data
+        //
+
         struct buffer_variable
         {
             natus::ntd::string_t name ;
@@ -702,15 +712,22 @@ struct d3d11_backend::pimpl
         natus_typedef( buffer_variable ) ;
         natus_typedefs( natus::ntd::vector< buffer_variable_t >, buffer_variables ) ;
 
-        natus::ntd::vector< std::pair< natus::graphics::variable_set_res_t,
-            buffer_variables_t > > var_sets_buffers_vs ;
+        typedef natus::ntd::vector< std::pair< natus::graphics::variable_set_res_t,
+            buffer_variables_t > > varsets_to_buffers_t ;
 
-        natus::ntd::vector< std::pair< natus::graphics::variable_set_res_t,
-            buffer_variables_t > > var_sets_buffers_so_vs ;
+        varsets_to_buffers_t var_sets_buffers_vs ;
+        varsets_to_buffers_t var_sets_buffers_so_vs ;
+        varsets_to_buffers_t var_sets_buffers_gs ;
+        varsets_to_buffers_t var_sets_buffers_so_gs ;
+        varsets_to_buffers_t var_sets_buffers_ps ;
+        varsets_to_buffers_t var_sets_buffers_so_ps ;
 
-        natus::ntd::vector< std::pair< natus::graphics::variable_set_res_t,
-            buffer_variables_t > > var_sets_buffers_ps ;
-
+        //
+        ///////////////////// END: Buffer variables <-> array data
+        
+        
+        ///////////////////// BEGIN: Cbuffer variables <-> normal data variables
+        // 
         // represents the cbuffer data of a shader stage.
         // very linked shader in a render data object
         // requires its own constant buffer data.
@@ -726,13 +743,17 @@ struct d3d11_backend::pimpl
         natus_typedef( cbuffer ) ;
         natus_typedefs( natus::ntd::vector< cbuffer_t >, cbuffers ) ;
 
+        typedef natus::ntd::vector< std::pair< natus::graphics::variable_set_res_t,
+            cbuffers_t > > variable_sets_to_cbuffers_t ;
+
         // vertex shader data. The variable requires a renaming.
         // like: var_sets_data_vs
-        natus::ntd::vector< std::pair< natus::graphics::variable_set_res_t,
-            cbuffers_t > > var_sets_data ;
+        variable_sets_to_cbuffers_t var_sets_data ;
+        variable_sets_to_cbuffers_t var_sets_data_gs ;
+        variable_sets_to_cbuffers_t var_sets_data_ps ;
 
-        natus::ntd::vector< std::pair< natus::graphics::variable_set_res_t,
-            cbuffers_t > > var_sets_data_ps ;
+        //
+        ///////////////////// END: Cbuffer variables <-> normal data variables
 
         render_data( void_t ) noexcept {}
         render_data( render_data const & ) = delete ;
@@ -754,7 +775,10 @@ struct d3d11_backend::pimpl
             var_sets_imgs_ps = std::move( rhv.var_sets_imgs_ps ) ;
             var_sets_buffers_vs = std::move( rhv.var_sets_buffers_vs ) ;
             var_sets_buffers_so_vs = std::move( rhv.var_sets_buffers_so_vs ) ;
+            var_sets_buffers_gs = std::move( rhv.var_sets_buffers_gs ) ;
+            var_sets_buffers_so_gs = std::move( rhv.var_sets_buffers_so_gs ) ;
             var_sets_buffers_ps = std::move( rhv.var_sets_buffers_ps ) ;
+            var_sets_buffers_so_ps = std::move( rhv.var_sets_buffers_so_ps ) ;
             var_sets_data = std::move( rhv.var_sets_data ) ;
             var_sets_data_ps = std::move( rhv.var_sets_data_ps ) ;
         }
@@ -802,7 +826,10 @@ struct d3d11_backend::pimpl
             var_sets_imgs_ps.clear() ;
             var_sets_buffers_vs.clear() ;
             var_sets_buffers_so_vs.clear() ;
+            var_sets_buffers_gs.clear() ;
+            var_sets_buffers_so_gs.clear() ;
             var_sets_buffers_ps.clear() ;
+            var_sets_buffers_so_ps.clear() ;
 
             for( auto & d : var_sets_data )
             {
@@ -2194,7 +2221,10 @@ public: // functions
 
                 // find shader variables in constant buffer
                 {
+                    shd.gs_textures.clear() ;
+                    shd.gs_cbuffers.clear() ;
                     shd.gs_cbuffers = this_t::determine_cbuffer( pGSBlob ) ;
+                    this_t::determine_texture( pGSBlob, shd.gs_textures, shd.gs_buffers ) ;
                 }
             }
             else if( shd.gs != nullptr )
@@ -2703,8 +2733,14 @@ public: // functions
 
         {
             rd.var_sets_imgs_ps.clear() ;
+
             rd.var_sets_buffers_vs.clear() ;
+            rd.var_sets_buffers_gs.clear() ;
             rd.var_sets_buffers_ps.clear() ;
+
+            rd.var_sets_buffers_so_vs.clear() ;
+            rd.var_sets_buffers_so_gs.clear() ;
+            rd.var_sets_buffers_so_ps.clear() ;
         }
 
         // constant buffer mapping
@@ -2826,14 +2862,17 @@ public: // functions
             } ) ;
         }
 
-        // array variable mapping : vs
+        auto array_variable_mapping = [&]( natus::graphics::render_object_ref_t rc_,
+            pimpl::so_datas_t & streamouts, 
+            this_t::render_data_t::varsets_to_buffers_t & var_sets_buffers, 
+            this_t::render_data_t::varsets_to_buffers_t & var_sets_buffers_so,
+             pimpl::shader_data_t::buffer_variables_ref_t the_buffer )
         {
-            this_t::shader_data_ref_t shd = shaders[ rd.shd_id ] ;
-            rc.for_each( [&] ( size_t const /*i*/, natus::graphics::variable_set_res_t vs )
+            rc_.for_each( [&] ( size_t const /*i*/, natus::graphics::variable_set_res_t vs )
             {
                 this_t::render_data_t::buffer_variables_t bvs ;
                 this_t::render_data_t::buffer_variables_t bvs_so ;
-                for( auto& t : shd.vs_buffers )
+                for( auto& t : the_buffer )
                 {
                     // first try data_buffers...
                     natus::ntd::string_t const name = vs->array_variable( t.name )->get() ;
@@ -2852,9 +2891,9 @@ public: // functions
                     else
                     {
                         natus::ntd::string_t const name2 = vs->array_variable_streamout( t.name )->get() ;
-                        size_t const i2 = this_t::find_index_by_resource_name( name2, _streamouts ) ;
+                        size_t const i2 = this_t::find_index_by_resource_name( name2, streamouts ) ;
                         
-                        if( i2 < _streamouts.size() )
+                        if( i2 < streamouts.size() )
                         {
                             this_t::render_data_t::buffer_variable_t bv ;
                             bv.id = i2 ;
@@ -2864,35 +2903,16 @@ public: // functions
                         }                        
                     }
                 }
-                rd.var_sets_buffers_vs.emplace_back( std::make_pair( vs, std::move( bvs ) ) ) ;
-                rd.var_sets_buffers_so_vs.emplace_back( std::make_pair( vs, std::move( bvs_so ) ) ) ;
+                var_sets_buffers.emplace_back( std::make_pair( vs, std::move( bvs ) ) ) ;
+                var_sets_buffers_so.emplace_back( std::make_pair( vs, std::move( bvs_so ) ) ) ;
             } ) ;
-        }
-
-        // array variable mapping : ps
+        } ;
+        
         {
             this_t::shader_data_ref_t shd = shaders[ rd.shd_id ] ;
-            rc.for_each( [&] ( size_t const /*i*/, natus::graphics::variable_set_res_t vs )
-            {
-                this_t::render_data_t::buffer_variables_t bvs ;
-                for( auto& t : shd.ps_buffers )
-                {
-                    auto * dv = vs->array_variable( t.name ) ;
-                    natus::ntd::string_t const name = dv->get() ;
-
-                    size_t i = 0 ;
-                    for( ; i < arrays.size(); ++i ) if( arrays[ i ].name == name ) break ;
-
-                    if( i == arrays.size() ) continue ;
-                    
-                    this_t::render_data_t::buffer_variable_t bv ;
-                    bv.id = i ;
-                    bv.name = t.name ;
-                    bv.slot = t.slot ;
-                    bvs.emplace_back( std::move( bv ) ) ;
-                }
-                rd.var_sets_buffers_ps.emplace_back( std::make_pair( vs, std::move( bvs ) ) ) ;
-            } ) ;
+            array_variable_mapping( rc, _streamouts, rd.var_sets_buffers_vs, rd.var_sets_buffers_so_vs, shd.vs_buffers ) ;
+            array_variable_mapping( rc, _streamouts, rd.var_sets_buffers_gs, rd.var_sets_buffers_so_gs, shd.gs_buffers ) ;
+            array_variable_mapping( rc, _streamouts, rd.var_sets_buffers_ps, rd.var_sets_buffers_so_ps, shd.ps_buffers ) ;
         }
 
         return true ;
