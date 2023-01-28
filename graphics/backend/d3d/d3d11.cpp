@@ -3210,7 +3210,7 @@ public: // functions
     }
 
     //******************************************************************************************************************************
-    bool_t render( size_t const id, size_t const geo_idx = 0, bool_t feed_from_so = false, size_t const varset_id = size_t( 0 ), UINT const start_element = UINT( 0 ),
+    bool_t render( size_t const id, size_t const geo_idx = 0, bool_t feed_from_so = false, bool_t use_streamout_count = false, size_t const varset_id = size_t( 0 ), UINT const start_element = UINT( 0 ),
         UINT const num_elements = UINT( -1 ) )
     {
         this_t::render_data_ref_t rnd = renders[ id ] ;
@@ -3306,34 +3306,61 @@ public: // functions
         }
 
         // feed from streamout path
-        if( feed_from_so && rnd.so_ids.size() != 0 )
+        if( use_streamout_count && rnd.so_ids.size() != 0 )
         {
-            this_t::so_data_ref_t so = _streamouts[ rnd.so_ids[0] ] ;
-            size_t const ridx = so.read_index() ;
-            auto & rbuffer = so.read_buffer() ;
+            D3D11_QUERY_DATA_SO_STATISTICS so_stats = { 0 };
 
-            #if 0 // for debugging purposes only - query primitives written by the streamout stage
+            if( !feed_from_so )
             {
-                D3D11_QUERY_DATA_SO_STATISTICS data = { 0 };
+                this_t::so_data_ref_t so = _streamouts[ rnd.so_ids[0] ] ;
+                size_t const ridx = so.read_index() ;
+                auto & rbuffer = so.read_buffer() ;
+
                 HRESULT hr = S_FALSE ;
                 while( hr != S_OK )
                 {
-                    hr = _ctx->ctx()->GetData( so.read_buffer().query, &data, sizeof( D3D11_QUERY_DATA_SO_STATISTICS ), 0 ) ;
+                    hr = _ctx->ctx()->GetData( so.read_buffer().query, &so_stats, sizeof( D3D11_QUERY_DATA_SO_STATISTICS ), 0 ) ;
                 }
                 int bp = 0 ;
             }
-            #endif
 
+            // this path uses the streamout primitives as input data and the number of captured primitives using DrawAuto
+            if( feed_from_so )
             {
+                this_t::so_data_ref_t so = _streamouts[ rnd.so_ids[0] ] ;
+                auto & rbuffer = so.read_buffer() ;
+
                 UINT const stride = so.stride ;
                 UINT const offset = 0 ;
                 ctx->IASetVertexBuffers( 0, 1, rbuffer.buffers[0], &stride, &offset );
                 ctx->IASetPrimitiveTopology( natus::graphics::d3d11::convert( so.pt ) ) ;
+                ctx->IASetInputLayout( rnd.vertex_layout_so ) ;
+
+                ctx->DrawAuto() ;
             }
 
-            ctx->IASetInputLayout( rnd.vertex_layout_so ) ;
-            ctx->DrawAuto() ;
+            // this path uses the geometry but should render just the number of captured primitives using DrawAuto
+            else 
+            {
+                this_t::geo_data_ref_t geo = geo_datas[ rnd.geo_ids[geo_idx] ] ;
+
+                UINT const stride = geo.stride ;
+                UINT const offset = 0 ;
+                ctx->IASetVertexBuffers( 0, 1, geo.vb, &stride, &offset );
+                ctx->IASetPrimitiveTopology( natus::graphics::d3d11::convert( geo.pt ) ) ;
+                ctx->IASetInputLayout( rnd.vertex_layout ) ;
+
+                // AutoDraw does not seem to work when binding a different vertex buffer
+                // then the used streamout buffer. If the other geometry uses index or instanced
+                // data, AutoDraw doesn't work anyways according to doc.
+                // @todo no index geo implemented, see remarks in geo path below.
+                ctx->Draw( UINT(so_stats.NumPrimitivesWritten), UINT( start_element ) ) ;
+            }
         }
+
+        // @todo
+        // if use_streamout_count && !feed_from_so 
+        // this path must be used with the queried number of prims written in so_stats
         else // feed from geometry path
         {
             this_t::geo_data_ref_t geo = geo_datas[ rnd.geo_ids[geo_idx] ] ;
@@ -4191,7 +4218,7 @@ natus::graphics::result d3d11_backend::render( natus::graphics::render_object_re
         return natus::graphics::result::failed ;
     }
 
-    _pimpl->render( id->get_oid( this_t::get_bid() ), detail.geo, detail.feed_from_streamout,
+    _pimpl->render( id->get_oid( this_t::get_bid() ), detail.geo, detail.feed_from_streamout, detail.use_streamout_count,
         detail.varset, (UINT)detail.start, (UINT)detail.num_elems ) ;
     
     return natus::graphics::result::ok ;
