@@ -2918,7 +2918,8 @@ struct gl4_backend::pimpl
     }
 
     //****************************************************************************************
-    bool_t render( size_t const id, size_t const geo_idx = 0, bool_t feed_from_tf = false, size_t const varset_id = size_t(0), GLsizei const start_element = GLsizei(0), 
+    bool_t render( size_t const id, size_t const geo_idx = 0, bool_t feed_from_tf = false, bool_t const use_streamout_count = false,
+        size_t const varset_id = size_t(0), GLsizei const start_element = GLsizei(0), 
         GLsizei const num_elements = GLsizei(-1) )
     {
         this_t::render_data & config = _renders[ id ] ;
@@ -2928,10 +2929,13 @@ struct gl4_backend::pimpl
         size_t tfid = size_t( -1 ) ;
 
         // #1 : check feedback geometry
-        if( feed_from_tf && config.tf_ids.size() != 0 )
+        if( (feed_from_tf || use_streamout_count) && config.tf_ids.size() != 0 )
         {
             tfid = config.tf_ids[0] ;
-            gid = _feedbacks[tfid].read_buffer().gids[0] ;
+            if( feed_from_tf )
+                gid = _feedbacks[tfid].read_buffer().gids[0] ;
+            else
+                gid = config.geo_ids[ geo_idx ] ;
         }
         // #2 : check geometry 
         else if( config.geo_ids.size() > geo_idx )
@@ -3076,7 +3080,7 @@ struct gl4_backend::pimpl
             {
                 auto & tfd = _feedbacks[ tfid ] ;
 
-                #if 0 // this is gl 3.x
+                #if 1 // this is gl 3.x
                 GLuint num_prims = 0 ;
                 {
                     glGetQueryObjectuiv( tfd.read_buffer().qid, GL_QUERY_RESULT, &num_prims ) ;
@@ -3714,7 +3718,7 @@ natus::graphics::result gl4_backend::render( natus::graphics::render_object_res_
     // @todo
     // change per object render states here.
 
-    _pimpl->render( id->get_oid( this_t::get_bid() ), detail.geo, detail.feed_from_streamout, 
+    _pimpl->render( id->get_oid( this_t::get_bid() ), detail.geo, detail.feed_from_streamout, detail.use_streamout_count,
         detail.varset, (GLsizei)detail.start, (GLsizei)detail.num_elems ) ;
 
     return natus::graphics::result::ok ;

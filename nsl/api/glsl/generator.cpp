@@ -701,7 +701,8 @@ natus::nsl::generated_code_t::shaders_t generator::generate( natus::nsl::generat
             }
             else if( var.binding == natus::nsl::binding::primitive_id )
             {
-                var.new_name = "gl_PrimitiveID" ;
+                if( var.st == natus::nsl::shader_type::geometry_shader ) var.new_name = "gl_PrimitiveIDIn" ;
+                else var.new_name = "gl_PrimitiveID" ;
             }
             else if( var.binding == natus::nsl::binding::instance_id )
             {

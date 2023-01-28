@@ -46,6 +46,7 @@ namespace natus
                 size_t geo = size_t( 0 ) ;
                 size_t state_set = size_t( -1 ) ;
                 bool_t feed_from_streamout = false ;
+                bool_t use_streamout_count = false ;
             };
             natus_typedef( render_detail ) ;
 
