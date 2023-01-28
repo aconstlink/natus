@@ -3169,63 +3169,41 @@ public: // functions
         this_t::render_data_ref_t rnd = renders[ id ] ;
 
         if( !rnd.valid ) return false ;
-
-        ID3D11DeviceContext * ctx = _ctx->ctx() ;
-
-        // vertex shader variables
-        for( auto & cb : rnd.var_sets_data_vs[ varset_id ].second )
+        
         {
-            size_t offset = 0 ;
-
-            for( auto iter = cb.data_variables.begin(); iter != cb.data_variables.end(); ++iter )
+            auto update_funk = [&]( ID3D11DeviceContext * ctx_, size_t const vsid, this_t::render_data::varsets_to_cbuffers_t & cbuffer )
             {
-                // if a variable was not there at construction time, 
-                // try it once more. If still not found, remove the entry.
-                while( iter->ivar == nullptr )
+                for( auto & cb : cbuffer[vsid].second )
                 {
-                    auto & var = *iter ;
-                    auto * ptr = rnd.var_sets_data_vs[ varset_id ].first->data_variable( var.name, var.t, var.ts ) ;
-                    if( ptr == nullptr )
+                    size_t offset = 0 ;
+
+                    for( auto iter = cb.data_variables.begin(); iter != cb.data_variables.end(); ++iter )
                     {
-                        iter = cb.data_variables.erase( iter ) ;
+                        // if a variable was not there at construction time, 
+                        // try it once more. If still not found, remove the entry.
+                        while( iter->ivar == nullptr )
+                        {
+                            auto & var = *iter ;
+                            auto * ptr = cbuffer[vsid].first->data_variable( var.name, var.t, var.ts ) ;
+                            if( ptr == nullptr )
+                            {
+                                iter = cb.data_variables.erase( iter ) ;
+                            }
+                            if( iter == cb.data_variables.end() ) break ;
+                        }
+                        if( iter == cb.data_variables.end() ) break ;
+
+                        iter->do_copy_funk( uint8_ptr_t(cb.mem) + offset ) ;
+                        offset += iter->sib ;
                     }
-                    if( iter == cb.data_variables.end() ) break ;
+
+                    ctx_->UpdateSubresource( cb.ptr, 0, nullptr, cb.mem, 0, 0 ) ;
                 }
-                if( iter == cb.data_variables.end() ) break ;
+            } ;
 
-                iter->do_copy_funk( uint8_ptr_t(cb.mem) + offset ) ;
-                offset += iter->sib ;
-            }
-
-            ctx->UpdateSubresource( cb.ptr, 0, nullptr, cb.mem, 0, 0 ) ;
-        }
-
-        // pixel shader variables
-        for( auto& cb : rnd.var_sets_data_ps[ varset_id ].second )
-        {
-            size_t offset = 0 ;
-
-            for( auto iter = cb.data_variables.begin(); iter != cb.data_variables.end(); ++iter )
-            {
-                // if a variable was not there at construction time, 
-                // try it once more. If still not found, remove the entry.
-                while( iter->ivar == nullptr )
-                {
-                    auto& var = *iter ;
-                    auto* ptr = rnd.var_sets_data_ps[ varset_id ].first->data_variable( var.name, var.t, var.ts ) ;
-                    if( ptr == nullptr )
-                    {
-                        iter = cb.data_variables.erase( iter ) ;
-                    }
-                    if( iter == cb.data_variables.end() ) break ;
-                }
-                if( iter == cb.data_variables.end() ) break ;
-
-                iter->do_copy_funk( uint8_ptr_t( cb.mem ) + offset ) ;
-                offset += iter->sib ;
-            }
-
-            ctx->UpdateSubresource( cb.ptr, 0, nullptr, cb.mem, 0, 0 ) ;
+            update_funk( _ctx->ctx(), varset_id, rnd.var_sets_data_vs ) ;
+            update_funk( _ctx->ctx(), varset_id, rnd.var_sets_data_gs ) ;
+            update_funk( _ctx->ctx(), varset_id, rnd.var_sets_data_ps ) ;
         }
 
         return true ;
@@ -3268,7 +3246,6 @@ public: // functions
 
         // SECTION: vertex shader variables
         {
-            
             for( auto & cb : rnd.var_sets_data_vs[ varset_id ].second )
             {
                 ctx->VSSetConstantBuffers( cb.slot, 1, cb.ptr ) ;
@@ -3288,6 +3265,21 @@ public: // functions
 
         // SECTION: geometry shader variables
         {
+            for( auto & cb : rnd.var_sets_data_gs[ varset_id ].second )
+            {
+                ctx->GSSetConstantBuffers( cb.slot, 1, cb.ptr ) ;
+            }
+
+            for( auto& buf : rnd.var_sets_buffers_gs[ varset_id ].second )
+            {
+                ctx->GSSetShaderResources( buf.slot, 1, arrays[ buf.id ].view ) ;
+            }
+            
+            for( auto& buf : rnd.var_sets_buffers_so_gs[ varset_id ].second )
+            {
+                auto & ppb = _streamouts[ buf.id ].read_buffer() ;
+                ctx->GSSetShaderResources( buf.slot, 1, ppb.views[0] ) ;
+            }
         }
 
         // SECTION: tesselation shader variables
