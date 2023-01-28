@@ -2811,91 +2811,9 @@ public: // functions
             this_t::shader_data_ref_t shd = shaders[ rd.shd_id ] ;
             rc.for_each( [&] ( size_t const /*i*/, natus::graphics::variable_set_res_t vs )
             {
-                #if 1
                 var_funk( _ctx->dev(), vs, shd.vs_cbuffers, rd.var_sets_data_vs ) ;
                 var_funk( _ctx->dev(), vs, shd.gs_cbuffers, rd.var_sets_data_gs ) ;
                 var_funk( _ctx->dev(), vs, shd.ps_cbuffers, rd.var_sets_data_ps ) ;
-                #else
-                {
-                    this_t::render_data_t::cbuffers_t cbs ;
-
-                    for( auto& c : shd.vs_cbuffers )
-                    {
-                        this_t::render_data_t::cbuffer_t cb ;
-                        cb.mem = natus::memory::global_t::alloc_raw< uint8_t >( c.sib, "[d3d11] : vertex shader cbuffer variable" ) ;
-                        cb.slot = c.slot ;
-
-                        D3D11_BUFFER_DESC bd = { } ;
-                        bd.Usage = D3D11_USAGE_DEFAULT ;
-                        bd.ByteWidth = UINT( c.sib ) ;
-                        bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER ;
-                        bd.CPUAccessFlags = 0 ;
-
-                        D3D11_SUBRESOURCE_DATA InitData = { } ;
-                        InitData.pSysMem = cb.mem ;
-                        auto const hr = _ctx->dev()->CreateBuffer( &bd, &InitData, cb.ptr ) ;
-                        if( FAILED( hr ) )
-                        {
-                            natus::log::global_t::error( natus_log_fn( "D3D11_BIND_CONSTANT_BUFFER" ) ) ;
-                        }
-
-                        for( auto& var : c.datas )
-                        {
-                            render_data_t::data_variable_t dv ;
-                            dv.ivar = vs->data_variable( var.name, var.t, var.ts ) ;
-                            dv.sib = natus::graphics::size_of( var.t ) * natus::graphics::size_of( var.ts ) ;
-                            dv.name = var.name ;
-                            dv.t = var.t ;
-                            dv.ts = var.ts ;
-                            cb.data_variables.emplace_back( dv ) ;
-                        }
-
-                        cbs.emplace_back( std::move( cb ) ) ;
-                    }
-                    rd.var_sets_data_vs.emplace_back( std::make_pair( vs, std::move( cbs ) ) ) ;
-                }
-
-                // gs cbuffers
-                {
-                    this_t::render_data_t::cbuffers_t cbs ;
-
-                    for( auto& c : shd.ps_cbuffers )
-                    {
-                        this_t::render_data_t::cbuffer_t cb ;
-                        cb.mem = natus::memory::global_t::alloc_raw< uint8_t >( c.sib, "[d3d11] : pixel shader cbuffer variable" ) ;
-                        cb.slot = c.slot ;
-
-                        D3D11_BUFFER_DESC bd = { } ;
-                        bd.Usage = D3D11_USAGE_DEFAULT ;
-                        bd.ByteWidth = UINT( c.sib ) ;
-                        bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER ;
-                        bd.CPUAccessFlags = 0 ;
-
-                        D3D11_SUBRESOURCE_DATA InitData = { } ;
-                        InitData.pSysMem = cb.mem ;
-                        auto const hr = _ctx->dev()->CreateBuffer( &bd, &InitData, cb.ptr ) ;
-                        if( FAILED( hr ) )
-                        {
-                            natus::log::global_t::error( natus_log_fn( "D3D11_BIND_CONSTANT_BUFFER" ) ) ;
-                        }
-
-                        for( auto& var : c.datas )
-                        {
-                            render_data_t::data_variable_t dv ;
-                            dv.ivar = vs->data_variable( var.name, var.t, var.ts ) ;
-                            dv.sib = natus::graphics::size_of( var.t ) * natus::graphics::size_of( var.ts ) ;
-                            dv.name = var.name ;
-                            dv.t = var.t ;
-                            dv.ts = var.ts ;
-                            cb.data_variables.emplace_back( dv ) ;
-                        }
-
-                        cbs.emplace_back( std::move( cb ) ) ;
-                    }
-
-                    rd.var_sets_data_ps.emplace_back( std::make_pair( vs, std::move( cbs ) ) ) ;
-                }
-                #endif
             } ) ;
         }
 
