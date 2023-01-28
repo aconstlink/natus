@@ -3080,7 +3080,7 @@ struct gl4_backend::pimpl
             {
                 auto & tfd = _feedbacks[ tfid ] ;
 
-                #if 1 // this is gl 3.x
+                #if 0 // this is gl 3.x
                 GLuint num_prims = 0 ;
                 {
                     glGetQueryObjectuiv( tfd.read_buffer().qid, GL_QUERY_RESULT, &num_prims ) ;
