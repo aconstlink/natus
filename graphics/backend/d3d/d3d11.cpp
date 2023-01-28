@@ -735,20 +735,18 @@ struct d3d11_backend::pimpl
         {
             UINT slot ;
             void_ptr_t mem = nullptr ;
-            ID3D11Buffer * ptr = nullptr ;
+            guard<ID3D11Buffer> ptr ;
             data_variables_t data_variables ;
-            // textures
-            // ...
         } ;
         natus_typedef( cbuffer ) ;
         natus_typedefs( natus::ntd::vector< cbuffer_t >, cbuffers ) ;
 
         typedef natus::ntd::vector< std::pair< natus::graphics::variable_set_res_t,
-            cbuffers_t > > variable_sets_to_cbuffers_t ;
+            cbuffers_t > > varsets_to_cbuffers_t ;
 
-        variable_sets_to_cbuffers_t var_sets_data_vs ;
-        variable_sets_to_cbuffers_t var_sets_data_gs ;
-        variable_sets_to_cbuffers_t var_sets_data_ps ;
+        varsets_to_cbuffers_t var_sets_data_vs ;
+        varsets_to_cbuffers_t var_sets_data_gs ;
+        varsets_to_cbuffers_t var_sets_data_ps ;
 
         //
         ///////////////////// END: Cbuffer variables <-> normal data variables
@@ -778,6 +776,7 @@ struct d3d11_backend::pimpl
             var_sets_buffers_ps = std::move( rhv.var_sets_buffers_ps ) ;
             var_sets_buffers_so_ps = std::move( rhv.var_sets_buffers_so_ps ) ;
             var_sets_data_vs = std::move( rhv.var_sets_data_vs ) ;
+            var_sets_data_gs = std::move( rhv.var_sets_data_gs ) ;
             var_sets_data_ps = std::move( rhv.var_sets_data_ps ) ;
         }
         ~render_data( void_t ) noexcept
@@ -829,23 +828,23 @@ struct d3d11_backend::pimpl
             var_sets_buffers_ps.clear() ;
             var_sets_buffers_so_ps.clear() ;
 
-            for( auto & d : var_sets_data_vs )
             {
-                for( auto & d2 : d.second )
+                auto clear_funk = [&]( this_t::render_data::varsets_to_cbuffers_t & datum )
                 {
-                    natus::memory::global_t::dealloc_raw( d2.mem ) ;
-                }
+                    for( auto & d : datum )
+                    {
+                        for( auto & d2 : d.second )
+                        {
+                            natus::memory::global_t::dealloc_raw( d2.mem ) ;
+                            d2.ptr = guard<ID3D11Buffer>() ; ;
+                        }
+                    }
+                    datum.clear() ;
+                } ;
+                clear_funk( var_sets_data_vs ) ;
+                clear_funk( var_sets_data_gs ) ;
+                clear_funk( var_sets_data_ps ) ;
             }
-            var_sets_data_vs.clear() ;
-
-            for( auto & d : var_sets_data_ps )
-            {
-                for( auto & d2 : d.second )
-                {
-                    natus::memory::global_t::dealloc_raw( d2.mem ) ;
-                }
-            }
-            var_sets_data_ps.clear() ;
         }
 
         size_t link_geometry( size_t const id ) noexcept
@@ -2683,6 +2682,30 @@ public: // functions
             }
         }
         
+        #if 1
+        {
+            auto release_funk = [&]( this_t::render_data::varsets_to_cbuffers_t & datum )
+            {
+                for( auto& vsd : datum )
+                {
+                    for( auto& b : vsd.second )
+                    {
+                        if( b.mem != nullptr )
+                        {
+                            natus::memory::global_t::dealloc_raw( b.mem ) ;
+                            b.mem = nullptr ;
+                        }
+                        b.ptr = guard<ID3D11Buffer>() ;
+                    }
+                    vsd.second.clear() ;
+                }
+                datum.clear() ;
+            } ;
+            release_funk( rd.var_sets_data_vs ) ;
+            release_funk( rd.var_sets_data_gs ) ;
+            release_funk( rd.var_sets_data_ps ) ;
+        }
+        #else        
         // release all cbuffers
         {
             for( auto& vsd : rd.var_sets_data_vs )
@@ -2728,6 +2751,7 @@ public: // functions
             }
             rd.var_sets_data_ps.clear() ;
         }
+        #endif
 
         {
             rd.var_sets_imgs_ps.clear() ;
@@ -2743,9 +2767,55 @@ public: // functions
 
         // constant buffer mapping
         {
+            auto var_funk = []( ID3D11Device * dev, natus::graphics::variable_set_res_t vs, 
+                this_t::shader_data_t::cbuffers_ref_t cbuffers, this_t::render_data::varsets_to_cbuffers_t & vtcb )
+            {
+                this_t::render_data_t::cbuffers_t cbs ;
+
+                for( auto& c : cbuffers )
+                {
+                    this_t::render_data_t::cbuffer_t cb ;
+                    cb.mem = natus::memory::global_t::alloc_raw< uint8_t >( c.sib, "[d3d11] : vertex shader cbuffer variable" ) ;
+                    cb.slot = c.slot ;
+
+                    D3D11_BUFFER_DESC bd = { } ;
+                    bd.Usage = D3D11_USAGE_DEFAULT ;
+                    bd.ByteWidth = UINT( c.sib ) ;
+                    bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER ;
+                    bd.CPUAccessFlags = 0 ;
+
+                    D3D11_SUBRESOURCE_DATA InitData = { } ;
+                    InitData.pSysMem = cb.mem ;
+                    auto const hr = dev->CreateBuffer( &bd, &InitData, cb.ptr ) ;
+                    if( FAILED( hr ) )
+                    {
+                        natus::log::global_t::error( natus_log_fn( "D3D11_BIND_CONSTANT_BUFFER" ) ) ;
+                    }
+
+                    for( auto& var : c.datas )
+                    {
+                        render_data_t::data_variable_t dv ;
+                        dv.ivar = vs->data_variable( var.name, var.t, var.ts ) ;
+                        dv.sib = natus::graphics::size_of( var.t ) * natus::graphics::size_of( var.ts ) ;
+                        dv.name = var.name ;
+                        dv.t = var.t ;
+                        dv.ts = var.ts ;
+                        cb.data_variables.emplace_back( dv ) ;
+                    }
+
+                    cbs.emplace_back( std::move( cb ) ) ;
+                }
+                vtcb.emplace_back( std::make_pair( vs, std::move( cbs ) ) ) ;
+            } ;
+
             this_t::shader_data_ref_t shd = shaders[ rd.shd_id ] ;
             rc.for_each( [&] ( size_t const /*i*/, natus::graphics::variable_set_res_t vs )
             {
+                #if 1
+                var_funk( _ctx->dev(), vs, shd.vs_cbuffers, rd.var_sets_data_vs ) ;
+                var_funk( _ctx->dev(), vs, shd.gs_cbuffers, rd.var_sets_data_gs ) ;
+                var_funk( _ctx->dev(), vs, shd.ps_cbuffers, rd.var_sets_data_ps ) ;
+                #else
                 {
                     this_t::render_data_t::cbuffers_t cbs ;
 
@@ -2763,7 +2833,7 @@ public: // functions
 
                         D3D11_SUBRESOURCE_DATA InitData = { } ;
                         InitData.pSysMem = cb.mem ;
-                        auto const hr = _ctx->dev()->CreateBuffer( &bd, &InitData, &cb.ptr ) ;
+                        auto const hr = _ctx->dev()->CreateBuffer( &bd, &InitData, cb.ptr ) ;
                         if( FAILED( hr ) )
                         {
                             natus::log::global_t::error( natus_log_fn( "D3D11_BIND_CONSTANT_BUFFER" ) ) ;
@@ -2803,7 +2873,7 @@ public: // functions
 
                         D3D11_SUBRESOURCE_DATA InitData = { } ;
                         InitData.pSysMem = cb.mem ;
-                        auto const hr = _ctx->dev()->CreateBuffer( &bd, &InitData, &cb.ptr ) ;
+                        auto const hr = _ctx->dev()->CreateBuffer( &bd, &InitData, cb.ptr ) ;
                         if( FAILED( hr ) )
                         {
                             natus::log::global_t::error( natus_log_fn( "D3D11_BIND_CONSTANT_BUFFER" ) ) ;
@@ -2825,6 +2895,7 @@ public: // functions
 
                     rd.var_sets_data_ps.emplace_back( std::make_pair( vs, std::move( cbs ) ) ) ;
                 }
+                #endif
             } ) ;
         }
 
@@ -3282,7 +3353,7 @@ public: // functions
             
             for( auto & cb : rnd.var_sets_data_vs[ varset_id ].second )
             {
-                ctx->VSSetConstantBuffers( cb.slot, 1, &cb.ptr ) ;
+                ctx->VSSetConstantBuffers( cb.slot, 1, cb.ptr ) ;
             }
 
             for( auto& buf : rnd.var_sets_buffers_vs[ varset_id ].second )
@@ -3309,7 +3380,7 @@ public: // functions
         {
             for( auto& cb : rnd.var_sets_data_ps[ varset_id ].second )
             {
-                ctx->PSSetConstantBuffers( cb.slot, 1, &cb.ptr ) ;
+                ctx->PSSetConstantBuffers( cb.slot, 1, cb.ptr ) ;
             }
 
             for( auto& img : rnd.var_sets_imgs_ps[ varset_id ].second )
