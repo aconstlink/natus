@@ -808,7 +808,7 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
             text << "#version 400 core" << " // " << genable.config.name << std::endl << std::endl ;
             break ;
         case natus::nsl::api_type::es3:
-            text << "#version 300 es" << std::endl ;
+            text << "#version 320 es" << std::endl ;
             text << "precision mediump int ;" << std::endl;
             text << "precision mediump float ;" << std::endl ;
             
@@ -983,7 +983,7 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
                 // no intput interface block in the vertex shader
                 if( sht_cur != natus::nsl::shader_type::vertex_shader )
                 {
-                    text << "} input" << (sht_cur == natus::nsl::shader_type::geometry_shader ? "[] " : " ") << ";" << std::endl << std::endl ;
+                    text << "} stage_in" << (sht_cur == natus::nsl::shader_type::geometry_shader ? "[] " : " ") << ";" << std::endl << std::endl ;
                 }
                 else text << std::endl ;
             }
@@ -1028,16 +1028,13 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
                         layloc = "layout( location = " + std::to_string( layloc_id++ ) + " ) " ;
                     }
 
-                    // no output interface block in the fragment shader
-                    if( sht_cur == natus::nsl::shader_type::pixel_shader) text << "out " ;
-
-                    text << layloc << " " << type_ << " " << name << " ; " << std::endl ;
+                    text << layloc << "out " << type_ << " " << name << " ; " << std::endl ;
                 }
 
                 // no output interface block in the fragment shader
                 if( sht_cur != natus::nsl::shader_type::pixel_shader )
                 {
-                    text << "} output ;" << std::endl << std::endl ;
+                    text << "} stage_out ;" << std::endl << std::endl ;
                 }
                 else text << std::endl ;
             }
@@ -1195,14 +1192,14 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
 
                 if( v.fq == natus::nsl::flow_qualifier::in )
                 {
-                    natus::ntd::string_t const iblock_name = sht_cur!=natus::nsl::shader_type::vertex_shader ? "input$1." : "" ;
+                    natus::ntd::string_t const iblock_name = sht_cur!=natus::nsl::shader_type::vertex_shader ? "stage_in$1." : "" ;
 
                     std::regex rex( "in *(\\[ *[0-9]*[a-z]* *\\])? *\\." + v.old_name ) ;
                     shd = std::regex_replace( shd, rex, iblock_name + v.new_name ) ; 
                 }
                 else if( v.fq == natus::nsl::flow_qualifier::out )
                 {
-                    natus::ntd::string_t const iblock_name = sht_cur!=natus::nsl::shader_type::pixel_shader ? "output." : "" ;
+                    natus::ntd::string_t const iblock_name = sht_cur!=natus::nsl::shader_type::pixel_shader ? "stage_out." : "" ;
 
                     std::regex rex( "out\\." + v.old_name ) ;
                     shd = std::regex_replace( shd, rex, iblock_name + v.new_name ) ; 
@@ -1243,6 +1240,7 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
 
     code.api = type ;
 
+    natus::log::global_t::status(code.shader) ;
     //ret.emplace_back( std::move( code ) ) ;
     return std::move( code ) ;
 
