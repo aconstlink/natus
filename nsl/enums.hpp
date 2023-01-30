@@ -263,6 +263,7 @@ namespace natus
             case natus::nsl::binding::vertex_id: 
             case natus::nsl::binding::primitive_id:
             case natus::nsl::binding::instance_id: return natus::nsl::flow_qualifier::local ;
+            default: break ;
             }
             return fq ;
         }

@@ -17,7 +17,7 @@ namespace natus
             virtual void_t release( void_t ) noexcept override {}
             virtual void_t start( void_t ) noexcept override {} ;
             virtual void_t stop( void_t ) noexcept override {} ;
-            virtual bool_t capture( natus::ntd::vector< float_t > & samples ) noexcept override { return true ; }
+            virtual bool_t capture( natus::ntd::vector< float_t > & /*samples*/ ) noexcept override { return true ; }
         
         };
         natus_res_typedef( null_audio_capture_helper ) ;

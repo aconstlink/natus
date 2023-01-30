@@ -102,7 +102,7 @@ namespace natus
 
         static natus::ntd::string_t perform_repl( natus::ntd::string_t s, repl_syms_cref_t repls ) noexcept
         {
-            if( s.empty() ) return std::move( s ) ;
+            if( s.empty() ) return s ;
 
             for( auto const& repl : repls )
             {
@@ -126,8 +126,8 @@ namespace natus
                     size_t beg = p0 + repl.what.size() + 3 ;
                     for( size_t i = beg; i < s.size(); ++i )
                     {
-                        if( level == 0 && s[ i ] == ',' ||
-                            level == 0 && s[ i ] == ')' )
+                        if( (level == 0 && s[ i ] == ',') ||
+                            (level == 0 && s[ i ] == ')') )
                         {
                             if( i > beg ) args.emplace_back( s.substr( beg, ( i - 1 ) - beg ) ) ;
                             beg = i + 2 ;

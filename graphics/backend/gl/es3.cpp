@@ -2502,7 +2502,7 @@ natus::graphics::result es3_backend::configure( natus::graphics::array_object_re
     return natus::graphics::result::ok ;
 }
 
-natus::graphics::result es3_backend::configure( natus::graphics::streamout_object_res_t obj ) noexcept 
+natus::graphics::result es3_backend::configure( natus::graphics::streamout_object_res_t /*obj*/ ) noexcept 
 {
     return natus::graphics::result::ok ;
 }

@@ -172,7 +172,7 @@ namespace natus
                     return false ;
                 }
 
-                static bool_t convert_key_to_special( bool_t const alt, bool_t const shift, ascii_key const k, char_ref_t c ) noexcept
+                static bool_t convert_key_to_special( bool_t const /*alt*/, bool_t const /*shift*/, ascii_key const k, char_ref_t c ) noexcept
                 {
                     if( k == ascii_key::space ) 
                     {

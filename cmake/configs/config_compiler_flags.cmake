@@ -32,7 +32,7 @@ elseif( NATUS_COMPILER_GNU )
 
     message( STATUS "[compiler] : GNU Compiler Flags") 
 
-    set( NATUS_UNWANTED_COMPILER_OPTIONS "-Wno-unused-function" )
+    set( NATUS_UNWANTED_COMPILER_OPTIONS "-Wno-unused-function -Wno-pessimizing-move -Wno-redundant-move " )
 
     set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${NATUS_UNWANTED_COMPILER_OPTIONS}")
     set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${NATUS_UNWANTED_COMPILER_OPTIONS}")

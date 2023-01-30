@@ -32,7 +32,7 @@ namespace natus
             }
 
             template< size_t s >
-            static void_t for_all( std::array< T, s > & points, swap_funk_t funk = [](size_t const a, size_t const b){} )
+            static void_t for_all( std::array< T, s > & points, swap_funk_t funk = [](size_t const /*a*/, size_t const /*b*/){} )
             {
                 return this_t::the_sort<s>( 0, points.size(), points, funk ) ;
             }
