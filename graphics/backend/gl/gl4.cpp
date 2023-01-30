@@ -31,10 +31,10 @@ struct gl4_backend::pimpl
         bool_t valid = false ;
         natus::ntd::string_t name ;
 
-        static const size_t max_buffers = 4 ;
-
         struct buffer
         {
+            static constexpr size_t max_buffers = 4 ;
+
             size_t gids[max_buffers] = { size_t(-1), size_t(-1), size_t(-1), size_t(-1) }  ;
 
             // buffer ids
@@ -80,7 +80,7 @@ struct gl4_backend::pimpl
 
         void_t swap_index( void_t ) noexcept
         {
-            _ridx = ++_ridx % 2 ;
+            _ridx = (_ridx+1) & 1 ;
         }
 
         size_t write_index( void_t ) const noexcept
@@ -1878,7 +1878,7 @@ struct gl4_backend::pimpl
             for( size_t i=0; i<config.tf_ids.size(); ++i )
             {
                 auto & tfd = _feedbacks[ config.tf_ids[i] ] ;
-                for( size_t j=0; j<tfd.max_buffers; ++j )
+                for( size_t j=0; j<tf_data::buffer::max_buffers; ++j )
                 {
                     if( tfd._buffers[0].gids[j] == size_t(-1) ) break ;
                     this_t::bind_attributes( shd, _geometries[ tfd._buffers[0].gids[j] ] ) ;
@@ -2292,8 +2292,6 @@ struct gl4_backend::pimpl
     {
         auto& config = _renders[ id ] ;
 
-        this_t::shader_data_ref_t shd = _shaders[ config.shd_id ] ;
-
         this_t::connect( config, vs ) ;
 
         return true ;
@@ -2441,7 +2439,6 @@ struct gl4_backend::pimpl
     {
         oid = determine_oid( obj.name(), _arrays ) ;
 
-        bool_t error = false ;
         auto & data = _arrays[ oid ] ;
 
         // buffer
@@ -2449,7 +2446,7 @@ struct gl4_backend::pimpl
         {
             GLuint id = GLuint( -1 ) ;
             glGenBuffers( 1, &id ) ;
-            error = natus::ogl::error::check_and_log( 
+            natus::ogl::error::check_and_log( 
                 natus_log_fn( "[construct_array_data] : glGenBuffers" ) ) ;
 
             data.buf_id = id ;
@@ -2460,7 +2457,7 @@ struct gl4_backend::pimpl
         {
             GLuint id = GLuint( -1 ) ;
             glGenTextures( 1, &id ) ;
-            error = natus::ogl::error::check_and_log( 
+            natus::ogl::error::check_and_log( 
                 natus_log_fn( "[construct_array_data] : glGenTextures" ) ) ;
 
             data.tex_id = id ;
@@ -2553,14 +2550,14 @@ struct gl4_backend::pimpl
     }
 
     //****************************************************************************************
-    size_t construct_feedback( size_t oid_, natus::graphics::streamout_object_ref_t obj ) noexcept
+    size_t construct_feedback( size_t /*oid_*/, natus::graphics::streamout_object_ref_t obj ) noexcept
     {
         size_t const oid = determine_oid( obj.name(), _feedbacks ) ;
 
-        bool_t error = false ;
+        //bool_t error = false ;
         auto & data = _feedbacks[ oid ] ;
 
-        size_t const req_buffers = std::min( obj.num_buffers(), this_t::tf_data::max_buffers ) ;
+        size_t const req_buffers = std::min( obj.num_buffers(), this_t::tf_data::buffer::max_buffers ) ;
 
         // rw : read/write - ping pong buffers
         for( size_t rw=0; rw<2; ++rw )
@@ -2584,11 +2581,11 @@ struct gl4_backend::pimpl
 
             // we just allways gen max buffers tex ids
             {
-                glGenTextures( this_t::tf_data::max_buffers, buffer.tids ) ;
+                glGenTextures( this_t::tf_data::buffer::max_buffers, buffer.tids ) ;
                 natus::ogl::error::check_and_log( natus_log_fn( "glGenTextures" ) ) ;
             }
 
-            for( size_t i=req_buffers; i<this_t::tf_data::max_buffers; ++i )
+            for( size_t i=req_buffers; i<this_t::tf_data::buffer::max_buffers; ++i )
             {
                 if( buffer.gids[i] == size_t(-1) ) break ;
 
@@ -2623,7 +2620,7 @@ struct gl4_backend::pimpl
         {
             auto & buffer = d._buffers[rw] ;
 
-            for( GLuint i=0; i<tf_data_t::max_buffers; ++i )
+            for( GLuint i=0; i<tf_data_t::buffer::max_buffers; ++i )
             {
                 if( buffer.gids[i] == size_t( -1 ) ) break ;
 
@@ -2649,7 +2646,7 @@ struct gl4_backend::pimpl
 
             // release textures
             {
-                glDeleteTextures( tf_data_t::max_buffers, buffer.tids ) ;
+                glDeleteTextures( tf_data_t::buffer::max_buffers, buffer.tids ) ;
                 natus::ogl::error::check_and_log( natus_log_fn( "glDeleteTextures" ) ) ;
             }
         }
@@ -2664,8 +2661,6 @@ struct gl4_backend::pimpl
     bool_t update( size_t oid, natus::graphics::streamout_object_ref_t obj, bool_t const is_config = false ) 
     {
         auto & data = _feedbacks[ oid ] ;
-
-        size_t const ne = obj.size() ;
 
         for( size_t rw=0; rw<2; ++rw )
         {
@@ -2733,7 +2728,7 @@ struct gl4_backend::pimpl
 
             // bind buffers
             {
-                for( size_t i=0; i<tf_data::max_buffers; ++i )
+                for( size_t i=0; i<tf_data::buffer::max_buffers; ++i )
                 {
                     auto const bid = buffer.bids[ i ] ;
                     auto const sib = buffer.sibs[ i ] ;
@@ -2781,7 +2776,7 @@ struct gl4_backend::pimpl
         // bind transform feedback object and update primitive type for 
         // rendering the transform feedback data.
         {
-            for( size_t i=0; i<tf_data::max_buffers; ++i )
+            for( size_t i=0; i<tf_data::buffer::max_buffers; ++i )
             {
                 if( buffer.bids[ i ] == GLuint(-1) ) break ;
                 _geometries[buffer.gids[ i ]].pt = gdata.pt ;
@@ -3073,9 +3068,9 @@ struct gl4_backend::pimpl
         // render section
         {
             GLenum const pt = gconfig.pt ;
-            GLuint const ib = gconfig.ib_id ;
+            //GLuint const ib = gconfig.ib_id ;
             //GLuint const vb = config.geo->vb_id ;
-            
+
             if( tfid != size_t( -1 ) )
             {
                 auto & tfd = _feedbacks[ tfid ] ;

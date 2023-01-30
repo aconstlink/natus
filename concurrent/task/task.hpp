@@ -17,9 +17,6 @@ namespace natus
         {
             natus_this_typedefs( task ) ;
             typedef natus::memory::res_t< task > this_res_t ;
-
-            friend class task ;
-
         public:
 
             typedef std::function< void_t ( this_res_t ) > task_funk_t ;

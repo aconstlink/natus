@@ -16,7 +16,7 @@ namespace natus
         template< typename T >
         void_t parallel_for( natus::concurrent::range_1d< T > const& r, natus::concurrent::funk_t<T> f )
         {
-            natus_typedefs( natus::concurrent::range_1d<T>, range ) ;
+            typedef natus::concurrent::range_1d<T> range_t ;
 
             //
             // make simple for if input space is too small

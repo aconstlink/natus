@@ -97,7 +97,6 @@ void_t particle_system::update( float_t const dt ) noexcept
 
     // reorder particles
     {
-        size_t cur = 0 ;
         size_t last = _particles.size() ;
         for( size_t i=0; i<last; ++i )
         {
@@ -137,7 +136,7 @@ void_t particle_system::update( float_t const dt ) noexcept
     // value can be read elsewhere during a 
     // cycle of physics
     {
-        for( auto & p : _particles )
+        //for( auto & p : _particles )
         {
             //p.force.negate();//natus::math::vec2f_t() ;
             //p.acl = natus::math::vec2f_t() ;

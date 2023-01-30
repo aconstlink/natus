@@ -72,9 +72,7 @@ namespace natus
                 _width = rhv._width ;
                 _height = rhv._height ;
                 _depth = rhv._depth ;
-                
-                if( _data != nullptr )
-                    int bp = 0 ;
+
                 this_t::resize( _width, _height, _depth ) ;
                 std::memcpy( _data, rhv._data, this_t::sib() ) ;
 
@@ -121,8 +119,7 @@ namespace natus
                 _depth = d ;
 
                 size_t const sib = this_t::sib() ;
-                if( _data != nullptr )
-                    int bp = 0 ;
+
                 _data = natus::memory::global_t::alloc( sib, 
                     natus::memory::purpose_t( natus_log_fn( "image" ) ) ) ;
 

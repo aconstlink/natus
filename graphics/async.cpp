@@ -437,7 +437,7 @@ void_t async::system_update( void_t ) noexcept
     {
         {
             natus::concurrent::lock_guard_t lk( _configures_mtx ) ;
-            _configures_id = ++_configures_id % 2 ;
+            _configures_id = (_configures_id+1) % 2 ;
         }
 
         size_t const use_id = (_configures_id + 1) % 2 ;
@@ -455,7 +455,7 @@ void_t async::system_update( void_t ) noexcept
     {
         {
             natus::concurrent::lock_guard_t lk( _runtimes_mtx ) ;
-            _runtimes_id = ++_runtimes_id % 2 ;
+            _runtimes_id = (_runtimes_id+1) % 2 ;
         }
 
         {

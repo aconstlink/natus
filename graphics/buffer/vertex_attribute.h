@@ -78,6 +78,7 @@ namespace natus
             case natus::graphics::vertex_attribute::texcoord5: return { natus::graphics::type::tfloat, natus::graphics::type_struct::vec2 } ;
             case natus::graphics::vertex_attribute::texcoord6: return { natus::graphics::type::tfloat, natus::graphics::type_struct::vec2 } ;
             case natus::graphics::vertex_attribute::texcoord7: return { natus::graphics::type::tfloat, natus::graphics::type_struct::vec2 } ;
+                default: break ;
             }
             return { natus::graphics::type::undefined, natus::graphics::type_struct::undefined } ;
         }

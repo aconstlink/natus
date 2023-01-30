@@ -435,6 +435,7 @@ namespace natus
                         return GL_RGBA32F ;
                     default: break ;
                     }
+                    break ;
 
                 case natus::graphics::type::tchar: 
                     switch( ts ) 
@@ -443,6 +444,7 @@ namespace natus
                         return GL_RGBA8 ;
                     default: break ;
                     }
+                    break ;
 
                 case natus::graphics::type::tuchar: 
                     switch( ts ) 
@@ -451,6 +453,7 @@ namespace natus
                         return GL_RGBA8UI ;
                     default: break ;
                     }
+                    break ;
 
                 case natus::graphics::type::tuint: 
                     switch( ts ) 
@@ -459,6 +462,7 @@ namespace natus
                         return GL_RGBA32UI ;
                     default: break ;
                     }
+                    break ;
 
                 case natus::graphics::type::tint: 
                     switch( ts ) 
@@ -467,6 +471,7 @@ namespace natus
                         return GL_RGBA32I ;
                     default: break ;
                     }
+                    break ;
 
                 default: break ;
                 }

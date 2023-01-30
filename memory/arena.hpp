@@ -184,7 +184,7 @@ namespace natus
                 {
                     std::lock_guard< std::mutex > lk( page_ptr->mtx ) ;
                     page_ptr->free_elems++ ;
-                    page_ptr->free_pos = --page_ptr->free_pos ;
+                    page_ptr->free_pos = page_ptr->free_pos - 1 ;
                     page_ptr->free_ptr[ page_ptr->free_pos ] = index ;
                 }
             }
