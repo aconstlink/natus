@@ -21,7 +21,31 @@ namespace natus
                 return 0 ;
             }
 
-            static ::std::pair< natus::graphics::type, natus::graphics::type_struct >  
+            static GLenum convert_to_transform_feedback_output( natus::graphics::primitive_type const pt ) noexcept
+            {
+                switch( pt )
+                {
+                case natus::graphics::primitive_type::lines: return GL_LINES ;
+                case natus::graphics::primitive_type::triangles: return GL_TRIANGLES ;
+                case natus::graphics::primitive_type::points: return GL_POINTS ;
+                default:break ;
+                }
+                return 0 ;
+            }
+
+            static GLuint primitive_type_to_num_vertices( GLenum const pt ) noexcept
+            {
+                switch( pt )
+                {
+                case GL_LINES: return 2 ;
+                case GL_TRIANGLES: return 3 ;
+                case GL_POINTS: return 1 ;
+                default:break ;
+                }
+                return 0 ;
+            }
+
+            static std::pair< natus::graphics::type, natus::graphics::type_struct >  
                 to_type_type_struct( GLenum const e ) noexcept
             {
                 switch( e )
@@ -72,13 +96,14 @@ namespace natus
                 case GL_UNSIGNED_INT_SAMPLER_3D:
                 case GL_SAMPLER_CUBE:
                 case GL_SAMPLER_2D_SHADOW:
+                case GL_SAMPLER_BUFFER:
                 case GL_SAMPLER_2D_ARRAY:
                 case GL_INT_SAMPLER_2D_ARRAY:
                 case GL_UNSIGNED_INT_SAMPLER_2D_ARRAY: 
-                    return ::std::make_pair( natus::graphics::type::tint, natus::graphics::type_struct::vec1 ) ;
+                    return std::make_pair( natus::graphics::type::tint, natus::graphics::type_struct::vec1 ) ;
                 default: break ;
                 }
-                return ::std::make_pair( natus::graphics::type::undefined, natus::graphics::type_struct::undefined ) ;
+                return std::make_pair( natus::graphics::type::undefined, natus::graphics::type_struct::undefined ) ;
             }
         }
         namespace es3
@@ -387,6 +412,75 @@ namespace natus
                 case natus::graphics::front_face::clock_wise: return GL_CW ;
                 case natus::graphics::front_face::counter_clock_wise: return GL_CCW ;
                 default: break;
+                }
+                return GL_NONE ;
+            }
+
+            static GLenum convert_for_texture_buffer( natus::graphics::type const t, natus::graphics::type_struct const ts ) noexcept
+            {
+                switch( t )
+                {
+                case natus::graphics::type::tfloat: 
+                    switch( ts ) 
+                    {
+                    case natus::graphics::type_struct::vec4:
+                        return GL_RGBA32F ;
+                    default: break ;
+                    }
+                    break ;
+
+                case natus::graphics::type::tchar: 
+                    switch( ts ) 
+                    {
+                    case natus::graphics::type_struct::vec4:
+                        return GL_RGBA8 ;
+                    default: break ;
+                    }
+                    break ;
+
+                case natus::graphics::type::tuchar: 
+                    switch( ts ) 
+                    {
+                    case natus::graphics::type_struct::vec4:
+                        return GL_RGBA8UI ;
+                    default: break ;
+                    }
+                    break ;
+
+                case natus::graphics::type::tuint: 
+                    switch( ts ) 
+                    {
+                    case natus::graphics::type_struct::vec4:
+                        return GL_RGBA32UI ;
+                    default: break ;
+                    }
+                    break ;
+
+                case natus::graphics::type::tint: 
+                    switch( ts ) 
+                    {
+                    case natus::graphics::type_struct::vec4:
+                        return GL_RGBA32I ;
+                    default: break ;
+                    }
+                    break ;
+
+                default: break ;
+                }
+
+                return GL_NONE ;
+            }
+        }
+
+        namespace es3
+        {
+            static GLenum convert( natus::graphics::streamout_mode const sm ) noexcept
+            {
+                switch( sm ) 
+                {
+                case natus::graphics::streamout_mode::interleaved: return GL_INTERLEAVED_ATTRIBS ;
+                case natus::graphics::streamout_mode::separate: return GL_SEPARATE_ATTRIBS ;
+                default: break ;
                 }
                 return GL_NONE ;
             }

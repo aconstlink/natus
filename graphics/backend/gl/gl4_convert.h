@@ -45,7 +45,7 @@ namespace natus
                 return 0 ;
             }
 
-            static ::std::pair< natus::graphics::type, natus::graphics::type_struct >  
+            static std::pair< natus::graphics::type, natus::graphics::type_struct >  
                 to_type_type_struct( GLenum const e ) noexcept
             {
                 switch( e )
@@ -106,10 +106,10 @@ namespace natus
                 case GL_SAMPLER_2D_ARRAY:
                 case GL_INT_SAMPLER_2D_ARRAY:
                 case GL_UNSIGNED_INT_SAMPLER_2D_ARRAY: 
-                    return ::std::make_pair( natus::graphics::type::tint, natus::graphics::type_struct::vec1 ) ;
+                    return std::make_pair( natus::graphics::type::tint, natus::graphics::type_struct::vec1 ) ;
                 default: break ;
                 }
-                return ::std::make_pair( natus::graphics::type::undefined, natus::graphics::type_struct::undefined ) ;
+                return std::make_pair( natus::graphics::type::undefined, natus::graphics::type_struct::undefined ) ;
             }
         }
 
