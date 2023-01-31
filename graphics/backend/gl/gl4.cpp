@@ -2907,7 +2907,7 @@ struct gl4_backend::pimpl
                     {
                         auto var = natus::graphics::data_variable< int_t >( tex_unit ) ;
                         auto & uv = sconfig.uniforms[ item.uniform_id ] ;
-                    
+
                         uv.do_copy_funk( item.mem, &var ) ;
 
                         ++tex_unit ;
@@ -2920,9 +2920,9 @@ struct gl4_backend::pimpl
     }
 
     //****************************************************************************************
-    bool_t render( size_t const id, size_t const geo_idx = 0, bool_t feed_from_tf = false, bool_t const use_streamout_count = false,
-        size_t const varset_id = size_t(0), GLsizei const start_element = GLsizei(0), 
-        GLsizei const num_elements = GLsizei(-1) )
+    bool_t render( size_t const id, size_t const geo_idx = 0, bool_t feed_from_tf = false, 
+                   bool_t const use_streamout_count = false, size_t const varset_id = size_t(0), 
+                   GLsizei const start_element = GLsizei(0), GLsizei const num_elements = GLsizei(-1) )
     {
         this_t::render_data & config = _renders[ id ] ;
         this_t::shader_data & sconfig = _shaders[ config.shd_id ] ;
@@ -2961,7 +2961,7 @@ struct gl4_backend::pimpl
             if( natus::ogl::error::check_and_log( natus_log_fn( "glBindVertexArray" ) ) )
                 return false ;
         }
-        
+
         {
             glUseProgram( sconfig.pg_id ) ;
             if( natus::ogl::error::check_and_log( natus_log_fn( "glUseProgram" ) ) )
@@ -3048,7 +3048,7 @@ struct gl4_backend::pimpl
                         glActiveTexture( GLenum( GL_TEXTURE0 + tex_unit ) ) ;
                         natus::ogl::error::check_and_log( natus_log_fn( "glActiveTexture" ) ) ;
                         glBindTexture( GL_TEXTURE_BUFFER, tid ) ;
-                        natus::ogl::error::check_and_log( natus_log_fn( "glBindTexture" ) ) ;                        
+                        natus::ogl::error::check_and_log( natus_log_fn( "glBindTexture" ) ) ;
 
                         {
                             auto & uv = sconfig.uniforms[ item.uniform_id ] ;
@@ -3102,10 +3102,10 @@ struct gl4_backend::pimpl
                 GLsizei const ne = std::min( num_elements>=0?num_elements:max_elems, max_elems ) ;
 
                 GLenum const glt = gconfig.ib_type ;
-                
+
                 void_cptr_t offset = void_cptr_t( byte_cptr_t( nullptr ) + 
                     start_element * GLsizei( gconfig.ib_elem_sib ) ) ;
-                
+
                 glDrawElements( pt, ne, glt, offset ) ;
 
                 natus::ogl::error::check_and_log( natus_log_fn( "glDrawElements" ) ) ;
@@ -3676,8 +3676,9 @@ natus::graphics::result gl4_backend::unuse( natus::graphics::backend::unuse_type
     return natus::graphics::result::ok ;
 }
 
-//********************************************************************************************************************
-natus::graphics::result gl4_backend::push( natus::graphics::state_object_res_t obj, size_t const sid, bool_t const ) noexcept 
+//*************************************************************************************
+natus::graphics::result gl4_backend::push( natus::graphics::state_object_res_t obj, 
+               size_t const sid, bool_t const ) noexcept 
 {
     if( !obj.is_valid() )
     {
@@ -3697,15 +3698,16 @@ natus::graphics::result gl4_backend::push( natus::graphics::state_object_res_t o
     return natus::graphics::result::ok ;
 }
 
-//********************************************************************************************************************
+//*****************************************************************************************
 natus::graphics::result gl4_backend::pop( natus::graphics::backend::pop_type const ) noexcept 
 {
     _pimpl->handle_render_state( size_t( -1 ), size_t( -1 ) ) ;
     return natus::graphics::result::ok ;
 }
 
-//********************************************************************************************************************
-natus::graphics::result gl4_backend::render( natus::graphics::render_object_res_t config, natus::graphics::backend::render_detail_cref_t detail ) noexcept 
+//***************************************************************************************
+natus::graphics::result gl4_backend::render( natus::graphics::render_object_res_t config, 
+          natus::graphics::backend::render_detail_cref_t detail ) noexcept 
 { 
     natus::graphics::id_res_t id = config->get_id() ;
 
@@ -3720,19 +3722,20 @@ natus::graphics::result gl4_backend::render( natus::graphics::render_object_res_
     // @todo
     // change per object render states here.
 
-    _pimpl->render( id->get_oid( this_t::get_bid() ), detail.geo, detail.feed_from_streamout, detail.use_streamout_count,
-        detail.varset, (GLsizei)detail.start, (GLsizei)detail.num_elems ) ;
+    _pimpl->render( id->get_oid( this_t::get_bid() ), detail.geo, 
+                    detail.feed_from_streamout, detail.use_streamout_count,
+                    detail.varset, (GLsizei)detail.start, (GLsizei)detail.num_elems ) ;
 
     return natus::graphics::result::ok ;
 }
 
-//********************************************************************************************************************
+//*************************************************************************************
 void_t gl4_backend::render_begin( void_t ) noexcept 
 {
     _pimpl->begin_frame() ;
 }
 
-//********************************************************************************************************************
+//*************************************************************************************
 void_t gl4_backend::render_end( void_t ) noexcept 
 {
     _pimpl->end_frame() ;

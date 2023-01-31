@@ -2759,23 +2759,42 @@ struct es3_backend::pimpl
         return true ;
     }
 
-    //***************************************************************************************************************************************
-    bool_t render( size_t const id, size_t const geo_idx = 0, size_t const varset_id = size_t(0), GLsizei const start_element = GLsizei(0), 
-        GLsizei const num_elements = GLsizei(-1) )
+    //************************************************************************************
+    bool_t render( size_t const id, size_t const geo_idx = 0, bool_t feed_from_tf = false,
+                   bool_t const use_streamout_count = false, size_t const varset_id = size_t(0), 
+                   GLsizei const start_element = GLsizei(0), GLsizei const num_elements = GLsizei(-1) )
     {
         this_t::render_data & config = _renders[ id ] ;
         this_t::shader_data& sconfig = _shaders[ config.shd_id ] ;
 
-        if( config.geo_ids.size() <= geo_idx ) 
+        size_t gid = size_t(-1) ;
+        size_t tfid = size_t( -1 ) ;
+
+        // #1 : check feedback geometry
+        if( (feed_from_tf || use_streamout_count) && config.tf_ids.size() != 0 )
         {
-            natus::log::global_t::error( "[es3::render] : used geometry idx invalid because exceeds array size for render object : " + config.name ) ;
-            return false ;
+            tfid = config.tf_ids[0] ;
+            if( feed_from_tf )
+                gid = _feedbacks[tfid].read_buffer().gids[0] ;
+            else
+                gid = config.geo_ids[ geo_idx ] ;
+        }
+        // #2 : check geometry 
+        else if( config.geo_ids.size() > geo_idx )
+        {
+            gid = config.geo_ids[ geo_idx ] ;
+        }
+        // #3 : otherwise we can not render
+        else
+        {
+            natus::log::global_t::error( "[gl3::render] : used geometry idx invalid because" 
+                "exceeds array size for render object : " + config.name ) ;
+                return false ;
         }
 
         this_t::geo_data& gconfig = _geometries[ config.geo_ids[geo_idx] ] ;
 
-        if( !sconfig.is_compilation_ok )
-            return false ;
+        if( !sconfig.is_compilation_ok ) return false ;
 
         {
             glBindVertexArray( gconfig.va_id ) ;
@@ -2831,6 +2850,50 @@ struct es3_backend::pimpl
                     ++tex_unit ;
                 }
             }
+
+            // array data vars
+#if 0 // not yet ready
+            {
+                auto & varset = config.var_sets_array[ varset_id ] ;
+                for( auto & item : varset.second )
+                {
+                    glActiveTexture( GLenum( GL_TEXTURE0 + tex_unit ) ) ;
+                    natus::ogl::error::check_and_log( natus_log_fn( "glActiveTexture" ) ) ;
+                    glBindTexture( GL_TEXTURE_BUFFER, item.tex_id ) ;
+                    natus::ogl::error::check_and_log( natus_log_fn( "glBindTexture" ) ) ;
+
+                    {
+                        auto & uv = sconfig.uniforms[ item.uniform_id ] ;
+                        uv.do_uniform_funk( item.mem ) ;
+                    }
+
+                    ++tex_unit ;
+                }
+            }
+#endif
+            // transform feedback as TBO
+#if 0 // not yet ready
+            {
+                auto & varset = config.var_sets_streamout[ varset_id ] ;
+                for( auto & item : varset.second )
+                {
+                    auto const & tfd = _feedbacks[ item.so_id ] ;
+                    GLuint const tid = item.tex_id[tfd.read_index()] ;
+
+                    glActiveTexture( GLenum( GL_TEXTURE0 + tex_unit ) ) ;
+                    natus::ogl::error::check_and_log( natus_log_fn( "glActiveTexture" ) ) ;
+                    glBindTexture( GL_TEXTURE_BUFFER, tid ) ;
+                    natus::ogl::error::check_and_log( natus_log_fn( "glBindTexture" ) ) ;
+
+                    {
+                        auto & uv = sconfig.uniforms[ item.uniform_id ] ;
+                        uv.do_uniform_funk( item.mem ) ;
+                    }
+
+                    ++tex_unit ;
+                }
+            }
+#endif
         }
 
         // render section
@@ -2839,16 +2902,16 @@ struct es3_backend::pimpl
             //GLuint const ib = gconfig.ib_id ;
             //GLuint const vb = config.geo->vb_id ;
 
-            if( gconfig.num_elements_ib )
+            if( gconfig.num_elements_ib > 0 )
             {
                 GLsizei const max_elems = GLsizei( gconfig.num_elements_ib ) ;
                 GLsizei const ne = std::min( num_elements>=0?num_elements:max_elems, max_elems ) ;
 
                 GLenum const glt = gconfig.ib_type ;
-                
+
                 void_cptr_t offset = void_cptr_t( byte_cptr_t( nullptr ) + 
                     start_element * GLsizei( gconfig.ib_elem_sib ) ) ;
-                
+
                 glDrawElements( pt, ne, glt, offset ) ;
 
                 natus::es::error::check_and_log( natus_log_fn( "glDrawElements" ) ) ;
@@ -2856,7 +2919,7 @@ struct es3_backend::pimpl
             else
             {
                 GLsizei const max_elems = GLsizei( gconfig.num_elements_vb ) ;
-                GLsizei const ne = std::max( 0, std::min( num_elements, max_elems ) ) ;
+                GLsizei const ne = std::min( num_elements>=0?num_elements:max_elems, max_elems ) ;
 
                 glDrawArrays( pt, start_element, ne ) ;
 
@@ -3369,8 +3432,9 @@ natus::graphics::result es3_backend::pop( natus::graphics::backend::pop_type con
     return natus::graphics::result::ok ;
 }
 
-//********************************************************************************************************************
-natus::graphics::result es3_backend::render( natus::graphics::render_object_res_t config, natus::graphics::backend::render_detail_cref_t detail ) noexcept 
+//***********************************************************************************************
+natus::graphics::result es3_backend::render( natus::graphics::render_object_res_t config, 
+         natus::graphics::backend::render_detail_cref_t detail ) noexcept 
 { 
     natus::graphics::id_res_t id = config->get_id() ;
 
@@ -3382,7 +3446,9 @@ natus::graphics::result es3_backend::render( natus::graphics::render_object_res_
         return natus::graphics::result::failed ;
     }
 
-    _pimpl->render( id->get_oid( this_t::get_bid()), detail.geo, detail.varset, (GLsizei)detail.start, (GLsizei)detail.num_elems ) ;
+    _pimpl->render( id->get_oid( this_t::get_bid()), detail.geo,
+                    detail.feed_from_streamout, detail.use_streamout_count,
+                    detail.varset, (GLsizei)detail.start, (GLsizei)detail.num_elems ) ;
 
     return natus::graphics::result::ok ;
 }
