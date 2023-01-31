@@ -1386,7 +1386,7 @@ struct gl4_backend::pimpl
         GLenum gl_attrib_type ;
 
         natus::memory::malloc_guard<char> buffer( name_length ) ;
-        
+
         for( GLint i = 0; i < num_active_attributes; ++i )
         {
             glGetActiveAttrib( program_id, i, name_length, 0, 
@@ -1406,7 +1406,7 @@ struct gl4_backend::pimpl
             vd.name = ::std::move( variable_name ) ;
             vd.loc = location_id ;
             vd.type = gl_attrib_type ;
-            
+
             {
                 natus::graphics::vertex_attribute va = natus::graphics::vertex_attribute::undefined ;
                 auto const res = config.find_vertex_input_binding_by_name( vd.name, va ) ;
@@ -1593,7 +1593,7 @@ struct gl4_backend::pimpl
         {
             GLuint id = GLuint( -1 ) ;
             glGenTextures( 1, &id ) ;
-            natus::ogl::error::check_and_log( natus_log_fn( "glGenSamplers" ) ) ;
+            natus::ogl::error::check_and_log( natus_log_fn( "glGenTextures" ) ) ;
 
             _images[ i ].tex_id = id ;
         }
@@ -1656,24 +1656,33 @@ struct gl4_backend::pimpl
 
         // !!! must be done pre-link !!!
         // set transform feedback varyings
-        if( sc.get_num_output_bindings() != 0 && sc.get_streamout_mode() != natus::graphics::streamout_mode::unknown )
+        if( (sc.get_num_output_bindings() != 0) && 
+            (sc.get_streamout_mode() != natus::graphics::streamout_mode::unknown) )
         {
-            sconfig.output_names = (char const **)natus::memory::global_t::alloc_raw<char *>( sc.get_num_output_bindings() ) ;
+            sconfig.output_names = (char const **)natus::memory::global_t::
+                alloc_raw<char *>( sc.get_num_output_bindings() ) ;
+
             sc.for_each_vertex_output_binding( [&]( size_t const i,
-                natus::graphics::vertex_attribute const va, natus::graphics::ctype const, natus::ntd::string_cref_t name )
+                natus::graphics::vertex_attribute const va, 
+                natus::graphics::ctype const, natus::ntd::string_cref_t name )
             {
                 sconfig.vertex_outputs.emplace_back( 
                     this_t::shader_data::vertex_output_binding { va, name } ) ;
                 sconfig.output_names[i] = name.c_str() ;
             } ) ;
 
-            // the mode interleaved or separate depends on the number of buffers in the streamout object. So if a streamout
-            // object is used, the engine needs to relink this shader based on the number of buffers attached to the streamout
+            // the mode interleaved or separate depends on the number of 
+            // buffers in the streamout object. So if a streamout
+            // object is used, the engine needs to relink this shader 
+            // based on the number of buffers attached to the streamout
             // object.
             GLenum const mode = natus::graphics::gl3::convert( sc.get_streamout_mode() ) ;
-            glTransformFeedbackVaryings( sconfig.pg_id, GLsizei( sc.get_num_output_bindings() ), sconfig.output_names, mode ) ;
+            glTransformFeedbackVaryings( sconfig.pg_id, GLsizei( sc.get_num_output_bindings() ), 
+                                         sconfig.output_names, mode ) ;
+
             natus::ogl::error::check_and_log( natus_log_fn( "glTransformFeedbackVaryings" ) ) ;
-            natus::log::global_t::status( mode == GL_NONE, "Did you miss to set the streamout mode in the shader object?" ) ;
+            natus::log::global_t::status( mode == GL_NONE, 
+                            "Did you miss to set the streamout mode in the shader object?" ) ;
 
             natus::memory::global_t::dealloc( sconfig.output_names ) ;
             sconfig.output_names = nullptr ;
@@ -1803,7 +1812,7 @@ struct gl4_backend::pimpl
                 {
                     return d.name == rc.get_geometry(i) ;
                 } ) ;
-            
+
                 if( iter == _geometries.end() )
                 {
                     natus::log::global_t::warning( natus_log_fn(
@@ -1812,7 +1821,7 @@ struct gl4_backend::pimpl
                 }
 
                 config.geo_ids.emplace_back( std::distance( _geometries.begin(), iter ) ) ;
-                
+
                 // add this render data id to the new geometry
                 _geometries[ config.geo_ids.back() ].add_render_data_id( id ) ;
             }
@@ -1860,7 +1869,7 @@ struct gl4_backend::pimpl
 
             config.shd_id = std::distance( _shaders.begin(), iter ) ;
         }
-        
+
         {
             this_t::shader_data_ref_t shd = _shaders[ config.shd_id ] ;
 

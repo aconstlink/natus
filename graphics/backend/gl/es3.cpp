@@ -1091,6 +1091,42 @@ struct es3_backend::pimpl
             }
         }
 
+        // geometry shader
+        if( ss.has_geometry_shader() )
+        {
+            GLuint id = _shaders[ oid ].gs_id ;
+
+            if( id == GLuint(-1) )
+            {
+                id = glCreateShader( GL_GEOMETRY_SHADER ) ;
+                natus::es::error::check_and_log(
+                    natus_log_fn( "Geometry Shader creation" ) ) ;
+
+                _shaders[ oid ].gs_id = id ;
+            }
+
+            GLuint const pid = _shaders[ oid ].pg_id ;
+
+            glAttachShader( pid, id ) ;
+            natus::es::error::check_and_log(
+                natus_log_fn( "Attaching geometry shader" ) ) ;
+
+            // check max output vertices
+            {
+                GLint max_out = 0 ;
+                glGetIntegerv( GL_MAX_GEOMETRY_OUTPUT_VERTICES, &max_out ) ;
+                natus::es::error::check_and_log(
+                    natus_log_fn( "Geometry Shader Max Output Vertices" ) ) ;
+                ( void_t ) max_out ;
+            }
+        }
+        else if( _shaders[ oid ].gs_id != GLuint(-1) )
+        {
+            glDeleteShader( _shaders[ oid ].gs_id ) ;
+            natus::es::error::check_and_log( natus_log_fn( "glDeleteShader" ) ) ;
+            _shaders[ oid ].gs_id = GLuint( -1 ) ;
+        }
+
         // pixel shader
         if( ss.has_pixel_shader() )
         {
@@ -1170,7 +1206,7 @@ struct es3_backend::pimpl
         return true ;
     }
 
-    //***************************************************************************************************************************************
+    //*******************************************************************************
     void_t detach_shaders( GLuint const program_id )
     {
         GLsizei count = 0 ;
@@ -1186,7 +1222,7 @@ struct es3_backend::pimpl
         }
     }
 
-    //***************************************************************************************************************************************
+    //*********************************************************************************
     void_t delete_all_variables( this_t::shader_data & config )
     {
         config.vertex_inputs.clear() ;
@@ -1199,7 +1235,7 @@ struct es3_backend::pimpl
         config.uniforms.clear() ;
     }
 
-    //***************************************************************************************************************************************
+    //*********************************************************************************
     bool_t compile_shader( GLuint const id, natus::ntd::string_cref_t code )
     {
         if( code.empty() ) return true ;
@@ -1250,7 +1286,7 @@ struct es3_backend::pimpl
         return true ;
     }
 
-    //***************************************************************************************************************************************
+    //******************************************************************************
     bool_t link( GLuint const program_id )
     {
         glLinkProgram( program_id ) ;
@@ -1291,7 +1327,7 @@ struct es3_backend::pimpl
         return false ;
     }
 
-    //***************************************************************************************************************************************
+    //*******************************************************************************
     void_t post_link_attributes( this_t::shader_data & config )
     {
         GLuint const program_id = config.pg_id ;
@@ -1346,7 +1382,7 @@ struct es3_backend::pimpl
         }
     }
 
-    //***************************************************************************************************************************************
+    //**************************************************************************************
     bool_t bind_attributes( this_t::shader_data & sconfig, this_t::geo_data & gconfig )
     {
         // bind vertex array object
@@ -1384,6 +1420,7 @@ struct es3_backend::pimpl
         GLuint uiBegin = 0 ;
         GLuint uiOffset = 0 ;
 
+        GLuint dummy_loc = 0 ;
         for( auto & e : gconfig.elements )
         {
             uiBegin += uiOffset ;
@@ -1395,19 +1432,29 @@ struct es3_backend::pimpl
                 return av.va == e.va ;
             } ) ;
 
+            GLuint loc = 0 ;
+            GLenum type = GL_NONE ;
+
             if( iter == sconfig.attributes.end() ) 
             {
-                natus::log::global_t::warning( natus_log_fn("invalid vertex attribute") ) ;
-                continue ;
+                natus::log::global_t::warning( natus_log_fn("Invalid vertex attribute. Will bind to dummy location.") ) ;
+                loc = dummy_loc++ ;
+                type = GL_FLOAT ;
             }
-            glEnableVertexAttribArray( iter->loc ) ;
+            else
+            {
+                loc = iter->loc ;
+                type = iter->type ;
+            }
+
+            glEnableVertexAttribArray( loc ) ;
             natus::es::error::check_and_log(
                 natus_log_fn( "glEnableVertexAttribArray" ) ) ;
 
             glVertexAttribPointer(
-                iter->loc,
+                loc,
                 GLint( natus::graphics::size_of(e.type_struct) ),
-                natus::ogl::complex_to_simple_type( iter->type ),
+                natus::ogl::complex_to_simple_type( type ),
                 GL_FALSE,
                 ( GLsizei ) uiStride,
                 (const GLvoid*)(size_t)uiBegin 
@@ -1419,7 +1466,7 @@ struct es3_backend::pimpl
         return true ;
     }
 
-    //***************************************************************************************************************************************
+    //*************************************************************************************
     void_t post_link_uniforms( this_t::shader_data & config )
     {
         GLuint const program_id = config.pg_id ;
@@ -1469,7 +1516,7 @@ struct es3_backend::pimpl
         }
     }
 
-    //***************************************************************************************************************************************
+    //***************************************************************************************
     size_t construct_image_config( size_t oid, natus::graphics::image_object_ref_t obj )
     {
         oid = determine_oid( obj.name(), _images ) ;
@@ -1483,7 +1530,7 @@ struct es3_backend::pimpl
         {
             GLuint id = GLuint( -1 ) ;
             glGenTextures( 1, &id ) ;
-            natus::es::error::check_and_log( natus_log_fn( "glGenSamplers" ) ) ;
+            natus::es::error::check_and_log( natus_log_fn( "glGenTextures" ) ) ;
 
             config.tex_id = id ;
         }
@@ -1504,7 +1551,7 @@ struct es3_backend::pimpl
         return oid ;
     }
 
-    //***************************************************************************************************************************************
+    //*************************************************************************************
     bool_t release_image_data( size_t const oid ) noexcept
     {
         auto & id = _images[ oid ] ;
@@ -1525,7 +1572,7 @@ struct es3_backend::pimpl
         return true ;
     }
 
-    //***************************************************************************************************************************************
+    //***********************************************************************************
     size_t construct_render_config( size_t oid, natus::graphics::render_object_ref_t obj )
     {
         oid = determine_oid( obj.name(), _renders ) ;
@@ -1534,6 +1581,8 @@ struct es3_backend::pimpl
             _renders[ oid ].name = obj.name() ;
             _renders[ oid ].var_sets_data.clear() ;
             _renders[ oid ].var_sets_texture.clear() ;
+            _renders[ oid ].var_sets_array.clear() ;
+            _renders[ oid ].var_sets_streamout.clear() ;
             _renders[ oid ].var_sets.clear() ;
 
             _renders[ oid ].geo_ids.clear();
@@ -1547,7 +1596,7 @@ struct es3_backend::pimpl
         return oid ;
     }
 
-    //***************************************************************************************************************************************
+    //******************************************************************************
     bool_t release_render_data( size_t const oid ) noexcept
     {
         auto & rd = _renders[ oid ] ;
@@ -1561,6 +1610,7 @@ struct es3_backend::pimpl
         rd.shd_id = GLuint( -1 ) ;
         rd.var_sets.clear() ;
         rd.var_sets_array.clear() ;
+        rd.var_sets_streamout.clear() ;
         rd.var_sets_data.clear() ;
         rd.var_sets_texture.clear() ;
 
@@ -1570,7 +1620,7 @@ struct es3_backend::pimpl
         return true ;
     }
 
-    //***************************************************************************************************************************************
+    //**********************************************************************************
     bool_t update( size_t const id, natus::graphics::shader_object_cref_t sc )
     {
         auto& sconfig = _shaders[ id ] ;
@@ -1582,6 +1632,40 @@ struct es3_backend::pimpl
                 sconfig.vertex_inputs.emplace_back( this_t::shader_data::vertex_input_binding 
                     { va, name } ) ;
             } ) ;
+        }
+
+        // !!! must be done pre-link !!!
+        // set transform feedback varyings
+        if( (sc.get_num_output_bindings() != 0) && 
+            (sc.get_streamout_mode() != natus::graphics::streamout_mode::unknown) )
+        {
+            sconfig.output_names = (char const **)natus::memory::global_t::
+                alloc_raw<char *>( sc.get_num_output_bindings() ) ;
+
+            sc.for_each_vertex_output_binding( [&]( size_t const i,
+                natus::graphics::vertex_attribute const va, 
+                natus::graphics::ctype const, natus::ntd::string_cref_t name )
+            {
+                sconfig.vertex_outputs.emplace_back( 
+                    this_t::shader_data::vertex_output_binding { va, name } ) ;
+                sconfig.output_names[i] = name.c_str() ;
+            } ) ;
+
+            // the mode interleaved or separate depends on the number of 
+            // buffers in the streamout object. So if a streamout
+            // object is used, the engine needs to relink this shader 
+            // based on the number of buffers attached to the streamout
+            // object.
+            GLenum const mode = natus::graphics::es3::convert( sc.get_streamout_mode() ) ;
+            glTransformFeedbackVaryings( sconfig.pg_id, GLsizei( sc.get_num_output_bindings() ), 
+                                         sconfig.output_names, mode ) ;
+
+            natus::es::error::check_and_log( natus_log_fn( "glTransformFeedbackVaryings" ) ) ;
+            natus::log::global_t::status( mode == GL_NONE, 
+                            "Did you miss to set the streamout mode in the shader object?" ) ;
+
+            natus::memory::global_t::dealloc( sconfig.output_names ) ;
+            sconfig.output_names = nullptr ;
         }
 
         // compile
@@ -1622,6 +1706,8 @@ struct es3_backend::pimpl
 
                 rd.var_sets_data.clear() ;
                 rd.var_sets_texture.clear() ;
+                rd.var_sets_array.clear() ;
+                rd.var_sets_streamout.clear() ;
 
                 auto vs = std::move( rd.var_sets ) ;
                 for( auto& item : vs )
@@ -1638,7 +1724,7 @@ struct es3_backend::pimpl
         return true ;
     }
 
-    //***************************************************************************************************************************************
+    //**************************************************************************************
     bool_t update( size_t const id, natus::graphics::render_object_ref_t rc )
     {
         auto& config = _renders[ id ] ;
@@ -1657,7 +1743,7 @@ struct es3_backend::pimpl
                 {
                     return d.name == rc.get_geometry(i) ;
                 } ) ;
-            
+
                 if( iter == _geometries.end() )
                 {
                     natus::log::global_t::warning( natus_log_fn(
@@ -1666,9 +1752,35 @@ struct es3_backend::pimpl
                 }
 
                 config.geo_ids.emplace_back( std::distance( _geometries.begin(), iter ) ) ;
-                
+
                 // add this render data id to the new geometry
                 _geometries[ config.geo_ids.back() ].add_render_data_id( id ) ;
+            }
+        }
+
+        // handle stream out links
+        {
+            // remove this render data id from the old feedback
+            for( auto tfid : config.tf_ids ) _feedbacks[ tfid ].remove_render_data_id( id ) ;
+            config.tf_ids.clear() ;
+
+            // find stream out object
+            for( size_t i=0; i<rc.get_num_streamout(); ++i )
+            {
+                auto const iter = std::find_if( _feedbacks.begin(), _feedbacks.end(),
+                    [&] ( this_t::tf_data const& d )
+                {
+                    return d.name == rc.get_streamout(i) ;
+                } ) ;
+
+                if( iter == _feedbacks.end() )
+                {
+                    natus::log::global_t::warning( natus_log_fn(
+                        "no streamout object with name [" + rc.get_streamout() + "] for render_data [" + rc.name() + "]" ) ) ;
+                    return false ;
+                }
+
+                config.tf_ids.emplace_back( std::distance( _feedbacks.begin(), iter ) ) ;
             }
         }
 
@@ -1688,13 +1800,29 @@ struct es3_backend::pimpl
 
             config.shd_id = std::distance( _shaders.begin(), iter ) ;
         }
-        
-        // for binding attributes, the shader and the geometry is required.
-        for( size_t i=0; i<config.geo_ids.size(); ++i )
+
         {
             this_t::shader_data_ref_t shd = _shaders[ config.shd_id ] ;
-            this_t::geo_data_ref_t geo = _geometries[ config.geo_ids[i] ] ;
-            this_t::bind_attributes( shd, geo ) ;
+
+            // for binding attributes, the shader and the geometry is required.
+            for( size_t i=0; i<config.geo_ids.size(); ++i )
+            {
+                this_t::geo_data_ref_t geo = _geometries[ config.geo_ids[i] ] ;
+                this_t::bind_attributes( shd, geo ) ;
+            }
+
+            // do for feedback objects
+            // for binding attributes, the shader and the geometry is required.
+            for( size_t i=0; i<config.tf_ids.size(); ++i )
+            {
+                auto & tfd = _feedbacks[ config.tf_ids[i] ] ;
+                for( size_t j=0; j<tf_data::buffer::max_buffers; ++j )
+                {
+                    if( tfd._buffers[0].gids[j] == size_t(-1) ) break ;
+                    this_t::bind_attributes( shd, _geometries[ tfd._buffers[0].gids[j] ] ) ;
+                    this_t::bind_attributes( shd, _geometries[ tfd._buffers[1].gids[j] ] ) ;
+                }
+            }
         }
 
         {
@@ -1711,7 +1839,7 @@ struct es3_backend::pimpl
         return true ;
     }
 
-    //***************************************************************************************************************************************
+    //***************************************************************************************
     void_t render_object_variable_memory( this_t::render_data & rd, this_t::shader_data & shader )
     {
         auto& config = rd ;
