@@ -19,6 +19,85 @@ struct es3_backend::pimpl
 {
     natus_this_typedefs( pimpl ) ;
 
+    //********************************************************************************
+    // transform feedback buffers
+    struct tf_data
+    {
+        natus_this_typedefs( tf_data ) ;
+
+        bool_t valid = false ;
+        natus::ntd::string_t name ;
+
+        struct buffer
+        {
+            static constexpr size_t max_buffers = 4 ;
+
+            size_t gids[max_buffers] = { size_t(-1), size_t(-1), size_t(-1), size_t(-1) }  ;
+
+            // buffer ids
+            GLuint bids[max_buffers] = { GLuint(-1), GLuint(-1), GLuint(-1), GLuint(-1) }  ;
+            GLuint sibs[max_buffers] = { 0, 0, 0, 0 } ;
+
+            // texture ids for TBOs
+            GLuint tids[max_buffers] = { GLuint(-1), GLuint(-1), GLuint(-1), GLuint(-1) }  ;
+
+            // query object id
+            GLuint qid = GLuint(-1)  ;
+
+            // transform feedback object ids
+            GLuint tfid = GLuint(-1) ;
+        };
+        buffer _buffers[2] ;
+
+        // if the tf is read and written at the 
+        // same time, this index is used for ping-ponging
+        // the id array within a buffer.
+        size_t _ridx = 0 ;
+
+        // must be derived from the geometry object
+        // that is rendered into the feedback buffer.
+        // this could be used to overwrite whats set in the 
+        // geometry data of the transform feedback buffers.
+        //GLenum pt = 0 ;
+
+        // for tf reconfig - render data ids
+        natus::ntd::vector< size_t > rd_ids ;
+        void_t remove_render_data_id( size_t const rid ) noexcept
+        {
+            if( rid == size_t( -1 ) ) return ;
+            for( auto & id : rd_ids ) if( id == rid ) { id = size_t( -1 ) ; break ; }
+        }
+
+        void_t add_render_data_id( size_t const rid ) noexcept
+        {
+            if( rid == size_t( -1 ) ) return ;
+            for( auto& id : rd_ids ) if( id == size_t( -1 ) ) { id = rid ; return ; }
+            rd_ids.push_back( rid ) ;
+        }
+
+        void_t swap_index( void_t ) noexcept
+        {
+            _ridx = (_ridx+1) & 1 ;
+        }
+
+        size_t write_index( void_t ) const noexcept
+        {
+            return (_ridx + 1) & 1 ;
+        }
+
+        size_t read_index( void_t ) const noexcept
+        {
+            return _ridx ;
+        }
+
+        buffer & read_buffer( void_t ) noexcept { return _buffers[ this_t::read_index() ] ; }
+        buffer const & read_buffer( void_t ) const noexcept { return _buffers[ this_t::read_index() ] ; }
+        buffer & write_buffer( void_t ) noexcept { return _buffers[ this_t::write_index() ] ; }
+        buffer const & write_buffer( void_t ) const noexcept { return _buffers[ this_t::write_index() ] ; }
+    };
+    natus_typedef( tf_data ) ;
+
+    //********************************************************************************
     struct geo_data
     {
         bool_t valid = false ;
@@ -75,6 +154,7 @@ struct es3_backend::pimpl
     };
     natus_typedef( geo_data ) ;
 
+    //********************************************************************************
     struct shader_data
     {
         bool_t valid = false ;
@@ -94,6 +174,14 @@ struct es3_backend::pimpl
         };
         natus::ntd::vector< vertex_input_binding > vertex_inputs ;
 
+        struct vertex_output_binding
+        {
+            natus::graphics::vertex_attribute va ;
+            natus::ntd::string_t name ;
+        };
+        natus::ntd::vector< vertex_output_binding > vertex_outputs ;
+        char const ** output_names = nullptr ;
+
         bool_t find_vertex_input_binding_by_name( natus::ntd::string_cref_t name_,
             natus::graphics::vertex_attribute& va ) const noexcept
         {
@@ -103,6 +191,21 @@ struct es3_backend::pimpl
                 return b.name == name_ ;
             } ) ;
             if( iter == vertex_inputs.end() ) return false ;
+
+            va = iter->va ;
+
+            return true ;
+        }
+
+        bool_t find_vertex_output_binding_by_name( natus::ntd::string_cref_t name_,
+            natus::graphics::vertex_attribute& va ) const noexcept
+        {
+            auto iter = std::find_if( vertex_outputs.begin(), vertex_outputs.end(),
+                [&] ( vertex_output_binding const& b )
+            {
+                return b.name == name_ ;
+            } ) ;
+            if( iter == vertex_outputs.end() ) return false ;
 
             va = iter->va ;
 
@@ -148,6 +251,7 @@ struct es3_backend::pimpl
     } ;
     natus_typedef( shader_data ) ;
 
+    //********************************************************************************
     struct state_data
     {
         bool_t valid = false ;
@@ -156,6 +260,7 @@ struct es3_backend::pimpl
     } ;
     natus_typedef( state_data ) ;
 
+    //********************************************************************************
     struct render_data
     {
         bool_t valid = false ;
@@ -211,6 +316,20 @@ struct es3_backend::pimpl
             natus::graphics::variable_set_res_t,
             natus::ntd::vector< uniform_array_data_link > > > var_sets_array ;
 
+        struct uniform_streamout_link
+        {
+            // the index into the shader_config::uniforms array
+            size_t uniform_id ;
+            GLint tex_id[2] ; // streamout object do double buffer
+            size_t so_id ; // link into _feedbacks
+
+            // pointing into the mem_block
+            void_ptr_t mem = nullptr ;
+        };
+        natus::ntd::vector< std::pair<
+            natus::graphics::variable_set_res_t,
+            natus::ntd::vector< uniform_streamout_link > > > var_sets_streamout ;
+
         // memory block for all variables in all variable sets.
         void_ptr_t mem_block = nullptr ;
 
@@ -226,7 +345,8 @@ struct es3_backend::pimpl
     };
     natus_typedef( render_data ) ;
 
-    struct image_config
+    //********************************************************************************
+    struct image_data
     {
         bool_t valid = false ;
         natus::ntd::string_t name ;
@@ -241,7 +361,9 @@ struct es3_backend::pimpl
 
         // sampler ids for gl>=3.3
     };
+    natus_typedef( image_data ) ;
 
+    //********************************************************************************
     // This should be a TBO but is not 
     // available before GLES3.2
     struct array_data
@@ -260,6 +382,7 @@ struct es3_backend::pimpl
     } ;
     natus_typedef( array_data ) ;
 
+    //********************************************************************************
     struct framebuffer_data
     {
         bool_t valid = false ;
@@ -289,8 +412,8 @@ struct es3_backend::pimpl
     typedef natus::ntd::vector< this_t::geo_data > geo_datas_t ;
     geo_datas_t geo_datas ;
 
-    typedef natus::ntd::vector< this_t::image_config > image_configs_t ;
-    image_configs_t img_configs ;
+    typedef natus::ntd::vector< this_t::image_data > image_datas_t ;
+    image_datas_t _images ;
 
     typedef natus::ntd::vector< this_t::framebuffer_data_t > framebuffers_t ;
     framebuffers_t _framebuffers ;
@@ -714,25 +837,25 @@ struct es3_backend::pimpl
         // store images
         if( requires_store )
         {
-            size_t const id = img_configs.size() ;
-            img_configs.resize( img_configs.size() + nt ) ;
+            size_t const id = _images.size() ;
+            _images.resize( _images.size() + nt ) ;
 
             for( size_t i = 0; i < nt; ++i )
             {
                 size_t const idx = id + i ;
-                img_configs[ idx ].valid = true ;
-                img_configs[ idx ].name = fb.name + "." + std::to_string( i ) ;
-                img_configs[ idx ].tex_id = fb.colors[ i ] ;
-                img_configs[ idx ].type = GL_TEXTURE_2D ; 
+                _images[ idx ].valid = true ;
+                _images[ idx ].name = fb.name + "." + std::to_string( i ) ;
+                _images[ idx ].tex_id = fb.colors[ i ] ;
+                _images[ idx ].type = GL_TEXTURE_2D ; 
 
                 for( size_t j = 0; j < ( size_t ) natus::graphics::texture_wrap_mode::size; ++j )
                 {
-                    img_configs[ idx ].wrap_types[ j ] = GL_CLAMP_TO_EDGE ;
+                    _images[ idx ].wrap_types[ j ] = GL_CLAMP_TO_EDGE ;
                 }
 
                 for( size_t j = 0; j < ( size_t ) natus::graphics::texture_filter_mode::size; ++j )
                 {
-                    img_configs[ idx ].filter_types[ j ] = GL_LINEAR ;
+                    _images[ idx ].filter_types[ j ] = GL_LINEAR ;
                 }
             }
         }
@@ -740,24 +863,24 @@ struct es3_backend::pimpl
         // store depth/stencil
         if( requires_store )
         {
-            size_t const id = img_configs.size() ;
-            img_configs.resize( img_configs.size() + 1 ) ;
+            size_t const id = _images.size() ;
+            _images.resize( _images.size() + 1 ) ;
 
             {
                 size_t const idx = id + 0 ;
-                img_configs[ idx ].valid = true ;
-                img_configs[ idx ].name = fb.name + ".depth" ;
-                img_configs[ idx ].tex_id = fb.depth ;
-                img_configs[ idx ].type = GL_TEXTURE_2D ; 
+                _images[ idx ].valid = true ;
+                _images[ idx ].name = fb.name + ".depth" ;
+                _images[ idx ].tex_id = fb.depth ;
+                _images[ idx ].type = GL_TEXTURE_2D ; 
 
                 for( size_t j = 0; j < ( size_t ) natus::graphics::texture_wrap_mode::size; ++j )
                 {
-                    img_configs[ idx ].wrap_types[ j ] = GL_REPEAT ;
+                    _images[ idx ].wrap_types[ j ] = GL_REPEAT ;
                 }
 
                 for( size_t j = 0; j < ( size_t ) natus::graphics::texture_filter_mode::size; ++j )
                 {
-                    img_configs[ idx ].filter_types[ j ] = GL_NEAREST ;
+                    _images[ idx ].filter_types[ j ] = GL_NEAREST ;
                 }
             }
         }
@@ -777,7 +900,7 @@ struct es3_backend::pimpl
             {
                 if( fbd.colors[i] == GLuint(-1) ) continue ;
 
-                for( auto & img : img_configs )
+                for( auto & img : _images )
                 {
                     if( img.tex_id == fbd.colors[i] )
                     {
@@ -804,7 +927,7 @@ struct es3_backend::pimpl
         {
             // find image id in images and remove them
             {
-                for( auto & img : img_configs )
+                for( auto & img : _images )
                 {
                     if( img.tex_id == fbd.depth )
                     {
@@ -1296,9 +1419,9 @@ struct es3_backend::pimpl
     //***************************************************************************************************************************************
     size_t construct_image_config( size_t oid, natus::graphics::image_object_ref_t obj )
     {
-        oid = determine_oid( obj.name(), img_configs ) ;
+        oid = determine_oid( obj.name(), _images ) ;
 
-        auto & config = img_configs[ oid ] ;
+        auto & config = _images[ oid ] ;
         config.name = obj.name() ;
         config.type = natus::graphics::es3::convert( obj.get_type() ) ;
 
@@ -1331,7 +1454,7 @@ struct es3_backend::pimpl
     //***************************************************************************************************************************************
     bool_t release_image_data( size_t const oid ) noexcept
     {
-        auto & id = img_configs[ oid ] ;
+        auto & id = _images[ oid ] ;
 
         id.name = "released image" ;
         id.type = GL_NONE ;
@@ -1812,7 +1935,7 @@ struct es3_backend::pimpl
     //***************************************************************************************************************************************
     bool_t update( size_t const id, natus::graphics::image_object_ref_t confin, bool_t const do_config )
     {
-        this_t::image_config& config = img_configs[ id ] ;
+        this_t::image_data_ref_t config = _images[ id ] ;
 
         glBindTexture( config.type, config.tex_id ) ;
         if( natus::es::error::check_and_log( natus_log_fn( "glBindTexture" ) ) )
@@ -1947,13 +2070,13 @@ struct es3_backend::pimpl
 
                 size_t i = 0 ;
                 auto const & tx_name = var->get() ;
-                for( auto & cfg : img_configs )
+                for( auto & cfg : _images )
                 {
                     if( cfg.name == tx_name ) break ;
                     ++i ;
                 }
 
-                if( i >= img_configs.size() ) 
+                if( i >= _images.size() ) 
                 {
                     natus::log::global_t::warning( natus_log_fn("image not found : " + tx_name ) ) ;
                     continue ;
@@ -1961,7 +2084,7 @@ struct es3_backend::pimpl
 
                 this_t::render_data::uniform_texture_link link ;
                 link.uniform_id = id++ ;
-                link.tex_id = img_configs[ i ].tex_id ;
+                link.tex_id = _images[ i ].tex_id ;
                 link.img_id = i ;
                 item_tex.second.emplace_back( link ) ;
             }
@@ -1984,8 +2107,8 @@ struct es3_backend::pimpl
 
         // prior to GLES 3.2, use a texture for data
         {
-            size_t oid_img = determine_oid( obj.name(), img_configs ) ;
-            auto & config = img_configs[ oid_img ] ;
+            size_t oid_img = determine_oid( obj.name(), _images ) ;
+            auto & config = _images[ oid_img ] ;
             config.type = GL_TEXTURE_2D ;
             data.img_id = oid_img ;
 
@@ -2024,9 +2147,9 @@ struct es3_backend::pimpl
 
         if( data.img_id != size_t( -1 ) )
         {
-            glDeleteTextures( 1, &img_configs[data.img_id].tex_id ) ;
+            glDeleteTextures( 1, &_images[data.img_id].tex_id ) ;
             natus::es::error::check_and_log( natus_log_fn( "glDeleteTextures" ) ) ;
-            img_configs[data.img_id].tex_id = GLuint( -1 ) ;
+            _images[data.img_id].tex_id = GLuint( -1 ) ;
         }
 
         data.valid = false ;
@@ -2043,7 +2166,7 @@ struct es3_backend::pimpl
         auto & data = _arrays[ oid ] ;
 
         {
-            this_t::image_config& config = img_configs[ data.img_id ] ;
+            this_t::image_data_ref_t config = _images[ data.img_id ] ;
 
             glBindTexture( GL_TEXTURE_2D, config.tex_id ) ;
             if( natus::es::error::check_and_log( natus_log_fn( "glBindTexture" ) ) )
@@ -2215,7 +2338,7 @@ struct es3_backend::pimpl
                     natus::es::error::check_and_log( natus_log_fn( "glActiveTexture" ) ) ;
 
                     {
-                        auto const& ic = img_configs[ item.img_id ] ;
+                        auto const& ic = _images[ item.img_id ] ;
 
                         glBindTexture( ic.type, item.tex_id ) ;
                         natus::es::error::check_and_log( natus_log_fn( "glBindTexture" ) ) ;
@@ -2672,7 +2795,7 @@ natus::graphics::result es3_backend::update( natus::graphics::geometry_object_re
 }
 
 //************************************************************************************************************************************************************************************************************************************
-natus::graphics::result es3_backend::update( natus::graphics::streamout_object_res_t obj ) noexcept
+natus::graphics::result es3_backend::update( natus::graphics::streamout_object_res_t /*obj*/ ) noexcept
 {
     return natus::graphics::result::ok ;
 }
@@ -2734,7 +2857,7 @@ natus::graphics::result es3_backend::use( natus::graphics::framebuffer_object_re
 }
 
 //********************************************************************************************************************
-natus::graphics::result es3_backend::use( natus::graphics::streamout_object_res_t obj ) noexcept 
+natus::graphics::result es3_backend::use( natus::graphics::streamout_object_res_t /*obj*/ ) noexcept 
 {
     return natus::graphics::result::ok ;
 }

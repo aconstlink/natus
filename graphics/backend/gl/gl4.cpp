@@ -158,7 +158,6 @@ struct gl4_backend::pimpl
     struct shader_data
     {
         bool_t valid = false ;
-
         natus::ntd::string_t name ;
 
         GLuint vs_id = GLuint( -1 ) ;
@@ -263,7 +262,6 @@ struct gl4_backend::pimpl
     struct render_data
     {
         bool_t valid = false ;
-
         natus::ntd::string_t name ;
 
         natus::ntd::vector< size_t > geo_ids ;
