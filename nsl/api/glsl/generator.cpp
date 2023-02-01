@@ -6,8 +6,9 @@
 using namespace natus::nsl::glsl ;
 
 
-//******************************************************************************************************************************************
-natus::ntd::string_t generator::replace_buildin_symbols( natus::nsl::api_type const t, natus::ntd::string_t code ) noexcept
+//*******************************************************************************************************
+natus::ntd::string_t generator::replace_buildin_symbols( natus::nsl::api_type const t, 
+                            natus::ntd::string_t code ) noexcept
 {
     natus::nsl::repl_syms_t repls =
     {
@@ -481,14 +482,12 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::nsl::api_type co
             [=] ( natus::ntd::vector< natus::ntd::string_t > const& args ) -> natus::ntd::string_t
             {
                 if( args.size() != 0 ) return "end_primitive( INVALID_ARGS ) " ;
-                
-
                 return "EndPrimitive ( ) " ;
             }
         }
     } ;
 
-    if( t == natus::nsl::api_type::gl4 )
+    //if( t == natus::nsl::api_type::gl4 )
     {
         repls.emplace_back( repl_sym ( 
             {
@@ -497,10 +496,11 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::nsl::api_type co
                 {
                     if( args.size() != 2 ) return "fetch_data ( INVALID_ARGS ) " ;
                     return "texelFetch ( " + args[ 0 ] + ", " + args[ 1 ] + " ) " ;
-                } 
+                }
             } ) ) ;
     }
-    else if( t == natus::nsl::api_type::es3 )
+#if 0    
+else if( t == natus::nsl::api_type::es3 )
     {
         repls.emplace_back( repl_sym ( 
             {
@@ -512,9 +512,10 @@ natus::ntd::string_t generator::replace_buildin_symbols( natus::nsl::api_type co
                         + "( ( " + args[ 1 ] + " ) % textureSize( " + args[0] + ", 0 ).x ) , " 
                         + "( ( " + args[ 1 ] + " ) / textureSize( " + args[0] + ", 0 ).x ) "
                         + ") , 0 ) " ;
-                } 
+                }
             } ) ) ;
     }
+#endif
 
     return natus::nsl::perform_repl( std::move( code ), repls ) ;
 }
@@ -583,7 +584,7 @@ namespace this_file
                 mapping_t( natus::nsl::type_t::as_tex1d(), "sampler1D" ),
                 mapping_t( natus::nsl::type_t::as_tex2d(), "sampler2D" ),
                 mapping_t( natus::nsl::type_t::as_tex2d_array(), "sampler2DArray" ),
-                mapping_t( natus::nsl::type_t::as_data_buffer(), "sampler2D" )
+                mapping_t( natus::nsl::type_t::as_data_buffer(), "samplerBuffer" )
             } ;
 
             for( auto const& m : __mappings ) if( m.first == type ) return m ;
@@ -811,7 +812,7 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
             text << "#version 320 es" << std::endl ;
             text << "precision mediump int ;" << std::endl;
             text << "precision mediump float ;" << std::endl ;
-            
+
             // print down all precision declarations 
             {
                 natus::nsl::type_t const table[] = { 

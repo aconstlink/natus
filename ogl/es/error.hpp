@@ -19,7 +19,7 @@ namespace natus
                 if( __so__err == GL_NO_ERROR ) return false ;
 
                 std::string const __glstring = natus::ogl::to_string( __so__err ) ;
-                natus::log::global_t::error( msg + " " + __glstring ) ;
+                natus::log::global_t::error( "[es]" + msg + " " + __glstring ) ;
                 return true ;
             }
         };

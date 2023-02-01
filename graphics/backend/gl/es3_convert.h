@@ -97,6 +97,8 @@ namespace natus
                 case GL_SAMPLER_CUBE:
                 case GL_SAMPLER_2D_SHADOW:
                 case GL_SAMPLER_BUFFER:
+                case GL_INT_SAMPLER_BUFFER:
+                case GL_UNSIGNED_INT_SAMPLER_BUFFER:
                 case GL_SAMPLER_2D_ARRAY:
                 case GL_INT_SAMPLER_2D_ARRAY:
                 case GL_UNSIGNED_INT_SAMPLER_2D_ARRAY: 

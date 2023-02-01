@@ -209,19 +209,19 @@ void_t sprite_render_2d::init( natus::ntd::string_cref_t name, natus::ntd::strin
                     uniform mat4 u_view ;
                     uniform mat4 u_world ;
                     uniform int u_offset ;
-                    uniform sampler2D u_data ;
+                    uniform samplerBuffer u_data ;
 
                     void main()
                     {
                         ivec2 wh = textureSize( u_data, 0 ) ;
 
                         int idx = (gl_VertexID / 4) * 6 + u_offset * 6 ;
-                        vec4 d0 = texelFetch( u_data, ivec2((idx+0)%wh.x, (idx+0)/wh.x), 0 ) ; // pos scale
-                        vec4 d1 = texelFetch( u_data, ivec2((idx+1)%wh.x, (idx+1)/wh.x), 0 ) ; // frame
-                        vec4 d2 = texelFetch( u_data, ivec2((idx+2)%wh.x, (idx+2)/wh.x), 0 ) ; // uv rect
-                        vec4 d3 = texelFetch( u_data, ivec2((idx+3)%wh.x, (idx+3)/wh.x), 0 ) ; // additional
-                        vec4 d4 = texelFetch( u_data, ivec2((idx+4)%wh.x, (idx+4)/wh.x), 0 ) ; // uv animation
-                        vec4 d5 = texelFetch( u_data, ivec2((idx+5)%wh.x, (idx+5)/wh.x), 0 ) ; // color
+                        vec4 d0 = texelFetch( u_data, idx + 0 ) ; // pos scale
+                        vec4 d1 = texelFetch( u_data, idx + 1 ) ; // frame
+                        vec4 d2 = texelFetch( u_data, idx + 2 ) ; // uv rect
+                        vec4 d3 = texelFetch( u_data, idx + 3 ) ; // additional
+                        vec4 d4 = texelFetch( u_data, idx + 4 ) ; // uv animation
+                        vec4 d5 = texelFetch( u_data, idx + 5 ) ; // color
 
                         vec2 pivot = d3.xy * d0.zw * vec2( 0.5 ) ;
                         vec2 scale = d0.zw * (d2.zw - d2.xy) ;

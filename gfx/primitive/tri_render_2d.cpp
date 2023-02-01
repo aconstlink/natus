@@ -164,28 +164,29 @@ void_t tri_render_2d::init( natus::ntd::string_cref_t name, natus::graphics::asy
             natus::graphics::shader_set_t ss = natus::graphics::shader_set_t().
 
                 set_vertex_shader( natus::graphics::shader_t( R"(
-                    #version 300 es
+                    #version 320 es
+                    precision mediump samplerBuffer ;
 
                     in vec2 in_pos ;
                     out vec4 var_col ;
                     uniform mat4 u_proj ;
                     uniform mat4 u_view ;
                     uniform mat4 u_world ;
-                    uniform sampler2D u_data ;
+                    uniform samplerBuffer u_data ;
                     uniform int u_offset ;
 
                     void main()
                     {
-                        int idx = gl_VertexID / 3 ;
-                        ivec2 wh = textureSize( u_data, 0 ) ;
-                        var_col = texelFetch( u_data, ivec2( ((idx) % wh.x), (idx / wh.x) ), 0 ) ;
+                        // glDrawArrays adds starting index to gl_VertexID
+                        int idx = (gl_VertexID) / 3 ;
+                        var_col = texelFetch( u_data, idx ) ;
 
                         vec4 pos = vec4( in_pos, 0.0, 1.0 )  ;
                         gl_Position = u_proj * u_view * u_world * pos ;
                     } )" ) ).
 
                 set_pixel_shader( natus::graphics::shader_t( R"(
-                    #version 300 es
+                    #version 320 es
                     precision mediump float ;
                     in vec4 var_col ;
                     layout(location = 0 ) out vec4 out_color ;

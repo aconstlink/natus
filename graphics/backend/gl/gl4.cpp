@@ -327,7 +327,7 @@ struct gl4_backend::pimpl
         natus::ntd::vector< std::pair<
             natus::graphics::variable_set_res_t,
             natus::ntd::vector< uniform_streamout_link > > > var_sets_streamout ;
-        
+
         // memory block for all variables in all variable sets.
         void_ptr_t mem_block = nullptr ;
 
@@ -550,7 +550,8 @@ struct gl4_backend::pimpl
 
     //****************************************************************************************
     template< typename T >
-    static size_t find_index_by_resource_name( natus::ntd::string_in_t name, natus::ntd::vector< T > const & resources ) noexcept
+    static size_t find_index_by_resource_name( natus::ntd::string_in_t name, 
+                   natus::ntd::vector< T > const & resources ) noexcept
     {
         size_t i = 0 ; 
         for( auto const & r : resources ) 
@@ -1966,7 +1967,8 @@ struct gl4_backend::pimpl
                     link.mem = mem ;
 
                     auto & uv = shader.uniforms[ link.uniform_id ] ;
-                    mem = reinterpret_cast<void_ptr_t>( size_t(mem) + size_t( natus::ogl::uniform_size_of( uv.type ) )) ;
+                    mem = reinterpret_cast<void_ptr_t>( size_t(mem) + 
+                           size_t( natus::ogl::uniform_size_of( uv.type ) )) ;
                 }
             }
 
@@ -1977,7 +1979,8 @@ struct gl4_backend::pimpl
                     link.mem = mem ;
 
                     auto & uv = shader.uniforms[ link.uniform_id ] ;
-                    mem = reinterpret_cast<void_ptr_t>( size_t(mem) + size_t( natus::ogl::uniform_size_of( uv.type ) )) ;
+                    mem = reinterpret_cast<void_ptr_t>( size_t(mem) + 
+                          size_t( natus::ogl::uniform_size_of( uv.type ) )) ;
                 }
             }
 
@@ -1988,7 +1991,8 @@ struct gl4_backend::pimpl
                     link.mem = mem ;
 
                     auto & uv = shader.uniforms[ link.uniform_id ] ;
-                    mem = reinterpret_cast<void_ptr_t>( size_t(mem) + size_t( natus::ogl::uniform_size_of( uv.type ) )) ;
+                    mem = reinterpret_cast<void_ptr_t>( size_t(mem) + 
+                        size_t( natus::ogl::uniform_size_of( uv.type ) )) ;
                 }
             }
 
@@ -1999,7 +2003,8 @@ struct gl4_backend::pimpl
                     link.mem = mem ;
 
                     auto & uv = shader.uniforms[ link.uniform_id ] ;
-                    mem = reinterpret_cast<void_ptr_t>( size_t(mem) + size_t( natus::ogl::uniform_size_of( uv.type ) )) ;
+                    mem = reinterpret_cast<void_ptr_t>( size_t(mem) + 
+                         size_t( natus::ogl::uniform_size_of( uv.type ) )) ;
                 }
             }
         }
@@ -2334,7 +2339,7 @@ struct gl4_backend::pimpl
                     natus::log::global_t::error( natus_log_fn( "can not claim variable " + uv.name ) ) ;
                     continue ;
                 }
-                
+
                 this_t::render_data::uniform_variable_link link ;
                 link.uniform_id = id++ ;
                 link.var = var ;
@@ -2424,8 +2429,8 @@ struct gl4_backend::pimpl
                 {
                     if( !handle_feedback_link() )
                     {
-                        natus::log::global_t::error( natus_log_fn( "Could not find array nor streamout object [" +
-                            tx_name + "]" ) ) ;
+                        natus::log::global_t::error( natus_log_fn( 
+                          "Could not find array nor streamout object [" + tx_name + "]" ) ) ;
                         continue ;
                     }
                 }
@@ -2870,6 +2875,7 @@ struct gl4_backend::pimpl
 
             // tex vars
             // this section must match with the section in the render function
+            // because of the used texture unit
             {
                 int_t tex_unit = 0 ;
                 // textures
@@ -2879,7 +2885,7 @@ struct gl4_backend::pimpl
                     {
                         auto var = natus::graphics::data_variable< int_t >( tex_unit ) ;
                         auto & uv = sconfig.uniforms[ item.uniform_id ] ;
-                    
+
                         uv.do_copy_funk( item.mem, &var ) ;
 
                         ++tex_unit ;
@@ -2893,7 +2899,7 @@ struct gl4_backend::pimpl
                     {
                         auto var = natus::graphics::data_variable< int_t >( tex_unit ) ;
                         auto & uv = sconfig.uniforms[ item.uniform_id ] ;
-                    
+
                         uv.do_copy_funk( item.mem, &var ) ;
 
                         ++tex_unit ;
@@ -3515,6 +3521,7 @@ natus::graphics::result gl4_backend::release( natus::graphics::array_object_res_
     return natus::graphics::result::ok ;
 }
 
+//*******************************************************************************************
 natus::graphics::result gl4_backend::release( natus::graphics::streamout_object_res_t obj ) noexcept 
 {
     if( !obj.is_valid() || obj->name().empty() )
@@ -3532,7 +3539,7 @@ natus::graphics::result gl4_backend::release( natus::graphics::streamout_object_
     return natus::graphics::result::ok ;
 }
 
-//********************************************************************************************************************
+//*******************************************************************************************
 natus::graphics::result gl4_backend::connect( natus::graphics::render_object_res_t config, natus::graphics::variable_set_res_t vs ) noexcept
 {
     natus::graphics::id_res_t id = config->get_id() ;
@@ -3552,7 +3559,7 @@ natus::graphics::result gl4_backend::connect( natus::graphics::render_object_res
     return natus::graphics::result::ok ;
 }
 
-//********************************************************************************************************************
+//*******************************************************************************************
 natus::graphics::result gl4_backend::update( natus::graphics::geometry_object_res_t config ) noexcept 
 {
     natus::graphics::id_res_t id = config->get_id() ;
@@ -3572,7 +3579,7 @@ natus::graphics::result gl4_backend::update( natus::graphics::geometry_object_re
     return natus::graphics::result::ok ;
 }
 
-//********************************************************************************************************************
+//*******************************************************************************************
 natus::graphics::result gl4_backend::update( natus::graphics::streamout_object_res_t obj ) noexcept
 {
     natus::graphics::id_res_t id = obj->get_id() ;
@@ -3586,7 +3593,7 @@ natus::graphics::result gl4_backend::update( natus::graphics::streamout_object_r
     return natus::graphics::result::ok ;
 }
 
-//********************************************************************************************************************
+//*******************************************************************************************
 natus::graphics::result gl4_backend::update( natus::graphics::array_object_res_t obj ) noexcept 
 {
     natus::graphics::id_res_t id = obj->get_id() ;
@@ -3600,13 +3607,13 @@ natus::graphics::result gl4_backend::update( natus::graphics::array_object_res_t
     return natus::graphics::result::ok ;
 }
 
-//********************************************************************************************************************
+//*******************************************************************************************
 natus::graphics::result gl4_backend::update( natus::graphics::image_object_res_t ) noexcept 
 {
     return natus::graphics::result::ok ;
 }
 
-//********************************************************************************************************************
+//*******************************************************************************************
 natus::graphics::result gl4_backend::update( natus::graphics::render_object_res_t obj, size_t const varset ) noexcept 
 {
     natus::graphics::id_res_t id = obj->get_id() ;
@@ -3620,7 +3627,7 @@ natus::graphics::result gl4_backend::update( natus::graphics::render_object_res_
     return natus::graphics::result::ok ;
 }
 
-//********************************************************************************************************************
+//*******************************************************************************************
 natus::graphics::result gl4_backend::use( natus::graphics::framebuffer_object_res_t obj ) noexcept
 {
     if( !obj.is_valid() )
@@ -3642,7 +3649,7 @@ natus::graphics::result gl4_backend::use( natus::graphics::framebuffer_object_re
     return natus::graphics::result::ok ;
 }
 
-//********************************************************************************************************************
+//*******************************************************************************************
 natus::graphics::result gl4_backend::use( natus::graphics::streamout_object_res_t obj ) noexcept 
 {
     if( !obj.is_valid() )
@@ -3664,7 +3671,7 @@ natus::graphics::result gl4_backend::use( natus::graphics::streamout_object_res_
     return natus::graphics::result::ok ;
 }
 
-//********************************************************************************************************************
+//*******************************************************************************************
 natus::graphics::result gl4_backend::unuse( natus::graphics::backend::unuse_type const t ) noexcept 
 {
     switch( t ) 

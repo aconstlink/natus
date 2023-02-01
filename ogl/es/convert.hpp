@@ -39,6 +39,9 @@ namespace natus
                 GL_SAMPLER_CUBE,
                 GL_SAMPLER_2D_SHADOW,
                 GL_SAMPLER_2D_ARRAY,
+                GL_SAMPLER_BUFFER,
+                GL_INT_SAMPLER_BUFFER,
+                GL_UNSIGNED_INT_SAMPLER_BUFFER,
                 GL_INT_SAMPLER_2D_ARRAY,
                 GL_UNSIGNED_INT_SAMPLER_2D_ARRAY
             } ;
@@ -79,6 +82,9 @@ namespace natus
             case GL_SAMPLER_CUBE: return sizeof( GLint );
             case GL_SAMPLER_2D_SHADOW: return sizeof( GLint );
             case GL_SAMPLER_2D_ARRAY: return sizeof( GLint );
+            case GL_SAMPLER_BUFFER: return sizeof( GLint );
+            case GL_INT_SAMPLER_BUFFER: return sizeof( GLint );
+            case GL_UNSIGNED_INT_SAMPLER_BUFFER: return sizeof( GLint );
             case GL_INT_SAMPLER_2D_ARRAY: return sizeof( GLint );
             case GL_UNSIGNED_INT_SAMPLER_2D_ARRAY: return sizeof( GLint );
             default: return 0 ;
@@ -134,11 +140,13 @@ namespace natus
             return false ;
         }
 
-        // not required for es3
         static bool_t uniform_is_buffer( GLenum const e ) noexcept
         {
             switch( e )
             {
+            case GL_SAMPLER_BUFFER: 
+            case GL_INT_SAMPLER_BUFFER: 
+            case GL_UNSIGNED_INT_SAMPLER_BUFFER: return true ;
             default: break ;
             }
             return false ;
@@ -176,6 +184,9 @@ namespace natus
             case GL_SAMPLER_CUBE:
             case GL_SAMPLER_2D_SHADOW:
             case GL_SAMPLER_2D_ARRAY:
+            case GL_SAMPLER_BUFFER:
+            case GL_INT_SAMPLER_BUFFER:
+            case GL_UNSIGNED_INT_SAMPLER_BUFFER:
             case GL_INT_SAMPLER_2D_ARRAY:
             case GL_UNSIGNED_INT_SAMPLER_2D_ARRAY: return GL_INT ;
             default: return 0 ;
@@ -257,6 +268,9 @@ namespace natus
             case GL_SAMPLER_CUBE: 
             case GL_SAMPLER_2D_SHADOW: 
             case GL_SAMPLER_2D_ARRAY: 
+            case GL_SAMPLER_BUFFER:
+            case GL_INT_SAMPLER_BUFFER: 
+            case GL_UNSIGNED_INT_SAMPLER_BUFFER:
             case GL_INT_SAMPLER_2D_ARRAY: 
             case GL_UNSIGNED_INT_SAMPLER_2D_ARRAY: 
                 return [=] ( GLuint loc, GLuint count, void_ptr_t p )
@@ -352,6 +366,9 @@ namespace natus
             case GL_SAMPLER_CUBE: 
             case GL_SAMPLER_2D_SHADOW: 
             case GL_SAMPLER_2D_ARRAY: 
+            case GL_SAMPLER_BUFFER:
+            case GL_INT_SAMPLER_BUFFER: 
+            case GL_UNSIGNED_INT_SAMPLER_BUFFER: 
             case GL_INT_SAMPLER_2D_ARRAY: 
             case GL_UNSIGNED_INT_SAMPLER_2D_ARRAY: 
                 return [=] ( void_ptr_t p )
