@@ -232,10 +232,11 @@ struct gl4_backend::pimpl
             // the GL uniform function
             natus::ogl::uniform_funk_t uniform_funk ;
 
-            void_t do_uniform_funk( void_ptr_t mem_ )
+            // @return false if failed to set uniform
+            bool_t do_uniform_funk( void_ptr_t mem_ )
             {
                 uniform_funk( loc, 1, mem_ ) ;
-                natus::ogl::error::check_and_log( natus_log_fn( "glUniform" ) ) ;
+                return !natus::ogl::error::check_and_log( natus_log_fn( "glUniform" ) ) ;
             }
 
             void_t do_copy_funk( void_ptr_t mem_, natus::graphics::ivariable_ptr_t var )
@@ -3001,7 +3002,10 @@ struct gl4_backend::pimpl
                 for( auto& item : varset.second )
                 {
                     auto& uv = sconfig.uniforms[ item.uniform_id ] ;
-                    uv.do_uniform_funk( item.mem ) ;
+                    if( !uv.do_uniform_funk( item.mem ) )
+                    {
+                        natus::log::global_t::error( "[gl4] : uniform " + uv.name + " failed." ) ; 
+                    }
                 }
             }
 
@@ -3033,7 +3037,10 @@ struct gl4_backend::pimpl
 
                         {
                             auto & uv = sconfig.uniforms[ item.uniform_id ] ;
-                            uv.do_uniform_funk( item.mem ) ;
+                            if( !uv.do_uniform_funk( item.mem ) )
+                            {
+                                natus::log::global_t::error( "[gl4] : uniform " + uv.name + " failed." ) ;
+                            }
                         }
 
                         ++tex_unit ;
@@ -3052,7 +3059,10 @@ struct gl4_backend::pimpl
 
                         {
                             auto & uv = sconfig.uniforms[ item.uniform_id ] ;
-                            uv.do_uniform_funk( item.mem ) ;
+                            if( !uv.do_uniform_funk( item.mem ) )
+                            {
+                                natus::log::global_t::error( "[gl4] : uniform " + uv.name + " failed." ) ;
+                            }
                         }
 
                         ++tex_unit ;
@@ -3074,7 +3084,10 @@ struct gl4_backend::pimpl
 
                         {
                             auto & uv = sconfig.uniforms[ item.uniform_id ] ;
-                            uv.do_uniform_funk( item.mem ) ;
+                            if( !uv.do_uniform_funk( item.mem ) )
+                            {
+                                natus::log::global_t::error( "[gl4] : uniform " + uv.name + " failed." ) ;
+                            }
                         }
 
                         ++tex_unit ;

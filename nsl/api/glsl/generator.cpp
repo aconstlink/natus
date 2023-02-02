@@ -1241,7 +1241,7 @@ natus::nsl::generated_code_t::code_t generator::generate( natus::nsl::generatabl
 
     code.api = type ;
 
-    natus::log::global_t::status(code.shader) ;
+    //natus::log::global_t::status(code.shader) ;
     //ret.emplace_back( std::move( code ) ) ;
     return std::move( code ) ;
 
