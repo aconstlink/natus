@@ -165,6 +165,31 @@ namespace natus
             return false ;
         }
 
+        static GLenum convert( natus::graphics::type const t ) noexcept
+        {
+            switch( t )
+            {
+            case natus::graphics::type::tbool:
+                return GL_BOOL ;
+            case natus::graphics::type::tfloat:
+                return GL_FLOAT ;
+            case natus::graphics::type::tdouble:
+                return GL_DOUBLE ;
+            case natus::graphics::type::tint:
+                return GL_INT ;
+            case natus::graphics::type::tuint:
+                return GL_UNSIGNED_INT ;
+            case natus::graphics::type::tshort:
+                return GL_SHORT ;
+            case natus::graphics::type::tushort:
+                return GL_UNSIGNED_SHORT ;
+            case natus::graphics::type::tchar:
+                return GL_BYTE ;
+            default: return GL_NONE ;
+            }
+            return GL_NONE ;
+        }
+
         static GLenum complex_to_simple_type( GLenum const e ) noexcept
         {
             switch( e )

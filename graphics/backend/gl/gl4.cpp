@@ -1458,7 +1458,19 @@ struct gl4_backend::pimpl
         GLuint uiBegin = 0 ;
         GLuint uiOffset = 0 ;
 
-        GLuint dummy_loc = 0 ;
+        // sometimes some shader input attributes might not be used but 
+        // are defined in the vertex layout. So a new location need to be
+        // figured out so that those vertex buffer attributes could
+        // be bound to the shader.
+        GLuint max_loc = 0 ;
+        if( sconfig.attributes.size() != gconfig.elements.size() )
+        {
+            for( auto const & a : sconfig.attributes )
+            {
+                max_loc = std::max( max_loc, a.loc ) ;
+            }
+        }
+
         for( auto & e : gconfig.elements )
         {
             uiBegin += uiOffset ;
@@ -1475,9 +1487,13 @@ struct gl4_backend::pimpl
 
             if( iter == sconfig.attributes.end() ) 
             {
-                natus::log::global_t::warning( natus_log_fn("Invalid vertex attribute. Will bind to dummy location.") ) ;
-                loc = dummy_loc++ ;
-                type = GL_FLOAT ;
+                loc = ++max_loc ;
+                type = natus::ogl::convert( e.type ) ;
+
+                natus::log::global_t::warning( natus_log_fn( "Vertex attribute (" +
+                    natus::graphics::to_string(e.va) + ") in shader (" + sconfig.name + ") not used."
+                    "Will bind geometry (" +sconfig.name+ ") layout attribute to custom location (" 
+                    + std::to_string( uint_t(loc) ) + ").") ) ;
             }
             else
             {

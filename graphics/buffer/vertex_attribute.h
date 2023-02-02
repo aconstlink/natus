@@ -33,7 +33,8 @@ namespace natus
         {
             static natus::ntd::string_t const vertex_attribute_string_array[] =
             {
-                "undefined", "position", "normal", "tangent", "color0", "color1", "texcood0",
+                "undefined", "position", "normal", "tangent", "color0", "color1", "color2",
+                "color3", "color4", "color5", "texcood0",
                 "texcood1", "texcood2", "texcood3", "texcood4", "texcood5", "texcood6", "texcood7"
             } ;
         }
