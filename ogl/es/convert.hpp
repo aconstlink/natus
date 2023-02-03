@@ -161,7 +161,7 @@ namespace natus
             case natus::graphics::type::tfloat:
                 return GL_FLOAT ;
             case natus::graphics::type::tdouble:
-                return GL_DOUBLE ;
+                return GL_FLOAT ;
             case natus::graphics::type::tint:
                 return GL_INT ;
             case natus::graphics::type::tuint:
