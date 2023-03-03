@@ -63,6 +63,8 @@ namespace natus
                 bool_t _left_down = false ;
                 bool_t _right_down = false ;
 
+                bool_t _mouse_control = true ;
+
             private:
 
                 bool_t _do_tool = false ;
@@ -173,6 +175,9 @@ namespace natus
                 natus::graphics::async_views_t graphics( void_t ) noexcept { return _graphics ; }
 
                 natus::math::vec2f_t get_extent( void_t ) const noexcept { return _extend ; }
+
+                void_t enable_mouse_control( bool_t const b ) noexcept{ _mouse_control = b ; }
+
             };
             natus_res_typedef( app_essentials ) ;
         }

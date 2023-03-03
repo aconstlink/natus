@@ -351,6 +351,7 @@ void_t app_essentials::on_device( natus::application::app::device_data_in_t ) no
     }
 
     // rotate
+    if( _mouse_control ) 
     {
         natus::device::layouts::three_mouse_t mouse( _dev_mouse ) ;
         static natus::math::vec2f_t old = mouse.get_global() * natus::math::vec2f_t( 2.0f ) - natus::math::vec2f_t( 1.0f ) ;
@@ -381,6 +382,7 @@ void_t app_essentials::on_device( natus::application::app::device_data_in_t ) no
     }
 
     // translate
+    if( _mouse_control ) 
     {
         natus::math::vec3f_t translate ;
 
