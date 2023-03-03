@@ -171,6 +171,7 @@ namespace natus
                 natus::nsl::database_res_t ndb( void_t ) noexcept { return _ndb ; }
 
                 natus::device::three_device_res_t get_mouse_dev( void_t ) noexcept { return _dev_mouse ; }
+                natus::device::ascii_device_res_t get_ascii_dev( void_t ) noexcept { return _dev_ascii ; }
 
                 natus::graphics::async_views_t graphics( void_t ) noexcept { return _graphics ; }
 
