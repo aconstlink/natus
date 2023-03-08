@@ -407,16 +407,6 @@ bool_t app::platform_update( void_t )
         for( size_t i=0; i<num_iter; ++i )
             this->on_physics( dat ) ;
 
-        {
-            _physics_residual -= num_iter * _physics_interval ;
-            dat.micro_dt = _physics_residual.count() ;
-            dat.sec_dt = float_t( double_t(_physics_residual.count()) / 1000000.0 ) ;
-            dat.milli_dt = dat.micro_dt / 1000 ;
-            this->on_physics( dat ) ;
-
-            _physics_residual = std::chrono::microseconds(0) ;
-        }
-
         this_t::after_physics( num_iter ) ;
     }
 
@@ -604,7 +594,7 @@ bool_t app::before_physics( std::chrono::microseconds const & dt ) noexcept
 
 bool_t app::after_physics( size_t const iter ) 
 {
-    //_physics_residual -= iter * _physics_interval ;
+    _physics_residual -= iter * _physics_interval ;
     return true ;
 }
 
