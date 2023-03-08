@@ -155,21 +155,21 @@ namespace natus
 
                     const type_t d_x = p_local.dot( n_x ) ;
                     const type_t d_y = p_local.dot( n_y ) ;
-                
+                    
                     type_t const bias = d_x * d_y ;
 
                     // fully inside/outside
                     if( bias > type_t(0) )
                     {
-                        vec2_t const dir_ext = ext * vec2_t( sign_x, sign_y ) ;
-                        vec2_t const local_n = (p_local.xy()-dir_ext).normalized() ;
-                        n = vec3_t( local_n, -local_n.dot(dir_ext) ) ;
+                        vec2_t const loc_n = vec2_t( sign_x, sign_y ).normalized() ;
+                        n = vec3_t( loc_n, -loc_n.dot( vec2_t( sign_x, sign_y ) * ext ) ) ;
                     }
                     // outside partial
                     else
                     {
                         n = ( d_x > type_t(0) ) ? n_x : n_y ;
                     }
+
 
                     return n ;
                 }
