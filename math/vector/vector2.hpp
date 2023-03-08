@@ -616,6 +616,11 @@ namespace natus
         natus_typedefs( vector2< uint_t >, vec2ui ) ;
         natus_typedefs( vector2< ushort_t >, vec2us ) ;
 
+        template< typename T >
+        static vector2< T > operator * ( float_t const f, vector2< T > const & o ) noexcept
+        {
+            return o * f ;
+        }
 
         template< typename T >
         class vector2e{ };
@@ -651,6 +656,13 @@ namespace natus
                 float_t const sig = vec2_t( type_t(1), dc.sign().y() )[ size_t( std::abs( dc.sign().y() ) )] ;
                 uint_t const idx = 1 - uint_t( natus::math::fn<float_t>::nnv_to_pnv( sig ) ) ;
                 return std::acos( dc.x() ) * sig + natus::math::vec2f_t( 0, natus::math::constants<float_t>::pix2() )[ idx ] ;
+            }
+
+            // reflects the vector d on surface normal n.
+            // @pre n must be normalized
+            static vec2_t reflect( vec2_cref_t n, vec2_cref_t d ) noexcept
+            {
+                return d - 2.0f * n * n.dot( d ) ;
             }
         };
 
