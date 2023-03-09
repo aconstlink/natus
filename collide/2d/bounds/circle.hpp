@@ -64,7 +64,9 @@ namespace natus
                 type_t get_radius2( void_t ) const noexcept { return _radius * _radius ; }
 
                 vec2_cref_t get_center( void_t ) const noexcept { return _center ; }
+                void_t set_center( vec2_cref_t p ) noexcept { _center = p ; }
             };
+            natus_typedefs( circle< float_t >, circlef ) ;
         }
     }
 }

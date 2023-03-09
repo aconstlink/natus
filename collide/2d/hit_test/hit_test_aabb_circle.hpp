@@ -15,74 +15,62 @@ namespace natus
     {
         namespace n2d
         {
-            /// @return true, if circle and aabb overlap, otherwise false.
-            template< typename type_t >
-            static bool_t hit_test_box_circle_overlap( aabb< type_t > const & bound_aabb, circle<type_t> const & bound_circle ) noexcept
+            template< typename T >
+            struct hit_test_aabb_circle
             {
-                const type_t d = bound_aabb.squared_distance_to( bound_circle.get_center() ) ;
-                const type_t r = bound_circle.get_radius2() ;
+                typedef T type_t ;
+                natus_typedefs( aabb< type_t >, aabb ) ;
+                natus_typedefs( circle< type_t >, circle ) ;
+                natus_typedefs( natus::math::vector2< type_t >, vec2 ) ;
+                natus_typedefs( natus::math::vector4< type_t >, vec4 ) ;
 
-                return d <= r ;
-            }
-
-            /// @return true, if circle and aabb overlap, otherwise false.
-            /// @return closest point to circle on intersection. Invalid if function returns false.
-            template< typename type_t >
-            static bool_t hit_test_box_circle_overlap( aabb< type_t > const & bound_aabb, circle<type_t> const & bound_circle, natus::math::vector2< type_t > & closest_point ) noexcept
-            {
-                bound_aabb.closest_point_to( bound_circle.get_center(), closest_point ) ;
-                return (closest_point - bound_circle.get_center()).length2()  <= bound_circle.get_radius2() ;
-            }
-
-            /// box against sphere
-            /// this function also returns intersect, if the sphere is completely inside the box.
-            /// @return 
-            /// ht_outside: if box and sphere are completely outside of each other
-            /// ht_inside: the box is completely inside of the sphere
-            /// ht_intersect: both box' and sphere's surface intersect
-            template< typename type_t >
-            static hit_test_type hit_test_box_circle( n2d::aabb< type_t > const & volume_a, n2d::circle<type_t> const & volume_b ) noexcept
-            {
-                typedef natus::math::vector2< type_t > vec2_t ;
-
-                const vec2_t max = volume_b.get_center() - volume_a.get_max() ;
-                const vec2_t min = volume_b.get_center() - volume_a.get_min() ;
-                const type_t radius = volume_b.get_radius() ;
-
-                vec2_t inner ;
-                vec2_t outer ;
-
-                if( min.x() < type_t(0) ){
-                    if( min.x() < -radius ) return hit_test_type::outside ;
-                    inner.x() = min.x() ;
-                }
-                else if( max.x() > type_t(0) )
+                /// @return true, if circle and aabb overlap, otherwise false.
+                static bool_t test_overlap( aabb_cref_t bound_aabb, circle_cref_t bound_circle ) noexcept
                 {
-                    if( max.x() > radius ) return hit_test_type::outside ;
-                    inner.x() = max.x() ;
+                    const type_t d = bound_aabb.squared_distance_to( bound_circle.get_center() ) ;
+                    const type_t r = bound_circle.get_radius2() ;
+
+                    return d <= r ;
                 }
-                if( min.y() < type_t(0) ){
-                    if( min.y() < -radius ) return hit_test_type::outside ;
-                    inner.y() = min.y() ;
-                }
-                else if( max.y() > type_t(0) )
+
+                /// @return true, if circle and aabb overlap, otherwise false.
+                /// @return closest point to circle on intersection. Invalid if function returns false.
+                static bool_t test_overlap( aabb_cref_t bound_aabb, circle_cref_t bound_circle, vec2_out_t closest_point ) noexcept
                 {
-                    if( max.y() > radius ) return hit_test_type::outside ;
-                    inner.y() = max.y() ;
+                    bound_aabb.closest_point_to( bound_circle.get_center(), closest_point ) ;
+                    return (closest_point - bound_circle.get_center()).length2()  <= bound_circle.get_radius2() ;
                 }
-            
-                if( inner.length2() > radius*radius ) return hit_test_type::outside ;
 
-                // construct the outer vector
-                inner = volume_b.get_center() - inner ;
-                outer = volume_a.get_center() - inner ;
-                outer = inner + outer * type_t(2) ;
+                /// box against circle
+                /// @return 
+                /// outside: if box and sphere are completely outside of each other
+                /// inside: the box is completely inside of the sphere
+                /// intersect: both box' and sphere's surface intersect
+                static hit_test_type test_full( aabb_cref_t volume_a, circle_cref_t volume_b ) noexcept
+                {
+                    const vec2_t max = volume_b.get_center() - volume_a.get_max() ;
+                    const vec2_t min = volume_b.get_center() - volume_a.get_min() ;
+                    const type_t radius = volume_b.get_radius() ;
 
-                // if outer vector < radius^2, the box is inside the sphere.
-                if( (outer-volume_b.get_center()).length2() < radius*radius ) return hit_test_type::inside ;
+                    // test full outside
+                    {
+                        auto const minb = min.less_than( vec2_t( -radius ) ) ;
+                        auto const maxb = max.greater_than( vec2_t( radius ) ) ;
 
-                return hit_test_type::intersect ;
-            }
+                        if( minb.any() || maxb.any() ) return hit_test_type::outside ;
+                    }
+
+                    // test intersection
+                    {
+                        auto const minb = min.greater_than( vec2_t( -radius ) ) && min.less_than( vec2_t( radius ) ) ;
+                        auto const maxb = max.greater_than( vec2_t( -radius ) ) && max.less_than( vec2_t( radius ) ) ;
+
+                        if( minb.any() || maxb.any() ) return hit_test_type::intersect ;
+                    }
+
+                    return hit_test_type::inside ;
+                }
+            };
         }
     }
 }

@@ -113,6 +113,18 @@ namespace natus
                 return (*this) ;
             }
 
+        public:
+
+            this_t operator && ( this_cref_t rhv ) const noexcept
+            {
+                return this_t( _elem[0] && rhv._elem[0], _elem[1] && rhv._elem[1] ) ;
+            }
+
+            this_t operator || ( this_cref_t rhv ) const noexcept
+            {
+                return this_t( _elem[0] || rhv._elem[0], _elem[1] || rhv._elem[1] ) ;
+            }
+
         public: // common
 
             bool all( void ) const 

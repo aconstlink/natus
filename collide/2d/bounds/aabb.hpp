@@ -161,15 +161,13 @@ namespace natus
                     // fully inside/outside
                     if( bias > type_t(0) )
                     {
-                        vec2_t const loc_n = vec2_t( sign_x, sign_y ).normalized() ;
-                        n = vec3_t( loc_n, -loc_n.dot( vec2_t( sign_x, sign_y ) * ext ) ) ;
+                        n = ( d_x > d_y ) ? n_x : n_y ;
                     }
                     // outside partial
                     else
                     {
                         n = ( d_x > type_t(0) ) ? n_x : n_y ;
                     }
-
 
                     return n ;
                 }
