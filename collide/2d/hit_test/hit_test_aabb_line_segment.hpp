@@ -7,6 +7,10 @@
 
 #include <limits>
 
+//
+// This file is obsolete
+//
+
 namespace natus
 {
     namespace collide 
@@ -15,6 +19,8 @@ namespace natus
         {
             using natus::collide::n2d::aabb ;
             using natus::math::m2d::line_segment ;
+
+            // @obsolete see hit_tes_aabb.hpp
 
             /// box/ray
             /// algorithm from rtr p. 743

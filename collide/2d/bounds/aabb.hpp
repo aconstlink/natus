@@ -143,7 +143,6 @@ namespace natus
                 /// @note the distance is measured to be of length to the aabb's center.
                 vec3_t calculate_normal_for( vec2_cref_t p ) const noexcept
                 {
-                    vec3_t n ;
                     const vec3_t p_local( p - this_t::get_center(), type_t(1) ) ;
                     const vec2_t ext = this_t::get_extend() ;
 
@@ -156,20 +155,7 @@ namespace natus
                     const type_t d_x = p_local.dot( n_x ) ;
                     const type_t d_y = p_local.dot( n_y ) ;
                     
-                    type_t const bias = d_x * d_y ;
-
-                    // fully inside/outside
-                    if( bias > type_t(0) )
-                    {
-                        n = ( d_x > d_y ) ? n_x : n_y ;
-                    }
-                    // outside partial
-                    else
-                    {
-                        n = ( d_x > type_t(0) ) ? n_x : n_y ;
-                    }
-
-                    return n ;
+                    return ( d_x > d_y ) ? n_x : n_y ;
                 }
 
             public: // transformation

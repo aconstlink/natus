@@ -7,9 +7,13 @@ set( sources
     "header_only.cpp"
     "typedefs.h"
 
+    "2d/hit_tests.hpp"
+
     "2d/bounds/aabb.hpp"
     "2d/bounds/circle.hpp"
+    "2d/bounds/obb.hpp"
 
+    "2d/hit_test/hit_test_aabb.hpp"
     "2d/hit_test/hit_test_aabb_aabb.hpp"
     "2d/hit_test/hit_test_aabb_circle.hpp"
     "2d/hit_test/hit_test_aabb_line_segment.hpp"

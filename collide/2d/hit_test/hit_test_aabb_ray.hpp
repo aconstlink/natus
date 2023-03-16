@@ -8,6 +8,10 @@
 #include <natus/math/primitive/2d/ray.hpp>
 #include <limits>
 
+//
+// This file is obsolete
+//
+
 namespace natus 
 {
     namespace collide
@@ -25,6 +29,7 @@ namespace natus
 
             }*/
 
+            // @obsolete see hit_tes_aabb.hpp
             /// box/ray
             /// algorithm from rtr p. 743
             /// this test doesnt return the distance to the intersection point. there is a similar function though, which does that.
@@ -72,6 +77,7 @@ namespace natus
                 return natus::collide::hit_test_type::intersect ;
             }
 
+            // @obsolete see hit_tes_aabb.hpp
             /// box/ray
             /// algorithm from rtr p. 743
             /// this test intersects a box with a ray and returns the distance to the intersection point on the ray.

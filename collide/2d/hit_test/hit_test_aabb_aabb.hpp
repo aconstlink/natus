@@ -3,12 +3,17 @@
 #include "../../hit_test_types.h"
 #include "../bounds/aabb.hpp"
 
+//
+// This file is obsolete
+//
+
 namespace natus
 {
     namespace collide
     {
         namespace n2d
         {
+            // @obsolete see hit_tes_aabb.hpp
             template< typename T >
             struct aabb_aabb_hit_test
             {

@@ -9,19 +9,14 @@
 #include <natus/math/vector/vector4.hpp>
 #include <natus/math/vector/vector4b.hpp>
 
-//
-// This file is obsolete
-//
-
 namespace natus 
 {
     namespace collide
     {
         namespace n2d
         {
-            // @obsolete see hit_tes_aabb.hpp
             template< typename T >
-            struct hit_test_aabb_circle
+            struct hit_test_aabb
             {
                 typedef T type_t ;
                 natus_typedefs( aabb< type_t >, aabb ) ;
@@ -30,7 +25,7 @@ namespace natus
                 natus_typedefs( natus::math::vector4< type_t >, vec4 ) ;
 
                 /// @return true, if circle and aabb overlap, otherwise false.
-                static bool_t test_overlap( aabb_cref_t bound_aabb, circle_cref_t bound_circle ) noexcept
+                static bool_t overlap( aabb_cref_t bound_aabb, circle_cref_t bound_circle ) noexcept
                 {
                     const type_t d = bound_aabb.squared_distance_to( bound_circle.get_center() ) ;
                     const type_t r = bound_circle.get_radius2() ;
@@ -40,7 +35,7 @@ namespace natus
 
                 /// @return true, if circle and aabb overlap, otherwise false.
                 /// @return closest point to circle on intersection. Invalid if function returns false.
-                static bool_t test_overlap( aabb_cref_t bound_aabb, circle_cref_t bound_circle, vec2_out_t closest_point ) noexcept
+                static bool_t overlap( aabb_cref_t bound_aabb, circle_cref_t bound_circle, vec2_out_t closest_point ) noexcept
                 {
                     bound_aabb.closest_point_to( bound_circle.get_center(), closest_point ) ;
                     return (closest_point - bound_circle.get_center()).length2()  <= bound_circle.get_radius2() ;
@@ -51,7 +46,7 @@ namespace natus
                 /// outside: if box and sphere are completely outside of each other
                 /// inside: the box is completely inside of the sphere
                 /// intersect: both box' and sphere's surface intersect
-                static hit_test_type test_full( aabb_cref_t volume_a, circle_cref_t volume_b ) noexcept
+                static hit_test_type full( aabb_cref_t volume_a, circle_cref_t volume_b ) noexcept
                 {
                     const vec2_t max = volume_b.get_center() - volume_a.get_max() ;
                     const vec2_t min = volume_b.get_center() - volume_a.get_min() ;
