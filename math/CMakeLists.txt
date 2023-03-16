@@ -46,15 +46,15 @@ set( non_arch_sources
 
     euler/euler_angles.hpp
     euler/euler_sequence.h
-        
-    planar/plane/hesse_plane.hpp
+
     planar/plane/hesse_plane3.hpp
-    planar/plane/plane.hpp
 
     primitive/2d/line.hpp
     primitive/2d/ray.hpp
     primitive/2d/line_segment.hpp
     primitive/2d/ray_line_intersect.hpp
+    primitive/2d/plane.hpp
+
     primitive/3d/ray.hpp
     primitive/3d/frustum.hpp
 

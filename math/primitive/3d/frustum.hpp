@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../../typedefs.h"
-#include "../../planar/plane/hesse_plane3.hpp"
+#include "../../vector/vector4.hpp"
 
 namespace natus
 {
@@ -14,12 +14,10 @@ namespace natus
             {
             public:
 
-                typedef frustum< type_t > this_t ;
-                typedef this_t& this_ref_t ;
+                natus_this_typedefs( frustum< type_t > ) ;
 
-                typedef natus::math::hesse_plane< type_t, 3 > plane_t ;
-                typedef plane_t const& plane_cref_t ;
-                typedef plane_t& plane_ref_t ;
+                // just a temporary fix. Dot not know it suffice.
+                natus_typedefs( natus::math::vector4< type_t >, plane ) ;
 
             private:
 

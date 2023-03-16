@@ -1,6 +1,5 @@
 #pragma once
 
-#include "hesse_plane.hpp"
 #include "../../vector/vector3.hpp"
 #include "../../utility/fn.hpp"
 
@@ -8,6 +7,7 @@ namespace natus
 {
     namespace math
     {
+        #if 0
         template<typename type_t>
         class hesse_plane< type_t, 3 >
         {
@@ -63,5 +63,6 @@ namespace natus
                 return -( normal.dot( origin ) ) ;
             }
         };
+        #endif
     }
 }

@@ -158,6 +158,48 @@ namespace natus
                     return ( d_x > d_y ) ? n_x : n_y ;
                 }
 
+                /// Calculates the nearest aabb side normals with distance.
+                /// @param p [in] the point to which the normal is required.
+                /// @param n [out] the normal ( x, y, hesse distance )
+                /// @note the distance is measured to be of length to the aabb's center.
+                std::array< vec3_t, 2 > calculate_normals_for( vec2_cref_t p ) const noexcept
+                {
+                    const vec3_t p_local( p - this_t::get_center(), type_t(1) ) ;
+                    const vec2_t ext = this_t::get_extend() ;
+
+                    const type_t sign_x = natus::math::fn<type_t>::sign( p_local.x() ) ;
+                    const type_t sign_y = natus::math::fn<type_t>::sign( p_local.y() ) ;
+
+                    const vec3_t n_x( sign_x, type_t(0), -ext.x() ) ;
+                    const vec3_t n_y( type_t(0), sign_y, -ext.y() ) ;
+                    
+                    return { n_x, n_y } ;
+                }
+
+                /// Calculates the best aabb side normals with distance for direction.
+                /// Note that if a direction vector is given, only two planes need to 
+                /// be considered.
+                /// @param p [in] the point to which the normal is required.
+                /// @param n [out] the normal ( x, y, hesse distance )
+                /// @note the distance is measured to be of length to the aabb's center.
+                std::array< vec3_t, 2 > calculate_normals_for_direction( vec2_cref_t d ) const noexcept
+                {
+                    // if one comp is zero exact, we can just take any ortho normal
+                    // because only the direct plane is important.
+                    type_t const x = d.x() == type_t(0) ? type_t(1) : d.x() ;
+                    type_t const y = d.y() == type_t(0) ? type_t(1) : d.y() ;
+
+                    type_t const sign_x = natus::math::fn<type_t>::sign( -x ) ;
+                    type_t const sign_y = natus::math::fn<type_t>::sign( -y ) ;
+                    
+                    vec2_t const ext = this_t::get_extend() ;
+
+                    vec3_t const n_x( sign_x, type_t(0), -ext.x() ) ;
+                    vec3_t const n_y( type_t(0), sign_y, -ext.y() ) ;
+                    
+                    return { n_x, n_y } ;
+                }
+
             public: // transformation
 
                 this_ref_t translate( vec2_cref_t translate )
