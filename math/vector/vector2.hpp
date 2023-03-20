@@ -180,6 +180,11 @@ namespace natus
                 return this_t(_elem[0]+rhv.x(), _elem[1]+rhv.y()) ;
             }
 
+            //***************************************************
+            this_t operator + ( void_t ) const noexcept{
+                return this_t( _elem[0], _elem[1] ) ;
+            }
+
         public: // operator -
 
             //***************************************************

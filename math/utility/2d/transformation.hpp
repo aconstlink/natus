@@ -5,6 +5,7 @@
 #include "../../vector/vector2.hpp"
 #include "../../vector/vector3.hpp"
 #include "../../matrix/matrix3.hpp"
+#include "../../matrix/matrix2x3.hpp"
 
 namespace natus
 {
@@ -12,72 +13,101 @@ namespace natus
     {
         namespace m2d
         {
+            // this transformation performs a rotation and then a transformation
+            // mathmatically: T * R * v = v*
             template< typename type_t >
             class transformation
             {
             public:
 
-                typedef transformation< type_t > this_t ;
-                typedef this_t& this_ref_t ;
-                typedef this_t const& this_cref_t ;
-
-                typedef vector2<type_t> vec2_t ;
-                typedef vec2_t const& vec2_cref_t ;
-
-                typedef vector3<type_t> vec3_t ;
-                typedef vec3_t const& vec3_cref_t ;
-
-                typedef matrix3<type_t> mat3_t ;
-                typedef mat3_t const& mat3_cref_t ;
+                natus_this_typedefs( transformation< type_t > ) ;
+                natus_typedefs( natus::math::vector2< type_t >, vec2 ) ;
+                natus_typedefs( natus::math::vector3< type_t >, vec3 ) ;
+                natus_typedefs( natus::math::matrix2< type_t >, mat2 ) ;
+                natus_typedefs( natus::math::matrix3< type_t >, mat3 ) ;
+                natus_typedefs( natus::math::matrix2x3< type_t >, mat2x3 ) ;
 
             private:
 
-                // contains rotation and position
-                mat3_t _trafo ;
+                // contains rotation and offset : R | o
+                mat2x3_t _trafo ;
 
             public:
 
-                transformation( void_t ) : _trafo( natus::math::with_identity() ) {}
-                transformation( this_cref_t rhv ) { *this = rhv ; }
+                transformation( void_t ) noexcept : _trafo( mat2x3_t::identity() ) {}
+                transformation( this_cref_t rhv ) noexcept { *this = rhv ; }
 
-                transformation( vec2_cref_t pos ) : _trafo( natus::math::with_identity() )
+                transformation( vec2_cref_t pos ) noexcept : _trafo( mat2x3_t::identity() )
                 {
                     this_t::translate_by( pos ) ;
                 }
 
+                // allows to directly set the transformation matrix
+                transformation( mat2x3_cref_t m ) noexcept : _trafo( m ) {}
+
+                ~transformation( void_t ) noexcept {}
+
             public:
 
-                mat3_cref_t get_transformation( void_t ) const { return _trafo ; }
+                mat2x3_cref_t get_transformation( void_t ) const noexcept { return _trafo ; }
 
-                vec2_t get_translation( void_t ) const { return _trafo.get_column( 2 ).xy() ; }
+                vec2_t get_translation( void_t ) const noexcept { return _trafo.column( 2 ) ; }
+                vec2_t get_origin( void_t )  const noexcept { return _trafo.column( 2 ) ; }
 
             public:
 
-                /// 2d rotate this transformation
-                this_ref_t rotate_by( type_t angle )
+                static this_t rotation( type_t const angle ) noexcept
                 {
-                    // rotation matrix
-                    mat3_t rot( natus::math::with_identity() ) ;
+                    return this_t().rotate_by( angle ) ;
+                }
 
-                    _trafo = rot * _trafo ;
-
+                /// rotate this transformation by an angle
+                this_ref_t rotate_by( type_t const angle )
+                {
+                    auto const m = mat2_t::rotation( angle ) * _trafo.get2x2() ;
+                    _trafo = mat2x3_t( m, _trafo.column(2) ) ;
                     return *this ;
                 }
 
                 /// translate this transformation
                 this_ref_t translate_by( vec2_cref_t by )
                 {
-                    _trafo = mat3_t( natus::math::with_identity() )
-                        .set_column( 2, vec3_t( by, type_t( 1 ) ) ) * _trafo ;
-
+                    _trafo.set_column( 2, _trafo.column( 2 ) + by ) ;
                     return *this ;
                 }
 
                 /// transform this transformation by another transformation
+                /// rhv is applyed from the left
                 this_ref_t transform_by( this_cref_t by )
                 {
                     _trafo = by._trafo * _trafo ;
                     return *this ;
+                }
+
+                this_ref_t invert( void_t ) noexcept
+                {
+                    auto const t = _trafo.get2x2().transpose() ;
+                    _trafo = mat2x3( t, t * -_trafo.column(2) ) ;
+                    return *this ;
+                }
+
+                this_t inverted( void_t ) const noexcept
+                {
+                    return this_t( *this ).invert() ;
+                }
+
+            public:
+
+                // transform location
+                vec2_t operator * ( vec3_cref_t v ) const noexcept
+                {
+                    return _trafo * v ;
+                }
+
+                // transform direction
+                vec2_t operator * ( vec2_cref_t v ) const noexcept
+                {
+                    return _trafo * v ;
                 }
 
             public:
@@ -88,7 +118,8 @@ namespace natus
                     return *this ;
                 }
             };
+            natus_typedefs( natus::math::m2d::transformation< float_t >, trafof ) ;
         }
+        natus_typedefs( natus::math::m2d::transformation< float_t >, trafo2df ) ;
     }
-    natus_typedefs( natus::math::m2d::transformation< float_t >, trafo2df ) ;
 }

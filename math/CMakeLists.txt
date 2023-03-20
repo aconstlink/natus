@@ -32,14 +32,15 @@ set( non_arch_sources
     vector/vector2b.hpp
     vector/vector3b.hpp
     vector/vector4b.hpp
-    
+
     interpolation/interpolate.hpp
-        
+
     matrix/switch.h
     matrix/protos.hpp
     matrix/matrix2.hpp
     matrix/matrix3.hpp
     matrix/matrix4.hpp
+    matrix/matrix2x3.hpp
     quaternion/protos.hpp
     quaternion/quaternion3.hpp
     quaternion/quaternion4.hpp

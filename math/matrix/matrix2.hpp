@@ -119,36 +119,29 @@ namespace natus
         public: // operator ()
 
             //************************************************************************************
-            this_cref_t operator()( type_t rhv ){
+            this_cref_t operator()( type_t rhv ) noexcept
+            {
                 for( size_t i=0; i<4; ++i ) _elem[i] = rhv ;
                 return (*this) ;
             }
 
             //************************************************************************************
-            type_t operator()( size_t row, size_t column ) const {
+            type_t operator()( size_t row, size_t column ) const noexcept 
+            {
                 return _elem[(row<<1)+column] ;
             }
 
         public: // common
 
             //************************************************************************************
-            vec2_t row( size_t i ) const 
+            vec2_t row( size_t i ) const noexcept
             {
-                const size_t start = i<<1 ;
-                return vec3_t( _elem[start],_elem[start+1], _elem[start+2] ) ;
+                size_t const idx = i<<1 ;
+                return vec2_t( _elem[idx+0],_elem[idx+1] ) ;
             }
 
             //************************************************************************************
-            this_ref_t set_row( size_t i, vec4_t const & v )
-            {
-                const size_t start = i<<1 ;
-                _elem[start] = v.x() ;
-                _elem[start+1] = v.y() ;
-                return *this ;
-            }
-
-            //************************************************************************************
-            this_ref_t set_row( size_t i, vec3_t const & v )
+            this_ref_t set_row( size_t i, vec4_cref_t v ) noexcept
             {
                 const size_t start = i<<1 ;
                 _elem[start] = v.x() ;
@@ -157,7 +150,7 @@ namespace natus
             }
 
             //************************************************************************************
-            this_ref_t set_row( size_t i, vec2_t const & v )
+            this_ref_t set_row( size_t i, vec3_t const & v ) noexcept
             {
                 const size_t start = i<<1 ;
                 _elem[start] = v.x() ;
@@ -166,19 +159,28 @@ namespace natus
             }
 
             //************************************************************************************
-            vec2_t column( size_t i ) const 
+            this_ref_t set_row( size_t i, vec2_t const & v ) noexcept
+            {
+                const size_t start = i<<1 ;
+                _elem[start] = v.x() ;
+                _elem[start+1] = v.y() ;
+                return *this ;
+            }
+
+            //************************************************************************************
+            vec2_t column( size_t i ) const noexcept 
             { 
                 return vec2_t( _elem[i], _elem[i+2] ) ; 
             }
 
             //************************************************************************************
-            vec2_t get_column( size_t i ) const 
+            vec2_t get_column( size_t i ) const noexcept 
             { 
                 return column(i) ; 
             }
 
             //************************************************************************************
-            this_ref_t set_column( size_t i, vec2_t const & v ) 
+            this_ref_t set_column( size_t i, vec2_t const & v ) noexcept 
             {
                 _elem[i] = v.x();
                 _elem[i+2] = v.y();
@@ -186,7 +188,7 @@ namespace natus
             }
 
             //************************************************************************************
-            this_ref_t zero( void_t )
+            this_ref_t zero( void_t ) noexcept
             {
                 for(size_t i=0;i<4; ++i) _elem[i] = type_t(0);
                 return *this ;
@@ -400,6 +402,24 @@ namespace natus
                 float_t const s = std::sin( angle ) ;
                 float_t const c = std::cos( angle ) ;
                 return this_t().set_row( 0, vec2_t( c, -s ) ).set_row( 1, vec2_t( s, c ) ) ;
+            }
+
+            //************************************************************************************
+            static this_t from_columns( vec2_cref_t a, vec2_cref_t b ) noexcept
+            {
+                this_t ret ;
+                ret.set_column( 0, a ) ;
+                ret.set_column( 1, b ) ;
+                return ret ;
+            }
+
+            //************************************************************************************
+            static this_t from_rows( vec2_cref_t a, vec2_cref_t b ) noexcept
+            {
+                this_t ret ;
+                ret.set_row( 0, a ) ;
+                ret.set_row( 1, b ) ;
+                return ret ;
             }
 
         private:

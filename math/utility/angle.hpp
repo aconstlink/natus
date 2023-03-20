@@ -135,5 +135,6 @@ namespace natus
                 return this_t::from_radians( _angle - other.as_radians() ) ;
             }
         };
+        natus_typedefs( angle< float_t >, anglef ) ;
     }
 }
