@@ -135,6 +135,10 @@ namespace natus
                     vec3_t(type_t(0), type_t(1),type_t(0)) ) ;
             }
         };
+        template< typename T >
+        using matrix23 = matrix2x3<T> ;
+
         natus_typedefs( matrix2x3<float_t>, mat2x3f ) ;
+        natus_typedefs( matrix2x3<float_t>, mat23f ) ;
     }
 }

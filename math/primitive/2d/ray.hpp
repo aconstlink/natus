@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../vector/vector2.hpp"
+#include "../../vector/vector3.hpp"
 
 namespace natus
 {
@@ -13,6 +14,7 @@ namespace natus
             {
                 natus_this_typedefs( ray< type_t > ) ;
                 natus_typedefs( natus::math::vector2< type_t >, vec2 ) ;
+                natus_typedefs( natus::math::vector3< type_t >, vec3 ) ;
 
             private:
 
@@ -41,6 +43,35 @@ namespace natus
                 }
 
                 void_t set_direction( vec2_cref_t d ) noexcept { _dir = d ; }
+
+                // dot with both direction vectors
+                type_t dot( this_cref_t other ) const noexcept
+                {
+                    return _dir.dot( other.get_direction() ) ;
+                }
+
+                // p is supposed to lay on this ray.
+                type_t lambda_to( vec2_cref_t p ) const noexcept 
+                {
+                    return _dir.dot( p ) ;
+                }
+
+                type_t lambda_to( this_cref_t or ) const noexcept 
+                {
+                    // orhto of the other rays' direction
+                    auto const n = vec3_t( 
+                        or.get_direction().ortho(), 
+                        -or.get_direction().ortho().dot( or.get_origin() ) ) ;
+                    
+                    return 
+                        -n.dot( vec3_t( _origin, type_t(1) ) ) /
+                        +n.xy().dot( _dir ) ;
+                }
+
+                vec2_t point_at( this_cref_t or ) const noexcept
+                {
+                    return this_t::point_at( this_t::lambda_to( or ) ) ;
+                }
             };
         }
         typedef m2d::ray< float_t > ray2f_t ;

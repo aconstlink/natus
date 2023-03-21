@@ -11,6 +11,8 @@
 #include <natus/math/vector/vector4.hpp>
 #include <natus/math/vector/vector4b.hpp>
 
+#include <limits>
+
 namespace natus 
 {
     namespace collide
@@ -20,9 +22,9 @@ namespace natus
             template< typename T >
             struct hit_tests
             {
-                typedef T type_t ;
                 natus_this_typedefs( hit_tests< T > ) ;
 
+                natus_typedefs( T, type ) ;
                 natus_typedefs( natus::math::m2d::ray< T >, ray ) ;
                 natus_typedefs( aabb< type_t >, aabb ) ;
                 natus_typedefs( obb< type_t >, obb ) ;
@@ -113,11 +115,7 @@ namespace natus
                 {
                     auto const cc = box.ref_to_local() * vec3_t( circ.get_center(), 1.0 ) ;
 
-                    auto const ext = box.get_extend() ;
-                    auto const min = -ext ;
-                    auto const max = +ext ;
-
-                    auto const res = this_t::aabb_circle( aabb_t( min, max ), circle_t( cc, circ.get_radius() ),
+                    auto const res = this_t::aabb_circle( aabb_t( box.get_minmax() ), circle_t( cc, circ.get_radius() ),
                         cp, nrm, np ) ;
 
                     if( res == hit_test_type::outside ) return res ;
@@ -168,7 +166,7 @@ namespace natus
                     return ds.less_than( 0.0f ).any() ? hit_test_type::inside : hit_test_type::intersect ;
                 }
 
-                static hit_test_type ray_aabb( ray_cref_t ray, aabb_cref_t box, type_t & l, vec3_out_t nrm_out ) noexcept
+                static hit_test_type ray_aabb( ray_cref_t ray, aabb_cref_t box, type_out_t l, vec3_out_t nrm_out ) noexcept
                 {
                     auto const nrms = box.calculate_normals_for_direction( ray.get_direction() ) ;
 
@@ -224,8 +222,32 @@ namespace natus
                     }
 
                     return hit_test_type::disjoint ;
-
                 }
+
+                // transforms the ray into obb space, solves for the contact 
+                // points and transforms back into reference space.
+                static hit_test_type ray_obb( ray_cref_t ray, obb_cref_t box, type_t & l, vec3_out_t nrm_out ) noexcept
+                {
+                    auto const res = this_t::ray_aabb( ray_t( box.ref_to_local( ray ) ), aabb_t( box.get_minmax() ),
+                        l, nrm_out ) ;
+
+                    nrm_out = vec3_t( box.local_to_ref_direction( nrm_out.xy() ), nrm_out.z() ) ;
+
+                    return res ;
+                }
+
+                static hit_test_type ray_ray( ray_cref_t r0, ray_cref_t r1, vec2_out_t cp ) noexcept
+                {
+                    if( std::abs( type_t(1) - r0.dot( r1 ) ) < std::numeric_limits<type_t>::epsilon() ) return hit_test_type::disjoint ;
+
+                    auto const l = r0.lambda_to( r1 ) ;
+                    if( l < type_t(0) ) return hit_test_type::disjoint ;
+
+                    cp = r0.point_at( l ) ;
+
+                    return hit_test_type::intersect ;
+                }
+
 
                 #if 0 // old one
                 //

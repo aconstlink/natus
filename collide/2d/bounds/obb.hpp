@@ -5,8 +5,10 @@
 #include "aabb.hpp"
 #include <natus/math/vector/vector2.hpp>
 #include <natus/math/vector/vector3.hpp>
+#include <natus/math/vector/vector4.hpp>
 #include <natus/math/matrix/matrix2.hpp>
 #include <natus/math/matrix/matrix2x3.hpp>
+#include <natus/math/primitive/2d/ray.hpp>
 #include <natus/math/utility/2d/transformation.hpp>
 
 namespace natus
@@ -22,8 +24,10 @@ namespace natus
 
                 natus_typedefs( natus::math::vector2< type_t >, vec2 ) ;
                 natus_typedefs( natus::math::vector3< type_t >, vec3 ) ;
+                natus_typedefs( natus::math::vector4< type_t >, vec4 ) ;
                 natus_typedefs( natus::math::matrix2<type_t>, mat2 ) ;
                 natus_typedefs( natus::math::matrix2x3<type_t>, mat2x3 ) ;
+                natus_typedefs( natus::math::m2d::ray<type_t>, ray ) ;
                 natus_typedefs( natus::math::m2d::transformation< type_t >, trafo ) ;
 
                 natus_typedefs( natus::collide::n2d::aabb< type_t >, aabb ) ;
@@ -100,6 +104,13 @@ namespace natus
                     return this_t::local_to_ref() * p ;
                 }
 
+                ray_t ref_to_local( ray_cref_t r ) const noexcept
+                {
+                    return ray_t( 
+                        this_t::ref_to_local() * vec3_t( r.get_origin(), type_t(1) ),
+                        this_t::ref_to_local() * r.get_direction() ) ;
+                }
+
             public:
 
                 // relative translation
@@ -133,6 +144,15 @@ namespace natus
                 vec3_cref_t y_axis( void_t ) const noexcept{ return _y ; }
 
                 vec2_t get_extend( void_t ) const noexcept { return vec2_t( _x.z(), _y.z() ) ; }
+
+                // returns the minimum and maximum extend in local coords
+                vec4_t get_minmax( void_t ) const noexcept 
+                { 
+                    return vec4_t( 
+                        -this_t::get_extend(),
+                        +this_t::get_extend()
+                    ) ; 
+                }
 
             public:
 

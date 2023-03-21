@@ -43,6 +43,13 @@ namespace natus
                     _min = min ;
                 }
 
+                // takes a vec4 with ( vec2(min), vec2(max) )
+                aabb( vec4_cref_t minmax ) noexcept
+                {
+                    _max = minmax.zw() ;
+                    _min = minmax.xy() ;
+                }
+
                 /// constructs the aabb a circle like
                 /// given parameters.
                 aabb( vec2_cref_t center, type_t radius ) noexcept
