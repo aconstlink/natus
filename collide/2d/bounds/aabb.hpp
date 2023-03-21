@@ -227,12 +227,17 @@ namespace natus
                     box_out.set_min(this_t::get_min()+translate) ;
                 }
 
-                this_ref_t translate_to_position( vec2_t const & position ) 
+                this_ref_t translate_to_position( vec2_t const & position ) noexcept
                 {
-                    vec2_t center = center() ;
+                    vec2_t center = this_t::get_center() ;
                     this_t::set_min(this_t::get_min()-center+position) ;
                     this_t::set_max(this_t::get_max()-center+position) ;
                     return *this ;
+                }
+
+                this_ref_t set_position( vec2_t const & p ) noexcept
+                {
+                    return this_t::translate_to_position( p ) ;
                 }
 
             public:
