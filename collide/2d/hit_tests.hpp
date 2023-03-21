@@ -33,6 +33,29 @@ namespace natus
                 natus_typedefs( natus::math::vector3< type_t >, vec3 ) ;
                 natus_typedefs( natus::math::vector4< type_t >, vec4 ) ;
 
+                static hit_test_type aabb_aabb_overlap( aabb_cref_t b0, aabb_cref_t b1 ) noexcept
+                {
+                    {
+                        auto const m0 = b0.get_min() ;
+                        auto const m1 = b1.get_max() ;
+                        if( m1.less_than( m0 ).any() ) return hit_test_type::disjoint ;
+                    }
+
+                    {
+                        auto const m0 = b1.get_min() ;
+                        auto const m1 = b0.get_max() ;
+                        if( m1.less_than( m0 ).any() ) return hit_test_type::disjoint ;
+                    }
+
+                    return hit_test_type::overlap ;
+                }
+
+                static hit_test_type aabb_aabb( aabb_cref_t b0, aabb_cref_t b1, 
+                    vec2_out_t cp, vec3_out_t nrm, size_t & np ) noexcept
+                {
+                    return hit_test_type::disjoint ;
+                }
+
                 /// @return true, if circle and aabb overlap, otherwise false.
                 static bool_t aabb_circle_overlap( aabb_cref_t bound_aabb, circle_cref_t bound_circle ) noexcept
                 {
