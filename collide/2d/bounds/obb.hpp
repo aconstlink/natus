@@ -83,14 +83,19 @@ namespace natus
 
                 // transform the given point p to the local 
                 // coordinate system
-                vec2_t ref_to_local( vec2_cref_t p ) noexcept 
+                vec2_t ref_to_local( vec2_cref_t p ) const noexcept 
                 {
                     return this_t::ref_to_local() * p ;
                 }
 
                 // transform the given point p from the local
                 // to the reference coordinate system
-                vec2_t local_to_ref( vec2_cref_t p ) noexcept
+                vec2_t local_to_ref_point( vec2_cref_t p ) const noexcept
+                {
+                    return this_t::local_to_ref() * vec3_t( p, type_t(1) ) ;
+                }
+
+                vec2_t local_to_ref_direction( vec2_cref_t p ) const noexcept
                 {
                     return this_t::local_to_ref() * p ;
                 }
@@ -127,6 +132,7 @@ namespace natus
                 vec3_cref_t x_axis( void_t ) const noexcept{ return _x ; }
                 vec3_cref_t y_axis( void_t ) const noexcept{ return _y ; }
 
+                vec2_t get_extend( void_t ) const noexcept { return vec2_t( _x.z(), _y.z() ) ; }
 
             public:
 

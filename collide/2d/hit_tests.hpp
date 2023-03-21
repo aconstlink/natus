@@ -4,6 +4,7 @@
 #include "../hit_test_types.h"
 
 #include "bounds/aabb.hpp"
+#include "bounds/obb.hpp"
 #include "bounds/circle.hpp"
 
 #include <natus/math/primitive/2d/ray.hpp>
@@ -24,6 +25,7 @@ namespace natus
 
                 natus_typedefs( natus::math::m2d::ray< T >, ray ) ;
                 natus_typedefs( aabb< type_t >, aabb ) ;
+                natus_typedefs( obb< type_t >, obb ) ;
                 natus_typedefs( circle< type_t >, circle ) ;
                 natus_typedefs( natus::math::vector2< type_t >, vec2 ) ;
                 natus_typedefs( natus::math::vector3< type_t >, vec3 ) ;
@@ -75,6 +77,57 @@ namespace natus
 
                     return hit_test_type::inside ;
                 }
+
+                // hit tests aabb vs circle and if penetration happend, 
+                // the contact point and normal is returned.
+                static hit_test_type aabb_circle( aabb_cref_t box, circle_cref_t circle, 
+                    vec2_out_t cp, vec3_out_t nrm, size_t & np ) noexcept
+                {
+                    np = 0 ;
+                    auto const res = aabb_circle( box, circle ) ;
+                    if( res == hit_test_type::outside ) return res ;
+
+                    nrm = box.calculate_normal_for( circle.get_center() ) ;
+                    cp = circle.get_center() - nrm.xy() * 
+                        nrm.dot( natus::math::vec3f_t( circle.get_center() - box.get_center(), 1.0f ) ) ;
+                    np = 1 ;
+
+                    return res ;
+                }
+
+                // obb vs circle. 
+                // transforms circle into obb space and solves aabb vs circle.
+                static hit_test_type obb_circle( obb_cref_t box, circle_cref_t circ ) noexcept
+                {
+                    auto const cc = box.ref_to_local() * vec3_t( circ.get_center(), 1.0 ) ;
+
+                    auto const ext = box.get_extend() ;
+                    auto const min = -ext ;
+                    auto const max = +ext ;
+
+                    return this_t::aabb_circle( aabb_t( min, max ), circle_t( cc, circ.get_radius() ) ) ;
+                }
+
+                static hit_test_type obb_circle( obb_cref_t box, circle_cref_t circ, 
+                    vec2_out_t cp, vec3_out_t nrm, size_t & np ) noexcept
+                {
+                    auto const cc = box.ref_to_local() * vec3_t( circ.get_center(), 1.0 ) ;
+
+                    auto const ext = box.get_extend() ;
+                    auto const min = -ext ;
+                    auto const max = +ext ;
+
+                    auto const res = this_t::aabb_circle( aabb_t( min, max ), circle_t( cc, circ.get_radius() ),
+                        cp, nrm, np ) ;
+
+                    if( res == hit_test_type::outside ) return res ;
+
+                    cp = box.local_to_ref_point( cp ) ; 
+                    nrm = vec3_t( box.local_to_ref_direction( nrm.xy() ), nrm.z() ) ;
+
+                    return res ;
+                }
+
 
                 // circle against circle
                 static hit_test_type circle_circle_overlap( circle_cref_t a, circle_cref_t b ) noexcept
