@@ -56,13 +56,16 @@ namespace natus
                     return hit_test_type::disjoint ;
                 }
 
-                /// @return true, if circle and aabb overlap, otherwise false.
-                static bool_t aabb_circle_overlap( aabb_cref_t bound_aabb, circle_cref_t bound_circle ) noexcept
+                // @return true, if circle and aabb overlap, otherwise false.
+                // used optimized technique from aabb_circle function below.
+                static hit_test_type aabb_circle_overlap( aabb_cref_t box, circle_cref_t circ ) noexcept
                 {
-                    const type_t d = bound_aabb.squared_distance_to( bound_circle.get_center() ) ;
-                    const type_t r = bound_circle.get_radius2() ;
+                    vec2_t const e = box.get_extend() ;
+                    vec2_t const c = (circ.get_center() - box.get_center()).abs() ;
+                    vec2_t const d = c - e ;
+                    type_t const r = circ.get_radius() ;
 
-                    return d <= r ;
+                    return d.greater_than( vec2_t( r ) ).any() ? hit_test_type::disjoint : hit_test_type::overlap ;
                 }
 
                 /// @return true, if circle and aabb overlap, otherwise false.
@@ -128,8 +131,14 @@ namespace natus
                     vec2_out_t cp, vec3_out_t nrm, size_t & np ) noexcept
                 {
                     np = 0 ;
+
+                    #if 0 
                     auto const res = this_t::aabb_circle( box, circle ) ;
-                    if( res == hit_test_type::outside ) return res ;
+                    if( res == hit_test_type::outside ) return res ;                    
+                    #else // this test takes even less condition tests
+                    auto const res = this_t::aabb_circle_overlap( box, circle ) ;
+                    if( res == hit_test_type::disjoint) return res ;
+                    #endif
 
                     nrm = box.calculate_normal_for( circle.get_center() ) ;
                     cp = circle.get_center() - nrm.xy() * 
