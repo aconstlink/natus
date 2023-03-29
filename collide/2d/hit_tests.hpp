@@ -93,9 +93,12 @@ namespace natus
                     }
 
                     // test intersection
+                    // note that due to the first test,
+                    // that min must be greater than -radius and
+                    // that max must be smaller than radius
                     {
-                        auto const minb = min.greater_than( vec2_t( -radius ) ) && min.less_than( vec2_t( radius ) ) ;
-                        auto const maxb = max.greater_than( vec2_t( -radius ) ) && max.less_than( vec2_t( radius ) ) ;
+                        auto const minb = min.less_than( vec2_t( radius ) ) ;
+                        auto const maxb = max.greater_than( vec2_t( -radius ) ) ;
 
                         if( minb.any() || maxb.any() ) return hit_test_type::intersect ;
                     }
@@ -109,7 +112,7 @@ namespace natus
                     vec2_out_t cp, vec3_out_t nrm, size_t & np ) noexcept
                 {
                     np = 0 ;
-                    auto const res = aabb_circle( box, circle ) ;
+                    auto const res = this_t::aabb_circle( box, circle ) ;
                     if( res == hit_test_type::outside ) return res ;
 
                     nrm = box.calculate_normal_for( circle.get_center() ) ;
