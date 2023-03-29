@@ -78,11 +78,12 @@ namespace natus
                 /// outside: if box and sphere are completely outside of each other
                 /// inside: the box is completely inside of the sphere
                 /// intersect: both box' and sphere's surface intersect
-                static hit_test_type aabb_circle( aabb_cref_t volume_a, circle_cref_t volume_b ) noexcept
+                static hit_test_type aabb_circle( aabb_cref_t box, circle_cref_t circ ) noexcept
                 {
-                    const vec2_t max = volume_b.get_center() - volume_a.get_max() ;
-                    const vec2_t min = volume_b.get_center() - volume_a.get_min() ;
-                    const type_t radius = volume_b.get_radius() ;
+                    #if 0 // nice one
+                    const vec2_t max = circ.get_center() - box.get_max() ;
+                    const vec2_t min = circ.get_center() - box.get_min() ;
+                    const type_t radius = circ.get_radius() ;
 
                     // test full outside
                     {
@@ -102,6 +103,21 @@ namespace natus
 
                         if( minb.any() || maxb.any() ) return hit_test_type::intersect ;
                     }
+                    
+                    #else // optimized one
+                    // d is the dot product of the two normals 
+                    // facing the circle in one shot.
+
+                    vec2_t const e = box.get_extend() ;
+                    vec2_t const c = (circ.get_center() - box.get_center()).abs() ;
+                    vec2_t const d = c - e ;
+                    type_t const r = circ.get_radius() ;
+
+                    auto const b = vec4_t( d, d ).greater_than( vec4_t( vec2_t( +r ), vec2_t( -r ) ) ) ;
+
+                    if( b.xy().any() ) return hit_test_type::outside ;
+                    if( b.zw().any() ) return hit_test_type::intersect ;
+                    #endif
 
                     return hit_test_type::inside ;
                 }
