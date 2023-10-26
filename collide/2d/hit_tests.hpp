@@ -177,6 +177,13 @@ namespace natus
                     return res ;
                 }
 
+                // point against circle
+                static hit_test_type point_circle_overlap( vec2_cref_t a, circle_cref_t b ) noexcept
+                {
+                    auto const dv = a - b.get_center() ;
+                    auto const f = b.get_radius() ;
+                    return ( dv.dot( dv ) > f*f ) ? hit_test_type::outside : hit_test_type::overlap ;
+                }
 
                 // circle against circle
                 static hit_test_type circle_circle_overlap( circle_cref_t a, circle_cref_t b ) noexcept
